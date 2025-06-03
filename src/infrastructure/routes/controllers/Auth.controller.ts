@@ -55,7 +55,7 @@ export const logout = async (req: Request, res: Response) => {
 export const resetPassword = async (req: Request, res: Response) => {
   try {
     const { token, newPassword } = req.body;
-    
+    console.log('Datos de restablecimiento de contraseña:', { token, newPassword });
     const authRepository = new AuthAdapter();
     const useCase = new ResetPwdUseCase(authRepository);
     await useCase.execute(token, newPassword);
