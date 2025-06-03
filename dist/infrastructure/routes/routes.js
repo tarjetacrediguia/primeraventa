@@ -8,13 +8,15 @@ const express_1 = require("express");
 const auth_routes_1 = __importDefault(require("./auth.routes"));
 const administradores_routes_1 = __importDefault(require("./administradores.routes"));
 const auth_middleware_1 = require("./middlewares/auth.middleware");
+const analistas_routes_1 = __importDefault(require("./analistas.routes"));
 const router = (0, express_1.Router)();
+const comerciantes_routes_1 = __importDefault(require("./comerciantes.routes"));
 router.use('/auth', auth_routes_1.default);
 // Aplica el middleware de autenticación a TODAS las rutas excepto las públicas
 router.use(auth_middleware_1.authMiddleware);
 router.use('/administradores', administradores_routes_1.default);
-//router.use('/analistas', analistasRoutes);
-//router.use('/comerciantes', comerciantesRoutes);
+router.use('/analistas', analistas_routes_1.default);
+router.use('/comerciantes', comerciantes_routes_1.default);
 //router.use('/permisos', permisosRoutes);
 //router.use('/solicitudes', solicitudesRoutes);
 //router.use('/contratos', contratosRoutes);

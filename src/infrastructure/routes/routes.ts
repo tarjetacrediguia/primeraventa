@@ -3,16 +3,18 @@ import { Router } from 'express';
 import authRoutes from './auth.routes';
 import administradoresRoutes from './administradores.routes';
 import { authMiddleware } from './middlewares/auth.middleware';
-
+import analistasRoutes from './analistas.routes';
 const router = Router();
+import comerciantesRoutes from './comerciantes.routes';
+
 
 
 router.use('/auth', authRoutes);
 // Aplica el middleware de autenticación a TODAS las rutas excepto las públicas
 router.use(authMiddleware);
 router.use('/administradores', administradoresRoutes);
-//router.use('/analistas', analistasRoutes);
-//router.use('/comerciantes', comerciantesRoutes);
+router.use('/analistas', analistasRoutes);
+router.use('/comerciantes', comerciantesRoutes);
 //router.use('/permisos', permisosRoutes);
 //router.use('/solicitudes', solicitudesRoutes);
 //router.use('/contratos', contratosRoutes);
