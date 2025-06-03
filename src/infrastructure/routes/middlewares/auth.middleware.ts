@@ -1,4 +1,7 @@
+// src/infrastructure/routes/middlewares/auth.middleware.ts
 import { Request, Response, NextFunction } from 'express';
+import { AuthAdapter } from '../../adapters/authorization/AuthAdapter';
+import { pool } from '../../config/Database/DatabaseDonfig';
 
 declare global {
   namespace Express {
@@ -11,7 +14,7 @@ declare global {
   }
 }
 
-export const authMiddleware = (req: Request, res: Response, next: NextFunction) => {
+export const authMiddleware = async (req: Request, res: Response, next: NextFunction) => {
   // Rutas públicas que no requieren autenticación
   const publicRoutes = [
     '/API/v1/auth/login',
@@ -24,16 +27,41 @@ export const authMiddleware = (req: Request, res: Response, next: NextFunction) 
     return next();
   }
 
-  // Obtener información del usuario desde el body
-  if (!req.body.user || !req.body.user.rol) {
-    return res.status(401).json({ error: 'Información de usuario no proporcionada en el body' });
+  // Verificar token en el encabezado Authorization
+  const authHeader = req.headers.authorization;
+  
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    return res.status(401).json({ error: 'Token no proporcionado o formato inválido' });
   }
 
-  // Establecer información del usuario en el request
-  req.user = {
-    id: req.body.user.id || 'default-id', // Asegúrate de enviar id en el body
-    rol: req.body.user.rol
-  };
+  const token = authHeader.split(' ')[1];
+  const authAdapter = new AuthAdapter();
 
-  next();
+  try {
+    // Verificar token en la base de datos
+    const sessionResult = await pool.query(
+      `SELECT s.*, u.rol 
+       FROM sesiones s
+       JOIN usuarios u ON s.usuario_id = u.id
+       WHERE s.token = $1 AND s.activa = TRUE AND s.fecha_expiracion > NOW()`,
+      [token]
+    );
+
+    if (sessionResult.rows.length === 0) {
+      return res.status(401).json({ error: 'Token inválido o sesión expirada' });
+    }
+
+    const session = sessionResult.rows[0];
+    
+    // Establecer información del usuario en el request
+    req.user = {
+      id: session.usuario_id.toString(),
+      rol: session.rol
+    };
+
+    next();
+  } catch (error) {
+    console.error('Error en autenticación:', error);
+    res.status(500).json({ error: 'Error de autenticación' });
+  }
 };

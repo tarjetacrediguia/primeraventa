@@ -2,7 +2,7 @@
 import { Usuario } from "../../domain/entities/Usuario";
 
 export interface AuthPort {
-    generarToken(usuario: Usuario): string;
+    generarToken(usuario: Usuario): Promise<string>;
     validarToken(token: string): { id: string; rol: string } | null;
     login(email: string, password: string): Promise<{ usuario: Usuario, token: string }>;
     logout(token: string): Promise<void>;

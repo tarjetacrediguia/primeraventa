@@ -49,5 +49,8 @@ class Comerciante extends Usuario_1.Usuario {
     autenticar(password) {
         return super.autenticar(password);
     }
+    getRol() {
+        return 'comerciante';
+    }
 }
 exports.Comerciante = Comerciante;

@@ -23,6 +23,14 @@ export abstract class Usuario {
     this.telefono = telefono;
   }
 
+  // Método para obtener el rol (debe ser implementado por las subclases)
+  public abstract getRol(): string;
+
+  // Método para obtener permisos (implementación base)
+  public getPermisos(): string[] {
+    return [];
+  }
+
   // Getters y Setters
   public getId(): string | undefined {
     return this.id;

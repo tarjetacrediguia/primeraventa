@@ -8,7 +8,7 @@ import { AuthAdapter } from '../../adapters/authorization/AuthAdapter';
 export const login = async (req: Request, res: Response) => {
   try {
     const { email, password } = req.body;
-    
+    console.log('Datos de login:', { email, password });
     const authRepository = new AuthAdapter();
     const useCase = new LoginUseCase(authRepository);
     const result = await useCase.execute(email, password);

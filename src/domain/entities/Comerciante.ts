@@ -92,4 +92,7 @@ export class Comerciante extends Usuario {
   autenticar(password: string): boolean {
     return super.autenticar(password);
   }
+  public getRol(): string {
+    return 'comerciante';
+  }
 }

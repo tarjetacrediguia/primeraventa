@@ -17,6 +17,7 @@ const AuthAdapter_1 = require("../../adapters/authorization/AuthAdapter");
 const login = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const { email, password } = req.body;
+        console.log('Datos de login:', { email, password });
         const authRepository = new AuthAdapter_1.AuthAdapter();
         const useCase = new LoginUseCase_1.LoginUseCase(authRepository);
         const result = yield useCase.execute(email, password);

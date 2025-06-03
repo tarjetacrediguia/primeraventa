@@ -28,5 +28,8 @@ class Administrador extends Usuario_1.Usuario {
     autenticar(password) {
         return super.autenticar(password);
     }
+    getRol() {
+        return 'administrador';
+    }
 }
 exports.Administrador = Administrador;

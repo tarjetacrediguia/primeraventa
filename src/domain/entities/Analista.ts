@@ -52,4 +52,8 @@ export class Analista extends Usuario {
   autenticar(password: string): boolean {
     return super.autenticar(password);
   }
+
+  public getRol(): string {
+    return 'analista';
+  }
 }

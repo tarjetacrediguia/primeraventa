@@ -11,6 +11,10 @@ class Usuario {
         this.password = password;
         this.telefono = telefono;
     }
+    // Método para obtener permisos (implementación base)
+    getPermisos() {
+        return [];
+    }
     // Getters y Setters
     getId() {
         return this.id;

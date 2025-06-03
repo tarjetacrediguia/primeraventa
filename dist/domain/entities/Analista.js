@@ -28,5 +28,8 @@ class Analista extends Usuario_1.Usuario {
     autenticar(password) {
         return super.autenticar(password);
     }
+    getRol() {
+        return 'analista';
+    }
 }
 exports.Analista = Analista;

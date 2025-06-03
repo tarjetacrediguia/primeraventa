@@ -55,4 +55,8 @@ export class Administrador extends Usuario {
   autenticar(password: string): boolean {
         return super.autenticar(password);
     }
+
+     public getRol(): string {
+    return 'administrador';
+  }
 }

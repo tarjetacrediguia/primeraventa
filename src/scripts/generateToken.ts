@@ -1,3 +1,5 @@
+// File: src/scripts/generateToken.ts
+
 import jwt from 'jsonwebtoken';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'kjhskdf65454sdfkhvxtu_clave_secreta_muy_segura';
