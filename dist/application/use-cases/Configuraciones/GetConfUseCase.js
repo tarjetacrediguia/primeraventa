@@ -1,0 +1,2 @@
+"use strict";
+//src/application/use-cases/Configuraciones/GetConfUseCase.ts

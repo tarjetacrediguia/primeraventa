@@ -1,0 +1,1 @@
+//src/infrastructure/routes/analistas.routes.ts

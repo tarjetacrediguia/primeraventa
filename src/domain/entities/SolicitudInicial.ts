@@ -1,0 +1,132 @@
+// src/domain/entities/SolicitudInicial.ts
+export class SolicitudInicial {
+    private readonly id: string;
+    private fechaCreacion: Date;
+    private estado: 'pendiente' | 'aprobada' | 'rechazada' | 'expirada';
+    private dniCliente: string;
+    private cuilCliente: string;
+    private reciboSueldo?: Buffer;
+    private comercianteId?: string;
+    private comentarios: string[]; // Nuevo atributo
+
+  constructor(
+    id: string,
+    fechaCreacion: Date,
+    estado: 'pendiente' | 'aprobada' | 'rechazada' | 'expirada',
+    dniCliente: string,
+    cuilCliente: string,
+    reciboSueldo?: Buffer,
+    comercianteId?: string,
+    comentarios: string[] = [] // Nuevo parámetro
+  ) {
+    this.id = id;
+    this.fechaCreacion = fechaCreacion;
+    this.estado = estado;
+    this.dniCliente = dniCliente;
+    this.cuilCliente = cuilCliente;
+    this.reciboSueldo = reciboSueldo;
+    this.comercianteId = comercianteId;
+    this.comentarios = comentarios;
+  }
+
+  // Getters y Setters
+  public getId(): string {
+    return this.id;
+  }
+
+  public getFechaCreacion(): Date {
+    return this.fechaCreacion;
+  }
+
+  public setFechaCreacion(fechaCreacion: Date): void {
+    this.fechaCreacion = fechaCreacion;
+  }
+
+  public getEstado(): string {
+    return this.estado;
+  }
+
+  public setEstado(estado: 'pendiente' | 'aprobada' | 'rechazada' | 'expirada'): void {
+    this.estado = estado;
+  }
+
+  public getDniCliente(): string {
+    return this.dniCliente;
+  }
+
+  public setDniCliente(dniCliente: string): void {
+    this.dniCliente = dniCliente;
+  }
+
+  public getCuilCliente(): string {
+    return this.cuilCliente;
+  }
+
+  public setCuilCliente(cuilCliente: string): void {
+    this.cuilCliente = cuilCliente;
+  }
+
+  public getReciboSueldo(): Buffer | undefined {
+    return this.reciboSueldo;
+  }
+
+  public setReciboSueldo(reciboSueldo: Buffer): void {
+    this.reciboSueldo = reciboSueldo;
+  }
+
+  public getComercianteId(): string | undefined {
+    return this.comercianteId;
+  }
+
+  public setComercianteId(comercianteId: string): void {
+    this.comercianteId = comercianteId;
+  }
+
+  // Métodos para comentarios
+  public getComentarios(): string[] {
+    return this.comentarios;
+  }
+
+  public setComentarios(comentarios: string[]): void {
+    this.comentarios = comentarios;
+  }
+
+  public agregarComentario(comentario: string): void {
+    this.comentarios.push(comentario);
+  }
+
+  // Métodos adicionales
+  public toString(): string {
+    return `SolicitudInicial[id=${this.id}, estado=${this.estado}, dni=${this.dniCliente}, cuil=${this.cuilCliente}]`;
+  }
+
+  public toPlainObject(): any {
+    return {
+      id: this.id,
+      fechaCreacion: this.fechaCreacion,
+      estado: this.estado,
+      dniCliente: this.dniCliente,
+      cuilCliente: this.cuilCliente,
+      reciboSueldo: this.reciboSueldo,
+      comercianteId: this.comercianteId,
+      comentarios: this.comentarios // Nuevo campo
+    };
+  }
+
+  public static fromMap(map: any): SolicitudInicial {
+    return new SolicitudInicial(
+      map.id,
+      map.fechaCreacion,
+      map.estado,
+      map.dniCliente,
+      map.cuilCliente,
+      map.reciboSueldo,
+      map.comercianteId,
+      map.comentarios || [] // Nuevo campo
+    );
+  }
+
+  validar(): boolean {
+    return !!this.dniCliente && !!this.cuilCliente;
+  }
+}
