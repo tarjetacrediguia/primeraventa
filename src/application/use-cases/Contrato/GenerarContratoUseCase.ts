@@ -97,7 +97,7 @@ export class GenerarContratoUseCase {
     ): Promise<void> {
         // Crear notificación en el sistema
         await this.notificationService.emitNotification({
-            userId: solicitud.getId(), // O usar otro identificador si es necesario
+            userId: Number(solicitud.getId()), // O usar otro identificador si es necesario
             type: "contrato",
             message: mensaje,
             metadata: {

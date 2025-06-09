@@ -32,7 +32,7 @@ class CreateComercianteUseCase {
                 throw new Error("Ya existe un comerciante con este CUIL");
             }
             // Crear instancia de Comerciante
-            const comerciante = new Comerciante_1.Comerciante("", // ID temporal
+            const comerciante = new Comerciante_1.Comerciante(0, // ID temporal
             nombre, apellido, email, password, telefono, nombreComercio, cuil, direccionComercio, permisos);
             // Guardar en el repositorio
             return this.repository.saveComerciante(comerciante);

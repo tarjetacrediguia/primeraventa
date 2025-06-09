@@ -1,21 +1,21 @@
 // src/domain/entities/Usuario.ts
 export abstract class Usuario {
   // Atributos
-  private readonly id: string;
+  private readonly id: number;
     private nombre: string;
     private apellido: string;
     private email: string;
     private password: string;
     private telefono: string;
   constructor(
-    id: string | undefined,
+    id: number | undefined,
     nombre: string,
     apellido: string,
     email: string,
     password: string,
     telefono: string
   ) {
-    this.id = id || '';
+    this.id = id || 0;
     this.nombre = nombre;
     this.apellido = apellido;
     this.email = email;
@@ -24,7 +24,7 @@ export abstract class Usuario {
   }
 
   // Getters y Setters
-  public getId(): string | undefined {
+  public getId(): number | undefined {
     return this.id;
   }
 

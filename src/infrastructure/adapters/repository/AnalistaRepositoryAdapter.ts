@@ -81,7 +81,7 @@ export class AnalistaRepositoryAdapter implements AnalistaRepositoryPort {
         }
     }
     
-    async getAnalistaById(id: string): Promise<Analista | null> {
+    async getAnalistaById(id: number): Promise<Analista | null> {
         const query = `
             SELECT u.id, u.nombre, u.apellido, u.email, u.telefono,
                    ARRAY_AGG(p.nombre) AS permisos
@@ -127,10 +127,10 @@ export class AnalistaRepositoryAdapter implements AnalistaRepositoryPort {
             );
             
             for (const permiso of analista.getPermisos()) {
-                if (!analista.getId()) {
+                if (analista.getId() === undefined) {
                     throw new Error("El ID del analista es undefined.");
                 }
-                await this.asignarPermiso(client, analista.getId() as string, permiso);
+                await this.asignarPermiso(client, analista.getId() as number, permiso);
             }
             
             await client.query('COMMIT');
@@ -144,7 +144,7 @@ export class AnalistaRepositoryAdapter implements AnalistaRepositoryPort {
         }
     }
     
-    async deleteAnalista(id: string): Promise<void> {
+    async deleteAnalista(id: number): Promise<void> {
         const client = await pool.connect();
         try {
             await client.query('BEGIN');
@@ -191,7 +191,7 @@ export class AnalistaRepositoryAdapter implements AnalistaRepositoryPort {
         return result.rows.map(row => this.mapRowToAnalista(row));
     }
 
-    private async asignarPermiso(client: any, usuarioId: string, permisoNombre: string): Promise<void> {
+    private async asignarPermiso(client: any, usuarioId: number, permisoNombre: string): Promise<void> {
         // Obtener ID del permiso
         const permisoRes = await client.query('SELECT id FROM permisos WHERE nombre = $1', [permisoNombre]);
         if (permisoRes.rows.length === 0) {
@@ -209,7 +209,7 @@ export class AnalistaRepositoryAdapter implements AnalistaRepositoryPort {
 
     private mapRowToAnalista(row: any): Analista {
         return new Analista(
-            row.id.toString(),
+            Number(row.id),
             row.nombre,
             row.apellido,
             row.email,

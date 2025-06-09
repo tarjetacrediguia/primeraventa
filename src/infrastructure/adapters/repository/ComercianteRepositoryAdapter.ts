@@ -111,7 +111,7 @@ export class ComercianteRepositoryAdapter implements ComercianteRepositoryPort {
         }
     }
 
-    async getComercianteById(id: string): Promise<Comerciante | null> {
+    async getComercianteById(id: number): Promise<Comerciante | null> {
         const query = `
             SELECT u.id, u.nombre, u.apellido, u.email, u.telefono,
                    c.nombre_comercio, c.cuil, c.direccion_comercio,
@@ -189,7 +189,7 @@ export class ComercianteRepositoryAdapter implements ComercianteRepositoryPort {
         }
     }
 
-    async deleteComerciante(id: string): Promise<void> {
+    async deleteComerciante(id: number): Promise<void> {
         const client = await pool.connect();
         try {
             await client.query('BEGIN');
@@ -237,7 +237,7 @@ export class ComercianteRepositoryAdapter implements ComercianteRepositoryPort {
         return result.rows.map(row => this.mapRowToComerciante(row));
     }
 
-    private async asignarPermiso(client: any, usuarioId: string, permisoNombre: string): Promise<void> {
+    private async asignarPermiso(client: any, usuarioId: number, permisoNombre: string): Promise<void> {
         // Obtener ID del permiso
         const permisoRes = await client.query('SELECT id FROM permisos WHERE nombre = $1', [permisoNombre]);
         if (permisoRes.rows.length === 0) {
@@ -255,7 +255,7 @@ export class ComercianteRepositoryAdapter implements ComercianteRepositoryPort {
 
     private mapRowToComerciante(row: any): Comerciante {
         return new Comerciante(
-            row.id.toString(),
+            Number(row.id),
             row.nombre,
             row.apellido,
             row.email,

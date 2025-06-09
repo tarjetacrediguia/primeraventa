@@ -4,7 +4,7 @@ import { ComercianteRepositoryPort } from "../../ports/ComercianteRepositoryPort
 export class DeleteComercianteUseCase {
     constructor(private readonly repository: ComercianteRepositoryPort) {}
 
-    async execute(id: string): Promise<void> {
+    async execute(id: number): Promise<void> {
         // Verificar existencia
         const existe = await this.repository.getComercianteById(id);
         if (!existe) {

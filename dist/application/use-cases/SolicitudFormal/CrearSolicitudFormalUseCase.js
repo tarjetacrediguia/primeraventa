@@ -24,7 +24,7 @@ class CrearSolicitudFormalUseCase {
         ) {
             try {
                 // 1. Verificar permisos del comerciante
-                const tienePermiso = yield this.permisoRepo.usuarioTienePermiso(comercianteId, "solicitud_formal.crear");
+                const tienePermiso = yield this.permisoRepo.usuarioTienePermiso(Number(comercianteId), "solicitud_formal.crear");
                 if (!tienePermiso) {
                     throw new Error("No tiene permisos para enviar solicitudes formales");
                 }
@@ -51,12 +51,22 @@ class CrearSolicitudFormalUseCase {
                 const solicitudCreada = yield this.solicitudFormalRepo.createSolicitudFormal(solicitudFormal);
                 // 8. Notificar al cliente
                 yield this.notificationService.emitNotification({
-                    userId: solicitudCreada.getId(),
+                    userId: Number(solicitudCreada.getId()),
                     type: "solicitud_formal",
-                    message: "Su solicitud formal de crédito ha sido enviada"
+                    message: "Solicitud formal creada exitosamente"
                 });
-                // 9. Notificar a los analistas
-                yield this.notificarAnalistas(solicitudCreada);
+                // Notificar al comerciante
+                yield this.notificationService.emitNotification({
+                    userId: Number(comercianteId),
+                    type: "solicitud_formal",
+                    message: "Se ha creado una nueva solicitud formal"
+                });
+                // Notificar a los analistas
+                yield this.notificationService.emitNotification({
+                    userId: 0, // ID especial para notificaciones grupales
+                    type: "nueva_solicitud",
+                    message: `Nueva solicitud formal pendiente: ${solicitudCreada.getId()}`
+                });
                 return solicitudCreada;
             }
             catch (error) {
@@ -66,7 +76,7 @@ class CrearSolicitudFormalUseCase {
                     errorMessage = error.message;
                 }
                 yield this.notificationService.emitNotification({
-                    userId: comercianteId,
+                    userId: Number(comercianteId),
                     type: "error",
                     message: `Error al crear solicitud formal: ${errorMessage}`
                 });
@@ -77,7 +87,7 @@ class CrearSolicitudFormalUseCase {
     notificarAnalistas(solicitud) {
         return __awaiter(this, void 0, void 0, function* () {
             yield this.notificationService.emitNotification({
-                userId: "analistas", // Grupo o rol
+                userId: 0, // ID especial para notificaciones grupales
                 type: "nueva_solicitud",
                 message: `Nueva solicitud formal pendiente: ${solicitud.getId()}`
             });

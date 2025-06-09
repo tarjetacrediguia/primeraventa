@@ -16,33 +16,16 @@ class UpdateComercianteUseCase {
     constructor(repository) {
         this.repository = repository;
     }
-    execute(id, nombre, apellido, email, telefono, nombreComercio, cuil, direccionComercio, permisos) {
+    execute(id, datos) {
         return __awaiter(this, void 0, void 0, function* () {
-            // Validaciones básicas
-            if (!nombre || !apellido || !email || !telefono ||
-                !nombreComercio || !cuil || !direccionComercio) {
-                throw new Error("Todos los campos son obligatorios");
-            }
-            // Validación de CUIL
-            if (!this.validarCUIL(cuil)) {
-                throw new Error("CUIL inválido");
-            }
-            // Obtener comerciante existente
+            // Verificar existencia
             const existe = yield this.repository.getComercianteById(id);
             if (!existe) {
                 throw new Error("Comerciante no encontrado");
             }
-            // Verificar CUIL único si cambió
-            if (existe.getCuil() !== cuil) {
-                const existeCuil = yield this.repository.findByCuil(cuil);
-                if (existeCuil) {
-                    throw new Error("Ya existe otro comerciante con este CUIL");
-                }
-            }
-            // Crear instancia actualizada manteniendo password
-            const comercianteActualizado = new Comerciante_1.Comerciante(id, nombre, apellido, email, existe.getPassword(), // Mantener password existente
-            telefono, nombreComercio, cuil, direccionComercio, permisos);
-            // Guardar cambios
+            // Crear objeto con datos actualizados
+            const comercianteActualizado = new Comerciante_1.Comerciante(id, datos.nombre || existe.getNombre(), datos.apellido || existe.getApellido(), datos.email || existe.getEmail(), existe.getPassword(), // No permitimos actualizar la contraseña aquí
+            datos.telefono || existe.getTelefono(), datos.nombreComercio || existe.getNombreComercio(), datos.cuil || existe.getCuil(), datos.direccionComercio || existe.getDireccionComercio(), datos.permisos || existe.getPermisos());
             return this.repository.updateComerciante(comercianteActualizado);
         });
     }

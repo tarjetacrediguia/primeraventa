@@ -21,9 +21,8 @@ const createAnalista = (req, res) => __awaiter(void 0, void 0, void 0, function*
     try {
         const { nombre, apellido, email, password, telefono, permisos } = req.body;
         const useCase = new CreateAnalistaUseCase_1.CreateAnalistaUseCase(analistaRepository);
-        const nuevoAnalista = yield useCase.execute(nombre, apellido, email, password, telefono, permisos || [] // Permisos opcionales
-        );
-        res.status(201).json(nuevoAnalista.toPlainObject());
+        const analista = yield useCase.execute(nombre, apellido, email, password, telefono, permisos || []);
+        res.status(201).json(analista.toPlainObject());
     }
     catch (error) {
         console.error('Error al crear analista:', error);
@@ -41,7 +40,13 @@ const updateAnalista = (req, res) => __awaiter(void 0, void 0, void 0, function*
         const { id } = req.params;
         const { nombre, apellido, email, telefono, permisos } = req.body;
         const useCase = new UpdateAnalistaUseCase_1.UpdateAnalistaUseCase(analistaRepository);
-        const analistaActualizado = yield useCase.execute(id, nombre, apellido, email, telefono, permisos);
+        const analistaActualizado = yield useCase.execute(Number(id), {
+            nombre,
+            apellido,
+            email,
+            telefono,
+            permisos
+        });
         res.status(200).json(analistaActualizado.toPlainObject());
     }
     catch (error) {
@@ -61,7 +66,7 @@ const deleteAnalista = (req, res) => __awaiter(void 0, void 0, void 0, function*
     try {
         const { id } = req.params;
         const useCase = new DeleteAnalistaUseCase_1.DeleteAnalistaUseCase(analistaRepository);
-        yield useCase.execute(id);
+        yield useCase.execute(Number(id));
         res.status(204).send();
     }
     catch (error) {
@@ -78,7 +83,7 @@ const getAnalista = (req, res) => __awaiter(void 0, void 0, void 0, function* ()
     try {
         const { id } = req.params;
         const useCase = new GetAnalistaByIdUseCase_1.GetAnalistaByIdUseCase(analistaRepository);
-        const analista = yield useCase.execute(id);
+        const analista = yield useCase.execute(Number(id));
         res.status(200).json(analista.toPlainObject());
     }
     catch (error) {

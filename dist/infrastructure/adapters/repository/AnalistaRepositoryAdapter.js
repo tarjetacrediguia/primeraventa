@@ -118,7 +118,7 @@ class AnalistaRepositoryAdapter {
                 // Actualizar permisos
                 yield client.query('DELETE FROM usuario_permisos WHERE usuario_id = $1', [analista.getId()]);
                 for (const permiso of analista.getPermisos()) {
-                    if (!analista.getId()) {
+                    if (analista.getId() === undefined) {
                         throw new Error("El ID del analista es undefined.");
                     }
                     yield this.asignarPermiso(client, analista.getId(), permiso);
@@ -190,7 +190,7 @@ class AnalistaRepositoryAdapter {
         });
     }
     mapRowToAnalista(row) {
-        return new Analista_1.Analista(row.id.toString(), row.nombre, row.apellido, row.email, '', // La contraseña no se retorna en las consultas
+        return new Analista_1.Analista(Number(row.id), row.nombre, row.apellido, row.email, '', // La contraseña no se retorna en las consultas
         row.telefono, row.permisos.filter((p) => p !== null));
     }
 }

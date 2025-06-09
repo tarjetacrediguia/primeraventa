@@ -4,7 +4,7 @@ import { AnalistaRepositoryPort } from "../../ports/AnalistaRepositoryPort";
 export class DeleteAnalistaUseCase {
     constructor(private readonly repository: AnalistaRepositoryPort) {}
 
-    async execute(id: string): Promise<void> {
+    async execute(id: number): Promise<void> {
         // Verificar existencia
         const existe = await this.repository.getAnalistaById(id);
         if (!existe) {

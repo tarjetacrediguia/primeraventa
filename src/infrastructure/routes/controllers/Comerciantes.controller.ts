@@ -52,7 +52,7 @@ export const createComerciante = async (req: Request, res: Response) => {
 
 export const updateComerciante = async (req: Request, res: Response) => {
     try {
-        const { id } = req.params;
+        const id = Number(req.params.id);
         const {
             nombre,
             apellido,
@@ -98,7 +98,7 @@ export const updateComerciante = async (req: Request, res: Response) => {
 
 export const deleteComerciante = async (req: Request, res: Response) => {
     try {
-        const { id } = req.params;
+        const id = Number(req.params.id);
         await comercianteRepository.deleteComerciante(id);
         res.status(200).json({
             success: true,
@@ -114,7 +114,7 @@ export const deleteComerciante = async (req: Request, res: Response) => {
 
 export const getComerciante = async (req: Request, res: Response) => {
     try {
-        const { id } = req.params;
+        const id = Number(req.params.id);
         const comerciante = await comercianteRepository.getComercianteById(id);
         
         if (!comerciante) {

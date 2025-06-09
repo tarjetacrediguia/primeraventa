@@ -122,7 +122,7 @@ export class AdministradorRepositoryAdapter implements AdministradorRepositoryPo
                 if (!administrador.getId()) {
                     throw new Error("El ID del administrador es undefined.");
                 }
-                await this.asignarPermiso(client, administrador.getId() as string, permiso);
+                await this.asignarPermiso(client, administrador.getId() as number, permiso);
             }
             
             await client.query('COMMIT');
@@ -167,7 +167,7 @@ export class AdministradorRepositoryAdapter implements AdministradorRepositoryPo
         }
     }
 
-    private async asignarPermiso(client: any, usuarioId: string, permisoNombre: string): Promise<void> {
+    private async asignarPermiso(client: any, usuarioId: number, permisoNombre: string): Promise<void> {
         // Obtener ID del permiso
         const permisoRes = await client.query('SELECT id FROM permisos WHERE nombre = $1', [permisoNombre]);
         if (permisoRes.rows.length === 0) {

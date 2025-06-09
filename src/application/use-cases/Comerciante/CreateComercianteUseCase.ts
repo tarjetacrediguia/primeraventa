@@ -34,7 +34,7 @@ export class CreateComercianteUseCase {
 
         // Crear instancia de Comerciante
         const comerciante = new Comerciante(
-            "", // ID temporal
+            0, // ID temporal
             nombre,
             apellido,
             email,

@@ -39,7 +39,7 @@ export class VerificarAprobacionSolicitudInicialUseCase {
 
             // 6. Notificar al comerciante
             await this.notificationService.emitNotification({
-                userId: solicitud.getComercianteId() || "admin",
+                userId: Number(solicitud.getComercianteId() || 0),
                 type: "solicitud_inicial",
                 message: `Solicitud ${solicitudId} actualizada a estado: ${solicitud.getEstado()}`
             });
@@ -52,7 +52,7 @@ export class VerificarAprobacionSolicitudInicialUseCase {
                 errorMessage = error.message;
             }
             await this.notificationService.emitNotification({
-                userId: solicitud.getComercianteId() || "admin",
+                userId: Number(solicitud.getComercianteId() || 0),
                 type: "error",
                 message: `Error verificando aprobación: ${errorMessage}`
             });

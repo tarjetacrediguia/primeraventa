@@ -68,7 +68,7 @@ class AprobarSolicitudesFormalesUseCase {
     notificarCliente(solicitud, mensaje) {
         return __awaiter(this, void 0, void 0, function* () {
             yield this.notificationService.emitNotification({
-                userId: solicitud.getId(), // Referencia al cliente
+                userId: Number(solicitud.getId()), // Referencia al cliente
                 type: "solicitud_formal",
                 message: mensaje
             });

@@ -14,16 +14,16 @@ export const createAnalista = async (req: Request, res: Response) => {
     const { nombre, apellido, email, password, telefono, permisos } = req.body;
     
     const useCase = new CreateAnalistaUseCase(analistaRepository);
-    const nuevoAnalista = await useCase.execute(
+    const analista = await useCase.execute(
       nombre,
       apellido,
       email,
       password,
       telefono,
-      permisos || [] // Permisos opcionales
+      permisos || []
     );
     
-    res.status(201).json(nuevoAnalista.toPlainObject());
+    res.status(201).json(analista.toPlainObject());
   } catch (error: any) {
     console.error('Error al crear analista:', error);
     if (error.message === "Todos los campos son obligatorios") {
@@ -41,12 +41,14 @@ export const updateAnalista = async (req: Request, res: Response) => {
     
     const useCase = new UpdateAnalistaUseCase(analistaRepository);
     const analistaActualizado = await useCase.execute(
-      id,
-      nombre,
-      apellido,
-      email,
-      telefono,
-      permisos
+      Number(id),
+      {
+        nombre,
+        apellido,
+        email,
+        telefono,
+        permisos
+      }
     );
     
     res.status(200).json(analistaActualizado.toPlainObject());
@@ -66,7 +68,7 @@ export const deleteAnalista = async (req: Request, res: Response) => {
     const { id } = req.params;
     
     const useCase = new DeleteAnalistaUseCase(analistaRepository);
-    await useCase.execute(id);
+    await useCase.execute(Number(id));
     
     res.status(204).send();
   } catch (error: any) {
@@ -83,7 +85,7 @@ export const getAnalista = async (req: Request, res: Response) => {
     const { id } = req.params;
     
     const useCase = new GetAnalistaByIdUseCase(analistaRepository);
-    const analista = await useCase.execute(id);
+    const analista = await useCase.execute(Number(id));
     
     res.status(200).json(analista.toPlainObject());
   } catch (error: any) {

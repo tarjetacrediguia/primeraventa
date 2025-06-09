@@ -28,7 +28,7 @@ class CrearSolicitudInicialUseCase {
                 if (tieneCreditoActivo) {
                     // Notificar al comerciante que no puede crear solicitud
                     yield this.notificationService.emitNotification({
-                        userId: comercianteId,
+                        userId: Number(comercianteId),
                         type: "solicitud_inicial",
                         message: `El cliente con DNI ${dniCliente} ya tiene un crédito activo`
                     });
@@ -52,6 +52,11 @@ class CrearSolicitudInicialUseCase {
                 }
                 // 6. Notificar al cliente (simulado)
                 console.log(`Notificación enviada al cliente DNI:${dniCliente} sobre su solicitud`);
+                yield this.notificationService.emitNotification({
+                    userId: Number(comercianteId),
+                    type: "solicitud_inicial",
+                    message: "Solicitud inicial creada exitosamente"
+                });
                 return solicitudCreada;
             }
             catch (error) {
@@ -61,7 +66,7 @@ class CrearSolicitudInicialUseCase {
                     errorMessage = error.message;
                 }
                 yield this.notificationService.emitNotification({
-                    userId: comercianteId,
+                    userId: Number(comercianteId),
                     type: "error",
                     message: `Error al crear solicitud: ${errorMessage}`
                 });

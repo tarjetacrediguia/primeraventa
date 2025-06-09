@@ -7,7 +7,7 @@ export class AuthAdapter implements AuthPort {
     generarToken(usuario: Usuario): string {
         throw new Error("Method not implemented.");
     }
-    validarToken(token: string): { id: string; rol: string; } | null {
+    validarToken(token: string): { id: number; rol: string; } | null {
         throw new Error("Method not implemented.");
     }
     login(email: string, password: string): Promise<{ usuario: Usuario; token: string; }> {
@@ -25,8 +25,7 @@ export class AuthAdapter implements AuthPort {
     resetPassword(token: string, newPassword: string): Promise<void> {
         throw new Error("Method not implemented.");
     }
-    changePassword(usuarioId: string, oldPassword: string, newPassword: string): Promise<void> {
+    changePassword(usuarioId: number, oldPassword: string, newPassword: string): Promise<void> {
         throw new Error("Method not implemented.");
     }
-  
 }

@@ -41,7 +41,7 @@ class VerificarAprobacionSolicitudInicialUseCase {
                 const updated = yield this.repository.updateSolicitudInicial(solicitud);
                 // 6. Notificar al comerciante
                 yield this.notificationService.emitNotification({
-                    userId: solicitud.getComercianteId() || "admin",
+                    userId: Number(solicitud.getComercianteId() || 0),
                     type: "solicitud_inicial",
                     message: `Solicitud ${solicitudId} actualizada a estado: ${solicitud.getEstado()}`
                 });
@@ -54,7 +54,7 @@ class VerificarAprobacionSolicitudInicialUseCase {
                     errorMessage = error.message;
                 }
                 yield this.notificationService.emitNotification({
-                    userId: solicitud.getComercianteId() || "admin",
+                    userId: Number(solicitud.getComercianteId() || 0),
                     type: "error",
                     message: `Error verificando aprobación: ${errorMessage}`
                 });

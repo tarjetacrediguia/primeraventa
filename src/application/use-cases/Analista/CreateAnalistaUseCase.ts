@@ -20,7 +20,7 @@ export class CreateAnalistaUseCase {
 
         // Crear instancia de Analista (el id se generará en el repositorio)
         const analista = new Analista(
-            "", // ID temporal (se asignará al guardar)
+            0, // ID temporal (se asignará al guardar)
             nombre,
             apellido,
             email,

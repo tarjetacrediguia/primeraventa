@@ -26,7 +26,7 @@ export class UpdateAdminUseCase {
 
         // Crear instancia actualizada
         const administradorActualizado = new Administrador(
-            id,
+            Number(id),
             nombre,
             apellido,
             email,

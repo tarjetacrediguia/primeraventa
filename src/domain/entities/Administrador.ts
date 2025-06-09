@@ -5,7 +5,7 @@ export class Administrador extends Usuario {
   private permisos: string[]
   
   constructor(
-    id: string,
+    id: number,
     nombre: string,
     apellido: string,
     email: string,

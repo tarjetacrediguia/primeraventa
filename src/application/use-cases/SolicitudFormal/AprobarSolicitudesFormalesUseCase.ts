@@ -87,7 +87,7 @@ export class AprobarSolicitudesFormalesUseCase {
 
     private async notificarCliente(solicitud: SolicitudFormal, mensaje: string): Promise<void> {
         await this.notificationService.emitNotification({
-            userId: solicitud.getId(), // Referencia al cliente
+            userId: Number(solicitud.getId()), // Referencia al cliente
             type: "solicitud_formal",
             message: mensaje
         });

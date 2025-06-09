@@ -231,7 +231,7 @@ class ComercianteRepositoryAdapter {
         });
     }
     mapRowToComerciante(row) {
-        return new Comerciante_1.Comerciante(row.id.toString(), row.nombre, row.apellido, row.email, '', // La contraseña no se retorna en las consultas
+        return new Comerciante_1.Comerciante(Number(row.id), row.nombre, row.apellido, row.email, '', // La contraseña no se retorna en las consultas
         row.telefono, row.nombre_comercio, row.cuil, row.direccion_comercio, row.permisos.filter((p) => p !== null));
     }
 }

@@ -36,7 +36,7 @@ export class CrearSolicitudFormalUseCase {
         try {
             // 1. Verificar permisos del comerciante
             const tienePermiso = await this.permisoRepo.usuarioTienePermiso(
-                comercianteId, 
+                Number(comercianteId), 
                 "solicitud_formal.crear"
             );
             
@@ -88,13 +88,24 @@ export class CrearSolicitudFormalUseCase {
 
             // 8. Notificar al cliente
             await this.notificationService.emitNotification({
-                userId: solicitudCreada.getId(),
+                userId: Number(solicitudCreada.getId()),
                 type: "solicitud_formal",
-                message: "Su solicitud formal de crédito ha sido enviada"
+                message: "Solicitud formal creada exitosamente"
             });
 
-            // 9. Notificar a los analistas
-            await this.notificarAnalistas(solicitudCreada);
+            // Notificar al comerciante
+            await this.notificationService.emitNotification({
+                userId: Number(comercianteId),
+                type: "solicitud_formal",
+                message: "Se ha creado una nueva solicitud formal"
+            });
+
+            // Notificar a los analistas
+            await this.notificationService.emitNotification({
+                userId: 0, // ID especial para notificaciones grupales
+                type: "nueva_solicitud",
+                message: `Nueva solicitud formal pendiente: ${solicitudCreada.getId()}`
+            });
 
             return solicitudCreada;
         } catch (error) {
@@ -105,7 +116,7 @@ export class CrearSolicitudFormalUseCase {
             }
             
             await this.notificationService.emitNotification({
-                userId: comercianteId,
+                userId: Number(comercianteId),
                 type: "error",
                 message: `Error al crear solicitud formal: ${errorMessage}`
             });
@@ -116,7 +127,7 @@ export class CrearSolicitudFormalUseCase {
 
     private async notificarAnalistas(solicitud: SolicitudFormal): Promise<void> {
         await this.notificationService.emitNotification({
-            userId: "analistas", // Grupo o rol
+            userId: 0, // ID especial para notificaciones grupales
             type: "nueva_solicitud",
             message: `Nueva solicitud formal pendiente: ${solicitud.getId()}`
         });

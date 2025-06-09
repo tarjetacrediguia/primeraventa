@@ -23,7 +23,7 @@ class CreateAdminUseCase {
                 throw new Error("Todos los campos son obligatorios");
             }
             // Crear instancia de Administrador (el id se generará en el repositorio)
-            const administrador = new Administrador_1.Administrador("", // ID temporal (se asignará al guardar)
+            const administrador = new Administrador_1.Administrador(0, // ID temporal (se asignará al guardar)
             nombre, apellido, email, password, telefono, permisos);
             // Guardar en el repositorio
             return this.repository.saveAdministrador(administrador);

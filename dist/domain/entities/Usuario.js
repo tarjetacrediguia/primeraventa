@@ -4,7 +4,7 @@ exports.Usuario = void 0;
 // src/domain/entities/Usuario.ts
 class Usuario {
     constructor(id, nombre, apellido, email, password, telefono) {
-        this.id = id || '';
+        this.id = id || 0;
         this.nombre = nombre;
         this.apellido = apellido;
         this.email = email;
