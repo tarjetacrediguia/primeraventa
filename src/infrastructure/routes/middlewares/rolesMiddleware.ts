@@ -8,16 +8,10 @@ export const esAdministrador = (req: Request, res: Response, next: NextFunction)
   }
   
   // Verificar rol de administrador
-<<<<<<< HEAD
   if (req.user.rol !== 'administrador') {
     return res.status(403).json({ 
       error: 'Acceso no autorizado. Se requiere rol de administrador' 
     });
-=======
-  if (req.user.rol !== 'analista') {
-    console.log(`Rol actual: ${req.user.rol}, Rol requerido: analista`);
-    return res.status(403).json({ error: 'Acceso no autorizado' });
->>>>>>> origin/jurgen
   }
   
   next();

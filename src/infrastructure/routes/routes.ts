@@ -3,14 +3,11 @@ import { Router } from 'express';
 import authRoutes from './auth.routes';
 import administradoresRoutes from './administradores.routes';
 import { authMiddleware } from './middlewares/auth.middleware';
-<<<<<<< HEAD
 import solicitudesRoutes from './solicitudes.routes';
 import notificacionesRoutes from './notification.routes';
 import contratosRoutes from './contratos.routes';
 
-=======
 import analistasRoutes from './analistas.routes';
->>>>>>> origin/jurgen
 const router = Router();
 import comerciantesRoutes from './comerciantes.routes';
 

@@ -11,10 +11,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.AnalistaRepositoryAdapter = void 0;
-<<<<<<< HEAD
-=======
 const Analista_1 = require("../../../domain/entities/Analista");
->>>>>>> origin/jurgen
 const DatabaseDonfig_1 = require("../../config/Database/DatabaseDonfig");
 class AnalistaRepositoryAdapter {
     obtenerIdsAnalistasActivos() {

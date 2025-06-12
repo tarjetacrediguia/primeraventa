@@ -43,13 +43,8 @@ export class CrearSolicitudFormalUseCase {
             this.tieneCreditoActivo(datosSolicitud.dni);
             // 1. Verificar permisos del comerciante
             const tienePermiso = await this.permisoRepo.usuarioTienePermiso(
-<<<<<<< HEAD
                 comercianteId, 
                 "create_solicitudFormal" // Permiso necesario
-=======
-                Number(comercianteId), 
-                "solicitud_formal.crear"
->>>>>>> origin/jurgen
             );
             
             if (!tienePermiso) {
@@ -106,34 +101,13 @@ export class CrearSolicitudFormalUseCase {
             console.log("Solicitud formal guardada en la base de datos:", solicitudCreada);
             // 8. Notificar al cliente
             await this.notificationService.emitNotification({
-<<<<<<< HEAD
                 userId: solicitudCreada.getComercianteId(),
-=======
-                userId: Number(solicitudCreada.getId()),
->>>>>>> origin/jurgen
                 type: "solicitud_formal",
                 message: "Solicitud formal creada exitosamente"
             });
-<<<<<<< HEAD
             console.log("Solicitud formal guardada:", solicitudCreada);
             // 9. Notificar a los analistas
             await this.notificarAnalistas(solicitudCreada);
-=======
-
-            // Notificar al comerciante
-            await this.notificationService.emitNotification({
-                userId: Number(comercianteId),
-                type: "solicitud_formal",
-                message: "Se ha creado una nueva solicitud formal"
-            });
-
-            // Notificar a los analistas
-            await this.notificationService.emitNotification({
-                userId: 0, // ID especial para notificaciones grupales
-                type: "nueva_solicitud",
-                message: `Nueva solicitud formal pendiente: ${solicitudCreada.getId()}`
-            });
->>>>>>> origin/jurgen
 
             return solicitudCreada;
         } catch (error) {
@@ -153,7 +127,6 @@ export class CrearSolicitudFormalUseCase {
         }
     }
 
-<<<<<<< HEAD
 private async notificarAnalistas(solicitud: SolicitudFormal): Promise<void> {
         try {
             // 1. Obtener todos los IDs de analistas usando el repositorio
@@ -179,14 +152,6 @@ private async notificarAnalistas(solicitud: SolicitudFormal): Promise<void> {
             console.error("Error notificando a analistas:", error);
             // Opcional: Notificar a administradores sobre fallo
         }
-=======
-    private async notificarAnalistas(solicitud: SolicitudFormal): Promise<void> {
-        await this.notificationService.emitNotification({
-            userId: 0, // ID especial para notificaciones grupales
-            type: "nueva_solicitud",
-            message: `Nueva solicitud formal pendiente: ${solicitud.getId()}`
-        });
->>>>>>> origin/jurgen
     }
 
     private async tieneCreditoActivo(dniCliente: string): Promise<boolean> {

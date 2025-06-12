@@ -27,12 +27,8 @@ class CrearSolicitudFormalUseCase {
                 //verificar que el cliente no tenga un crédito activo
                 this.tieneCreditoActivo(datosSolicitud.dni);
                 // 1. Verificar permisos del comerciante
-<<<<<<< HEAD
                 const tienePermiso = yield this.permisoRepo.usuarioTienePermiso(comercianteId, "create_solicitudFormal" // Permiso necesario
                 );
-=======
-                const tienePermiso = yield this.permisoRepo.usuarioTienePermiso(Number(comercianteId), "solicitud_formal.crear");
->>>>>>> origin/jurgen
                 if (!tienePermiso) {
                     throw new Error("No tiene permisos para enviar solicitudes formales");
                 }
@@ -65,32 +61,13 @@ class CrearSolicitudFormalUseCase {
                 console.log("Solicitud formal guardada en la base de datos:", solicitudCreada);
                 // 8. Notificar al cliente
                 yield this.notificationService.emitNotification({
-<<<<<<< HEAD
                     userId: solicitudCreada.getComercianteId(),
-=======
-                    userId: Number(solicitudCreada.getId()),
->>>>>>> origin/jurgen
                     type: "solicitud_formal",
                     message: "Solicitud formal creada exitosamente"
                 });
-                // Notificar al comerciante
-                yield this.notificationService.emitNotification({
-                    userId: Number(comercianteId),
-                    type: "solicitud_formal",
-                    message: "Se ha creado una nueva solicitud formal"
-                });
-                // Notificar a los analistas
-                yield this.notificationService.emitNotification({
-                    userId: 0, // ID especial para notificaciones grupales
-                    type: "nueva_solicitud",
-                    message: `Nueva solicitud formal pendiente: ${solicitudCreada.getId()}`
-                });
-<<<<<<< HEAD
                 console.log("Solicitud formal guardada:", solicitudCreada);
                 // 9. Notificar a los analistas
                 yield this.notificarAnalistas(solicitudCreada);
-=======
->>>>>>> origin/jurgen
                 return solicitudCreada;
             }
             catch (error) {
@@ -110,7 +87,6 @@ class CrearSolicitudFormalUseCase {
     }
     notificarAnalistas(solicitud) {
         return __awaiter(this, void 0, void 0, function* () {
-<<<<<<< HEAD
             try {
                 // 1. Obtener todos los IDs de analistas usando el repositorio
                 const analistaIds = yield this.analistaRepo.obtenerIdsAnalistasActivos();
@@ -152,13 +128,6 @@ class CrearSolicitudFormalUseCase {
                 }
             }
             return false;
-=======
-            yield this.notificationService.emitNotification({
-                userId: 0, // ID especial para notificaciones grupales
-                type: "nueva_solicitud",
-                message: `Nueva solicitud formal pendiente: ${solicitud.getId()}`
-            });
->>>>>>> origin/jurgen
         });
     }
 }

@@ -107,11 +107,7 @@ class GenerarContratoUseCase {
         return __awaiter(this, void 0, void 0, function* () {
             // Crear notificación en el sistema
             yield this.notificationService.emitNotification({
-<<<<<<< HEAD
                 userId: solicitud.getId(),
-=======
-                userId: Number(solicitud.getId()), // O usar otro identificador si es necesario
->>>>>>> origin/jurgen
                 type: "contrato",
                 message: mensaje,
                 metadata: {

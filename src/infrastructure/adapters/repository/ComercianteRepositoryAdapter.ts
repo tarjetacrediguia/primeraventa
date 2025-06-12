@@ -26,10 +26,6 @@ export class ComercianteRepositoryAdapter implements ComercianteRepositoryPort {
         return this.mapRowToComerciante(result.rows[0]);
     }
 
-<<<<<<< HEAD
-    getComercianteById(id: number): Promise<Comerciante | null> {
-        throw new Error("Method not implemented.");
-=======
     async findByCuil(cuil: string): Promise<Comerciante | null> {
         const query = `
             SELECT u.id, u.nombre, u.apellido, u.email, u.telefono,
@@ -49,7 +45,6 @@ export class ComercianteRepositoryAdapter implements ComercianteRepositoryPort {
         }
         
         return this.mapRowToComerciante(result.rows[0]);
->>>>>>> origin/jurgen
     }
 
     async saveComerciante(comerciante: Comerciante): Promise<Comerciante> {
@@ -116,10 +111,6 @@ export class ComercianteRepositoryAdapter implements ComercianteRepositoryPort {
         }
     }
 
-<<<<<<< HEAD
-    deleteComerciante(id: number): Promise<void> {
-        throw new Error("Method not implemented.");
-=======
     async getComercianteById(id: number): Promise<Comerciante | null> {
         const query = `
             SELECT u.id, u.nombre, u.apellido, u.email, u.telefono,
@@ -139,7 +130,6 @@ export class ComercianteRepositoryAdapter implements ComercianteRepositoryPort {
         }
         
         return this.mapRowToComerciante(result.rows[0]);
->>>>>>> origin/jurgen
     }
 
     async updateComerciante(comerciante: Comerciante): Promise<Comerciante> {

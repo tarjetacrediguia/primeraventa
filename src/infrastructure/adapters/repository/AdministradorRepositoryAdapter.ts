@@ -122,11 +122,7 @@ export class AdministradorRepositoryAdapter implements AdministradorRepositoryPo
                 if (!administrador.getId()) {
                     throw new Error("El ID del administrador es undefined.");
                 }
-<<<<<<< HEAD
                 await this.asignarPermiso(client, administrador.getId(), permiso);
-=======
-                await this.asignarPermiso(client, administrador.getId() as number, permiso);
->>>>>>> origin/jurgen
             }
             
             await client.query('COMMIT');

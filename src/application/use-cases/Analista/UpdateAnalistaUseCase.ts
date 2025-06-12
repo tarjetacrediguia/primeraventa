@@ -7,7 +7,6 @@ export class UpdateAnalistaUseCase {
 
     async execute(
         id: number,
-<<<<<<< HEAD
         nombre: string,
         apellido: string,
         email: string,
@@ -17,16 +16,7 @@ export class UpdateAnalistaUseCase {
         // Validaciones básicas
         if (!nombre || !apellido || !email || !telefono || !permisos) {
             throw new Error("Todos los campos son obligatorios");
-=======
-        datos: {
-            nombre?: string;
-            apellido?: string;
-            email?: string;
-            telefono?: string;
-            permisos?: string[];
->>>>>>> origin/jurgen
         }
-    ): Promise<Analista> {
         // Verificar existencia
         const existe = await this.repository.getAnalistaById(id);
         if (!existe) {
@@ -36,12 +26,12 @@ export class UpdateAnalistaUseCase {
         // Crear objeto con datos actualizados
         const analistaActualizado = new Analista(
             id,
-            datos.nombre || existe.getNombre(),
-            datos.apellido || existe.getApellido(),
-            datos.email || existe.getEmail(),
+            nombre || existe.getNombre(),
+            apellido || existe.getApellido(),
+            email || existe.getEmail(),
             existe.getPassword(), // No permitimos actualizar la contraseña aquí
-            datos.telefono || existe.getTelefono(),
-            datos.permisos || existe.getPermisos()
+            telefono || existe.getTelefono(),
+            permisos || existe.getPermisos()
         );
 
         return this.repository.updateAnalista(analistaActualizado);

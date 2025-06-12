@@ -34,25 +34,8 @@ class ComercianteRepositoryAdapter {
             return this.mapRowToComerciante(result.rows[0]);
         });
     }
-    findByCuil(cuil) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const query = `
-            SELECT u.id, u.nombre, u.apellido, u.email, u.telefono,
-                   c.nombre_comercio, c.cuil, c.direccion_comercio,
-                   ARRAY_AGG(p.nombre) AS permisos
-            FROM usuarios u
-            INNER JOIN comerciantes c ON u.id = c.usuario_id
-            LEFT JOIN usuario_permisos up ON u.id = up.usuario_id
-            LEFT JOIN permisos p ON up.permiso_id = p.id
-            WHERE c.cuil = $1
-            GROUP BY u.id, c.nombre_comercio, c.cuil, c.direccion_comercio
-        `;
-            const result = yield DatabaseDonfig_1.pool.query(query, [cuil]);
-            if (result.rows.length === 0) {
-                return null;
-            }
-            return this.mapRowToComerciante(result.rows[0]);
-        });
+    getComercianteById(id) {
+        throw new Error("Method not implemented.");
     }
     saveComerciante(comerciante) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -104,25 +87,8 @@ class ComercianteRepositoryAdapter {
             }
         });
     }
-    getComercianteById(id) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const query = `
-            SELECT u.id, u.nombre, u.apellido, u.email, u.telefono,
-                   c.nombre_comercio, c.cuil, c.direccion_comercio,
-                   ARRAY_AGG(p.nombre) AS permisos
-            FROM usuarios u
-            INNER JOIN comerciantes c ON u.id = c.usuario_id
-            LEFT JOIN usuario_permisos up ON u.id = up.usuario_id
-            LEFT JOIN permisos p ON up.permiso_id = p.id
-            WHERE u.id = $1
-            GROUP BY u.id, c.nombre_comercio, c.cuil, c.direccion_comercio
-        `;
-            const result = yield DatabaseDonfig_1.pool.query(query, [id]);
-            if (result.rows.length === 0) {
-                return null;
-            }
-            return this.mapRowToComerciante(result.rows[0]);
-        });
+    deleteComerciante(id) {
+        throw new Error("Method not implemented.");
     }
     updateComerciante(comerciante) {
         return __awaiter(this, void 0, void 0, function* () {
