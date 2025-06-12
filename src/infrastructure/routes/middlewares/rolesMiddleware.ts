@@ -16,3 +16,28 @@ export const esAdministrador = (req: Request, res: Response, next: NextFunction)
   
   next();
 };
+// Verifica si el usuario es un comerciante
+export const esComerciante = (req: Request, res: Response, next: NextFunction) => {
+  if (!req.user) return res.status(401).json({ error: 'No autenticado' });
+  if (req.user.rol !== 'comerciante') {
+    console.log(req.user); // Para depuración, ver el usuario autenticado
+    return res.status(403).json({ error: 'Acceso no autorizado. Se requiere rol de comerciante' });
+  }
+  next();
+};
+//Verifica si el usuario es un analista
+export const esAnalista = (req: Request, res: Response, next: NextFunction) => {
+  if (!req.user) return res.status(401).json({ error: 'No autenticado' });
+  if (req.user.rol !== 'analista') {
+    return res.status(403).json({ error: 'Acceso no autorizado. Se requiere rol de analista' });
+  }
+  next();
+};
+// Verifica si el usuario es un comerciante o analista
+export const esComercianteOAnalista = (req: Request, res: Response, next: NextFunction) => {
+  if (!req.user) return res.status(401).json({ error: 'No autenticado' });
+  if (req.user.rol !== 'comerciante' && req.user.rol !== 'analista') {
+    return res.status(403).json({ error: 'Acceso no autorizado. Se requiere rol de comerciante o analista' });
+  }
+  next();
+};

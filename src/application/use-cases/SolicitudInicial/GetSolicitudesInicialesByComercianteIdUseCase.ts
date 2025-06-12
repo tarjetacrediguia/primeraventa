@@ -5,7 +5,7 @@ import { SolicitudInicialRepositoryPort } from "../../ports/SolicitudInicialRepo
 export class GetSolicitudesInicialesByComercianteIdUseCase {
     constructor(private readonly repository: SolicitudInicialRepositoryPort) {}
 
-    async execute(comercianteId: string): Promise<SolicitudInicial[]> {
+    async execute(comercianteId: number): Promise<SolicitudInicial[]> {
         return this.repository.getSolicitudesInicialesByComercianteId(comercianteId);
     }
 }

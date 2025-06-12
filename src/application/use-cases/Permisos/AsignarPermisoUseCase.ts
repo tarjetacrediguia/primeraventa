@@ -6,7 +6,7 @@ export class AsignarPermisoUseCase {
     constructor(private readonly repository: PermisoRepositoryPort) {}
 
     async execute(
-        usuarioId: string,
+        usuarioId: number,
         permisos: string[]
     ): Promise<Usuario> {
         // Validaciones básicas

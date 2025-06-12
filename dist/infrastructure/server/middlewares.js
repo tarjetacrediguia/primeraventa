@@ -16,6 +16,9 @@ const applyMiddlewares = (app) => {
     app.use((0, helmet_1.default)());
     // Parsing de JSON
     app.use(express_1.default.json());
+    // Aumentar el límite a 10MB (o el tamaño que necesites)
+    app.use(express_1.default.json({ limit: '10mb' }));
+    app.use(express_1.default.urlencoded({ limit: '10mb', extended: true }));
     // Logging
     if (process.env.NODE_ENV === 'development') {
         app.use((0, morgan_1.default)('dev')); // Desarrollo: formato detallado

@@ -5,19 +5,22 @@ import { PdfPort } from "../../ports/PdfPort";
 import { NotificationPort } from "../../ports/NotificationPort";
 import { SolicitudFormal } from "../../../domain/entities/SolicitudFormal";
 import { Contrato } from "../../../domain/entities/Contrato";
+import { ClienteRepositoryAdapter } from "../../../infrastructure/adapters/repository/ClienteRepositoryAdapter";
 
 export class GenerarContratoUseCase {
     constructor(
         private readonly solicitudRepository: SolicitudFormalRepositoryPort,
         private readonly contratoRepository: ContratoRepositoryPort,
         private readonly pdfService: PdfPort,
-        private readonly notificationService: NotificationPort
+        private readonly notificationService: NotificationPort,
+        private readonly clienteRepository: ClienteRepositoryAdapter
     ) {}
 
-    async execute(numeroSolicitud: string): Promise<Contrato> {
+    async execute(numeroSolicitud: number): Promise<Contrato> {
         try {
-            // 1. Obtener solicitud formal (asumiendo que el ID es el número de solicitud)
+            // 1. Obtener solicitud formal
             const solicitud = await this.solicitudRepository.getSolicitudFormalById(numeroSolicitud);
+            console.log(`Solicitud obtenida: ${JSON.stringify(solicitud)}`);
             if (!solicitud) {
                 throw new Error(`Solicitud formal no encontrada: ${numeroSolicitud}`);
             }
@@ -28,31 +31,53 @@ export class GenerarContratoUseCase {
                 throw new Error("La solicitud no está aprobada, no se puede generar contrato");
             }
 
-            // 3. Generar contrato (monto asumido o calculado según tu lógica de negocio)
-            const monto = this.calcularMontoContrato(solicitud);
-            const contrato = new Contrato(
-                this.generarIdContrato(),
-                new Date(),
-                monto,
-                "generado",
-                solicitud.getId(),
-                solicitud.getDni(), // Usamos DNI como identificador de cliente
-                this.generarNumeroAutorizacion(),
-                this.generarNumeroCuenta()
-            );
+            console.log('clienteDNI:', solicitud.getDni());
+            const cliente = await this.clienteRepository.findByDni(solicitud.getDni());
+            if (!cliente) {
+                throw new Error(`Cliente no encontrado para el ID: ${solicitud.getClienteId()}`);
+            }
 
+            // Verificar si ya existe un contrato para esta solicitud
+            const contratosExistentes = await this.contratoRepository.getContratosBySolicitudFormalId(Number(solicitud.getId()));
+            if (contratosExistentes && contratosExistentes.length > 0) {
+                throw new Error(`Ya existe un contrato para la solicitud ${solicitud.getId()}`);
+            }
+
+            // Obtener el cliente por DNI
+            const clienteDNI = solicitud.getDni();
+            const clientePorDNI = await this.clienteRepository.findByDni(clienteDNI);
+            if (!clientePorDNI) {
+                throw new Error(`No se encontró el cliente con DNI ${clienteDNI}`);
+            }
+
+            // Calcular el monto del contrato
+            const monto = 10000; // Monto fijo por ahora
+
+            // Crear el contrato con los valores correctos
+            const contrato = new Contrato(
+                0, 
+                new Date(), 
+                monto, 
+                "generado", 
+                solicitud.getId(), 
+                clientePorDNI.getId(), 
+                solicitud.getNumeroTarjeta(), // Usar el número de tarjeta de la solicitud
+                solicitud.getNumeroCuenta()   // Usar el número de cuenta de la solicitud
+            );
+            console.log(`Contrato generado: ${contrato}`);
             // 4. Guardar contrato
             const contratoGuardado = await this.contratoRepository.saveContrato(contrato);
-
+            console.log(`Contrato guardado: ${JSON.stringify(contratoGuardado)}`);
             // 5. Vincular contrato a solicitud
             await this.solicitudRepository.vincularContrato(solicitud.getId(), contratoGuardado.getId());
 
+            console.log(`Contrato vinculado a solicitud: ${solicitud.getId()} -> ${contratoGuardado.getId()}`);
             // 6. Generar PDF
             const pdfBuffer = await this.pdfService.generateContractPdf({
                 contrato: contratoGuardado.toPlainObject(),
                 solicitud: solicitud.toPlainObject()
             });
-
+            console.log(`PDF generado para contrato: ${contratoGuardado.getId()}`);
             // 7. Notificar al solicitante
             await this.notificarContratoGenerado(solicitud, contratoGuardado, pdfBuffer);
 
@@ -75,11 +100,11 @@ export class GenerarContratoUseCase {
         contrato: Contrato,
         pdfBuffer: Buffer
     ): Promise<void> {
-        const mensaje = `Su contrato ${contrato.getNumeroAutorizacion()} ha sido generado con éxito. Monto: $${contrato.getMonto()}`;
+        const mensaje = `Su contrato ${contrato.getNumeroTarjeta()} ha sido generado con éxito. Monto: $${contrato.getMonto()}`;
         await this.enviarNotificacion(solicitud, mensaje, pdfBuffer);
     }
 
-    private async manejarErrorGeneracion(error: Error, numeroSolicitud: string): Promise<void> {
+    private async manejarErrorGeneracion(error: Error, numeroSolicitud: number): Promise<void> {
         console.error(`Error generando contrato para solicitud ${numeroSolicitud}:`, error);
         
         // Obtener solicitud para notificación de error
@@ -97,7 +122,7 @@ export class GenerarContratoUseCase {
     ): Promise<void> {
         // Crear notificación en el sistema
         await this.notificationService.emitNotification({
-            userId: solicitud.getId(), // O usar otro identificador si es necesario
+            userId: solicitud.getId(),
             type: "contrato",
             message: mensaje,
             metadata: {

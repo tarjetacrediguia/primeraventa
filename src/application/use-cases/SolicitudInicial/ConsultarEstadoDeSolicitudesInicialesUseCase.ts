@@ -9,7 +9,7 @@ export class ConsultarEstadoDeSolicitudesInicialesUseCase {
         private readonly notificationService: NotificationPort
     ) {}
 
-    async execute(comercianteId: string): Promise<SolicitudInicial[]> {
+    async execute(comercianteId: number): Promise<SolicitudInicial[]> {
         try {
             // Obtener solicitudes del comerciante
             const solicitudes = await this.repository.getSolicitudesInicialesByComercianteId(comercianteId);

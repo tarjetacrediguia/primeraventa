@@ -3,9 +3,9 @@ import { Usuario } from "../../domain/entities/Usuario";
 
 export interface UsuarioRepositoryPort {
     saveUsuario(usuario: Usuario): Promise<Usuario>;
-    getUsuarioById(id: string): Promise<Usuario | null>;
+    getUsuarioById(id: number): Promise<Usuario | null>;
     updateUsuario(usuario: Usuario): Promise<Usuario>;
-    deleteUsuario(id: string): Promise<void>;
+    deleteUsuario(id: number): Promise<void>;
     getAllUsuarios(): Promise<Usuario[]>;
     getUsuariosByEmail(email: string): Promise<Usuario[]>;
     getUsuarioByEmail(email: string): Promise<Usuario | null>;

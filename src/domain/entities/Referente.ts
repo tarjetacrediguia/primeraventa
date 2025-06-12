@@ -1,7 +1,7 @@
 // src/domain/entities/Referente.ts
 export class Referente {
-
-  private nombreCompleto: string
+    private id?: number;
+    private nombreCompleto: string
     private apellido: string
     private vinculo: string
     private telefono: string
@@ -49,6 +49,14 @@ export class Referente {
   public setTelefono(telefono: string): void {
     this.telefono = telefono;
   }
+
+   public getId(): number | undefined {
+        return this.id;
+    }
+
+    public setId(id: number): void {
+        this.id = id;
+    }
 
   // Métodos adicionales
   public toString(): string {

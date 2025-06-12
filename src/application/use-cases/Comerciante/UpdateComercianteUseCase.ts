@@ -6,7 +6,7 @@ export class UpdateComercianteUseCase {
     constructor(private readonly repository: ComercianteRepositoryPort) {}
 
     async execute(
-        id: string,
+        id: number,
         nombre: string,
         apellido: string,
         email: string,

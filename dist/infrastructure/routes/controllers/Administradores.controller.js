@@ -38,7 +38,7 @@ const createAdministrador = (req, res) => __awaiter(void 0, void 0, void 0, func
 exports.createAdministrador = createAdministrador;
 const updateAdministrador = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        const { id } = req.params;
+        const id = parseInt(req.params.id, 10);
         const { nombre, apellido, email, telefono, permisos } = req.body;
         const useCase = new UpdateAdminUseCase_1.UpdateAdminUseCase(administradorRepository);
         const adminActualizado = yield useCase.execute(id, nombre, apellido, email, telefono, permisos);
@@ -59,7 +59,7 @@ const updateAdministrador = (req, res) => __awaiter(void 0, void 0, void 0, func
 exports.updateAdministrador = updateAdministrador;
 const deleteAdministrador = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        const { id } = req.params;
+        const id = parseInt(req.params.id, 10);
         const useCase = new DeleteAdminUseCase_1.DeleteAdminUseCase(administradorRepository);
         yield useCase.execute(id);
         res.status(204).send();
@@ -76,7 +76,7 @@ const deleteAdministrador = (req, res) => __awaiter(void 0, void 0, void 0, func
 exports.deleteAdministrador = deleteAdministrador;
 const getAdministrador = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        const { id } = req.params;
+        const id = parseInt(req.params.id, 10);
         const useCase = new GetAdminByIdUseCase_1.GetAdminByIdUseCase(administradorRepository);
         const admin = yield useCase.execute(id);
         res.status(200).json(admin.toPlainObject());

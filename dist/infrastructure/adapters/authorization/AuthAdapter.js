@@ -56,6 +56,7 @@ class AuthAdapter {
                 throw new Error('Credenciales inválidas');
             }
             const userRow = userResult.rows[0];
+            const saltRounds = 10;
             const passwordMatch = yield bcrypt_1.default.compare(password, userRow.password_hash);
             console.log('passwordMatch:', passwordMatch);
             if (!passwordMatch) {

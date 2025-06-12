@@ -23,7 +23,7 @@ class CreateAnalistaUseCase {
                 throw new Error("Todos los campos son obligatorios");
             }
             // Crear instancia de Analista
-            const analista = new Analista_1.Analista("", // ID temporal
+            const analista = new Analista_1.Analista(0, // ID temporal (se asignará al guardar)
             nombre, apellido, email, password, telefono, permisos);
             // Guardar en el repositorio
             return this.repository.saveAnalista(analista);

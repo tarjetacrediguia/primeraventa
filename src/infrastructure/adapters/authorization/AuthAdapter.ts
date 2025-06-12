@@ -50,7 +50,9 @@ async generarToken(usuario: Usuario): Promise<string> {
             throw new Error('Credenciales inválidas');
         }
         
+        
         const userRow = userResult.rows[0];
+        const saltRounds = 10;
         const passwordMatch = await bcrypt.compare(password, userRow.password_hash);
         console.log('passwordMatch:', passwordMatch);
         

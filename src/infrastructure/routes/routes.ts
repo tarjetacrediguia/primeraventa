@@ -3,6 +3,9 @@ import { Router } from 'express';
 import authRoutes from './auth.routes';
 import administradoresRoutes from './administradores.routes';
 import { authMiddleware } from './middlewares/auth.middleware';
+import solicitudesRoutes from './solicitudes.routes';
+import notificacionesRoutes from './notification.routes';
+import contratosRoutes from './contratos.routes';
 
 const router = Router();
 
@@ -14,10 +17,10 @@ router.use('/administradores', administradoresRoutes);
 //router.use('/analistas', analistasRoutes);
 //router.use('/comerciantes', comerciantesRoutes);
 //router.use('/permisos', permisosRoutes);
-//router.use('/solicitudes', solicitudesRoutes);
-//router.use('/contratos', contratosRoutes);
+router.use('/solicitudes', solicitudesRoutes);
+router.use('/contratos', contratosRoutes);
 //router.use('/estadisticas', estadisticasRoutes);
-//router.use('/notificaciones', notificacionesRoutes);
+router.use('/notificaciones', notificacionesRoutes);
 //router.use('/configuracion', configuracionRoutes);
 //router.use('/tareas', tareasRoutes);
 //router.use('/sistema', sistemaRoutes);

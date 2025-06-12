@@ -1,23 +1,25 @@
 // src/domain/entities/SolicitudInicial.ts
 export class SolicitudInicial {
-    private readonly id: string;
-    private fechaCreacion: Date;
-    private estado: 'pendiente' | 'aprobada' | 'rechazada' | 'expirada';
-    private dniCliente: string;
-    private cuilCliente: string;
-    private reciboSueldo?: Buffer;
-    private comercianteId?: string;
-    private comentarios: string[]; // Nuevo atributo
+  private readonly id: number;
+  private fechaCreacion: Date;
+  private estado: "pendiente" | "aprobada" | "rechazada" | "expirada";
+  private dniCliente: string;
+  private cuilCliente?: string;
+  private reciboSueldo?: Buffer;
+  private comercianteId?: number;
+  private comentarios: string[];
+  private clienteId: number;
 
   constructor(
-    id: string,
+    id: number,
     fechaCreacion: Date,
-    estado: 'pendiente' | 'aprobada' | 'rechazada' | 'expirada',
+    estado: "pendiente" | "aprobada" | "rechazada" | "expirada",
     dniCliente: string,
-    cuilCliente: string,
+    clienteId: number,
+    cuilCliente?: string,
     reciboSueldo?: Buffer,
-    comercianteId?: string,
-    comentarios: string[] = [] // Nuevo parámetro
+    comercianteId?: number,
+    comentarios: string[] = []
   ) {
     this.id = id;
     this.fechaCreacion = fechaCreacion;
@@ -27,10 +29,20 @@ export class SolicitudInicial {
     this.reciboSueldo = reciboSueldo;
     this.comercianteId = comercianteId;
     this.comentarios = comentarios;
+    this.clienteId = clienteId;
   }
 
   // Getters y Setters
-  public getId(): string {
+
+  public getClienteId(): number {
+    return this.clienteId;
+  }
+
+  public setClienteId(clienteId: number): void {
+    this.clienteId = clienteId;
+  }
+
+  public getId(): number {
     return this.id;
   }
 
@@ -42,11 +54,13 @@ export class SolicitudInicial {
     this.fechaCreacion = fechaCreacion;
   }
 
-  public getEstado(): string {
+  public getEstado(): "pendiente" | "aprobada" | "rechazada" | "expirada" {
     return this.estado;
   }
 
-  public setEstado(estado: 'pendiente' | 'aprobada' | 'rechazada' | 'expirada'): void {
+  public setEstado(
+    estado: "pendiente" | "aprobada" | "rechazada" | "expirada"
+  ): void {
     this.estado = estado;
   }
 
@@ -58,11 +72,11 @@ export class SolicitudInicial {
     this.dniCliente = dniCliente;
   }
 
-  public getCuilCliente(): string {
+  public getCuilCliente(): string | undefined {
     return this.cuilCliente;
   }
 
-  public setCuilCliente(cuilCliente: string): void {
+  public setCuilCliente(cuilCliente: string | undefined): void {
     this.cuilCliente = cuilCliente;
   }
 
@@ -74,11 +88,11 @@ export class SolicitudInicial {
     this.reciboSueldo = reciboSueldo;
   }
 
-  public getComercianteId(): string | undefined {
+  public getComercianteId(): number | undefined {
     return this.comercianteId;
   }
 
-  public setComercianteId(comercianteId: string): void {
+  public setComercianteId(comercianteId: number): void {
     this.comercianteId = comercianteId;
   }
 
@@ -109,7 +123,7 @@ export class SolicitudInicial {
       cuilCliente: this.cuilCliente,
       reciboSueldo: this.reciboSueldo,
       comercianteId: this.comercianteId,
-      comentarios: this.comentarios // Nuevo campo
+      comentarios: this.comentarios, // Nuevo campo
     };
   }
 
@@ -119,10 +133,11 @@ export class SolicitudInicial {
       map.fechaCreacion,
       map.estado,
       map.dniCliente,
+      map.clienteId || 0,
       map.cuilCliente,
       map.reciboSueldo,
       map.comercianteId,
-      map.comentarios || [] // Nuevo campo
+      map.comentarios || []
     );
   }
 

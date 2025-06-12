@@ -20,7 +20,7 @@ export class CreateAdminUseCase {
 
         // Crear instancia de Administrador (el id se generará en el repositorio)
         const administrador = new Administrador(
-            "", // ID temporal (se asignará al guardar)
+            0, // ID temporal (se asignará al guardar)
             nombre,
             apellido,
             email,

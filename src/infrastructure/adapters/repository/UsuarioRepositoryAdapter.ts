@@ -7,13 +7,13 @@ export class UsuarioRepositoryAdapter implements UsuarioRepositoryPort {
     saveUsuario(usuario: Usuario): Promise<Usuario> {
         throw new Error("Method not implemented.");
     }
-    getUsuarioById(id: string): Promise<Usuario | null> {
+    getUsuarioById(id: number): Promise<Usuario | null> {
         throw new Error("Method not implemented.");
     }
     updateUsuario(usuario: Usuario): Promise<Usuario> {
         throw new Error("Method not implemented.");
     }
-    deleteUsuario(id: string): Promise<void> {
+    deleteUsuario(id: number): Promise<void> {
         throw new Error("Method not implemented.");
     }
     getAllUsuarios(): Promise<Usuario[]> {

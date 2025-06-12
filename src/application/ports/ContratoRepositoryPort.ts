@@ -8,8 +8,8 @@ export interface ContratoRepositoryPort {
     deleteContrato(id: string): Promise<void>;
     createContrato(contrato: Contrato): Promise<Contrato>;
     getAllContratos(): Promise<Contrato[]>;
-    getContratosBySolicitudFormalId(solicitudFormalId: string): Promise<Contrato[]>;
-    getContratosByAnalistaId(analistaId: string): Promise<Contrato[]>;
-    getContratosByComercianteId(comercianteId: string): Promise<Contrato[]>;
+    getContratosBySolicitudFormalId(solicitudFormalId: number): Promise<Contrato[]>;
+    getContratosByAnalistaId(analistaId: number): Promise<Contrato[]>;
+    getContratosByComercianteId(comercianteId: number): Promise<Contrato[]>;
     getContratosByEstado(estado: string): Promise<Contrato[]>;
 }

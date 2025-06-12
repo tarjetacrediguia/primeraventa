@@ -6,7 +6,7 @@ export class UpdateAnalistaUseCase {
     constructor(private readonly repository: AnalistaRepositoryPort) {}
 
     async execute(
-        id: string,
+        id: number,
         nombre: string,
         apellido: string,
         email: string,

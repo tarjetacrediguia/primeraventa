@@ -5,7 +5,7 @@ import { ComercianteRepositoryPort } from "../../ports/ComercianteRepositoryPort
 export class GetComercianteByIdUseCase {
     constructor(private readonly repository: ComercianteRepositoryPort) {}
 
-    async execute(id: string): Promise<Comerciante> {
+    async execute(id: number): Promise<Comerciante> {
         const comerciante = await this.repository.getComercianteById(id);
         
         if (!comerciante) {

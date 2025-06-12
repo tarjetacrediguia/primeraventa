@@ -4,7 +4,7 @@ import { AdministradorRepositoryPort } from "../../ports/AdministradorRepository
 export class DeleteAdminUseCase {
     constructor(private readonly repository: AdministradorRepositoryPort) {}
 
-    async execute(id: string): Promise<void> {
+    async execute(id: number): Promise<void> {
         // Verificar existencia antes de eliminar
         const existe = await this.repository.getAdministradorById(id);
         if (!existe) {

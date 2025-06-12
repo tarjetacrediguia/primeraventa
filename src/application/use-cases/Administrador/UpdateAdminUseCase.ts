@@ -6,7 +6,7 @@ export class UpdateAdminUseCase {
     constructor(private readonly repository: AdministradorRepositoryPort) {}
 
     async execute(
-        id: string,
+        id: number,
         nombre: string,
         apellido: string,
         email: string,

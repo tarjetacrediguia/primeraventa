@@ -15,13 +15,14 @@ class AprobarSolicitudesFormalesUseCase {
         this.repository = repository;
         this.notificationService = notificationService;
     }
-    aprobarSolicitud(solicitudId, numeroAprobacion, numeroCuenta, comentario) {
+    aprobarSolicitud(solicitudId, numeroTarjeta, numeroCuenta, comentario) {
         return __awaiter(this, void 0, void 0, function* () {
             // 1. Obtener solicitud formal
             const solicitud = yield this.repository.getSolicitudFormalById(solicitudId);
             if (!solicitud) {
                 throw new Error("Solicitud formal no encontrada");
             }
+            console.log("Solicitud formal encontrada:", solicitud);
             // 2. Verificar que esté en estado pendiente
             if (solicitud.getEstado() !== "pendiente") {
                 throw new Error("Solo se pueden aprobar solicitudes pendientes");
@@ -32,10 +33,14 @@ class AprobarSolicitudesFormalesUseCase {
             }
             // 4. Actualizar estado
             solicitud.setEstado("aprobada");
+            solicitud.setNumeroTarjeta(numeroTarjeta);
+            solicitud.setNumeroCuenta(numeroCuenta);
+            console.log("Solicitud formal actualizada:", solicitud);
             // 5. Guardar cambios
-            const solicitudActualizada = yield this.repository.updateSolicitudFormal(solicitud);
+            const solicitudActualizada = yield this.repository.updateSolicitudFormalAprobacion(solicitud);
+            console.log("Solicitud formal actualizada:", solicitudActualizada);
             // 6. Notificar al cliente
-            yield this.notificarCliente(solicitudActualizada, `Su solicitud formal de crédito ha sido aprobada. N° Aprobación: ${numeroAprobacion}, N° Cuenta: ${numeroCuenta}`);
+            yield this.notificarCliente(solicitudActualizada, `Su solicitud formal de crédito ha sido aprobada. N° NumeroTarjeta: ${numeroTarjeta}, N° Cuenta: ${numeroCuenta}`);
             return solicitudActualizada;
         });
     }
@@ -68,7 +73,7 @@ class AprobarSolicitudesFormalesUseCase {
     notificarCliente(solicitud, mensaje) {
         return __awaiter(this, void 0, void 0, function* () {
             yield this.notificationService.emitNotification({
-                userId: solicitud.getId(), // Referencia al cliente
+                userId: solicitud.getComercianteId(), // Referencia al cliente
                 type: "solicitud_formal",
                 message: mensaje
             });

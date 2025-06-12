@@ -11,7 +11,7 @@ export class VerificarAprobacionSolicitudInicialUseCase {
         private readonly notificationService: NotificationPort
     ) {}
 
-    async execute(solicitudId: string): Promise<SolicitudInicial> {
+    async execute(solicitudId: number): Promise<SolicitudInicial> {
         // 1. Obtener solicitud
         const solicitud = await this.repository.getSolicitudInicialById(solicitudId);
         if (!solicitud) {
@@ -39,7 +39,7 @@ export class VerificarAprobacionSolicitudInicialUseCase {
 
             // 6. Notificar al comerciante
             await this.notificationService.emitNotification({
-                userId: solicitud.getComercianteId() || "admin",
+                userId: solicitud.getComercianteId() || 0,
                 type: "solicitud_inicial",
                 message: `Solicitud ${solicitudId} actualizada a estado: ${solicitud.getEstado()}`
             });
@@ -52,7 +52,7 @@ export class VerificarAprobacionSolicitudInicialUseCase {
                 errorMessage = error.message;
             }
             await this.notificationService.emitNotification({
-                userId: solicitud.getComercianteId() || "admin",
+                userId: solicitud.getComercianteId() || 0,
                 type: "error",
                 message: `Error verificando aprobación: ${errorMessage}`
             });

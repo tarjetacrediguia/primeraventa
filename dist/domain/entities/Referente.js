@@ -34,6 +34,12 @@ class Referente {
     setTelefono(telefono) {
         this.telefono = telefono;
     }
+    getId() {
+        return this.id;
+    }
+    setId(id) {
+        this.id = id;
+    }
     // Métodos adicionales
     toString() {
         return `Referente[nombre=${this.nombreCompleto} ${this.apellido}, vinculo=${this.vinculo}, tel=${this.telefono}]`;

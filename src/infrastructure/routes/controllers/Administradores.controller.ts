@@ -36,7 +36,7 @@ export const createAdministrador = async (req: Request, res: Response) => {
 
 export const updateAdministrador = async (req: Request, res: Response) => {
   try {
-    const { id } = req.params;
+    const id = parseInt(req.params.id, 10);
     const { nombre, apellido, email, telefono, permisos } = req.body;
     
     const useCase = new UpdateAdminUseCase(administradorRepository);
@@ -63,7 +63,7 @@ export const updateAdministrador = async (req: Request, res: Response) => {
 
 export const deleteAdministrador = async (req: Request, res: Response) => {
   try {
-    const { id } = req.params;
+    const id = parseInt(req.params.id, 10);
     
     const useCase = new DeleteAdminUseCase(administradorRepository);
     await useCase.execute(id);
@@ -80,7 +80,7 @@ export const deleteAdministrador = async (req: Request, res: Response) => {
 
 export const getAdministrador = async (req: Request, res: Response) => {
   try {
-    const { id } = req.params;
+    const id = parseInt(req.params.id, 10);
     
     const useCase = new GetAdminByIdUseCase(administradorRepository);
     const admin = await useCase.execute(id);

@@ -74,7 +74,7 @@ export class AdministradorRepositoryAdapter implements AdministradorRepositoryPo
             client.release();
         }
     }
-    async getAdministradorById(id: string): Promise<Administrador | null> {
+    async getAdministradorById(id: number): Promise<Administrador | null> {
         const query = `
             SELECT u.id, u.nombre, u.apellido, u.email, u.telefono,
                    ARRAY_AGG(p.nombre) AS permisos
@@ -122,7 +122,7 @@ export class AdministradorRepositoryAdapter implements AdministradorRepositoryPo
                 if (!administrador.getId()) {
                     throw new Error("El ID del administrador es undefined.");
                 }
-                await this.asignarPermiso(client, administrador.getId() as string, permiso);
+                await this.asignarPermiso(client, administrador.getId(), permiso);
             }
             
             await client.query('COMMIT');
@@ -135,7 +135,7 @@ export class AdministradorRepositoryAdapter implements AdministradorRepositoryPo
             client.release();
         }
     }
-    async deleteAdministrador(id: string): Promise<void> {
+    async deleteAdministrador(id: number): Promise<void> {
         const client = await pool.connect();
         try {
             await client.query('BEGIN');
@@ -167,7 +167,7 @@ export class AdministradorRepositoryAdapter implements AdministradorRepositoryPo
         }
     }
 
-    private async asignarPermiso(client: any, usuarioId: string, permisoNombre: string): Promise<void> {
+    private async asignarPermiso(client: any, usuarioId: number, permisoNombre: string): Promise<void> {
         // Obtener ID del permiso
         const permisoRes = await client.query('SELECT id FROM permisos WHERE nombre = $1', [permisoNombre]);
         if (permisoRes.rows.length === 0) {

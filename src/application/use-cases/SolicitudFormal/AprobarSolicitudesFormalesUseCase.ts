@@ -10,8 +10,8 @@ export class AprobarSolicitudesFormalesUseCase {
     ) {}
 
     async aprobarSolicitud(
-        solicitudId: string,
-        numeroAprobacion: string,
+        solicitudId: number,
+        numeroTarjeta: string,
         numeroCuenta: string,
         comentario?: string
     ): Promise<SolicitudFormal> {
@@ -20,7 +20,7 @@ export class AprobarSolicitudesFormalesUseCase {
         if (!solicitud) {
             throw new Error("Solicitud formal no encontrada");
         }
-        
+        console.log("Solicitud formal encontrada:", solicitud);
         // 2. Verificar que esté en estado pendiente
         if (solicitud.getEstado() !== "pendiente") {
             throw new Error("Solo se pueden aprobar solicitudes pendientes");
@@ -33,23 +33,26 @@ export class AprobarSolicitudesFormalesUseCase {
         
         // 4. Actualizar estado
         solicitud.setEstado("aprobada");
+        solicitud.setNumeroTarjeta(numeroTarjeta);
+        solicitud.setNumeroCuenta(numeroCuenta);
+        console.log("Solicitud formal actualizada:", solicitud);
         
         // 5. Guardar cambios
-        const solicitudActualizada = await this.repository.updateSolicitudFormal(solicitud);
-        
+        const solicitudActualizada = await this.repository.updateSolicitudFormalAprobacion(solicitud);
+        console.log("Solicitud formal actualizada:", solicitudActualizada);
         // 6. Notificar al cliente
         await this.notificarCliente(
             solicitudActualizada, 
-            `Su solicitud formal de crédito ha sido aprobada. N° Aprobación: ${numeroAprobacion}, N° Cuenta: ${numeroCuenta}`
+            `Su solicitud formal de crédito ha sido aprobada. N° NumeroTarjeta: ${numeroTarjeta}, N° Cuenta: ${numeroCuenta}`
         );
         
         return solicitudActualizada;
     }
 
     async rechazarSolicitud(
-        solicitudId: string,
+        solicitudId: number,
         comentario: string,
-        analistaId: string
+        analistaId: number
     ): Promise<SolicitudFormal> {
         // 1. Obtener solicitud formal
         const solicitud = await this.repository.getSolicitudFormalById(solicitudId);
@@ -87,7 +90,7 @@ export class AprobarSolicitudesFormalesUseCase {
 
     private async notificarCliente(solicitud: SolicitudFormal, mensaje: string): Promise<void> {
         await this.notificationService.emitNotification({
-            userId: solicitud.getId(), // Referencia al cliente
+            userId: solicitud.getComercianteId(), // Referencia al cliente
             type: "solicitud_formal",
             message: mensaje
         });

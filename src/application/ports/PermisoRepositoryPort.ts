@@ -7,7 +7,7 @@ export interface PermisoRepositoryPort {
     
     // Asignar permisos a un usuario
     asignarPermisos(
-        usuarioId: string,
+        usuarioId: number,
         permisos: string[]
     ): Promise<Usuario>;
     
@@ -20,12 +20,12 @@ export interface PermisoRepositoryPort {
     
     // Verificar si un usuario tiene un permiso específico
     usuarioTienePermiso(
-        usuarioId: string,
+        usuarioId: number,
         permiso: string
     ): Promise<boolean>;
     
     // Obtener permisos de un usuario específico
-    getPermisosUsuario(usuarioId: string): Promise<string[]>;
+    getPermisosUsuario(usuarioId: number): Promise<string[]>;
     
     // Obtener todos los usuarios con un permiso específico
     getUsuariosConPermiso(permiso: string): Promise<Usuario[]>;

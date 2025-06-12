@@ -4,7 +4,7 @@ import { PermisoRepositoryPort } from "../../ports/PermisoRepositoryPort";
 export class ObtenerPermisosUsuarioUseCase {
     constructor(private readonly repository: PermisoRepositoryPort) {}
 
-    async execute(usuarioId: string): Promise<string[]> {
+    async execute(usuarioId: number): Promise<string[]> {
         if (!usuarioId) {
             throw new Error("Usuario es obligatorio");
         }

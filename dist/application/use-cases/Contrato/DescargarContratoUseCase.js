@@ -18,16 +18,20 @@ class DescargarContratoUseCase {
     }
     execute(contratoId, dniSolicitante) {
         return __awaiter(this, void 0, void 0, function* () {
+            console.log("contratoId: ", contratoId);
+            console.log("dniSolicitante: ", dniSolicitante);
             // 1. Obtener contrato
             const contrato = yield this.contratoRepository.getContratoById(contratoId);
             if (!contrato) {
                 throw new Error(`Contrato no encontrado: ${contratoId}`);
             }
+            console.log("contrato: ", contrato);
             // 2. Obtener solicitud asociada
             const solicitud = yield this.solicitudRepository.getSolicitudFormalById(contrato.getSolicitudFormalId());
             if (!solicitud) {
                 throw new Error(`Solicitud formal asociada no encontrada`);
             }
+            console.log("solicitud: ", solicitud);
             // 3. Verificar que el DNI del solicitante coincide
             if (solicitud.getDni() !== dniSolicitante) {
                 throw new Error("No tiene permiso para acceder a este contrato");
@@ -36,7 +40,7 @@ class DescargarContratoUseCase {
                 // 4. Generar PDF
                 return yield this.pdfService.generateContractPdf({
                     contrato: contrato.toPlainObject(),
-                    solicitud: solicitud.toPlainObject()
+                    solicitud: Object.assign(Object.assign({}, solicitud.toPlainObject()), { nombreCompleto: solicitud.getNombreCompleto(), apellido: solicitud.getApellido(), dni: solicitud.getDni() })
                 });
             }
             catch (error) {

@@ -3,8 +3,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.SolicitudInicial = void 0;
 // src/domain/entities/SolicitudInicial.ts
 class SolicitudInicial {
-    constructor(id, fechaCreacion, estado, dniCliente, cuilCliente, reciboSueldo, comercianteId, comentarios = [] // Nuevo parámetro
-    ) {
+    constructor(id, fechaCreacion, estado, dniCliente, clienteId, cuilCliente, reciboSueldo, comercianteId, comentarios = []) {
         this.id = id;
         this.fechaCreacion = fechaCreacion;
         this.estado = estado;
@@ -13,8 +12,15 @@ class SolicitudInicial {
         this.reciboSueldo = reciboSueldo;
         this.comercianteId = comercianteId;
         this.comentarios = comentarios;
+        this.clienteId = clienteId;
     }
     // Getters y Setters
+    getClienteId() {
+        return this.clienteId;
+    }
+    setClienteId(clienteId) {
+        this.clienteId = clienteId;
+    }
     getId() {
         return this.id;
     }
@@ -77,12 +83,11 @@ class SolicitudInicial {
             cuilCliente: this.cuilCliente,
             reciboSueldo: this.reciboSueldo,
             comercianteId: this.comercianteId,
-            comentarios: this.comentarios // Nuevo campo
+            comentarios: this.comentarios, // Nuevo campo
         };
     }
     static fromMap(map) {
-        return new SolicitudInicial(map.id, map.fechaCreacion, map.estado, map.dniCliente, map.cuilCliente, map.reciboSueldo, map.comercianteId, map.comentarios || [] // Nuevo campo
-        );
+        return new SolicitudInicial(map.id, map.fechaCreacion, map.estado, map.dniCliente, map.clienteId || 0, map.cuilCliente, map.reciboSueldo, map.comercianteId, map.comentarios || []);
     }
     validar() {
         return !!this.dniCliente && !!this.cuilCliente;

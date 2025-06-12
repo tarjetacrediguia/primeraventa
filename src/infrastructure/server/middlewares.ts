@@ -14,6 +14,9 @@ export const applyMiddlewares = (app: express.Application) => {
   
   // Parsing de JSON
   app.use(express.json());
+  // Aumentar el límite a 10MB (o el tamaño que necesites)
+  app.use(express.json({ limit: '10mb' }));
+  app.use(express.urlencoded({ limit: '10mb', extended: true }));
   
   // Logging
   if (process.env.NODE_ENV === 'development') {

@@ -6,7 +6,7 @@ import { SolicitudFormal } from "../../../domain/entities/SolicitudFormal";
 export class GetSolicitudesFormalesByComercianteIdUseCase {
     constructor(private readonly repository: SolicitudFormalRepositoryPort) {}
 
-    async execute(comercianteId: string): Promise<SolicitudFormal[]> {
+    async execute(comercianteId: number): Promise<SolicitudFormal[]> {
         return this.repository.getSolicitudesFormalesByComercianteId(comercianteId);
     }
 }

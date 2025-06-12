@@ -14,7 +14,7 @@ export class ComercianteRepositoryAdapter implements ComercianteRepositoryPort {
         throw new Error("Method not implemented.");
     }
 
-    getComercianteById(id: string): Promise<Comerciante | null> {
+    getComercianteById(id: number): Promise<Comerciante | null> {
         throw new Error("Method not implemented.");
     }
 
@@ -22,7 +22,7 @@ export class ComercianteRepositoryAdapter implements ComercianteRepositoryPort {
         throw new Error("Method not implemented.");
     }
 
-    deleteComerciante(id: string): Promise<void> {
+    deleteComerciante(id: number): Promise<void> {
         throw new Error("Method not implemented.");
     }
 

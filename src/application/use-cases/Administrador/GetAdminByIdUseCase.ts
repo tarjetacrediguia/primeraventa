@@ -5,7 +5,7 @@ import { AdministradorRepositoryPort } from "../../ports/AdministradorRepository
 export class GetAdminByIdUseCase {
     constructor(private readonly repository: AdministradorRepositoryPort) {}
 
-    async execute(id: string): Promise<Administrador> {
+    async execute(id: number): Promise<Administrador> {
         const administrador = await this.repository.getAdministradorById(id);
         
         if (!administrador) {

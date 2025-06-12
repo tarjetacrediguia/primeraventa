@@ -1,18 +1,28 @@
 // src/domain/entities/Contrato.ts
 export class Contrato {
+  private pdfContrato?: Buffer;
   constructor(
-    public readonly id: string,
+    public readonly id: number,
     public fechaGeneracion: Date,
     public monto: number,
     public estado: string,
-    public solicitudFormalId: string,
-    public clienteId: string,
-    public numeroAutorizacion: string,
-    public numeroCuenta: string
+    public solicitudFormalId: number,
+    public clienteId: number,
+    public numeroTarjeta?: string,
+    public numeroCuenta?: string
   ) {}
 
   // Getters y Setters
-  public getId(): string {
+
+  getPdfContrato(): Buffer | undefined {
+    return this.pdfContrato;
+  }
+
+  setPdfContrato(pdf: Buffer): void {
+    this.pdfContrato = pdf;
+  }
+
+  public getId(): number {
     return this.id;
   }
 
@@ -40,31 +50,31 @@ export class Contrato {
     this.estado = estado;
   }
 
-  public getSolicitudFormalId(): string {
+  public getSolicitudFormalId(): number {
     return this.solicitudFormalId;
   }
 
-  public setSolicitudFormalId(solicitudFormalId: string): void {
+  public setSolicitudFormalId(solicitudFormalId: number): void {
     this.solicitudFormalId = solicitudFormalId;
   }
 
-  public getClienteId(): string {
+  public getClienteId(): number {
     return this.clienteId;
   }
 
-  public setClienteId(clienteId: string): void {
+  public setClienteId(clienteId: number): void {
     this.clienteId = clienteId;
   }
 
-  public getNumeroAutorizacion(): string {
-    return this.numeroAutorizacion;
+  public getNumeroTarjeta(): string | undefined {
+    return this.numeroTarjeta;
   }
 
-  public setNumeroAutorizacion(numeroAutorizacion: string): void {
-    this.numeroAutorizacion = numeroAutorizacion;
+  public setNumeroTarjeta(numeroTarjeta: string): void {
+    this.numeroTarjeta = numeroTarjeta;
   }
 
-  public getNumeroCuenta(): string {
+  public getNumeroCuenta(): string | undefined {
     return this.numeroCuenta;
   }
 
@@ -74,7 +84,7 @@ export class Contrato {
 
   // Métodos adicionales
   public toString(): string {
-    return `Contrato[id=${this.id}, monto=${this.monto}, estado=${this.estado}]`;
+    return `Contrato [id=${this.id}, fechaGeneracion=${this.fechaGeneracion}, monto=${this.monto}, estado=${this.estado}, solicitudFormalId=${this.solicitudFormalId}, clienteId=${this.clienteId}, numeroTarjeta=${this.numeroTarjeta || 'No asignado'}, numeroCuenta=${this.numeroCuenta || 'No asignado'}]`;
   }
 
   public toPlainObject(): any {
@@ -85,7 +95,7 @@ export class Contrato {
       estado: this.estado,
       solicitudFormalId: this.solicitudFormalId,
       clienteId: this.clienteId,
-      numeroAutorizacion: this.numeroAutorizacion,
+      numeroTarjeta: this.numeroTarjeta,
       numeroCuenta: this.numeroCuenta
     };
   }
@@ -98,7 +108,7 @@ export class Contrato {
       map.estado,
       map.solicitudFormalId,
       map.clienteId,
-      map.numeroAutorizacion,
+      map.numeroTarjeta,
       map.numeroCuenta
     );
   }

@@ -2,7 +2,7 @@
 import { Referente } from "./Referente";
 
 export class SolicitudFormal {
-    private readonly id: string;
+    private readonly id: number;
     private nombreCompleto: string;
     private apellido: string;
     private dni: string;
@@ -17,9 +17,18 @@ export class SolicitudFormal {
     private datosEmpleador: string;
     private referentes: Referente[];
     private comentarios: string[];
+    private solicitudInicialId: number;
+    private comercianteId: number;
+    private clienteId: number;
+    private numeroTarjeta?: string;
+    private numeroCuenta?: string;
+    private fechaAprobacion?: Date;
+    
 
   constructor(
-    id: string,
+    id: number,
+    solicitudInicialId: number,
+    comercianteId: number, 
     nombreCompleto: string,
     apellido: string,
     dni: string,
@@ -33,9 +42,16 @@ export class SolicitudFormal {
     domicilio: string,
     datosEmpleador: string,
     referentes: Referente[],
-    comentarios: string[] = [] // Nuevo parámetro
+    comentarios: string[] = [],
+    clienteId: number = 0,
+    numeroTarjeta?: string,
+    numeroCuenta?: string,
+    fechaAprobacion?: Date
+    
   ) {
     this.id = id;
+    this.solicitudInicialId = solicitudInicialId;
+    this.comercianteId = comercianteId;
     this.nombreCompleto = nombreCompleto;
     this.apellido = apellido;
     this.dni = dni;
@@ -50,10 +66,45 @@ export class SolicitudFormal {
     this.datosEmpleador = datosEmpleador;
     this.referentes = referentes || [];
     this.comentarios = comentarios;
+    this.clienteId = clienteId;
+    this.numeroTarjeta = numeroTarjeta;
+    this.numeroCuenta = numeroCuenta;
+    this.fechaAprobacion = fechaAprobacion;
+    
+    
   }
 
   // Getters y Setters
-  public getId(): string {
+  public getFechaAprobacion(): Date | undefined {
+    return this.fechaAprobacion;
+  }
+  public setFechaAprobacion(fechaAprobacion: Date): void {
+    this.fechaAprobacion = fechaAprobacion;
+  }
+  public getNumeroCuenta(): string | undefined {
+    return this.numeroCuenta;
+  }
+  public setNumeroCuenta(numeroCuenta: string): void {
+    this.numeroCuenta = numeroCuenta;
+  }
+  public getNumeroTarjeta(): string | undefined {
+    return this.numeroTarjeta;
+  }
+  public setNumeroTarjeta(numeroTarjeta: string): void {
+    this.numeroTarjeta = numeroTarjeta;
+  }
+  public getClienteId(): number {
+    return this.clienteId;
+  }
+  public getSolicitudInicialId(): number {
+        return this.solicitudInicialId;
+    }
+
+  public getComercianteId(): number {
+      return this.comercianteId;
+  }
+
+  public getId(): number {
     return this.id;
   }
 
@@ -195,13 +246,17 @@ export class SolicitudFormal {
       domicilio: this.domicilio,
       datosEmpleador: this.datosEmpleador,
       referentes: this.referentes.map(r => r.toPlainObject()),
-      comentarios: this.comentarios // Nuevo campo
+      comentarios: this.comentarios,
+      numeroTarjeta: this.numeroTarjeta,
+      numeroCuenta: this.numeroCuenta
     };
   }
 
   public static fromMap(map: any): SolicitudFormal {
     return new SolicitudFormal(
       map.id,
+      map.solicitudInicialId,
+      map.comercianteId,
       map.nombreCompleto,
       map.apellido,
       map.dni,
@@ -215,7 +270,11 @@ export class SolicitudFormal {
       map.domicilio,
       map.datosEmpleador,
       map.referentes.map((r: any) => Referente.fromMap(r)),
-      map.comentarios || []
+      map.comentarios || [],
+      map.clienteId || 0,
+      map.numeroTarjeta,
+      map.numeroCuenta,
+      map.fechaAprobacion
     );
   }
 }
