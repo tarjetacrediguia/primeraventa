@@ -9,5 +9,6 @@ export interface AuthPort {
     register(usuario: Partial<Usuario>): Promise<Usuario>;
     forgotPassword(email: string): Promise<void>;
     resetPassword(token: string, newPassword: string): Promise<void>;
+    changePassword(usuarioId: number, oldPassword: string, newPassword: string): Promise<void>;
     changePassword(usuarioId: string, oldPassword: string, newPassword: string): Promise<void>;
 }

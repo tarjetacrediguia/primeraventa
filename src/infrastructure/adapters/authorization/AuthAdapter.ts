@@ -172,7 +172,7 @@ async generarToken(usuario: Usuario): Promise<string> {
         );
     }
 
-    async changePassword(usuarioId: string, oldPassword: string, newPassword: string): Promise<void> {
+    async changePassword(usuarioId: number, oldPassword: string, newPassword: string): Promise<void> {
         // Obtener usuario
         const userResult = await pool.query(
             'SELECT password_hash FROM usuarios WHERE id = $1',

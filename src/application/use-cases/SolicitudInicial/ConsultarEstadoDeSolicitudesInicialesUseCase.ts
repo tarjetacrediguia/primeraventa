@@ -17,7 +17,7 @@ export class ConsultarEstadoDeSolicitudesInicialesUseCase {
             if (solicitudes.length === 0) {
                 // Notificar al comerciante que no hay solicitudes
                 await this.notificationService.emitNotification({
-                    userId: comercianteId,
+                    userId: Number(comercianteId),
                     type: "solicitud_inicial",
                     message: "No se encontraron solicitudes iniciales para su comercio"
                 });
@@ -28,7 +28,7 @@ export class ConsultarEstadoDeSolicitudesInicialesUseCase {
         } catch (error) {
             // Notificar error al comerciante
             await this.notificationService.emitNotification({
-                userId: comercianteId,
+                userId: Number(comercianteId),
                 type: "error",
                 message: "Error al consultar solicitudes iniciales"
             });

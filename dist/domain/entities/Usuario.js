@@ -4,7 +4,11 @@ exports.Usuario = void 0;
 // src/domain/entities/Usuario.ts
 class Usuario {
     constructor(id, nombre, apellido, email, password, telefono) {
+<<<<<<< HEAD
         this.id = id;
+=======
+        this.id = id || 0;
+>>>>>>> origin/jurgen
         this.nombre = nombre;
         this.apellido = apellido;
         this.email = email;

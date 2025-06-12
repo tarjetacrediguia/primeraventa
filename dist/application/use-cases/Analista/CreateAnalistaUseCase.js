@@ -22,7 +22,11 @@ class CreateAnalistaUseCase {
             if (!nombre || !apellido || !email || !password || !telefono) {
                 throw new Error("Todos los campos son obligatorios");
             }
+<<<<<<< HEAD
             // Crear instancia de Analista
+=======
+            // Crear instancia de Analista (el id se generará en el repositorio)
+>>>>>>> origin/jurgen
             const analista = new Analista_1.Analista(0, // ID temporal (se asignará al guardar)
             nombre, apellido, email, password, telefono, permisos);
             // Guardar en el repositorio

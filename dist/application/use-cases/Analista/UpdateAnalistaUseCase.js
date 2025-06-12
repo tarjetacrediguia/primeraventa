@@ -16,21 +16,16 @@ class UpdateAnalistaUseCase {
     constructor(repository) {
         this.repository = repository;
     }
-    execute(id, nombre, apellido, email, telefono, permisos) {
+    execute(id, datos) {
         return __awaiter(this, void 0, void 0, function* () {
-            // Validaciones básicas
-            if (!nombre || !apellido || !email || !telefono || !permisos) {
-                throw new Error("Todos los campos son obligatorios");
-            }
-            // Obtener analista existente
+            // Verificar existencia
             const existe = yield this.repository.getAnalistaById(id);
             if (!existe) {
                 throw new Error("Analista no encontrado");
             }
-            // Crear instancia actualizada manteniendo password
-            const analistaActualizado = new Analista_1.Analista(id, nombre, apellido, email, existe.getPassword(), // Mantener password existente
-            telefono, permisos);
-            // Guardar cambios
+            // Crear objeto con datos actualizados
+            const analistaActualizado = new Analista_1.Analista(id, datos.nombre || existe.getNombre(), datos.apellido || existe.getApellido(), datos.email || existe.getEmail(), existe.getPassword(), // No permitimos actualizar la contraseña aquí
+            datos.telefono || existe.getTelefono(), datos.permisos || existe.getPermisos());
             return this.repository.updateAnalista(analistaActualizado);
         });
     }

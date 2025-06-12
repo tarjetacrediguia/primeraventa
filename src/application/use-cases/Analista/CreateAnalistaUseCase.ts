@@ -18,7 +18,7 @@ export class CreateAnalistaUseCase {
             throw new Error("Todos los campos son obligatorios");
         }
 
-        // Crear instancia de Analista
+        // Crear instancia de Analista (el id se generará en el repositorio)
         const analista = new Analista(
             0, // ID temporal (se asignará al guardar)
             nombre,

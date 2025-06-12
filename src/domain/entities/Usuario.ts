@@ -8,14 +8,22 @@ export abstract class Usuario {
     private password: string;
     private telefono: string;
   constructor(
+<<<<<<< HEAD
     id: number,
+=======
+    id: number | undefined,
+>>>>>>> origin/jurgen
     nombre: string,
     apellido: string,
     email: string,
     password: string,
     telefono: string
   ) {
+<<<<<<< HEAD
     this.id = id;
+=======
+    this.id = id || 0;
+>>>>>>> origin/jurgen
     this.nombre = nombre;
     this.apellido = apellido;
     this.email = email;
@@ -32,7 +40,11 @@ export abstract class Usuario {
   }
 
   // Getters y Setters
+<<<<<<< HEAD
   public getId(): number {
+=======
+  public getId(): number | undefined {
+>>>>>>> origin/jurgen
     return this.id;
   }
 
