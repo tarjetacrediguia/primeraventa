@@ -22,19 +22,15 @@ class UpdateAnalistaUseCase {
             if (!nombre || !apellido || !email || !telefono || !permisos) {
                 throw new Error("Todos los campos son obligatorios");
             }
-            Promise < Analista_1.Analista > {
-                // Verificar existencia
-                const: existe = yield this.repository.getAnalistaById(id),
-                if(, existe) {
-                    throw new Error("Analista no encontrado");
-                }
-                // Crear objeto con datos actualizados
-                ,
-                // Crear objeto con datos actualizados
-                const: analistaActualizado = new Analista_1.Analista(id, datos.nombre || existe.getNombre(), datos.apellido || existe.getApellido(), datos.email || existe.getEmail(), existe.getPassword(), // No permitimos actualizar la contraseña aquí
-                datos.telefono || existe.getTelefono(), datos.permisos || existe.getPermisos()),
-                return: this.repository.updateAnalista(analistaActualizado)
-            };
+            // Verificar existencia
+            const existe = yield this.repository.getAnalistaById(id);
+            if (!existe) {
+                throw new Error("Analista no encontrado");
+            }
+            // Crear objeto con datos actualizados
+            const analistaActualizado = new Analista_1.Analista(id, nombre || existe.getNombre(), apellido || existe.getApellido(), email || existe.getEmail(), existe.getPassword(), // No permitimos actualizar la contraseña aquí
+            telefono || existe.getTelefono(), permisos || existe.getPermisos());
+            return this.repository.updateAnalista(analistaActualizado);
         });
     }
 }

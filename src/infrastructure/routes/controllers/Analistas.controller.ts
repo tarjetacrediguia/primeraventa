@@ -42,13 +42,11 @@ export const updateAnalista = async (req: Request, res: Response) => {
     const useCase = new UpdateAnalistaUseCase(analistaRepository);
     const analistaActualizado = await useCase.execute(
       Number(id),
-      {
         nombre,
         apellido,
         email,
         telefono,
         permisos
-      }
     );
     
     res.status(200).json(analistaActualizado.toPlainObject());
