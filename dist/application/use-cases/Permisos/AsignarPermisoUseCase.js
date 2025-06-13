@@ -14,7 +14,8 @@ class AsignarPermisoUseCase {
     constructor(repository) {
         this.repository = repository;
     }
-    execute(usuarioId, permisos) {
+    execute(usuarioId, permisos // Ahora solo nombres de permisos
+    ) {
         return __awaiter(this, void 0, void 0, function* () {
             // Validaciones básicas
             if (!usuarioId || !permisos || permisos.length === 0) {
@@ -22,8 +23,10 @@ class AsignarPermisoUseCase {
             }
             // Obtener todos los permisos válidos del sistema
             const permisosValidos = yield this.repository.getAllPermisos();
+            // Extraer solo los nombres de los permisos válidos
+            const nombresPermisosValidos = permisosValidos.map(p => p.nombre);
             // Verificar que todos los permisos a asignar sean válidos
-            const permisosInvalidos = permisos.filter(p => !permisosValidos.includes(p));
+            const permisosInvalidos = permisos.filter(p => !nombresPermisosValidos.includes(p));
             if (permisosInvalidos.length > 0) {
                 throw new Error(`Permisos inválidos: ${permisosInvalidos.join(', ')}`);
             }

@@ -14,30 +14,10 @@ class ListPermisosUseCase {
     constructor(repository) {
         this.repository = repository;
     }
-    execute(categoria_1) {
-        return __awaiter(this, arguments, void 0, function* (categoria, incluirDetalles = false) {
+    execute() {
+        return __awaiter(this, void 0, void 0, function* () {
             const permisos = yield this.repository.getAllPermisos();
-            if (!incluirDetalles) {
-                return categoria
-                    ? permisos.filter(p => p.startsWith(`${categoria}.`))
-                    : permisos;
-            }
-            // Obtener detalles para cada permiso
-            const permisosConDetalles = [];
-            for (const permiso of permisos) {
-                // Si se especificó categoría, filtrar por ella
-                if (categoria && !permiso.startsWith(`${categoria}.`))
-                    continue;
-                const detalle = yield this.repository.getPermisoDetalle(permiso);
-                if (detalle) {
-                    permisosConDetalles.push({
-                        nombre: permiso,
-                        descripcion: detalle.descripcion,
-                        categoria: detalle.categoria
-                    });
-                }
-            }
-            return permisosConDetalles;
+            return permisos;
         });
     }
 }

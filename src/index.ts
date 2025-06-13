@@ -3,6 +3,7 @@ import "dotenv/config";
 import { createHTTPServer } from "./infrastructure/server/http.server";
 import router from "./infrastructure/routes/routes";
 import { appConfig } from "./infrastructure/config/server/AppConfig";
+import './infrastructure/adapters/cron/ExpirarSolicitudesCron'; // Importar cron para que se ejecute al iniciar
 
 const start = async () => {
   try {

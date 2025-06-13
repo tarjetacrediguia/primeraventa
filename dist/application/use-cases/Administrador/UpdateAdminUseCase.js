@@ -16,10 +16,10 @@ class UpdateAdminUseCase {
     constructor(repository) {
         this.repository = repository;
     }
-    execute(id, nombre, apellido, email, telefono, permisos) {
+    execute(id, nombre, apellido, telefono) {
         return __awaiter(this, void 0, void 0, function* () {
             // Validaciones básicas
-            if (!nombre || !apellido || !email || !telefono || !permisos) {
+            if (!nombre || !apellido || !telefono) {
                 throw new Error("Todos los campos son obligatorios");
             }
             // Obtener administrador existente
@@ -28,8 +28,10 @@ class UpdateAdminUseCase {
                 throw new Error("Administrador no encontrado");
             }
             // Crear instancia actualizada
-            const administradorActualizado = new Administrador_1.Administrador(Number(id), nombre, apellido, email, existe.getPassword(), // Mantener password existente
-            telefono, permisos);
+            const administradorActualizado = new Administrador_1.Administrador(Number(id), nombre, apellido, existe.getEmail(), // Mantener email existente
+            existe.getPassword(), // Mantener password existente
+            telefono, existe.getPermisos() // Mantener permisos existentes
+            );
             // Guardar cambios
             return this.repository.updateAdministrador(administradorActualizado);
         });

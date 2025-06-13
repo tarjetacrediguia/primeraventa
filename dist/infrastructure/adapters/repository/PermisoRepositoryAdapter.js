@@ -15,12 +15,46 @@ const Administrador_1 = require("../../../domain/entities/Administrador");
 const Analista_1 = require("../../../domain/entities/Analista");
 const DatabaseDonfig_1 = require("../../config/Database/DatabaseDonfig");
 const Comerciante_1 = require("../../../domain/entities/Comerciante");
+const Permiso_1 = require("../../../domain/entities/Permiso");
 class PermisoRepositoryAdapter {
+    asignarPermisosARol(rol, permisos) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const client = yield DatabaseDonfig_1.pool.connect();
+            try {
+                yield client.query('BEGIN');
+                // Eliminar permisos existentes para el rol
+                yield client.query(`
+                DELETE FROM usuario_permisos
+                WHERE usuario_id IN (
+                    SELECT id FROM usuarios WHERE rol = $1
+                )
+            `, [rol]);
+                // Asignar nuevos permisos
+                for (const permiso of permisos) {
+                    const permisoId = yield this.getPermisoId(client, permiso);
+                    yield client.query(`
+                    INSERT INTO usuario_permisos (usuario_id, permiso_id)
+                    SELECT id, $1
+                    FROM usuarios
+                    WHERE rol = $2
+                `, [permisoId, rol]);
+                }
+                yield client.query('COMMIT');
+            }
+            catch (error) {
+                yield client.query('ROLLBACK');
+                throw error;
+            }
+            finally {
+                client.release();
+            }
+        });
+    }
     getAllPermisos() {
         return __awaiter(this, void 0, void 0, function* () {
-            const query = 'SELECT nombre FROM permisos';
+            const query = 'SELECT nombre, descripcion FROM permisos';
             const result = yield DatabaseDonfig_1.pool.query(query);
-            return result.rows.map(row => row.nombre);
+            return result.rows.map(row => Permiso_1.Permiso.fromMap(row));
         });
     }
     asignarPermisos(usuarioId, permisos) {
@@ -64,15 +98,15 @@ class PermisoRepositoryAdapter {
             }
         });
     }
-    crearPermiso(nombre, descripcion, categoria) {
-        return __awaiter(this, void 0, void 0, function* () {
+    crearPermiso(nombre_1, descripcion_1) {
+        return __awaiter(this, arguments, void 0, function* (nombre, descripcion, categoria = "") {
             const query = `
-            INSERT INTO permisos (nombre, descripcion, categoria)
-            VALUES ($1, $2, $3)
-            RETURNING nombre
+            INSERT INTO permisos (nombre, descripcion)
+            VALUES ($1, $2)
+            RETURNING nombre, descripcion
         `;
-            const result = yield DatabaseDonfig_1.pool.query(query, [nombre, descripcion, categoria]);
-            return result.rows[0].nombre;
+            const result = yield DatabaseDonfig_1.pool.query(query, [nombre, descripcion]);
+            return Permiso_1.Permiso.fromMap(result.rows[0]);
         });
     }
     usuarioTienePermiso(usuarioId, permiso) {
@@ -90,13 +124,13 @@ class PermisoRepositoryAdapter {
     getPermisosUsuario(usuarioId) {
         return __awaiter(this, void 0, void 0, function* () {
             const query = `
-            SELECT p.nombre
+            SELECT p.nombre, p.descripcion
             FROM usuario_permisos up
             JOIN permisos p ON up.permiso_id = p.id
             WHERE up.usuario_id = $1
         `;
             const result = yield DatabaseDonfig_1.pool.query(query, [usuarioId]);
-            return result.rows.map((row) => row.nombre);
+            return result.rows.map(row => Permiso_1.Permiso.fromMap(row));
         });
     }
     getUsuariosConPermiso(permiso) {
@@ -118,7 +152,7 @@ class PermisoRepositoryAdapter {
     getPermisoDetalle(permiso) {
         return __awaiter(this, void 0, void 0, function* () {
             const query = `
-            SELECT nombre, descripcion, categoria, fecha_creacion AS "fechaCreacion" 
+            SELECT nombre, descripcion 
             FROM permisos 
             WHERE nombre = $1
         `;
@@ -137,8 +171,17 @@ class PermisoRepositoryAdapter {
     }
     actualizarPermiso(permiso, nuevaDescripcion) {
         return __awaiter(this, void 0, void 0, function* () {
-            const query = 'UPDATE permisos SET descripcion = $1 WHERE nombre = $2';
-            yield DatabaseDonfig_1.pool.query(query, [nuevaDescripcion, permiso]);
+            const query = `
+            UPDATE permisos 
+            SET descripcion = $1 
+            WHERE nombre = $2
+            RETURNING nombre, descripcion
+        `;
+            const result = yield DatabaseDonfig_1.pool.query(query, [nuevaDescripcion, permiso]);
+            if (result.rows.length === 0) {
+                throw new Error("Permiso no encontrado");
+            }
+            return Permiso_1.Permiso.fromMap(result.rows[0]);
         });
     }
     // Helper Methods
@@ -169,12 +212,8 @@ class PermisoRepositoryAdapter {
                 return new Analista_1.Analista(baseUsuario.id, baseUsuario.nombre, baseUsuario.apellido, baseUsuario.email, '', // Password no disponible
                 baseUsuario.telefono, baseUsuario.permisos);
             case 'comerciante':
-                // Asumiendo que existe clase Comerciante
                 return new Comerciante_1.Comerciante(baseUsuario.id, baseUsuario.nombre, baseUsuario.apellido, baseUsuario.email, '', // Password no disponible
-                baseUsuario.telefono, 'CUIL', // Requieren queries adicionales
-                'Nombre Comercio', // Datos específicos
-                'Direccion Comercio', // Dirección del comercio
-                baseUsuario.permisos);
+                baseUsuario.telefono, row.cuil, row.nombre_comercio, row.direccion_comercio, baseUsuario.permisos);
             default:
                 throw new Error(`Rol desconocido: ${row.rol}`);
         }

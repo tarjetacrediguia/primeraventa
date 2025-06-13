@@ -6,10 +6,14 @@ import { authMiddleware } from './middlewares/auth.middleware';
 import solicitudesRoutes from './solicitudes.routes';
 import notificacionesRoutes from './notification.routes';
 import contratosRoutes from './contratos.routes';
-
-import analistasRoutes from './analistas.routes';
-const router = Router();
 import comerciantesRoutes from './comerciantes.routes';
+import permisosRoutes from './permisos.routes';
+import analistasRoutes from './analistas.routes';
+import configuracionRoutes from './configuracion.routes';
+
+
+const router = Router();
+
 
 
 
@@ -19,12 +23,12 @@ router.use(authMiddleware);
 router.use('/administradores', administradoresRoutes);
 router.use('/analistas', analistasRoutes);
 router.use('/comerciantes', comerciantesRoutes);
-//router.use('/permisos', permisosRoutes);
+router.use('/permisos', permisosRoutes);
 router.use('/solicitudes', solicitudesRoutes);
 router.use('/contratos', contratosRoutes);
 //router.use('/estadisticas', estadisticasRoutes);
 router.use('/notificaciones', notificacionesRoutes);
-//router.use('/configuracion', configuracionRoutes);
+router.use('/configuracion', configuracionRoutes);
 //router.use('/tareas', tareasRoutes);
 //router.use('/sistema', sistemaRoutes);
 

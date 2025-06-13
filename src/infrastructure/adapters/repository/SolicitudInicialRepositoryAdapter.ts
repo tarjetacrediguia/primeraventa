@@ -5,6 +5,69 @@ import { SolicitudInicial } from "../../../domain/entities/SolicitudInicial";
 import { pool } from "../../config/Database/DatabaseDonfig";
 
 export class SolicitudInicialRepositoryAdapter implements SolicitudInicialRepositoryPort {
+    async obtenerSolicitudesAExpirar(diasExpiracion: number): Promise<SolicitudInicial[]> {
+        const query = `
+            SELECT 
+                si.id, 
+                si.cliente_id AS "clienteId",
+                si.fecha_creacion AS "fechaCreacion",
+                c.dni AS "dniCliente",
+                c.cuil AS "cuilCliente"
+            FROM solicitudes_iniciales si
+            INNER JOIN clientes c ON si.cliente_id = c.id
+            WHERE si.estado = 'aprobada'
+            AND si.fecha_creacion < NOW() - INTERVAL '1 day' * $1
+            AND NOT EXISTS (
+                SELECT 1
+                FROM solicitudes_formales
+                WHERE solicitudes_formales.solicitud_inicial_id = si.id
+            )
+        `;
+        const result = await pool.query(query, [diasExpiracion]);
+        
+        return result.rows.map(row => new SolicitudInicial(
+            row.id,
+            new Date(row.fechaCreacion),
+            'aprobada',
+            row.dniCliente,
+            row.clienteId,
+            row.cuilCliente,
+            undefined, // reciboSueldo (no se necesita para esta operación)
+            undefined, // comercianteId (no se necesita para esta operación)
+            []        // comentarios (inicializar como array vacío)
+        ));
+    }
+    async expirarSolicitud(solicitudId: number): Promise<void> {
+        const client = await pool.connect();
+        try {
+            await client.query('BEGIN');
+            
+            // Actualizar estado de la solicitud
+            await client.query(`
+                UPDATE solicitudes_iniciales
+                SET estado = 'expirada',
+                    fecha_actualizacion = NOW()
+                WHERE id = $1
+            `, [solicitudId]);
+            
+            // Registrar en historial
+            await client.query(`
+                INSERT INTO historial (accion, entidad_afectada, entidad_id, detalles)
+                VALUES ('expiracion_automatica', 'solicitud_inicial', $1, $2)
+            `, [
+                solicitudId,
+                JSON.stringify({ accion: "expiracion_automatica" })
+            ]);
+            
+            await client.query('COMMIT');
+        } catch (error) {
+            await client.query('ROLLBACK');
+            throw error;
+        } finally {
+            client.release();
+        }
+    }
+
     
     async createSolicitudInicial(solicitudInicial: SolicitudInicial): Promise<SolicitudInicial> {
         const client = await pool.connect();

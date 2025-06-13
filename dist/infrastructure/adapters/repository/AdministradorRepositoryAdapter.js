@@ -60,7 +60,7 @@ class AdministradorRepositoryAdapter {
                 yield client.query(adminQuery, [usuarioId]);
                 // Insertar permisos
                 for (const permiso of administrador.getPermisos()) {
-                    yield this.asignarPermiso(client, usuarioId, permiso);
+                    yield this.asignarPermiso(client, usuarioId, permiso.getNombre());
                 }
                 yield client.query('COMMIT');
                 // Retornar el administrador creado con su ID
@@ -118,7 +118,7 @@ class AdministradorRepositoryAdapter {
                     if (!administrador.getId()) {
                         throw new Error("El ID del administrador es undefined.");
                     }
-                    yield this.asignarPermiso(client, administrador.getId(), permiso);
+                    yield this.asignarPermiso(client, administrador.getId(), permiso.getNombre());
                 }
                 yield client.query('COMMIT');
                 return administrador;

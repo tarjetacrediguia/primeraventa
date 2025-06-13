@@ -8,10 +8,14 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.CreateComercianteUseCase = void 0;
 // src/application/use-cases/Comerciante/CreateComercianteUseCase.ts
 const Comerciante_1 = require("../../../domain/entities/Comerciante");
+const bcrypt_1 = __importDefault(require("bcrypt"));
 class CreateComercianteUseCase {
     constructor(repository) {
         this.repository = repository;
@@ -22,10 +26,15 @@ class CreateComercianteUseCase {
             if (!nombre || !apellido || !email || !password || !telefono || !nombreComercio || !cuil || !direccionComercio) {
                 throw new Error("Todos los campos son obligatorios");
             }
+            // Encriptar contraseña
+            const saltRounds = 10;
+            const passwordHash = yield bcrypt_1.default.hash(password, saltRounds);
             // Validación de CUIL
+            /*
             if (!this.validarCUIL(cuil)) {
                 throw new Error("CUIL inválido");
             }
+    */
             // Verificar CUIL único
             const existeCuil = yield this.repository.findByCuil(cuil);
             if (existeCuil) {
@@ -33,7 +42,7 @@ class CreateComercianteUseCase {
             }
             // Crear instancia de Comerciante
             const comerciante = new Comerciante_1.Comerciante(0, // ID temporal
-            nombre, apellido, email, password, telefono, nombreComercio, cuil, direccionComercio, permisos);
+            nombre, apellido, email, passwordHash, telefono, nombreComercio, cuil, direccionComercio, permisos);
             // Guardar en el repositorio
             return this.repository.saveComerciante(comerciante);
         });

@@ -14,6 +14,63 @@ exports.SolicitudInicialRepositoryAdapter = void 0;
 const SolicitudInicial_1 = require("../../../domain/entities/SolicitudInicial");
 const DatabaseDonfig_1 = require("../../config/Database/DatabaseDonfig");
 class SolicitudInicialRepositoryAdapter {
+    obtenerSolicitudesAExpirar(diasExpiracion) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const query = `
+            SELECT 
+                si.id, 
+                si.cliente_id AS "clienteId",
+                si.fecha_creacion AS "fechaCreacion",
+                c.dni AS "dniCliente",
+                c.cuil AS "cuilCliente"
+            FROM solicitudes_iniciales si
+            INNER JOIN clientes c ON si.cliente_id = c.id
+            WHERE si.estado = 'aprobada'
+            AND si.fecha_creacion < NOW() - INTERVAL '1 day' * $1
+            AND NOT EXISTS (
+                SELECT 1
+                FROM solicitudes_formales
+                WHERE solicitudes_formales.solicitud_inicial_id = si.id
+            )
+        `;
+            const result = yield DatabaseDonfig_1.pool.query(query, [diasExpiracion]);
+            return result.rows.map(row => new SolicitudInicial_1.SolicitudInicial(row.id, new Date(row.fechaCreacion), 'aprobada', row.dniCliente, row.clienteId, row.cuilCliente, undefined, // reciboSueldo (no se necesita para esta operación)
+            undefined, // comercianteId (no se necesita para esta operación)
+            [] // comentarios (inicializar como array vacío)
+            ));
+        });
+    }
+    expirarSolicitud(solicitudId) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const client = yield DatabaseDonfig_1.pool.connect();
+            try {
+                yield client.query('BEGIN');
+                // Actualizar estado de la solicitud
+                yield client.query(`
+                UPDATE solicitudes_iniciales
+                SET estado = 'expirada',
+                    fecha_actualizacion = NOW()
+                WHERE id = $1
+            `, [solicitudId]);
+                // Registrar en historial
+                yield client.query(`
+                INSERT INTO historial (accion, entidad_afectada, entidad_id, detalles)
+                VALUES ('expiracion_automatica', 'solicitud_inicial', $1, $2)
+            `, [
+                    solicitudId,
+                    JSON.stringify({ accion: "expiracion_automatica" })
+                ]);
+                yield client.query('COMMIT');
+            }
+            catch (error) {
+                yield client.query('ROLLBACK');
+                throw error;
+            }
+            finally {
+                client.release();
+            }
+        });
+    }
     createSolicitudInicial(solicitudInicial) {
         return __awaiter(this, void 0, void 0, function* () {
             const client = yield DatabaseDonfig_1.pool.connect();

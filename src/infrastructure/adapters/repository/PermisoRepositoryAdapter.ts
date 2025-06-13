@@ -6,13 +6,47 @@ import { Administrador } from "../../../domain/entities/Administrador";
 import { Analista } from "../../../domain/entities/Analista";
 import { pool } from "../../config/Database/DatabaseDonfig";
 import { Comerciante } from "../../../domain/entities/Comerciante";
+import { Permiso } from "../../../domain/entities/Permiso";
 
 export class PermisoRepositoryAdapter implements PermisoRepositoryPort {
+    async asignarPermisosARol(rol: string, permisos: string[]): Promise<void> {
+        const client = await pool.connect();
+        try {
+            await client.query('BEGIN');
+            
+            // Eliminar permisos existentes para el rol
+            await client.query(`
+                DELETE FROM usuario_permisos
+                WHERE usuario_id IN (
+                    SELECT id FROM usuarios WHERE rol = $1
+                )
+            `, [rol]);
+            
+            // Asignar nuevos permisos
+            for (const permiso of permisos) {
+                const permisoId = await this.getPermisoId(client, permiso);
+                
+                await client.query(`
+                    INSERT INTO usuario_permisos (usuario_id, permiso_id)
+                    SELECT id, $1
+                    FROM usuarios
+                    WHERE rol = $2
+                `, [permisoId, rol]);
+            }
+            
+            await client.query('COMMIT');
+        } catch (error) {
+            await client.query('ROLLBACK');
+            throw error;
+        } finally {
+            client.release();
+        }
+    }
     
-    async getAllPermisos(): Promise<string[]> {
-        const query = 'SELECT nombre FROM permisos';
+    async getAllPermisos(): Promise<Permiso[]> {
+        const query = 'SELECT nombre, descripcion FROM permisos';
         const result = await pool.query(query);
-        return result.rows.map(row => row.nombre);
+        return result.rows.map(row => Permiso.fromMap(row));
     }
 
     async asignarPermisos(usuarioId: number, permisos: string[]): Promise<Usuario> {
@@ -64,14 +98,14 @@ export class PermisoRepositoryAdapter implements PermisoRepositoryPort {
         }
     }
 
-    async crearPermiso(nombre: string, descripcion: string, categoria: string): Promise<string> {
+    async crearPermiso(nombre: string, descripcion: string, categoria: string = ""): Promise<Permiso> {
         const query = `
-            INSERT INTO permisos (nombre, descripcion, categoria)
-            VALUES ($1, $2, $3)
-            RETURNING nombre
+            INSERT INTO permisos (nombre, descripcion)
+            VALUES ($1, $2)
+            RETURNING nombre, descripcion
         `;
-        const result = await pool.query(query, [nombre, descripcion, categoria]);
-        return result.rows[0].nombre;
+        const result = await pool.query(query, [nombre, descripcion]);
+        return Permiso.fromMap(result.rows[0]);
     }
 
     async usuarioTienePermiso(usuarioId: number, permiso: string): Promise<boolean> {
@@ -85,15 +119,15 @@ export class PermisoRepositoryAdapter implements PermisoRepositoryPort {
         return parseInt(result.rows[0].count) > 0;
     }
 
-    async getPermisosUsuario(usuarioId: number): Promise<string[]> {
+    async getPermisosUsuario(usuarioId: number): Promise<Permiso[]> {
         const query = `
-            SELECT p.nombre
+            SELECT p.nombre, p.descripcion
             FROM usuario_permisos up
             JOIN permisos p ON up.permiso_id = p.id
             WHERE up.usuario_id = $1
         `;
         const result = await pool.query(query, [usuarioId]);
-        return result.rows.map((row: { nombre: any; }) => row.nombre);
+        return result.rows.map(row => Permiso.fromMap(row));
     }
 
     async getUsuariosConPermiso(permiso: string): Promise<Usuario[]> {
@@ -119,7 +153,7 @@ export class PermisoRepositoryAdapter implements PermisoRepositoryPort {
         fechaCreacion: Date; 
     } | null> {
         const query = `
-            SELECT nombre, descripcion, categoria, fecha_creacion AS "fechaCreacion" 
+            SELECT nombre, descripcion 
             FROM permisos 
             WHERE nombre = $1
         `;
@@ -138,9 +172,20 @@ export class PermisoRepositoryAdapter implements PermisoRepositoryPort {
         };
     }
 
-    async actualizarPermiso(permiso: string, nuevaDescripcion: string): Promise<void> {
-        const query = 'UPDATE permisos SET descripcion = $1 WHERE nombre = $2';
-        await pool.query(query, [nuevaDescripcion, permiso]);
+    async actualizarPermiso(permiso: string, nuevaDescripcion: string): Promise<Permiso> {
+        const query = `
+            UPDATE permisos 
+            SET descripcion = $1 
+            WHERE nombre = $2
+            RETURNING nombre, descripcion
+        `;
+        const result = await pool.query(query, [nuevaDescripcion, permiso]);
+        
+        if (result.rows.length === 0) {
+            throw new Error("Permiso no encontrado");
+        }
+        
+        return Permiso.fromMap(result.rows[0]);
     }
 
     // Helper Methods
@@ -155,7 +200,7 @@ export class PermisoRepositoryAdapter implements PermisoRepositoryPort {
         return result.rows[0].id;
     }
 
-    private crearUsuarioConcreto(row: any, permisos: string[]): Usuario {
+    private crearUsuarioConcreto(row: any, permisos: Permiso[]): Usuario {
         const baseUsuario = {
             id: row.id.toString(),
             nombre: row.nombre,
@@ -189,7 +234,6 @@ export class PermisoRepositoryAdapter implements PermisoRepositoryPort {
                 );
                 
             case 'comerciante':
-                // Asumiendo que existe clase Comerciante
                 return new Comerciante(
                     baseUsuario.id,
                     baseUsuario.nombre,
@@ -197,9 +241,9 @@ export class PermisoRepositoryAdapter implements PermisoRepositoryPort {
                     baseUsuario.email,
                     '', // Password no disponible
                     baseUsuario.telefono,
-                    'CUIL',              // Requieren queries adicionales
-                    'Nombre Comercio', // Datos específicos
-                    'Direccion Comercio', // Dirección del comercio
+                    row.cuil,
+                    row.nombre_comercio,
+                    row.direccion_comercio,
                     baseUsuario.permisos
                 );
                 

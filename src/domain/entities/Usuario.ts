@@ -1,3 +1,5 @@
+import { Permiso } from "./Permiso";
+
 // src/domain/entities/Usuario.ts
 export abstract class Usuario {
   // Atributos
@@ -27,7 +29,7 @@ export abstract class Usuario {
   public abstract getRol(): string;
 
   // Método para obtener permisos (implementación base)
-  public getPermisos(): string[] {
+  public getPermisos(): Permiso[] {
     return [];
   }
 

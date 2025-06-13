@@ -13,15 +13,13 @@ export const createComerciante = async (req: Request, res: Response) => {
             password,
             telefono,
             nombreComercio,
-            nombre_comercio,
             cuil,
             direccionComercio,
             permisos
         } = req.body;
 
-        const nombreComercioFinal = nombreComercio || nombre_comercio;
 
-        if (!nombreComercioFinal) {
+        if (!nombreComercio) {
             throw new Error("El nombre del comercio es obligatorio");
         }
 
@@ -32,16 +30,13 @@ export const createComerciante = async (req: Request, res: Response) => {
             email,
             password,
             telefono,
-            nombreComercioFinal,
+            nombreComercio,
             cuil,
             direccionComercio,
             permisos
         );
 
-        res.status(201).json({
-            success: true,
-            data: comerciante
-        });
+        res.status(201).json(comerciante.toPlainObject());
     } catch (error) {
         res.status(400).json({
             success: false,
@@ -56,16 +51,14 @@ export const updateComerciante = async (req: Request, res: Response) => {
         const {
             nombre,
             apellido,
-            email,
             telefono,
             nombreComercio,
-            nombre_comercio,
-            cuil,
-            direccionComercio,
-            permisos
+            direccionComercio
         } = req.body;
 
-        const nombreComercioFinal = nombreComercio || nombre_comercio;
+        if (!nombre || !apellido || !telefono || !nombreComercio || !direccionComercio) {
+            throw new Error("Todos los campos son obligatorios");
+        }
 
         const comerciante = await comercianteRepository.getComercianteById(id);
         if (!comerciante) {
@@ -75,19 +68,13 @@ export const updateComerciante = async (req: Request, res: Response) => {
         // Actualizar solo los campos proporcionados
         if (nombre) comerciante.setNombre(nombre);
         if (apellido) comerciante.setApellido(apellido);
-        if (email) comerciante.setEmail(email);
         if (telefono) comerciante.setTelefono(telefono);
-        if (nombreComercioFinal) comerciante.setNombreComercio(nombreComercioFinal);
-        if (cuil) comerciante.setCuil(cuil);
+        if (nombreComercio) comerciante.setNombreComercio(nombreComercio);
         if (direccionComercio) comerciante.setDireccionComercio(direccionComercio);
-        if (permisos) comerciante.setPermisos(permisos);
 
         const comercianteActualizado = await comercianteRepository.updateComerciante(comerciante);
 
-        res.status(200).json({
-            success: true,
-            data: comercianteActualizado
-        });
+        res.status(200).json(comercianteActualizado.toPlainObject());
     } catch (error) {
         res.status(400).json({
             success: false,
@@ -101,12 +88,10 @@ export const deleteComerciante = async (req: Request, res: Response) => {
         const id = Number(req.params.id);
         await comercianteRepository.deleteComerciante(id);
         res.status(200).json({
-            success: true,
             message: "Comerciante eliminado exitosamente"
         });
     } catch (error) {
         res.status(400).json({
-            success: false,
             error: error instanceof Error ? error.message : 'Error al eliminar el comerciante'
         });
     }
@@ -121,10 +106,7 @@ export const getComerciante = async (req: Request, res: Response) => {
             throw new Error("Comerciante no encontrado");
         }
 
-        res.status(200).json({
-            success: true,
-            data: comerciante
-        });
+        res.status(200).json(comerciante.toPlainObject());
     } catch (error) {
         res.status(400).json({
             success: false,
@@ -136,13 +118,9 @@ export const getComerciante = async (req: Request, res: Response) => {
 export const listComerciantes = async (req: Request, res: Response) => {
     try {
         const comerciantes = await comercianteRepository.getAllComerciantes();
-        res.status(200).json({
-            success: true,
-            data: comerciantes
-        });
+        res.status(200).json(comerciantes.map(comerciante => comerciante.toPlainObject()));
     } catch (error) {
         res.status(400).json({
-            success: false,
             error: error instanceof Error ? error.message : 'Error al obtener los comerciantes'
         });
     }

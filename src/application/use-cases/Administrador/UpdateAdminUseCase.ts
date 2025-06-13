@@ -9,12 +9,10 @@ export class UpdateAdminUseCase {
         id: number,
         nombre: string,
         apellido: string,
-        email: string,
-        telefono: string,
-        permisos: string[]
+        telefono: string
     ): Promise<Administrador> {
         // Validaciones básicas
-        if (!nombre || !apellido || !email || !telefono || !permisos) {
+        if (!nombre || !apellido || !telefono) {
             throw new Error("Todos los campos son obligatorios");
         }
 
@@ -29,10 +27,10 @@ export class UpdateAdminUseCase {
             Number(id),
             nombre,
             apellido,
-            email,
+            existe.getEmail(), // Mantener email existente
             existe.getPassword(), // Mantener password existente
             telefono,
-            permisos
+            existe.getPermisos() // Mantener permisos existentes
         );
 
         // Guardar cambios

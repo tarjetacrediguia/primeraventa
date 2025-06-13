@@ -37,16 +37,14 @@ export const createAnalista = async (req: Request, res: Response) => {
 export const updateAnalista = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
-    const { nombre, apellido, email, telefono, permisos } = req.body;
+    const { nombre, apellido, telefono } = req.body;
     
     const useCase = new UpdateAnalistaUseCase(analistaRepository);
     const analistaActualizado = await useCase.execute(
       Number(id),
         nombre,
         apellido,
-        email,
-        telefono,
-        permisos
+        telefono
     );
     
     res.status(200).json(analistaActualizado.toPlainObject());

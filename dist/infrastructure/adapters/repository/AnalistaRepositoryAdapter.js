@@ -75,7 +75,7 @@ class AnalistaRepositoryAdapter {
                 yield client.query(analistaQuery, [usuarioId]);
                 // Insertar permisos
                 for (const permiso of analista.getPermisos()) {
-                    yield this.asignarPermiso(client, usuarioId, permiso);
+                    yield this.asignarPermiso(client, usuarioId, permiso.getNombre());
                 }
                 yield client.query('COMMIT');
                 // Retornar el analista creado con su ID
@@ -133,7 +133,7 @@ class AnalistaRepositoryAdapter {
                     if (analista.getId() === undefined) {
                         throw new Error("El ID del analista es undefined.");
                     }
-                    yield this.asignarPermiso(client, analista.getId(), permiso);
+                    yield this.asignarPermiso(client, analista.getId(), permiso.getNombre());
                 }
                 yield client.query('COMMIT');
                 return analista;

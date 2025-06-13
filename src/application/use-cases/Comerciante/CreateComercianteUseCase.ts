@@ -1,6 +1,8 @@
 // src/application/use-cases/Comerciante/CreateComercianteUseCase.ts
 import { Comerciante } from "../../../domain/entities/Comerciante";
+import { Permiso } from "../../../domain/entities/Permiso";
 import { ComercianteRepositoryPort } from "../../ports/ComercianteRepositoryPort";
+import bcrypt from 'bcrypt';
 
 export class CreateComercianteUseCase {
     constructor(private readonly repository: ComercianteRepositoryPort) {}
@@ -14,18 +16,21 @@ export class CreateComercianteUseCase {
         nombreComercio: string,
         cuil: string,
         direccionComercio: string,
-        permisos: string[] = []
+        permisos: Permiso[] = []
     ): Promise<Comerciante> {
         // Validaciones básicas
         if (!nombre || !apellido || !email || !password || !telefono || !nombreComercio || !cuil || !direccionComercio) {
             throw new Error("Todos los campos son obligatorios");
         }
-
+        // Encriptar contraseña
+        const saltRounds = 10;
+        const passwordHash = await bcrypt.hash(password, saltRounds);
         // Validación de CUIL
+        /*
         if (!this.validarCUIL(cuil)) {
             throw new Error("CUIL inválido");
         }
-
+*/
         // Verificar CUIL único
         const existeCuil = await this.repository.findByCuil(cuil);
         if (existeCuil) {
@@ -38,7 +43,7 @@ export class CreateComercianteUseCase {
             nombre,
             apellido,
             email,
-            password,
+            passwordHash,
             telefono,
             nombreComercio,
             cuil,

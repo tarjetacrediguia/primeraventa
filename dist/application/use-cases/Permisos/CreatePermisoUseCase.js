@@ -14,17 +14,17 @@ class CreatePermisoUseCase {
     constructor(repository) {
         this.repository = repository;
     }
-    execute(nombre, descripcion, categoria) {
+    execute(nombre, descripcion) {
         return __awaiter(this, void 0, void 0, function* () {
             // Validaciones básicas
-            if (!nombre || !descripcion || !categoria) {
+            if (!nombre || !descripcion) {
                 throw new Error("Todos los campos son obligatorios");
             }
             // Validar formato del nombre del permiso
             if (!/^[a-z_]+$/.test(nombre)) {
                 throw new Error("El nombre del permiso solo puede contener letras minúsculas y guiones bajos");
             }
-            return this.repository.crearPermiso(nombre, descripcion, categoria);
+            return this.repository.crearPermiso(nombre, descripcion);
         });
     }
 }

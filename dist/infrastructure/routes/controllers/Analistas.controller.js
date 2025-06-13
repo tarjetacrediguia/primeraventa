@@ -38,15 +38,9 @@ exports.createAnalista = createAnalista;
 const updateAnalista = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const { id } = req.params;
-        const { nombre, apellido, email, telefono, permisos } = req.body;
+        const { nombre, apellido, telefono } = req.body;
         const useCase = new UpdateAnalistaUseCase_1.UpdateAnalistaUseCase(analistaRepository);
-        const analistaActualizado = yield useCase.execute(Number(id), {
-            nombre,
-            apellido,
-            email,
-            telefono,
-            permisos
-        });
+        const analistaActualizado = yield useCase.execute(Number(id), nombre, apellido, telefono);
         res.status(200).json(analistaActualizado.toPlainObject());
     }
     catch (error) {

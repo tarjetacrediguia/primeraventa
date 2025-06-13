@@ -9,12 +9,10 @@ export class UpdateComercianteUseCase {
         id: number,
         nombre: string,
         apellido: string,
-        email: string,
         telefono: string,
         nombreComercio: string,
         cuil: string,
-        direccionComercio: string,
-        permisos: string[]
+        direccionComercio: string
     ): Promise<Comerciante> {
         // Verificar existencia
         const existe = await this.repository.getComercianteById(id);
@@ -27,13 +25,13 @@ export class UpdateComercianteUseCase {
             id,
             nombre || existe.getNombre(),
             apellido || existe.getApellido(),
-            email || existe.getEmail(),
+            existe.getEmail(),
             existe.getPassword(), // No permitimos actualizar la contraseña aquí
             telefono || existe.getTelefono(),
             nombreComercio || existe.getNombreComercio(),
             cuil || existe.getCuil(),
             direccionComercio || existe.getDireccionComercio(),
-            permisos || existe.getPermisos()
+            existe.getPermisos()
         );
 
         return this.repository.updateComerciante(comercianteActualizado);

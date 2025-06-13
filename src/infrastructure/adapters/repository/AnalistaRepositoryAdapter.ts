@@ -68,7 +68,7 @@ export class AnalistaRepositoryAdapter implements AnalistaRepositoryPort {
             
             // Insertar permisos
             for (const permiso of analista.getPermisos()) {
-                await this.asignarPermiso(client, usuarioId, permiso);
+                await this.asignarPermiso(client, usuarioId, permiso.getNombre());
             }
             
             await client.query('COMMIT');
@@ -140,7 +140,7 @@ export class AnalistaRepositoryAdapter implements AnalistaRepositoryPort {
                 if (analista.getId() === undefined) {
                     throw new Error("El ID del analista es undefined.");
                 }
-                await this.asignarPermiso(client, analista.getId() as number, permiso);
+                await this.asignarPermiso(client, analista.getId() as number, permiso.getNombre());
             }
             
             await client.query('COMMIT');

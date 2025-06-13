@@ -52,7 +52,7 @@ export class AdministradorRepositoryAdapter implements AdministradorRepositoryPo
             
             // Insertar permisos
             for (const permiso of administrador.getPermisos()) {
-                await this.asignarPermiso(client, usuarioId, permiso);
+                await this.asignarPermiso(client, usuarioId, permiso.getNombre());
             }
             
             await client.query('COMMIT');
@@ -122,7 +122,7 @@ export class AdministradorRepositoryAdapter implements AdministradorRepositoryPo
                 if (!administrador.getId()) {
                     throw new Error("El ID del administrador es undefined.");
                 }
-                await this.asignarPermiso(client, administrador.getId(), permiso);
+                await this.asignarPermiso(client, administrador.getId(), permiso.getNombre());
             }
             
             await client.query('COMMIT');

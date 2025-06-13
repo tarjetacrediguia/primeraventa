@@ -1,9 +1,10 @@
 // src/application/ports/PermisoRepositoryPort.ts
+import { Permiso } from "../../domain/entities/Permiso";
 import { Usuario } from "../../domain/entities/Usuario";
 
 export interface PermisoRepositoryPort {
     // Obtener todos los permisos disponibles en el sistema
-    getAllPermisos(): Promise<string[]>;
+    getAllPermisos(): Promise<Permiso[]>;
     
     // Asignar permisos a un usuario
     asignarPermisos(
@@ -14,9 +15,8 @@ export interface PermisoRepositoryPort {
     // Crear un nuevo permiso en el sistema
     crearPermiso(
         nombre: string,
-        descripcion: string,
-        categoria: string
-    ): Promise<string>;
+        descripcion: string
+    ): Promise<Permiso>;
     
     // Verificar si un usuario tiene un permiso específico
     usuarioTienePermiso(
@@ -25,7 +25,7 @@ export interface PermisoRepositoryPort {
     ): Promise<boolean>;
     
     // Obtener permisos de un usuario específico
-    getPermisosUsuario(usuarioId: number): Promise<string[]>;
+    getPermisosUsuario(usuarioId: number): Promise<Permiso[]>;
     
     // Obtener todos los usuarios con un permiso específico
     getUsuariosConPermiso(permiso: string): Promise<Usuario[]>;
@@ -42,5 +42,10 @@ export interface PermisoRepositoryPort {
     actualizarPermiso(
         permiso: string,
         nuevaDescripcion: string
+    ): Promise<Permiso>;
+
+    asignarPermisosARol(
+        rol: string,
+        permisos: string[]
     ): Promise<void>;
 }

@@ -6,6 +6,7 @@ import { GetAdminByIdUseCase } from '../../../application/use-cases/Administrado
 import { GetAllAdminUseCase } from '../../../application/use-cases/Administrador/GetAllAdminUseCase';
 import { UpdateAdminUseCase } from '../../../application/use-cases/Administrador/UpdateAdminUseCase';
 import { AdministradorRepositoryAdapter } from '../../adapters/repository/AdministradorRepositoryAdapter';
+import { Permiso } from '../../../domain/entities/Permiso';
 
 const administradorRepository = new AdministradorRepositoryAdapter();
 
@@ -13,6 +14,26 @@ export const createAdministrador = async (req: Request, res: Response) => {
   try {
     const { nombre, apellido, email, password, telefono, permisos } = req.body;
     
+    let permisosArray: Permiso[] = [];
+    if (permisos) {
+      try {
+        // Parsear si es string JSON
+        const parsedPermisos = typeof permisos === 'string' 
+          ? JSON.parse(permisos) 
+          : permisos;
+        
+        // Convertir cada objeto a Permiso usando fromMap
+        if (Array.isArray(parsedPermisos)) {
+          permisosArray = parsedPermisos.map((p: any) => Permiso.fromMap(p));
+        } else {
+          throw new Error("Formato inválido para permisos");
+        }
+      } catch (error) {
+        console.error('Error al procesar permisos:', error);
+        return res.status(400).json({ error: "Formato de permisos inválido" });
+      }
+    }
+
     const useCase = new CreateAdminUseCase(administradorRepository);
     const nuevoAdmin = await useCase.execute(
       nombre,
@@ -20,7 +41,7 @@ export const createAdministrador = async (req: Request, res: Response) => {
       email,
       password,
       telefono,
-      permisos || [] // Permisos opcionales
+      permisosArray
     );
     
     res.status(201).json(nuevoAdmin.toPlainObject());
@@ -37,16 +58,14 @@ export const createAdministrador = async (req: Request, res: Response) => {
 export const updateAdministrador = async (req: Request, res: Response) => {
   try {
     const id = parseInt(req.params.id, 10);
-    const { nombre, apellido, email, telefono, permisos } = req.body;
+    const { nombre, apellido, telefono } = req.body;
     
     const useCase = new UpdateAdminUseCase(administradorRepository);
     const adminActualizado = await useCase.execute(
       id,
       nombre,
       apellido,
-      email,
-      telefono,
-      permisos
+      telefono
     );
     
     res.status(200).json(adminActualizado.toPlainObject());
@@ -66,9 +85,9 @@ export const deleteAdministrador = async (req: Request, res: Response) => {
     const id = parseInt(req.params.id, 10);
     
     const useCase = new DeleteAdminUseCase(administradorRepository);
-    await useCase.execute(id);
+    const response = await useCase.execute(id);
     
-    res.status(204).send();
+    res.status(204).send(response);
   } catch (error: any) {
     if (error.message === "Administrador no encontrado") {
       res.status(404).json({ error: error.message });

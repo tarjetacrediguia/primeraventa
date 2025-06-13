@@ -16,13 +16,33 @@ const GetAdminByIdUseCase_1 = require("../../../application/use-cases/Administra
 const GetAllAdminUseCase_1 = require("../../../application/use-cases/Administrador/GetAllAdminUseCase");
 const UpdateAdminUseCase_1 = require("../../../application/use-cases/Administrador/UpdateAdminUseCase");
 const AdministradorRepositoryAdapter_1 = require("../../adapters/repository/AdministradorRepositoryAdapter");
+const Permiso_1 = require("../../../domain/entities/Permiso");
 const administradorRepository = new AdministradorRepositoryAdapter_1.AdministradorRepositoryAdapter();
 const createAdministrador = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const { nombre, apellido, email, password, telefono, permisos } = req.body;
+        let permisosArray = [];
+        if (permisos) {
+            try {
+                // Parsear si es string JSON
+                const parsedPermisos = typeof permisos === 'string'
+                    ? JSON.parse(permisos)
+                    : permisos;
+                // Convertir cada objeto a Permiso usando fromMap
+                if (Array.isArray(parsedPermisos)) {
+                    permisosArray = parsedPermisos.map((p) => Permiso_1.Permiso.fromMap(p));
+                }
+                else {
+                    throw new Error("Formato inválido para permisos");
+                }
+            }
+            catch (error) {
+                console.error('Error al procesar permisos:', error);
+                return res.status(400).json({ error: "Formato de permisos inválido" });
+            }
+        }
         const useCase = new CreateAdminUseCase_1.CreateAdminUseCase(administradorRepository);
-        const nuevoAdmin = yield useCase.execute(nombre, apellido, email, password, telefono, permisos || [] // Permisos opcionales
-        );
+        const nuevoAdmin = yield useCase.execute(nombre, apellido, email, password, telefono, permisosArray);
         res.status(201).json(nuevoAdmin.toPlainObject());
     }
     catch (error) {
@@ -39,9 +59,9 @@ exports.createAdministrador = createAdministrador;
 const updateAdministrador = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const id = parseInt(req.params.id, 10);
-        const { nombre, apellido, email, telefono, permisos } = req.body;
+        const { nombre, apellido, telefono } = req.body;
         const useCase = new UpdateAdminUseCase_1.UpdateAdminUseCase(administradorRepository);
-        const adminActualizado = yield useCase.execute(id, nombre, apellido, email, telefono, permisos);
+        const adminActualizado = yield useCase.execute(id, nombre, apellido, telefono);
         res.status(200).json(adminActualizado.toPlainObject());
     }
     catch (error) {
@@ -61,8 +81,8 @@ const deleteAdministrador = (req, res) => __awaiter(void 0, void 0, void 0, func
     try {
         const id = parseInt(req.params.id, 10);
         const useCase = new DeleteAdminUseCase_1.DeleteAdminUseCase(administradorRepository);
-        yield useCase.execute(id);
-        res.status(204).send();
+        const response = yield useCase.execute(id);
+        res.status(204).send(response);
     }
     catch (error) {
         if (error.message === "Administrador no encontrado") {

@@ -85,7 +85,7 @@ export class ComercianteRepositoryAdapter implements ComercianteRepositoryPort {
             
             // Insertar permisos
             for (const permiso of comerciante.getPermisos()) {
-                await this.asignarPermiso(client, usuarioId, permiso);
+                await this.asignarPermiso(client, usuarioId, permiso.getNombre());
             }
             
             await client.query('COMMIT');
@@ -175,7 +175,7 @@ export class ComercianteRepositoryAdapter implements ComercianteRepositoryPort {
             );
             
             for (const permiso of comerciante.getPermisos()) {
-                await this.asignarPermiso(client, id, permiso);
+                await this.asignarPermiso(client, id, permiso.getNombre());
             }
             
             await client.query('COMMIT');

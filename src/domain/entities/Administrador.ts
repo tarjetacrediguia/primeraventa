@@ -1,8 +1,9 @@
 // src/domain/entities/Administrador.ts
+import { Permiso } from "./Permiso";
 import { Usuario } from "./Usuario";
 
 export class Administrador extends Usuario {
-  private permisos: string[]
+  private permisos: Permiso[]
   
   constructor(
     id: number,
@@ -11,18 +12,18 @@ export class Administrador extends Usuario {
     email: string,
     password: string,
     telefono: string,
-    permisos: string[]
+    permisos: Permiso[]
   ) {
     super(id, nombre, apellido, email, password, telefono);
     this.permisos = permisos;
   }
 
   // Getters y Setters
-  public getPermisos(): string[] {
+  public getPermisos(): Permiso[] {
     return this.permisos;
   }
 
-  public setPermisos(permisos: string[]): void {
+  public setPermisos(permisos: Permiso[]): void {
     this.permisos = permisos;
   }
 

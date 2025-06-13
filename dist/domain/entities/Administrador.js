@@ -1,7 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.Administrador = void 0;
-// src/domain/entities/Administrador.ts
 const Usuario_1 = require("./Usuario");
 class Administrador extends Usuario_1.Usuario {
     constructor(id, nombre, apellido, email, password, telefono, permisos) {

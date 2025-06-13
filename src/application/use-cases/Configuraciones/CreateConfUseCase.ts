@@ -1,11 +1,11 @@
-// src/application/use-cases/Configuraciones/UpdateConfUseCase.ts
+// src/application/use-cases/Configuraciones/CreateConfUseCase.ts
 import { ConfiguracionRepositoryPort } from "../../ports/ConfiguracionRepositoryPort";
 import { Configuracion } from "../../../domain/entities/Configuracion";
 
-export class UpdateConfUseCase {
+export class CreateConfUseCase {
     constructor(private readonly repository: ConfiguracionRepositoryPort) {}
 
-    async execute(clave: string, valor: any): Promise<Configuracion> {
-        return this.repository.actualizarConfiguracion(clave, valor);
+    async execute(configuracion: Configuracion): Promise<Configuracion> {
+        return this.repository.crearConfiguracion(configuracion);
     }
 }

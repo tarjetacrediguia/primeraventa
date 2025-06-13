@@ -11,4 +11,6 @@ export interface SolicitudInicialRepositoryPort {
     getSolicitudesInicialesByFecha(fecha: Date): Promise<SolicitudInicial[]>;
     getSolicitudesInicialesByComercianteId(comercianteId: number): Promise<SolicitudInicial[]>;
     getSolicitudesInicialesByClienteId(clienteId: number): Promise<SolicitudInicial[]>;
+    obtenerSolicitudesAExpirar(diasExpiracion: number): Promise<SolicitudInicial[]>;
+    expirarSolicitud(solicitudId: number): Promise<void>;
 }

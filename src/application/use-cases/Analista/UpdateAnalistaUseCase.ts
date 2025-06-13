@@ -9,12 +9,10 @@ export class UpdateAnalistaUseCase {
         id: number,
         nombre: string,
         apellido: string,
-        email: string,
-        telefono: string,
-        permisos: string[]
+        telefono: string
     ): Promise<Analista> {
         // Validaciones básicas
-        if (!nombre || !apellido || !email || !telefono || !permisos) {
+        if (!nombre || !apellido || !telefono) {
             throw new Error("Todos los campos son obligatorios");
         }
         // Verificar existencia
@@ -28,10 +26,10 @@ export class UpdateAnalistaUseCase {
             id,
             nombre || existe.getNombre(),
             apellido || existe.getApellido(),
-            email || existe.getEmail(),
+            existe.getEmail(),
             existe.getPassword(), // No permitimos actualizar la contraseña aquí
             telefono || existe.getTelefono(),
-            permisos || existe.getPermisos()
+            existe.getPermisos()
         );
 
         return this.repository.updateAnalista(analistaActualizado);

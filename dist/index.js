@@ -17,6 +17,7 @@ require("dotenv/config");
 const http_server_1 = require("./infrastructure/server/http.server");
 const routes_1 = __importDefault(require("./infrastructure/routes/routes"));
 const AppConfig_1 = require("./infrastructure/config/server/AppConfig");
+require("./infrastructure/adapters/cron/ExpirarSolicitudesCron"); // Importar cron para que se ejecute al iniciar
 const start = () => __awaiter(void 0, void 0, void 0, function* () {
     try {
         // Crear servidor HTTP con el router principal

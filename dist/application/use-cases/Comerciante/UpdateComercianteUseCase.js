@@ -16,7 +16,7 @@ class UpdateComercianteUseCase {
     constructor(repository) {
         this.repository = repository;
     }
-    execute(id, nombre, apellido, email, telefono, nombreComercio, cuil, direccionComercio, permisos) {
+    execute(id, nombre, apellido, telefono, nombreComercio, cuil, direccionComercio) {
         return __awaiter(this, void 0, void 0, function* () {
             // Verificar existencia
             const existe = yield this.repository.getComercianteById(id);
@@ -24,8 +24,8 @@ class UpdateComercianteUseCase {
                 throw new Error("Comerciante no encontrado");
             }
             // Crear objeto con datos actualizados
-            const comercianteActualizado = new Comerciante_1.Comerciante(id, nombre || existe.getNombre(), apellido || existe.getApellido(), email || existe.getEmail(), existe.getPassword(), // No permitimos actualizar la contraseña aquí
-            telefono || existe.getTelefono(), nombreComercio || existe.getNombreComercio(), cuil || existe.getCuil(), direccionComercio || existe.getDireccionComercio(), permisos || existe.getPermisos());
+            const comercianteActualizado = new Comerciante_1.Comerciante(id, nombre || existe.getNombre(), apellido || existe.getApellido(), existe.getEmail(), existe.getPassword(), // No permitimos actualizar la contraseña aquí
+            telefono || existe.getTelefono(), nombreComercio || existe.getNombreComercio(), cuil || existe.getCuil(), direccionComercio || existe.getDireccionComercio(), existe.getPermisos());
             return this.repository.updateComerciante(comercianteActualizado);
         });
     }

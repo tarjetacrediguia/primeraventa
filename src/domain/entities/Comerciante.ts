@@ -1,4 +1,5 @@
 // src/domain/entities/Comerciante.ts
+import { Permiso } from "./Permiso";
 import { Usuario } from "./Usuario";
 
 export class Comerciante extends Usuario {
@@ -6,7 +7,7 @@ export class Comerciante extends Usuario {
   private nombreComercio: string
   private cuil: string
   private direccionComercio: string
-  private permisos: string[]
+  private permisos: Permiso[]
 
   constructor(
     id: number,
@@ -18,7 +19,7 @@ export class Comerciante extends Usuario {
     nombreComercio: string,
     cuil: string,
     direccionComercio: string,
-    permisos:string[]
+    permisos:Permiso[]
   ) {
     super(id, nombre, apellido, email, password, telefono);
     this.nombreComercio = nombreComercio;
@@ -52,11 +53,11 @@ export class Comerciante extends Usuario {
     this.direccionComercio = direccionComercio;
   }
 
-  public getPermisos(): string[] {
+  public getPermisos(): Permiso[] {
     return this.permisos;
   }
 
-  public setPermisos(permisos: string[]): void {
+  public setPermisos(permisos: Permiso[]): void {
     this.permisos = permisos;
   }
 
