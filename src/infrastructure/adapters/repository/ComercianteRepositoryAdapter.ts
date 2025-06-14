@@ -168,16 +168,6 @@ export class ComercianteRepositoryAdapter implements ComercianteRepositoryPort {
                 id
             ]);
             
-            // Actualizar permisos
-            await client.query(
-                'DELETE FROM usuario_permisos WHERE usuario_id = $1',
-                [id]
-            );
-            
-            for (const permiso of comerciante.getPermisos()) {
-                await this.asignarPermiso(client, id, permiso.getNombre());
-            }
-            
             await client.query('COMMIT');
             
             return comerciante;

@@ -21,7 +21,7 @@ const createAnalista = (req, res) => __awaiter(void 0, void 0, void 0, function*
     try {
         const { nombre, apellido, email, password, telefono, permisos } = req.body;
         const useCase = new CreateAnalistaUseCase_1.CreateAnalistaUseCase(analistaRepository);
-        const analista = yield useCase.execute(nombre, apellido, email, password, telefono, permisos || []);
+        const analista = yield useCase.execute(nombre, apellido, email, password, telefono);
         res.status(201).json(analista.toPlainObject());
     }
     catch (error) {

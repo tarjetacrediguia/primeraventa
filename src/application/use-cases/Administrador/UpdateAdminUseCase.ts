@@ -32,6 +32,7 @@ export class UpdateAdminUseCase {
             telefono,
             existe.getPermisos() // Mantener permisos existentes
         );
+        console.log(administradorActualizado)
 
         // Guardar cambios
         return this.repository.updateAdministrador(administradorActualizado);

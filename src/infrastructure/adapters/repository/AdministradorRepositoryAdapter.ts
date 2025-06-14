@@ -101,30 +101,19 @@ export class AdministradorRepositoryAdapter implements AdministradorRepositoryPo
             // Actualizar datos básicos en usuarios
             const updateUserQuery = `
                 UPDATE usuarios
-                SET nombre = $1, apellido = $2, email = $3, telefono = $4
-                WHERE id = $5
+                SET nombre = $1, apellido = $2, telefono = $3
+                WHERE id = $4
             `;
             await client.query(updateUserQuery, [
                 administrador.getNombre(),
                 administrador.getApellido(),
-                administrador.getEmail(),
                 administrador.getTelefono(),
                 administrador.getId()
             ]);
+            console.log("administrador ID",administrador.getId())
             
-            // Actualizar permisos
-            await client.query(
-                'DELETE FROM usuario_permisos WHERE usuario_id = $1',
-                [administrador.getId()]
-            );
             
-            for (const permiso of administrador.getPermisos()) {
-                if (!administrador.getId()) {
-                    throw new Error("El ID del administrador es undefined.");
-                }
-                await this.asignarPermiso(client, administrador.getId(), permiso.getNombre());
-            }
-            
+            console.log("administrador",administrador)
             await client.query('COMMIT');
             
             return administrador;
@@ -174,7 +163,7 @@ export class AdministradorRepositoryAdapter implements AdministradorRepositoryPo
             throw new Error(`Permiso '${permisoNombre}' no encontrado`);
         }
         const permisoId = permisoRes.rows[0].id;
-        
+        console.log("permiso ID",permisoId)
         // Asignar permiso al usuario
         await client.query(`
             INSERT INTO usuario_permisos (usuario_id, permiso_id)

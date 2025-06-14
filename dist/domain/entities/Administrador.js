@@ -5,7 +5,7 @@ const Usuario_1 = require("./Usuario");
 class Administrador extends Usuario_1.Usuario {
     constructor(id, nombre, apellido, email, password, telefono, permisos) {
         super(id, nombre, apellido, email, password, telefono);
-        this.permisos = permisos;
+        this.permisos = permisos !== null && permisos !== void 0 ? permisos : [];
     }
     // Getters y Setters
     getPermisos() {

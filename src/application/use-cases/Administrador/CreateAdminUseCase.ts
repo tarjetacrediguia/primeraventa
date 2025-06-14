@@ -12,8 +12,7 @@ export class CreateAdminUseCase {
         apellido: string,
         email: string,
         password: string,
-        telefono: string,
-        permisos: Permiso[]
+        telefono: string
     ): Promise<Administrador> {
         // Validaciones básicas
         if (!nombre || !apellido || !email || !password || !telefono) {
@@ -29,8 +28,7 @@ export class CreateAdminUseCase {
             apellido,
             email,
             passwordHash,
-            telefono,
-            permisos
+            telefono
         );
 
         // Guardar en el repositorio

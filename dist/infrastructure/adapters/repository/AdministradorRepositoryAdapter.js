@@ -102,24 +102,17 @@ class AdministradorRepositoryAdapter {
                 // Actualizar datos básicos en usuarios
                 const updateUserQuery = `
                 UPDATE usuarios
-                SET nombre = $1, apellido = $2, email = $3, telefono = $4
-                WHERE id = $5
+                SET nombre = $1, apellido = $2, telefono = $3
+                WHERE id = $4
             `;
                 yield client.query(updateUserQuery, [
                     administrador.getNombre(),
                     administrador.getApellido(),
-                    administrador.getEmail(),
                     administrador.getTelefono(),
                     administrador.getId()
                 ]);
-                // Actualizar permisos
-                yield client.query('DELETE FROM usuario_permisos WHERE usuario_id = $1', [administrador.getId()]);
-                for (const permiso of administrador.getPermisos()) {
-                    if (!administrador.getId()) {
-                        throw new Error("El ID del administrador es undefined.");
-                    }
-                    yield this.asignarPermiso(client, administrador.getId(), permiso.getNombre());
-                }
+                console.log("administrador ID", administrador.getId());
+                console.log("administrador", administrador);
                 yield client.query('COMMIT');
                 return administrador;
             }
@@ -162,6 +155,7 @@ class AdministradorRepositoryAdapter {
                 throw new Error(`Permiso '${permisoNombre}' no encontrado`);
             }
             const permisoId = permisoRes.rows[0].id;
+            console.log("permiso ID", permisoId);
             // Asignar permiso al usuario
             yield client.query(`
             INSERT INTO usuario_permisos (usuario_id, permiso_id)

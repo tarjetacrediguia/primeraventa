@@ -11,10 +11,10 @@ export class Analista extends Usuario {
     email: string,
     password: string,
     telefono: string,
-    permisos: Permiso[]
+    permisos?: Permiso[]
   ) {
     super(id, nombre, apellido, email, password, telefono);
-    this.permisos = permisos;
+    this.permisos = permisos ?? [];
   }
 
   // Getters y Setters

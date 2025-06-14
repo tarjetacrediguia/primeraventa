@@ -19,8 +19,7 @@ export const createAnalista = async (req: Request, res: Response) => {
       apellido,
       email,
       password,
-      telefono,
-      permisos || []
+      telefono
     );
     
     res.status(201).json(analista.toPlainObject());

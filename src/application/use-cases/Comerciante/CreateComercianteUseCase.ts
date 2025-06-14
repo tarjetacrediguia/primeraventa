@@ -15,8 +15,7 @@ export class CreateComercianteUseCase {
         telefono: string,
         nombreComercio: string,
         cuil: string,
-        direccionComercio: string,
-        permisos: Permiso[] = []
+        direccionComercio: string
     ): Promise<Comerciante> {
         // Validaciones básicas
         if (!nombre || !apellido || !email || !password || !telefono || !nombreComercio || !cuil || !direccionComercio) {
@@ -47,8 +46,7 @@ export class CreateComercianteUseCase {
             telefono,
             nombreComercio,
             cuil,
-            direccionComercio,
-            permisos
+            direccionComercio
         );
 
         // Guardar en el repositorio

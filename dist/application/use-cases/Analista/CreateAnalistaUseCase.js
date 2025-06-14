@@ -20,7 +20,7 @@ class CreateAnalistaUseCase {
     constructor(repository) {
         this.repository = repository;
     }
-    execute(nombre, apellido, email, password, telefono, permisos) {
+    execute(nombre, apellido, email, password, telefono) {
         return __awaiter(this, void 0, void 0, function* () {
             // Validaciones básicas
             if (!nombre || !apellido || !email || !password || !telefono) {
@@ -31,7 +31,7 @@ class CreateAnalistaUseCase {
             const passwordHash = yield bcrypt_1.default.hash(password, saltRounds);
             // Crear instancia de Analista (el id se generará en el repositorio)
             const analista = new Analista_1.Analista(0, // ID temporal (se asignará al guardar)
-            nombre, apellido, email, passwordHash, telefono, permisos);
+            nombre, apellido, email, passwordHash, telefono);
             // Guardar en el repositorio
             return this.repository.saveAnalista(analista);
         });

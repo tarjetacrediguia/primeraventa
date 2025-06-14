@@ -158,11 +158,6 @@ class ComercianteRepositoryAdapter {
                     comerciante.getDireccionComercio(),
                     id
                 ]);
-                // Actualizar permisos
-                yield client.query('DELETE FROM usuario_permisos WHERE usuario_id = $1', [id]);
-                for (const permiso of comerciante.getPermisos()) {
-                    yield this.asignarPermiso(client, id, permiso.getNombre());
-                }
                 yield client.query('COMMIT');
                 return comerciante;
             }

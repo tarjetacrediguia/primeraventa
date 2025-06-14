@@ -19,13 +19,13 @@ export class Comerciante extends Usuario {
     nombreComercio: string,
     cuil: string,
     direccionComercio: string,
-    permisos:Permiso[]
+    permisos?:Permiso[]
   ) {
     super(id, nombre, apellido, email, password, telefono);
     this.nombreComercio = nombreComercio;
     this.cuil = cuil;
     this.direccionComercio = direccionComercio;
-    this.permisos = permisos;
+    this.permisos = permisos ?? [];
   }
 
   // Getters y Setters

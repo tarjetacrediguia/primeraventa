@@ -20,7 +20,7 @@ class CreateAdminUseCase {
     constructor(repository) {
         this.repository = repository;
     }
-    execute(nombre, apellido, email, password, telefono, permisos) {
+    execute(nombre, apellido, email, password, telefono) {
         return __awaiter(this, void 0, void 0, function* () {
             // Validaciones básicas
             if (!nombre || !apellido || !email || !password || !telefono) {
@@ -31,7 +31,7 @@ class CreateAdminUseCase {
             const passwordHash = yield bcrypt_1.default.hash(password, saltRounds);
             // Crear instancia de Administrador (el id se generará en el repositorio)
             const administrador = new Administrador_1.Administrador(0, // ID temporal (se asignará al guardar)
-            nombre, apellido, email, passwordHash, telefono, permisos);
+            nombre, apellido, email, passwordHash, telefono);
             // Guardar en el repositorio
             return this.repository.saveAdministrador(administrador);
         });

@@ -20,8 +20,8 @@ class CreateComercianteUseCase {
     constructor(repository) {
         this.repository = repository;
     }
-    execute(nombre_1, apellido_1, email_1, password_1, telefono_1, nombreComercio_1, cuil_1, direccionComercio_1) {
-        return __awaiter(this, arguments, void 0, function* (nombre, apellido, email, password, telefono, nombreComercio, cuil, direccionComercio, permisos = []) {
+    execute(nombre, apellido, email, password, telefono, nombreComercio, cuil, direccionComercio) {
+        return __awaiter(this, void 0, void 0, function* () {
             // Validaciones básicas
             if (!nombre || !apellido || !email || !password || !telefono || !nombreComercio || !cuil || !direccionComercio) {
                 throw new Error("Todos los campos son obligatorios");
@@ -42,7 +42,7 @@ class CreateComercianteUseCase {
             }
             // Crear instancia de Comerciante
             const comerciante = new Comerciante_1.Comerciante(0, // ID temporal
-            nombre, apellido, email, passwordHash, telefono, nombreComercio, cuil, direccionComercio, permisos);
+            nombre, apellido, email, passwordHash, telefono, nombreComercio, cuil, direccionComercio);
             // Guardar en el repositorio
             return this.repository.saveComerciante(comerciante);
         });

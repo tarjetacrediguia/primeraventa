@@ -130,19 +130,6 @@ export class AnalistaRepositoryAdapter implements AnalistaRepositoryPort {
                 analista.getId()
             ]);
             
-            // Actualizar permisos
-            await client.query(
-                'DELETE FROM usuario_permisos WHERE usuario_id = $1',
-                [analista.getId()]
-            );
-            
-            for (const permiso of analista.getPermisos()) {
-                if (analista.getId() === undefined) {
-                    throw new Error("El ID del analista es undefined.");
-                }
-                await this.asignarPermiso(client, analista.getId() as number, permiso.getNombre());
-            }
-            
             await client.query('COMMIT');
             
             return analista;

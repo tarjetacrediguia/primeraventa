@@ -1,6 +1,5 @@
 // src/application/use-cases/Analista/CreateAnalistaUseCase.ts
 import { Analista } from "../../../domain/entities/Analista";
-import { Permiso } from "../../../domain/entities/Permiso";
 import { AnalistaRepositoryPort } from "../../ports/AnalistaRepositoryPort";
 import bcrypt from 'bcrypt';
 
@@ -12,8 +11,7 @@ export class CreateAnalistaUseCase {
         apellido: string,
         email: string,
         password: string,
-        telefono: string,
-        permisos: Permiso[]
+        telefono: string
     ): Promise<Analista> {
         // Validaciones básicas
         if (!nombre || !apellido || !email || !password || !telefono) {
@@ -29,8 +27,7 @@ export class CreateAnalistaUseCase {
             apellido,
             email,
             passwordHash,
-            telefono,
-            permisos
+            telefono
         );
 
         // Guardar en el repositorio

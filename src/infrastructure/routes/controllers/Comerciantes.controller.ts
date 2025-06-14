@@ -14,8 +14,7 @@ export const createComerciante = async (req: Request, res: Response) => {
             telefono,
             nombreComercio,
             cuil,
-            direccionComercio,
-            permisos
+            direccionComercio
         } = req.body;
 
 
@@ -32,8 +31,7 @@ export const createComerciante = async (req: Request, res: Response) => {
             telefono,
             nombreComercio,
             cuil,
-            direccionComercio,
-            permisos
+            direccionComercio
         );
 
         res.status(201).json(comerciante.toPlainObject());
@@ -77,7 +75,6 @@ export const updateComerciante = async (req: Request, res: Response) => {
         res.status(200).json(comercianteActualizado.toPlainObject());
     } catch (error) {
         res.status(400).json({
-            success: false,
             error: error instanceof Error ? error.message : 'Error al actualizar el comerciante'
         });
     }

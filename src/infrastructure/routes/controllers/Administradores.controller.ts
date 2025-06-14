@@ -12,36 +12,15 @@ const administradorRepository = new AdministradorRepositoryAdapter();
 
 export const createAdministrador = async (req: Request, res: Response) => {
   try {
-    const { nombre, apellido, email, password, telefono, permisos } = req.body;
+    const { nombre, apellido, email, password, telefono } = req.body;
     
-    let permisosArray: Permiso[] = [];
-    if (permisos) {
-      try {
-        // Parsear si es string JSON
-        const parsedPermisos = typeof permisos === 'string' 
-          ? JSON.parse(permisos) 
-          : permisos;
-        
-        // Convertir cada objeto a Permiso usando fromMap
-        if (Array.isArray(parsedPermisos)) {
-          permisosArray = parsedPermisos.map((p: any) => Permiso.fromMap(p));
-        } else {
-          throw new Error("Formato inválido para permisos");
-        }
-      } catch (error) {
-        console.error('Error al procesar permisos:', error);
-        return res.status(400).json({ error: "Formato de permisos inválido" });
-      }
-    }
-
     const useCase = new CreateAdminUseCase(administradorRepository);
     const nuevoAdmin = await useCase.execute(
       nombre,
       apellido,
       email,
       password,
-      telefono,
-      permisosArray
+      telefono
     );
     
     res.status(201).json(nuevoAdmin.toPlainObject());

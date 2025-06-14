@@ -127,14 +127,6 @@ class AnalistaRepositoryAdapter {
                     analista.getTelefono(),
                     analista.getId()
                 ]);
-                // Actualizar permisos
-                yield client.query('DELETE FROM usuario_permisos WHERE usuario_id = $1', [analista.getId()]);
-                for (const permiso of analista.getPermisos()) {
-                    if (analista.getId() === undefined) {
-                        throw new Error("El ID del analista es undefined.");
-                    }
-                    yield this.asignarPermiso(client, analista.getId(), permiso.getNombre());
-                }
                 yield client.query('COMMIT');
                 return analista;
             }

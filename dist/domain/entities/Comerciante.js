@@ -8,7 +8,7 @@ class Comerciante extends Usuario_1.Usuario {
         this.nombreComercio = nombreComercio;
         this.cuil = cuil;
         this.direccionComercio = direccionComercio;
-        this.permisos = permisos;
+        this.permisos = permisos !== null && permisos !== void 0 ? permisos : [];
     }
     // Getters y Setters
     getNombreComercio() {
