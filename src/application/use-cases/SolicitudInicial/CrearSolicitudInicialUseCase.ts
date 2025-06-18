@@ -76,7 +76,7 @@ export class CrearSolicitudInicialUseCase {
             } else if(estadoVeraz.status === "rechazado"){
                 solicitudCreada.setEstado("rechazada");
                 await this.solicitudInicialRepository.updateSolicitudInicial(solicitudCreada);
-                throw new Error("Cliente no apto para crédito según Veraz");
+                //throw new Error("Cliente no apto para crédito según Veraz");
             } else {
                 solicitudCreada.setEstado("pendiente");
                 await this.solicitudInicialRepository.updateSolicitudInicial(solicitudCreada);

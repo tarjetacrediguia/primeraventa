@@ -60,7 +60,7 @@ class GenerarContratoUseCase {
                 const contratoGuardado = yield this.contratoRepository.saveContrato(contrato);
                 console.log(`Contrato guardado: ${JSON.stringify(contratoGuardado)}`);
                 // 5. Vincular contrato a solicitud
-                yield this.solicitudRepository.vincularContrato(solicitud.getId(), contratoGuardado.getId());
+                yield this.solicitudRepository.vincularContrato(solicitud.getSolicitudInicialId(), contratoGuardado.getId());
                 console.log(`Contrato vinculado a solicitud: ${solicitud.getId()} -> ${contratoGuardado.getId()}`);
                 // 6. Generar PDF
                 const pdfBuffer = yield this.pdfService.generateContractPdf({

@@ -69,7 +69,7 @@ export class GenerarContratoUseCase {
             const contratoGuardado = await this.contratoRepository.saveContrato(contrato);
             console.log(`Contrato guardado: ${JSON.stringify(contratoGuardado)}`);
             // 5. Vincular contrato a solicitud
-            await this.solicitudRepository.vincularContrato(solicitud.getId(), contratoGuardado.getId());
+            await this.solicitudRepository.vincularContrato(solicitud.getSolicitudInicialId(), contratoGuardado.getId());
 
             console.log(`Contrato vinculado a solicitud: ${solicitud.getId()} -> ${contratoGuardado.getId()}`);
             // 6. Generar PDF
