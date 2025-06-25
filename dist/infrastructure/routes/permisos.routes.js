@@ -13,4 +13,6 @@ router.post('/', Permisos_controller_1.crearPermiso);
 router.get('/', Permisos_controller_1.listarPermisos);
 router.put('/rol/:rol', Permisos_controller_1.asignarPermisosARol);
 router.put('/asignar-permisos/:id', Permisos_controller_1.asignarPermisosAUsuario);
+router.get('/usuario/:id', Permisos_controller_1.obtenerPermisosUsuario);
+router.get('/verificar-permiso/:id', Permisos_controller_1.verificarPermisoUsuario);
 exports.default = router;

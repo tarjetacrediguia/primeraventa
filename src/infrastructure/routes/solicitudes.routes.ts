@@ -11,7 +11,7 @@ import {
   actualizarSolicitudFormal,
   obtenerDetalleSolicitudFormal
 } from './controllers/Solicitudes.controller';
-import { esComerciante, esAnalista, esComercianteOAnalista, esAdministrador } from './middlewares/rolesMiddleware';
+import { esComerciante, esAnalista, esComercianteOAnalista, esAdministrador, esAnalistaOAdministrador } from './middlewares/rolesMiddleware';
 
 const router = Router();
 
@@ -24,8 +24,8 @@ router.post('/verificacion-crediticia', esComerciante, verificarEstadoCrediticio
 
 // Rutas para solicitudes formales
 router.post('/solicitudes-formales', esComerciante, crearSolicitudFormal);
-router.put('/solicitudes-formales/:id/aprobar', esAnalista, aprobarSolicitudFormal);
-router.put('/solicitudes-formales/:id/rechazar', esAnalista, rechazarSolicitudFormal);
+router.put('/solicitudes-formales/:id/aprobar', esAnalistaOAdministrador, aprobarSolicitudFormal);
+router.put('/solicitudes-formales/:id/rechazar', esAnalistaOAdministrador, rechazarSolicitudFormal);
 router.get('/solicitudes-formales', esComercianteOAnalista, listarSolicitudesFormales);
 router.put('/solicitudes-formales/:id', esAnalista, actualizarSolicitudFormal);
 router.get('/solicitudes-formales/:id/detalle', esComercianteOAnalista, obtenerDetalleSolicitudFormal);

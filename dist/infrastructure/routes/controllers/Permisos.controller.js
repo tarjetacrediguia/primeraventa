@@ -9,12 +9,14 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.asignarPermisosAUsuario = exports.asignarPermisosARol = exports.listarPermisos = exports.crearPermiso = void 0;
+exports.verificarPermisoUsuario = exports.obtenerPermisosUsuario = exports.asignarPermisosAUsuario = exports.asignarPermisosARol = exports.listarPermisos = exports.crearPermiso = void 0;
 const PermisoRepositoryAdapter_1 = require("../../adapters/repository/PermisoRepositoryAdapter");
 const CreatePermisoUseCase_1 = require("../../../application/use-cases/Permisos/CreatePermisoUseCase");
 const ListPermisosUseCase_1 = require("../../../application/use-cases/Permisos/ListPermisosUseCase");
 const AsignarPermisosRolUseCase_1 = require("../../../application/use-cases/Permisos/AsignarPermisosRolUseCase");
 const AsignarPermisoUseCase_1 = require("../../../application/use-cases/Permisos/AsignarPermisoUseCase");
+const VerificarPermisoUseCase_1 = require("../../../application/use-cases/Permisos/VerificarPermisoUseCase");
+const ObtenerPermisosUsuarioUseCase_1 = require("../../../application/use-cases/Permisos/ObtenerPermisosUsuarioUseCase");
 const permisoRepository = new PermisoRepositoryAdapter_1.PermisoRepositoryAdapter();
 const crearPermiso = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
@@ -102,3 +104,50 @@ const asignarPermisosAUsuario = (req, res) => __awaiter(void 0, void 0, void 0, 
     }
 });
 exports.asignarPermisosAUsuario = asignarPermisosAUsuario;
+const obtenerPermisosUsuario = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const usuarioId = parseInt(req.params.id, 10);
+        if (isNaN(usuarioId)) {
+            return res.status(400).json({ error: 'ID de usuario inválido' });
+        }
+        const useCase = new ObtenerPermisosUsuarioUseCase_1.ObtenerPermisosUsuarioUseCase(permisoRepository);
+        const permisos = yield useCase.execute(usuarioId);
+        res.status(200).json(permisos.map(permiso => permiso.toPlainObject()));
+    }
+    catch (error) {
+        if (error.message === "Usuario no encontrado") {
+            res.status(404).json({ error: error.message });
+        }
+        else {
+            console.error('Error al obtener permisos del usuario:', error);
+            res.status(500).json({ error: 'Error interno del servidor' });
+        }
+    }
+});
+exports.obtenerPermisosUsuario = obtenerPermisosUsuario;
+// Nueva función: Verificar si usuario tiene un permiso
+const verificarPermisoUsuario = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const usuarioId = parseInt(req.params.id, 10);
+        const permiso = req.query.permiso; // Se obtiene de query params
+        if (isNaN(usuarioId)) {
+            return res.status(400).json({ error: 'ID de usuario inválido' });
+        }
+        if (!permiso) {
+            return res.status(400).json({ error: 'Nombre de permiso requerido' });
+        }
+        const useCase = new VerificarPermisoUseCase_1.VerificarPermisoUseCase(permisoRepository);
+        const tienePermiso = yield useCase.execute(usuarioId, permiso);
+        res.status(200).json({ tienePermiso });
+    }
+    catch (error) {
+        if (error.message === "Usuario no encontrado") {
+            res.status(404).json({ error: error.message });
+        }
+        else {
+            console.error('Error al verificar permiso:', error);
+            res.status(500).json({ error: 'Error interno del servidor' });
+        }
+    }
+});
+exports.verificarPermisoUsuario = verificarPermisoUsuario;

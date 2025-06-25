@@ -139,7 +139,9 @@ class SolicitudFormalRepositoryAdapter {
                 sf.comerciante_id,
                 sf.numero_cuenta,
                 sf.numero_tarjeta,
-                sf.fecha_aprobacion
+                sf.fecha_aprobacion,
+                sf.analista_aprobador_id,
+                sf.administrador_aprobador_id
             FROM solicitudes_formales sf
             INNER JOIN clientes c ON sf.cliente_id = c.id
             WHERE sf.id = $1
@@ -162,7 +164,7 @@ class SolicitudFormalRepositoryAdapter {
             const referentes = referentesResult.rows.map(refRow => new Referente_1.Referente(refRow.nombre_completo, refRow.apellido, refRow.vinculo, refRow.telefono));
             console.log('row', row);
             return new SolicitudFormal_1.SolicitudFormal(Number(row.id), // Convertir a número
-            row.solicitud_inicial_id, row.comerciante_id, row.nombre_completo, row.apellido, row.dni, row.telefono, row.email, new Date(row.fecha_solicitud), row.recibo, row.estado, row.acepta_tarjeta, new Date(row.fecha_nacimiento), row.domicilio, row.datos_empleador, referentes, row.comentarios || [], row.cliente_id || 0, row.numero_tarjeta, row.numero_cuenta, row.fecha_aprobacion ? new Date(row.fecha_aprobacion) : undefined);
+            row.solicitud_inicial_id, row.comerciante_id, row.nombre_completo, row.apellido, row.dni, row.telefono, row.email, new Date(row.fecha_solicitud), row.recibo, row.estado, row.acepta_tarjeta, new Date(row.fecha_nacimiento), row.domicilio, row.datos_empleador, referentes, row.comentarios || [], row.cliente_id || 0, row.numero_tarjeta, row.numero_cuenta, row.fecha_aprobacion ? new Date(row.fecha_aprobacion) : undefined, row.analista_aprobador_id, row.administrador_aprobador_id);
         });
     }
     updateSolicitudFormal(solicitudFormal) {
@@ -286,7 +288,7 @@ class SolicitudFormalRepositoryAdapter {
                 ]);
                 // Actualizar solicitud formal
                 const actualizarSolicitudQuery = `
-                UPDATE solicitudes_formales
+            UPDATE solicitudes_formales
             SET 
                 fecha_solicitud = $1, 
                 recibo = $2, 
@@ -295,9 +297,11 @@ class SolicitudFormalRepositoryAdapter {
                 comentarios = $5,
                 numero_tarjeta = $6,
                 numero_cuenta = $7,
-                fecha_aprobacion = CURRENT_TIMESTAMP
+                fecha_aprobacion = CURRENT_TIMESTAMP,
+                analista_aprobador_id = $9,
+                administrador_aprobador_id = $10
             WHERE id = $8
-            `;
+        `;
                 yield client.query(actualizarSolicitudQuery, [
                     solicitudFormal.getFechaSolicitud(),
                     solicitudFormal.getRecibo(),
@@ -306,7 +310,9 @@ class SolicitudFormalRepositoryAdapter {
                     solicitudFormal.getComentarios(),
                     solicitudFormal.getNumeroTarjeta(),
                     solicitudFormal.getNumeroCuenta(),
-                    solicitudId
+                    solicitudFormal.getId(),
+                    solicitudFormal.getAnalistaAprobadorId(),
+                    solicitudFormal.getAdministradorAprobadorId()
                 ]);
                 // Eliminar referentes existentes
                 yield client.query('DELETE FROM solicitud_referente WHERE solicitud_formal_id = $1', [solicitudId]);
@@ -337,6 +343,55 @@ class SolicitudFormalRepositoryAdapter {
             catch (error) {
                 yield client.query('ROLLBACK');
                 throw new Error(`Error al actualizar solicitud formal: ${error instanceof Error ? error.message : 'Error desconocido'}`);
+            }
+            finally {
+                client.release();
+            }
+        });
+    }
+    updateSolicitudFormalRechazo(solicitudFormal) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const client = yield DatabaseDonfig_1.pool.connect();
+            try {
+                yield client.query('BEGIN');
+                const solicitudId = solicitudFormal.getId();
+                // Actualizar solicitud formal con información de rechazo
+                const actualizarSolicitudQuery = `
+            UPDATE solicitudes_formales
+            SET 
+                estado = $1,
+                comentarios = $2,
+                fecha_actualizacion = CURRENT_TIMESTAMP,
+                analista_aprobador_id = $3,
+                administrador_aprobador_id = $4
+            WHERE id = $5
+        `;
+                yield client.query(actualizarSolicitudQuery, [
+                    solicitudFormal.getEstado(),
+                    solicitudFormal.getComentarios(),
+                    solicitudFormal.getAnalistaAprobadorId(),
+                    solicitudFormal.getAdministradorAprobadorId(),
+                    solicitudId
+                ]);
+                // Registrar acción en el historial
+                const accion = `Solicitud formal ${solicitudId} rechazada`;
+                const detalles = {
+                    comentarios: solicitudFormal.getComentarios(),
+                    aprobador_id: solicitudFormal.getAnalistaAprobadorId() || solicitudFormal.getAdministradorAprobadorId()
+                };
+                yield client.query('INSERT INTO historial (usuario_id, accion, entidad_afectada, entidad_id, detalles) VALUES ($1, $2, $3, $4, $5)', [
+                    solicitudFormal.getAnalistaAprobadorId() || solicitudFormal.getAdministradorAprobadorId(),
+                    accion,
+                    'solicitudes_formales',
+                    solicitudId,
+                    JSON.stringify(detalles)
+                ]);
+                yield client.query('COMMIT');
+                return yield this.getSolicitudFormalById(solicitudId);
+            }
+            catch (error) {
+                yield client.query('ROLLBACK');
+                throw new Error(`Error al rechazar solicitud formal: ${error instanceof Error ? error.message : 'Error desconocido'}`);
             }
             finally {
                 client.release();

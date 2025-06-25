@@ -23,6 +23,8 @@ export class SolicitudFormal {
     private numeroTarjeta?: string;
     private numeroCuenta?: string;
     private fechaAprobacion?: Date;
+    private analistaAprobadorId?: number;
+    private administradorAprobadorId?: number;
     
 
   constructor(
@@ -46,7 +48,9 @@ export class SolicitudFormal {
     clienteId: number = 0,
     numeroTarjeta?: string,
     numeroCuenta?: string,
-    fechaAprobacion?: Date
+    fechaAprobacion?: Date,
+    analistaAprobadorId?: number,
+        administradorAprobadorId?: number
     
   ) {
     this.id = id;
@@ -70,11 +74,28 @@ export class SolicitudFormal {
     this.numeroTarjeta = numeroTarjeta;
     this.numeroCuenta = numeroCuenta;
     this.fechaAprobacion = fechaAprobacion;
+    this.analistaAprobadorId = analistaAprobadorId;
+    this.administradorAprobadorId = administradorAprobadorId;
     
     
   }
 
   // Getters y Setters
+    public getAnalistaAprobadorId(): number | undefined {
+      return this.analistaAprobadorId;
+  }
+
+  public setAnalistaAprobadorId(analistaId: number): void {
+      this.analistaAprobadorId = analistaId;
+  }
+
+  public getAdministradorAprobadorId(): number | undefined {
+      return this.administradorAprobadorId;
+  }
+
+  public setAdministradorAprobadorId(adminId: number): void {
+      this.administradorAprobadorId = adminId;
+  }
   public getFechaAprobacion(): Date | undefined {
     return this.fechaAprobacion;
   }
@@ -248,7 +269,9 @@ export class SolicitudFormal {
       referentes: this.referentes.map(r => r.toPlainObject()),
       comentarios: this.comentarios,
       numeroTarjeta: this.numeroTarjeta,
-      numeroCuenta: this.numeroCuenta
+      numeroCuenta: this.numeroCuenta,
+      analistaAprobadorId: this.analistaAprobadorId,
+      administradorAprobadorId: this.administradorAprobadorId
     };
   }
 
@@ -274,7 +297,9 @@ export class SolicitudFormal {
       map.clienteId || 0,
       map.numeroTarjeta,
       map.numeroCuenta,
-      map.fechaAprobacion
+      map.fechaAprobacion,
+      map.analistaAprobadorId,
+      map.administradorAprobadorId
     );
   }
 }

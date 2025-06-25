@@ -207,23 +207,22 @@ export const aprobarSolicitudFormal = async (req: Request, res: Response) => {
   try {
     const id = req.params.id;
     const { numeroTarjeta, numeroCuenta, generarTarjeta, comentario } = req.body;
-    if (!req.user || !req.user.id) {
+    
+    if (!req.user || !req.user.id || !req.user.rol) {
       return res.status(401).json({ error: 'Usuario no autenticado' });
     }
-    const analistaId = Number(req.user.id);
-    console.log(`Datos de aprobación: numeroTarjeta: ${numeroTarjeta}, numeroCuenta: ${numeroCuenta}, generarTarjeta: ${generarTarjeta}, comentario: ${comentario}`);
+    
+    const esAdministrador = req.user.rol === 'administrador';
+    const aprobadorId = Number(req.user.id);
 
     const solicitudActualizada = await aprobarSolicitudesUC.aprobarSolicitud(
       Number(id),
       numeroTarjeta,
       numeroCuenta,
+      aprobadorId,
+      esAdministrador,
       comentario
     );
-
-    // Lógica para generar tarjeta si es necesario (implementar en otro caso de uso)
-    if (generarTarjeta) {
-      // generarTarjetaUC.execute(id, ...);
-    }
 
     res.status(200).json(solicitudActualizada);
   } catch (error) {
@@ -241,15 +240,19 @@ export const rechazarSolicitudFormal = async (req: Request, res: Response) => {
   try {
     const id = req.params.id;
     const { comentario } = req.body;
-    if (!req.user || !req.user.id) {
+    
+    if (!req.user || !req.user.id || !req.user.rol) {
       return res.status(401).json({ error: 'Usuario no autenticado' });
     }
-    const analistaId = Number(req.user.id);
+    
+    const esAdministrador = req.user.rol === 'administrador';
+    const aprobadorId = Number(req.user.id);
 
     const solicitudActualizada = await aprobarSolicitudesUC.rechazarSolicitud(
       Number(id),
       comentario,
-      analistaId
+      aprobadorId,
+      esAdministrador
     );
 
     res.status(200).json(solicitudActualizada);

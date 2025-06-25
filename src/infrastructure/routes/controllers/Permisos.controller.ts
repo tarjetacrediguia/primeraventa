@@ -5,6 +5,8 @@ import { CreatePermisoUseCase } from '../../../application/use-cases/Permisos/Cr
 import { ListPermisosUseCase } from '../../../application/use-cases/Permisos/ListPermisosUseCase';
 import { AsignarPermisosRolUseCase } from '../../../application/use-cases/Permisos/AsignarPermisosRolUseCase';
 import { AsignarPermisoUseCase } from '../../../application/use-cases/Permisos/AsignarPermisoUseCase';
+import { VerificarPermisoUseCase } from '../../../application/use-cases/Permisos/VerificarPermisoUseCase';
+import { ObtenerPermisosUsuarioUseCase } from '../../../application/use-cases/Permisos/ObtenerPermisosUsuarioUseCase';
 
 const permisoRepository = new PermisoRepositoryAdapter();
 
@@ -96,6 +98,55 @@ export const asignarPermisosAUsuario = async (req: Request, res: Response) => {
             res.status(400).json({ error: error.message });
         } else {
             console.error('Error al asignar permisos al usuario:', error);
+            res.status(500).json({ error: 'Error interno del servidor' });
+        }
+    }
+};
+
+export const obtenerPermisosUsuario = async (req: Request, res: Response) => {
+    try {
+        const usuarioId = parseInt(req.params.id, 10);
+        
+        if (isNaN(usuarioId)) {
+            return res.status(400).json({ error: 'ID de usuario inválido' });
+        }
+
+        const useCase = new ObtenerPermisosUsuarioUseCase(permisoRepository);
+        const permisos = await useCase.execute(usuarioId);
+        
+        res.status(200).json(permisos.map(permiso => permiso.toPlainObject()));
+    } catch (error: any) {
+        if (error.message === "Usuario no encontrado") {
+            res.status(404).json({ error: error.message });
+        } else {
+            console.error('Error al obtener permisos del usuario:', error);
+            res.status(500).json({ error: 'Error interno del servidor' });
+        }
+    }
+};
+
+// Nueva función: Verificar si usuario tiene un permiso
+export const verificarPermisoUsuario = async (req: Request, res: Response) => {
+    try {
+        const usuarioId = parseInt(req.params.id, 10);
+        const permiso = req.query.permiso as string;  // Se obtiene de query params
+        
+        if (isNaN(usuarioId)) {
+            return res.status(400).json({ error: 'ID de usuario inválido' });
+        }
+        if (!permiso) {
+            return res.status(400).json({ error: 'Nombre de permiso requerido' });
+        }
+
+        const useCase = new VerificarPermisoUseCase(permisoRepository);
+        const tienePermiso = await useCase.execute(usuarioId, permiso);
+        
+        res.status(200).json({ tienePermiso });
+    } catch (error: any) {
+        if (error.message === "Usuario no encontrado") {
+            res.status(404).json({ error: error.message });
+        } else {
+            console.error('Error al verificar permiso:', error);
             res.status(500).json({ error: 'Error interno del servidor' });
         }
     }

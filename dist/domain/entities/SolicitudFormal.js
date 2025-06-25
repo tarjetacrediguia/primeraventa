@@ -4,7 +4,7 @@ exports.SolicitudFormal = void 0;
 // src/domain/entities/SolicitudFormal.ts
 const Referente_1 = require("./Referente");
 class SolicitudFormal {
-    constructor(id, solicitudInicialId, comercianteId, nombreCompleto, apellido, dni, telefono, email, fechaSolicitud, recibo, estado, aceptaTarjeta, fechaNacimiento, domicilio, datosEmpleador, referentes, comentarios = [], clienteId = 0, numeroTarjeta, numeroCuenta, fechaAprobacion) {
+    constructor(id, solicitudInicialId, comercianteId, nombreCompleto, apellido, dni, telefono, email, fechaSolicitud, recibo, estado, aceptaTarjeta, fechaNacimiento, domicilio, datosEmpleador, referentes, comentarios = [], clienteId = 0, numeroTarjeta, numeroCuenta, fechaAprobacion, analistaAprobadorId, administradorAprobadorId) {
         this.id = id;
         this.solicitudInicialId = solicitudInicialId;
         this.comercianteId = comercianteId;
@@ -26,8 +26,22 @@ class SolicitudFormal {
         this.numeroTarjeta = numeroTarjeta;
         this.numeroCuenta = numeroCuenta;
         this.fechaAprobacion = fechaAprobacion;
+        this.analistaAprobadorId = analistaAprobadorId;
+        this.administradorAprobadorId = administradorAprobadorId;
     }
     // Getters y Setters
+    getAnalistaAprobadorId() {
+        return this.analistaAprobadorId;
+    }
+    setAnalistaAprobadorId(analistaId) {
+        this.analistaAprobadorId = analistaId;
+    }
+    getAdministradorAprobadorId() {
+        return this.administradorAprobadorId;
+    }
+    setAdministradorAprobadorId(adminId) {
+        this.administradorAprobadorId = adminId;
+    }
     getFechaAprobacion() {
         return this.fechaAprobacion;
     }
@@ -168,11 +182,13 @@ class SolicitudFormal {
             referentes: this.referentes.map(r => r.toPlainObject()),
             comentarios: this.comentarios,
             numeroTarjeta: this.numeroTarjeta,
-            numeroCuenta: this.numeroCuenta
+            numeroCuenta: this.numeroCuenta,
+            analistaAprobadorId: this.analistaAprobadorId,
+            administradorAprobadorId: this.administradorAprobadorId
         };
     }
     static fromMap(map) {
-        return new SolicitudFormal(map.id, map.solicitudInicialId, map.comercianteId, map.nombreCompleto, map.apellido, map.dni, map.telefono, map.email, map.fechaSolicitud, map.recibo, map.estado, map.aceptaTarjeta, map.fechaNacimiento, map.domicilio, map.datosEmpleador, map.referentes.map((r) => Referente_1.Referente.fromMap(r)), map.comentarios || [], map.clienteId || 0, map.numeroTarjeta, map.numeroCuenta, map.fechaAprobacion);
+        return new SolicitudFormal(map.id, map.solicitudInicialId, map.comercianteId, map.nombreCompleto, map.apellido, map.dni, map.telefono, map.email, map.fechaSolicitud, map.recibo, map.estado, map.aceptaTarjeta, map.fechaNacimiento, map.domicilio, map.datosEmpleador, map.referentes.map((r) => Referente_1.Referente.fromMap(r)), map.comentarios || [], map.clienteId || 0, map.numeroTarjeta, map.numeroCuenta, map.fechaAprobacion, map.analistaAprobadorId, map.administradorAprobadorId);
     }
 }
 exports.SolicitudFormal = SolicitudFormal;

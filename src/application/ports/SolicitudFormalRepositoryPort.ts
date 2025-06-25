@@ -16,4 +16,5 @@ export interface SolicitudFormalRepositoryPort {
     getSolicitudesFormalesByDni(dni: string): Promise<SolicitudFormal[]>;
     getSolicitudesFormalesBySolicitudInicialId(solicitudInicialId: number): Promise<SolicitudFormal[]>;
     updateSolicitudFormalAprobacion(solicitudFormal: SolicitudFormal): Promise<SolicitudFormal>;
+    updateSolicitudFormalRechazo(solicitudFormal: SolicitudFormal): Promise<SolicitudFormal>
 }

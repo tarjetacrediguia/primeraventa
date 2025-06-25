@@ -15,12 +15,18 @@ class AprobarSolicitudesFormalesUseCase {
         this.repository = repository;
         this.notificationService = notificationService;
     }
-    aprobarSolicitud(solicitudId, numeroTarjeta, numeroCuenta, comentario) {
+    aprobarSolicitud(solicitudId, numeroTarjeta, numeroCuenta, aprobadorId, esAdministrador, comentario) {
         return __awaiter(this, void 0, void 0, function* () {
             // 1. Obtener solicitud formal
             const solicitud = yield this.repository.getSolicitudFormalById(solicitudId);
             if (!solicitud) {
                 throw new Error("Solicitud formal no encontrada");
+            }
+            if (esAdministrador) {
+                solicitud.setAdministradorAprobadorId(aprobadorId);
+            }
+            else {
+                solicitud.setAnalistaAprobadorId(aprobadorId);
             }
             console.log("Solicitud formal encontrada:", solicitud);
             // 2. Verificar que esté en estado pendiente
@@ -44,28 +50,36 @@ class AprobarSolicitudesFormalesUseCase {
             return solicitudActualizada;
         });
     }
-    rechazarSolicitud(solicitudId, comentario, analistaId) {
+    rechazarSolicitud(solicitudId, comentario, aprobadorId, esAdministrador) {
         return __awaiter(this, void 0, void 0, function* () {
             // 1. Obtener solicitud formal
             const solicitud = yield this.repository.getSolicitudFormalById(solicitudId);
             if (!solicitud) {
                 throw new Error("Solicitud formal no encontrada");
             }
-            // 2. Verificar que esté en estado pendiente
+            // 2. Asignar aprobador según rol
+            if (esAdministrador) {
+                solicitud.setAdministradorAprobadorId(aprobadorId);
+            }
+            else {
+                solicitud.setAnalistaAprobadorId(aprobadorId);
+            }
+            // 3. Verificar estado pendiente
             if (solicitud.getEstado() !== "pendiente") {
                 throw new Error("Solo se pueden rechazar solicitudes pendientes");
             }
-            // 3. Validar comentario
+            // 4. Validar comentario
             if (!comentario || comentario.trim().length < 10) {
                 throw new Error("El comentario es obligatorio y debe tener al menos 10 caracteres");
             }
-            // 4. Agregar comentario
-            solicitud.agregarComentario(`Rechazo por analista ${analistaId}: ${comentario}`);
-            // 5. Actualizar estado
+            // 5. Agregar comentario con contexto
+            const rol = esAdministrador ? 'administrador' : 'analista';
+            solicitud.agregarComentario(`Rechazo por ${rol} ${aprobadorId}: ${comentario}`);
+            // 6. Actualizar estado
             solicitud.setEstado("rechazada");
-            // 6. Guardar cambios
-            const solicitudActualizada = yield this.repository.updateSolicitudFormal(solicitud);
-            // 7. Notificar al cliente
+            // 7. Guardar cambios usando la nueva función específica
+            const solicitudActualizada = yield this.repository.updateSolicitudFormalRechazo(solicitud);
+            // 8. Notificar al cliente
             yield this.notificarCliente(solicitudActualizada, `Su solicitud formal de crédito ha sido rechazada. Comentario: ${comentario}`);
             return solicitudActualizada;
         });

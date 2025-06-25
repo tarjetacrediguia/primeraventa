@@ -10,6 +10,7 @@ import comerciantesRoutes from './comerciantes.routes';
 import permisosRoutes from './permisos.routes';
 import analistasRoutes from './analistas.routes';
 import configuracionRoutes from './configuracion.routes';
+import estadisticasRoutes from './estadisticas.routes';
 
 
 const router = Router();
@@ -26,7 +27,7 @@ router.use('/comerciantes', comerciantesRoutes);
 router.use('/permisos', permisosRoutes);
 router.use('/solicitudes', solicitudesRoutes);
 router.use('/contratos', contratosRoutes);
-//router.use('/estadisticas', estadisticasRoutes);
+router.use('/estadisticas', estadisticasRoutes);
 router.use('/notificaciones', notificacionesRoutes);
 router.use('/configuracion', configuracionRoutes);
 //router.use('/tareas', tareasRoutes);

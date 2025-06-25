@@ -170,16 +170,12 @@ const aprobarSolicitudFormal = (req, res) => __awaiter(void 0, void 0, void 0, f
     try {
         const id = req.params.id;
         const { numeroTarjeta, numeroCuenta, generarTarjeta, comentario } = req.body;
-        if (!req.user || !req.user.id) {
+        if (!req.user || !req.user.id || !req.user.rol) {
             return res.status(401).json({ error: 'Usuario no autenticado' });
         }
-        const analistaId = Number(req.user.id);
-        console.log(`Datos de aprobación: numeroTarjeta: ${numeroTarjeta}, numeroCuenta: ${numeroCuenta}, generarTarjeta: ${generarTarjeta}, comentario: ${comentario}`);
-        const solicitudActualizada = yield aprobarSolicitudesUC.aprobarSolicitud(Number(id), numeroTarjeta, numeroCuenta, comentario);
-        // Lógica para generar tarjeta si es necesario (implementar en otro caso de uso)
-        if (generarTarjeta) {
-            // generarTarjetaUC.execute(id, ...);
-        }
+        const esAdministrador = req.user.rol === 'administrador';
+        const aprobadorId = Number(req.user.id);
+        const solicitudActualizada = yield aprobarSolicitudesUC.aprobarSolicitud(Number(id), numeroTarjeta, numeroCuenta, aprobadorId, esAdministrador, comentario);
         res.status(200).json(solicitudActualizada);
     }
     catch (error) {
@@ -199,11 +195,12 @@ const rechazarSolicitudFormal = (req, res) => __awaiter(void 0, void 0, void 0, 
     try {
         const id = req.params.id;
         const { comentario } = req.body;
-        if (!req.user || !req.user.id) {
+        if (!req.user || !req.user.id || !req.user.rol) {
             return res.status(401).json({ error: 'Usuario no autenticado' });
         }
-        const analistaId = Number(req.user.id);
-        const solicitudActualizada = yield aprobarSolicitudesUC.rechazarSolicitud(Number(id), comentario, analistaId);
+        const esAdministrador = req.user.rol === 'administrador';
+        const aprobadorId = Number(req.user.id);
+        const solicitudActualizada = yield aprobarSolicitudesUC.rechazarSolicitud(Number(id), comentario, aprobadorId, esAdministrador);
         res.status(200).json(solicitudActualizada);
     }
     catch (error) {

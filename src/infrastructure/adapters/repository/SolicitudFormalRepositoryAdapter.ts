@@ -140,7 +140,9 @@ async createSolicitudFormal(solicitudFormal: SolicitudFormal): Promise<Solicitud
                 sf.comerciante_id,
                 sf.numero_cuenta,
                 sf.numero_tarjeta,
-                sf.fecha_aprobacion
+                sf.fecha_aprobacion,
+                sf.analista_aprobador_id,
+                sf.administrador_aprobador_id
             FROM solicitudes_formales sf
             INNER JOIN clientes c ON sf.cliente_id = c.id
             WHERE sf.id = $1
@@ -194,7 +196,9 @@ async createSolicitudFormal(solicitudFormal: SolicitudFormal): Promise<Solicitud
             row.cliente_id || 0,
             row.numero_tarjeta,
             row.numero_cuenta,
-            row.fecha_aprobacion ? new Date(row.fecha_aprobacion) : undefined
+            row.fecha_aprobacion ? new Date(row.fecha_aprobacion) : undefined,
+            row.analista_aprobador_id,
+            row.administrador_aprobador_id
         );
     }
 
@@ -342,7 +346,7 @@ async createSolicitudFormal(solicitudFormal: SolicitudFormal): Promise<Solicitud
 
             // Actualizar solicitud formal
             const actualizarSolicitudQuery = `
-                UPDATE solicitudes_formales
+            UPDATE solicitudes_formales
             SET 
                 fecha_solicitud = $1, 
                 recibo = $2, 
@@ -351,10 +355,13 @@ async createSolicitudFormal(solicitudFormal: SolicitudFormal): Promise<Solicitud
                 comentarios = $5,
                 numero_tarjeta = $6,
                 numero_cuenta = $7,
-                fecha_aprobacion = CURRENT_TIMESTAMP
+                fecha_aprobacion = CURRENT_TIMESTAMP,
+                analista_aprobador_id = $9,
+                administrador_aprobador_id = $10
             WHERE id = $8
-            `;
-            await client.query(actualizarSolicitudQuery, [
+        `;
+        
+        await client.query(actualizarSolicitudQuery, [
             solicitudFormal.getFechaSolicitud(),
             solicitudFormal.getRecibo(),
             solicitudFormal.getEstado(),
@@ -362,7 +369,9 @@ async createSolicitudFormal(solicitudFormal: SolicitudFormal): Promise<Solicitud
             solicitudFormal.getComentarios(),
             solicitudFormal.getNumeroTarjeta(),
             solicitudFormal.getNumeroCuenta(),
-            solicitudId 
+            solicitudFormal.getId(),
+            solicitudFormal.getAnalistaAprobadorId(),
+            solicitudFormal.getAdministradorAprobadorId()
         ]);
 
             // Eliminar referentes existentes
@@ -412,6 +421,63 @@ async createSolicitudFormal(solicitudFormal: SolicitudFormal): Promise<Solicitud
             client.release();
         }
     }
+
+    async updateSolicitudFormalRechazo(solicitudFormal: SolicitudFormal): Promise<SolicitudFormal> {
+    const client = await pool.connect();
+    try {
+        await client.query('BEGIN');
+    
+        const solicitudId = solicitudFormal.getId();
+        
+        // Actualizar solicitud formal con información de rechazo
+        const actualizarSolicitudQuery = `
+            UPDATE solicitudes_formales
+            SET 
+                estado = $1,
+                comentarios = $2,
+                fecha_actualizacion = CURRENT_TIMESTAMP,
+                analista_aprobador_id = $3,
+                administrador_aprobador_id = $4
+            WHERE id = $5
+        `;
+        
+        await client.query(actualizarSolicitudQuery, [
+            solicitudFormal.getEstado(),
+            solicitudFormal.getComentarios(),
+            solicitudFormal.getAnalistaAprobadorId(),
+            solicitudFormal.getAdministradorAprobadorId(),
+            solicitudId
+        ]);
+
+        // Registrar acción en el historial
+        const accion = `Solicitud formal ${solicitudId} rechazada`;
+        const detalles = {
+            comentarios: solicitudFormal.getComentarios(),
+            aprobador_id: solicitudFormal.getAnalistaAprobadorId() || solicitudFormal.getAdministradorAprobadorId()
+        };
+        
+        await client.query(
+            'INSERT INTO historial (usuario_id, accion, entidad_afectada, entidad_id, detalles) VALUES ($1, $2, $3, $4, $5)',
+            [
+                solicitudFormal.getAnalistaAprobadorId() || solicitudFormal.getAdministradorAprobadorId(),
+                accion,
+                'solicitudes_formales',
+                solicitudId,
+                JSON.stringify(detalles)
+            ]
+        );
+
+        await client.query('COMMIT');
+        
+        return await this.getSolicitudFormalById(solicitudId) as SolicitudFormal;
+        
+    } catch (error) {
+        await client.query('ROLLBACK');
+        throw new Error(`Error al rechazar solicitud formal: ${error instanceof Error ? error.message : 'Error desconocido'}`);
+    } finally {
+        client.release();
+    }
+}
 
     async deleteSolicitudFormal(id: number): Promise<void> {
         const client = await pool.connect();
