@@ -25,6 +25,8 @@ import { PermisoRepositoryAdapter } from '../../adapters/repository/PermisoRepos
 import { Referente } from '../../../domain/entities/Referente';
 import { AnalistaRepositoryAdapter } from '../../adapters/repository/AnalistaRepositoryAdapter';
 import { ClienteRepositoryAdapter } from '../../adapters/repository/ClienteRepositoryAdapter';
+import { GetSolicitudesInicialesByComercianteYEstadoUseCase } from '../../../application/use-cases/SolicitudInicial/GetSolicitudesInicialesByComercianteYEstadoUseCase';
+import { GetSolicitudesFormalesByComercianteYEstadoUseCase } from '../../../application/use-cases/SolicitudFormal/GetSolicitudesFormalesByComercianteYEstadoUseCase';
 
 // Inyección de dependencias (deberían venir de un contenedor DI)
 const verazService: VerazPort = new VerazAdapter();
@@ -34,6 +36,9 @@ const contratoRepo: ContratoRepositoryPort = new ContratoRepositoryAdapter();
 const solicitudFormalRepo: SolicitudFormalRepositoryPort = new SolicitudFormalRepositoryAdapter();
 const permisoRepo: PermisoRepositoryPort = new PermisoRepositoryAdapter();
 const clienteRepository = new ClienteRepositoryAdapter();
+
+
+const getSolicitudesInicialesByComercianteYEstado = new GetSolicitudesInicialesByComercianteYEstadoUseCase(solicitudInicialRepo)
 
 // Casos de uso inicializados
 const crearSolicitudInicialUC = new CrearSolicitudInicialUseCase(
@@ -131,14 +136,30 @@ export const crearSolicitudFormal = async (req: Request, res: Response) => {
   try {
     const { idSolicitudInicial, cliente, referentes } = req.body;
     console.log(`Creando solicitud formal para solicitud inicial ID: ${idSolicitudInicial}`);
-    
-    // Validar campos obligatorios
-    /*
+    console.log("recibo de sueldo:", cliente.recibo);
+    // Validar que el recibo sea proporcionado
     if (!cliente.recibo) {
       return res.status(400).json({ error: 'El recibo es obligatorio' });
     }
-*/
-    // Validar que se proporcionen exactamente dos referentes
+
+    // Convertir base64 a Buffer
+    const reciboBuffer = Buffer.from(cliente.recibo, 'base64');
+    
+    // Validar que sea una imagen JPG
+    const mimeType = await getImageMimeType(reciboBuffer);
+    if (mimeType !== 'image/jpeg') {
+      return res.status(400).json({ error: 'El recibo debe ser una imagen JPG' });
+    }
+    
+    // Validar tamaño máximo (5MB)
+    if (reciboBuffer.length > 5 * 1024 * 1024) {
+      return res.status(400).json({ error: 'El recibo no puede exceder los 5MB' });
+    }
+    
+    // Reemplazar el string base64 con el Buffer
+    cliente.recibo = reciboBuffer;
+
+    // Validar referentes (código existente)
     if (!referentes || !Array.isArray(referentes)) {
       return res.status(400).json({ error: 'Se requiere un array de referentes' });
     }
@@ -146,7 +167,6 @@ export const crearSolicitudFormal = async (req: Request, res: Response) => {
       return res.status(400).json({ error: 'Se requieren exactamente dos referentes' });
     }
 
-    // Validar estructura de cada referente
     const referentesInstances = referentes.map(ref => {
       if (!ref.nombreCompleto || !ref.apellido || !ref.vinculo || !ref.telefono) {
         throw new Error('Cada referente debe tener: nombreCompleto, apellido, vinculo y telefono');
@@ -173,7 +193,7 @@ export const crearSolicitudFormal = async (req: Request, res: Response) => {
         dni: cliente.dni,
         telefono: cliente.telefono,
         email: cliente.email,
-        recibo: Buffer.from(cliente.recibo, 'base64') ,
+        recibo: cliente.recibo, // Ahora es un Buffer
         aceptaTarjeta: cliente.aceptaTarjeta,
         fechaNacimiento: new Date(cliente.fechaNacimiento),
         domicilio: cliente.domicilio,
@@ -197,6 +217,64 @@ export const crearSolicitudFormal = async (req: Request, res: Response) => {
       } else {
         res.status(400).json({ error: error.message });
       }
+    } else {
+      res.status(500).json({ error: 'Error interno del servidor' });
+    }
+  }
+};
+
+async function getImageMimeType(buffer: Buffer): Promise<string | null> {
+  try {
+    // Verificar la firma del archivo (magic number)
+    if (buffer.length < 3) return null;
+    
+    // Verificar firma JPG: FF D8 FF
+    if (buffer[0] === 0xFF && buffer[1] === 0xD8 && buffer[2] === 0xFF) {
+      return 'image/jpeg';
+    }
+    
+    // Verificar firma alternativa para JPG
+    if (buffer.length > 6 && 
+        buffer[0] === 0xFF && 
+        buffer[1] === 0xD8 && 
+        buffer[2] === 0xFF && 
+        buffer[3] === 0xE0 && 
+        buffer[6] === 'J'.charCodeAt(0) && 
+        buffer[7] === 'F'.charCodeAt(0) && 
+        buffer[8] === 'I'.charCodeAt(0) && 
+        buffer[9] === 'F'.charCodeAt(0)) {
+      return 'image/jpeg';
+    }
+    
+    return null;
+  } catch (error) {
+    console.error('Error al detectar tipo MIME:', error);
+    return null;
+  }
+}
+
+export const obtenerReciboSolicitudFormal = async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    const solicitud = await getSolicitudFormalByIdUC.execute(Number(id));
+    
+    if (!solicitud) {
+      return res.status(404).json({ error: 'Solicitud no encontrada' });
+    }
+    
+    const reciboBuffer = solicitud.getRecibo();
+    
+    // Establecer encabezados
+    res.setHeader('Content-Type', 'image/jpeg');
+    res.setHeader('Content-Disposition', `inline; filename="recibo-${id}.jpg"`);
+    res.setHeader('Content-Length', reciboBuffer.length);
+    
+    // Enviar imagen
+    res.end(reciboBuffer);
+    
+  } catch (error) {
+    if (error instanceof Error) {
+      res.status(400).json({ error: error.message });
     } else {
       res.status(500).json({ error: 'Error interno del servidor' });
     }
@@ -316,6 +394,8 @@ export const actualizarSolicitudFormal = async (req: Request, res: Response) => 
       if (!Array.isArray(updates.referentes)) {
         return res.status(400).json({ error: 'Referentes debe ser un array' });
       }
+
+      
       
       const referentesInstances = updates.referentes.map((ref: any) => {
         if (!ref.nombreCompleto || !ref.apellido || !ref.vinculo || !ref.telefono) {
@@ -351,10 +431,19 @@ export const actualizarSolicitudFormal = async (req: Request, res: Response) => 
       }
       
       // Manejar recibo (base64 a Buffer)
-      if (cliente.recibo !== undefined) {
-        solicitudExistente.setRecibo(Buffer.from(cliente.recibo, 'base64'));
+    if (cliente.recibo !== undefined) {
+      const reciboBuffer = Buffer.from(cliente.recibo, 'base64');
+      
+      // Validar que sea JPG
+      if (!(reciboBuffer[0] === 0xFF && reciboBuffer[1] === 0xD8 && reciboBuffer[2] === 0xFF)) {
+        return res.status(400).json({ error: 'El recibo debe ser una imagen JPG válida' });
       }
+      
+      solicitudExistente.setRecibo(reciboBuffer);
     }
+    }
+
+    
 
     console.log(`Actualizando solicitud formal ID: ${id} con datos:`, updates);
     
@@ -384,4 +473,52 @@ export const obtenerDetalleSolicitudFormal = async (req: Request, res: Response)
   } catch (error) {
     res.status(400).json({ error: (error as Error).message });
   }
+};
+
+export const listarSolicitudesInicialesByComercianteYEstado = async (req: Request, res: Response) => {
+    try {
+        const comercianteId = req.query.id ? parseInt(req.query.id as string) : undefined;
+        const estado = req.query.estado as string;
+
+        console.log(`Listando solicitudes iniciales para comerciante ID: ${comercianteId} con estado: ${estado}`);
+        
+        // Validar parámetros
+        if (!comercianteId || !estado) {
+            return res.status(400).json({ error: 'Se requieren id y estado' });
+        }
+        
+        // Filtro combinado
+        const useCase = getSolicitudesInicialesByComercianteYEstado;
+        const solicitudes = await useCase.execute(comercianteId, estado);
+        
+        res.json(solicitudes);
+    } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : String(error);
+        res.status(500).json({ error: errorMessage });
+    }
+
+   
+};
+
+ export const listarSolicitudesFormalesByComercianteYEstado = async (req: Request, res: Response) => {
+    try {
+        const comercianteId = req.query.id ? parseInt(req.query.id as string) : undefined;
+        const estado = req.query.estado as string;
+
+        console.log(`Listando solicitudes formales para comerciante ID: ${comercianteId} con estado: ${estado}`);
+        
+        // Validar parámetros
+        if (!comercianteId || !estado) {
+            return res.status(400).json({ error: 'Se requieren id y estado' });
+        }
+        
+        // Filtro combinado
+        const useCase = new GetSolicitudesFormalesByComercianteYEstadoUseCase(solicitudFormalRepo);
+        const solicitudes = await useCase.execute(comercianteId, estado);
+        
+        res.json(solicitudes);
+    } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : String(error);
+        res.status(500).json({ error: errorMessage });
+    }
 };

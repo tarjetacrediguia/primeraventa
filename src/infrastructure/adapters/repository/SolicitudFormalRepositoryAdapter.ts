@@ -52,30 +52,41 @@ async createSolicitudFormal(solicitudFormal: SolicitudFormal): Promise<Solicitud
         ]);
 
         // 3. Crear solicitud formal usando el mismo cliente_id
+        const reciboStream = solicitudFormal.getReciboStream();
+        const chunks: Uint8Array[] = [];
+        
+        for await (const chunk of reciboStream) {
+        chunks.push(chunk);
+        }
+        
+        const reciboBuffer = Buffer.concat(chunks);
+
+        // Insertar en la base de datos
         const solicitudQuery = `
-            INSERT INTO solicitudes_formales (
-                cliente_id, 
-                solicitud_inicial_id, 
-                comerciante_id,
-                fecha_solicitud, 
-                recibo, 
-                estado, 
-                acepta_tarjeta, 
-                comentarios
-            )
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-            RETURNING id
-        `;
-        const solicitudValues = [
-            clienteId,
-            solicitudFormal.getSolicitudInicialId(),
-            solicitudFormal.getComercianteId(),
-            solicitudFormal.getFechaSolicitud(),
-            solicitudFormal.getRecibo(),
-            solicitudFormal.getEstado(),
-            solicitudFormal.getAceptaTarjeta(),
-            solicitudFormal.getComentarios()
-        ];
+      INSERT INTO solicitudes_formales (
+        cliente_id, 
+        solicitud_inicial_id, 
+        comerciante_id,
+        fecha_solicitud, 
+        recibo, 
+        estado, 
+        acepta_tarjeta, 
+        comentarios
+      )
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+      RETURNING id
+    `;
+    
+    const solicitudValues = [
+      clienteId,
+      solicitudFormal.getSolicitudInicialId(),
+      solicitudFormal.getComercianteId(),
+      solicitudFormal.getFechaSolicitud(),
+      solicitudFormal.getRecibo(),
+      solicitudFormal.getEstado(),
+      solicitudFormal.getAceptaTarjeta(),
+      solicitudFormal.getComentarios()
+    ];
         
         const solicitudResult = await client.query(solicitudQuery, solicitudValues);
         const solicitudId = solicitudResult.rows[0].id;
@@ -576,7 +587,7 @@ async createSolicitudFormal(solicitudFormal: SolicitudFormal): Promise<Solicitud
                 row.telefono,
                 row.email,
                 new Date(row.fecha_solicitud),
-                row.recibo,
+                Buffer.alloc(0),
                 row.estado,
                 row.acepta_tarjeta,
                 new Date(row.fecha_nacimiento),
@@ -838,4 +849,38 @@ async createSolicitudFormal(solicitudFormal: SolicitudFormal): Promise<Solicitud
         
         return solicitudes;
     }
+
+    async getSolicitudesFormalesByComercianteYEstado(
+    comercianteId: number, 
+    estado: string
+): Promise<SolicitudFormal[]> {
+    const query = `
+        SELECT 
+            sf.id,
+            c.nombre_completo,
+            c.apellido,
+            c.dni,
+            c.telefono,
+            c.email,
+            sf.fecha_solicitud,
+            sf.recibo,
+            sf.estado,
+            sf.acepta_tarjeta,
+            c.fecha_nacimiento,
+            c.domicilio,
+            c.datos_empleador,
+            sf.comentarios,
+            sf.solicitud_inicial_id,
+            sf.comerciante_id
+        FROM solicitudes_formales sf
+        INNER JOIN clientes c ON sf.cliente_id = c.id
+        WHERE sf.comerciante_id = $1 AND sf.estado = $2
+        ORDER BY sf.fecha_solicitud DESC
+    `;
+    
+    return await this.executeSolicitudesQuery(query, [comercianteId, estado]);
+}
+
+
+    
 }

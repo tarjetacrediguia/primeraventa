@@ -13,4 +13,8 @@ export interface SolicitudInicialRepositoryPort {
     getSolicitudesInicialesByClienteId(clienteId: number): Promise<SolicitudInicial[]>;
     obtenerSolicitudesAExpirar(diasExpiracion: number): Promise<SolicitudInicial[]>;
     expirarSolicitud(solicitudId: number): Promise<void>;
+    getSolicitudesInicialesByComercianteYEstado(
+        comercianteId: number, 
+        estado: string
+    ): Promise<SolicitudInicial[]>;
 }

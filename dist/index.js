@@ -22,11 +22,11 @@ const start = () => __awaiter(void 0, void 0, void 0, function* () {
     try {
         // Crear servidor HTTP con el router principal
         const app = (0, http_server_1.createHTTPServer)(routes_1.default);
-        app.listen(AppConfig_1.appConfig.port, () => {
+        app.listen(AppConfig_1.appConfig.port, '0.0.0.0', () => {
             console.log(`
       🚀 Servidor en ejecución en modo ${AppConfig_1.appConfig.environment.toUpperCase()}
       ✅ Puerto: ${AppConfig_1.appConfig.port}
-      ✅ Base URL: http://localhost:${AppConfig_1.appConfig.port}/API/v1
+      ✅ Base URL: http://0.0.0.0:${AppConfig_1.appConfig.port}/API/v1
       ✅ JWT Secret: ${AppConfig_1.appConfig.jwtSecret ? 'Configurado' : 'NO configurado!'}
       `);
         });

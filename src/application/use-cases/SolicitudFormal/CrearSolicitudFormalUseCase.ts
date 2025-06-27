@@ -4,7 +4,6 @@ import { SolicitudFormalRepositoryPort } from "../../ports/SolicitudFormalReposi
 import { NotificationPort } from "../../ports/NotificationPort";
 import { PermisoRepositoryPort } from "../../ports/PermisoRepositoryPort";
 import { SolicitudFormal } from "../../../domain/entities/SolicitudFormal";
-import { v4 as uuidv4 } from 'uuid';
 import { AnalistaRepositoryPort } from "../../ports/AnalistaRepositoryPort";
 import { ContratoRepositoryPort } from "../../ports/ContratoRepositoryPort";
 import { ClienteRepositoryPort } from "../../ports/ClienteRepositoryPort";
@@ -29,7 +28,7 @@ export class CrearSolicitudFormalUseCase {
             dni: string;
             telefono: string;
             email: string;
-            recibo: Buffer | string;
+            recibo: Buffer;
             aceptaTarjeta: boolean;
             fechaNacimiento: Date;
             domicilio: string;
@@ -66,6 +65,27 @@ export class CrearSolicitudFormalUseCase {
             const existentes = await this.solicitudFormalRepo.getSolicitudesFormalesBySolicitudInicialId(solicitudInicialId);
             if (existentes.length > 0) {
                 throw new Error("Ya existe una solicitud formal para esta solicitud inicial");
+            }
+
+            const signature = datosSolicitud.recibo.subarray(0, 3);
+            if (!(signature[0] === 0xFF && signature[1] === 0xD8 && signature[2] === 0xFF)) {
+            throw new Error('El recibo no es una imagen JPG válida');
+            }
+
+            if (typeof datosSolicitud.recibo === 'string') {
+            const buffer = Buffer.from(datosSolicitud.recibo, 'base64');
+            const fileType = await import('file-type');
+            const type = await fileType.fileTypeFromBuffer(buffer);
+            
+            if (!type || !type.mime.startsWith('image/')) {
+                throw new Error('El recibo debe ser una imagen válida');
+            }
+            
+            if (type.mime !== 'image/jpeg') {
+                throw new Error('Solo se aceptan imágenes en formato JPG');
+            }
+            
+            datosSolicitud.recibo = buffer;
             }
 
             // 5. Crear la solicitud formal con comentario inicial

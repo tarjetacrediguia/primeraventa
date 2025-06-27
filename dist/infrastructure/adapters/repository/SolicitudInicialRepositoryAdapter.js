@@ -311,5 +311,21 @@ class SolicitudInicialRepositoryAdapter {
         return new SolicitudInicial_1.SolicitudInicial(row.id.toString(), row.fecha_creacion, row.estado, row.dni_cliente, row.cuil_cliente, row.recibosueldo || undefined, // BYTEA field
         ((_a = row.comerciante_id) === null || _a === void 0 ? void 0 : _a.toString()) || undefined, row.comentarios || []);
     }
+    getSolicitudesInicialesByComercianteYEstado(comercianteId, estado) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const query = `
+        SELECT 
+            si.id, si.fecha_creacion, si.estado, si.reciboSueldo, 
+            si.comentarios, si.comerciante_id,
+            c.dni as dni_cliente, c.cuil as cuil_cliente
+        FROM solicitudes_iniciales si
+        INNER JOIN clientes c ON si.cliente_id = c.id
+        WHERE si.comerciante_id = $1 AND si.estado = $2
+        ORDER BY si.fecha_creacion DESC
+    `;
+            const result = yield DatabaseDonfig_1.pool.query(query, [comercianteId, estado]);
+            return result.rows.map(row => this.mapRowToSolicitudInicial(row));
+        });
+    }
 }
 exports.SolicitudInicialRepositoryAdapter = SolicitudInicialRepositoryAdapter;

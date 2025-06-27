@@ -9,6 +9,13 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
+var __asyncValues = (this && this.__asyncValues) || function (o) {
+    if (!Symbol.asyncIterator) throw new TypeError("Symbol.asyncIterator is not defined.");
+    var m = o[Symbol.asyncIterator], i;
+    return m ? m.call(o) : (o = typeof __values === "function" ? __values(o) : o[Symbol.iterator](), i = {}, verb("next"), verb("throw"), verb("return"), i[Symbol.asyncIterator] = function () { return this; }, i);
+    function verb(n) { i[n] = o[n] && function (v) { return new Promise(function (resolve, reject) { v = o[n](v), settle(resolve, reject, v.done, v.value); }); }; }
+    function settle(resolve, reject, d, v) { Promise.resolve(v).then(function(v) { resolve({ value: v, done: d }); }, reject); }
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.SolicitudFormalRepositoryAdapter = void 0;
 const SolicitudFormal_1 = require("../../../domain/entities/SolicitudFormal");
@@ -18,6 +25,7 @@ class SolicitudFormalRepositoryAdapter {
     // src/infrastructure/adapters/repository/SolicitudFormalRepositoryAdapter.ts
     createSolicitudFormal(solicitudFormal) {
         return __awaiter(this, void 0, void 0, function* () {
+            var _a, e_1, _b, _c;
             const client = yield DatabaseDonfig_1.pool.connect();
             try {
                 yield client.query('BEGIN');
@@ -56,20 +64,39 @@ class SolicitudFormalRepositoryAdapter {
                     clienteId
                 ]);
                 // 3. Crear solicitud formal usando el mismo cliente_id
+                const reciboStream = solicitudFormal.getReciboStream();
+                const chunks = [];
+                try {
+                    for (var _d = true, reciboStream_1 = __asyncValues(reciboStream), reciboStream_1_1; reciboStream_1_1 = yield reciboStream_1.next(), _a = reciboStream_1_1.done, !_a; _d = true) {
+                        _c = reciboStream_1_1.value;
+                        _d = false;
+                        const chunk = _c;
+                        chunks.push(chunk);
+                    }
+                }
+                catch (e_1_1) { e_1 = { error: e_1_1 }; }
+                finally {
+                    try {
+                        if (!_d && !_a && (_b = reciboStream_1.return)) yield _b.call(reciboStream_1);
+                    }
+                    finally { if (e_1) throw e_1.error; }
+                }
+                const reciboBuffer = Buffer.concat(chunks);
+                // Insertar en la base de datos
                 const solicitudQuery = `
-            INSERT INTO solicitudes_formales (
-                cliente_id, 
-                solicitud_inicial_id, 
-                comerciante_id,
-                fecha_solicitud, 
-                recibo, 
-                estado, 
-                acepta_tarjeta, 
-                comentarios
-            )
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-            RETURNING id
-        `;
+      INSERT INTO solicitudes_formales (
+        cliente_id, 
+        solicitud_inicial_id, 
+        comerciante_id,
+        fecha_solicitud, 
+        recibo, 
+        estado, 
+        acepta_tarjeta, 
+        comentarios
+      )
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+      RETURNING id
+    `;
                 const solicitudValues = [
                     clienteId,
                     solicitudFormal.getSolicitudInicialId(),
@@ -469,7 +496,7 @@ class SolicitudFormalRepositoryAdapter {
             `;
                 const referentesResult = yield DatabaseDonfig_1.pool.query(referentesQuery, [row.id]);
                 const referentes = referentesResult.rows.map(refRow => new Referente_1.Referente(refRow.nombre_completo, refRow.apellido, refRow.vinculo, refRow.telefono));
-                solicitudes.push(new SolicitudFormal_1.SolicitudFormal(row.id.toString(), row.solicitud_inicial_id, row.comerciante_id, row.nombre_completo, row.apellido, row.dni, row.telefono, row.email, new Date(row.fecha_solicitud), row.recibo, row.estado, row.acepta_tarjeta, new Date(row.fecha_nacimiento), row.domicilio, row.datos_empleador, referentes, row.comentarios || []));
+                solicitudes.push(new SolicitudFormal_1.SolicitudFormal(row.id.toString(), row.solicitud_inicial_id, row.comerciante_id, row.nombre_completo, row.apellido, row.dni, row.telefono, row.email, new Date(row.fecha_solicitud), Buffer.alloc(0), row.estado, row.acepta_tarjeta, new Date(row.fecha_nacimiento), row.domicilio, row.datos_empleador, referentes, row.comentarios || []));
             }
             return solicitudes;
         });
@@ -690,6 +717,34 @@ class SolicitudFormalRepositoryAdapter {
                 solicitudes.push(new SolicitudFormal_1.SolicitudFormal(row.id.toString(), row.solicitud_inicial_id, row.comerciante_id, row.nombre_completo, row.apellido, row.dni, row.telefono, row.email, new Date(row.fecha_solicitud), row.recibo, row.estado, row.acepta_tarjeta, new Date(row.fecha_nacimiento), row.domicilio, row.datos_empleador, referentes, row.comentarios || []));
             }
             return solicitudes;
+        });
+    }
+    getSolicitudesFormalesByComercianteYEstado(comercianteId, estado) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const query = `
+        SELECT 
+            sf.id,
+            c.nombre_completo,
+            c.apellido,
+            c.dni,
+            c.telefono,
+            c.email,
+            sf.fecha_solicitud,
+            sf.recibo,
+            sf.estado,
+            sf.acepta_tarjeta,
+            c.fecha_nacimiento,
+            c.domicilio,
+            c.datos_empleador,
+            sf.comentarios,
+            sf.solicitud_inicial_id,
+            sf.comerciante_id
+        FROM solicitudes_formales sf
+        INNER JOIN clientes c ON sf.cliente_id = c.id
+        WHERE sf.comerciante_id = $1 AND sf.estado = $2
+        ORDER BY sf.fecha_solicitud DESC
+    `;
+            return yield this.executeSolicitudesQuery(query, [comercianteId, estado]);
         });
     }
 }

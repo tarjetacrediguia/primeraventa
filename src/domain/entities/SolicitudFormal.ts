@@ -1,4 +1,5 @@
 // src/domain/entities/SolicitudFormal.ts
+import { Readable } from "stream";
 import { Referente } from "./Referente";
 
 export class SolicitudFormal {
@@ -249,6 +250,16 @@ export class SolicitudFormal {
   // Métodos adicionales
   public toString(): string {
     return `SolicitudFormal[id=${this.id}, estado=${this.estado}, solicitante=${this.nombreCompleto} ${this.apellido}]`;
+  }
+
+  public getReciboStream(): Readable {
+    return Readable.from(this.recibo);
+  }
+
+  public async getReciboMimeType(): Promise<string> {
+    const fileType = await import('file-type');
+    const type = await fileType.fileTypeFromBuffer(this.recibo);
+    return type?.mime || 'application/octet-stream';
   }
 
   public toPlainObject(): any {

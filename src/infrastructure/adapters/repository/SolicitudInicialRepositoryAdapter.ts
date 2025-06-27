@@ -339,4 +339,24 @@ export class SolicitudInicialRepositoryAdapter implements SolicitudInicialReposi
             row.comentarios || []
         );
     }
+    async getSolicitudesInicialesByComercianteYEstado(
+    comercianteId: number, 
+    estado: string
+): Promise<SolicitudInicial[]> {
+    const query = `
+        SELECT 
+            si.id, si.fecha_creacion, si.estado, si.reciboSueldo, 
+            si.comentarios, si.comerciante_id,
+            c.dni as dni_cliente, c.cuil as cuil_cliente
+        FROM solicitudes_iniciales si
+        INNER JOIN clientes c ON si.cliente_id = c.id
+        WHERE si.comerciante_id = $1 AND si.estado = $2
+        ORDER BY si.fecha_creacion DESC
+    `;
+    
+    const result = await pool.query(query, [comercianteId, estado]);
+    return result.rows.map(row => this.mapRowToSolicitudInicial(row));
+}
+
+
 }
