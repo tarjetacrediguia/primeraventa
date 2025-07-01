@@ -7,11 +7,8 @@ import {
   getSolicitudesFormalesStats,
   getTiemposAprobacionStats,
   getTasaConversionStats,
-  getContratosStats,
   getEstadisticasComerciantes,
-  getEstadisticasAnalistas,
-  getActividadSistema,
-  getTiemposResolucion
+  getEstadisticasAnalistas
 } from './controllers/Estadisticas.controller';
 
 const router = Router();

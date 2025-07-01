@@ -50,6 +50,7 @@ export class Historial {
     get accion(): string {
         return this._accion;
     }
+    
     set accion(value: string) {
         this._accion = value;
     }

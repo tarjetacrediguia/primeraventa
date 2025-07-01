@@ -25,6 +25,9 @@ class UpdateSolicitudFormalUseCase {
                 if (!original) {
                     throw new Error("Solicitud no encontrada");
                 }
+                if (original.getEstado() == "aprobada") {
+                    throw new Error("No se puede actualizar una solicitud aprobada");
+                }
                 // 2. Detectar cambios antes de actualizar
                 const cambios = this.detectarCambios(original, solicitud);
                 // 3. Actualizar la solicitud
