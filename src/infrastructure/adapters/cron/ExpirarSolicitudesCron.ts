@@ -7,6 +7,7 @@ import { NotificationAdapter } from '../notification/NotificationAdapter';
 import { ExpirarSolicitudesInicialesUseCase } from '../../../application/use-cases/tareas/ExpirarSolicitudesInicialesUseCase';
 import { ComercianteRepositoryAdapter } from '../repository/ComercianteRepositoryAdapter';
 import { AnalistaRepositoryAdapter } from '../repository/AnalistaRepositoryAdapter';
+import { HistorialRepositoryAdapter } from '../repository/HistorialRepositoryAdapter';
 
 // Ejecutar todos los días a la 1:00 AM
 cron.schedule('0 1 * * *', async () => {
@@ -18,6 +19,7 @@ cron.schedule('0 1 * * *', async () => {
         const comercianteRepository = new ComercianteRepositoryAdapter();
         const analistaRepository = new AnalistaRepositoryAdapter();
         const notificationService = new NotificationAdapter();
+        const historialRepository = new HistorialRepositoryAdapter();
         
         const useCase = new ExpirarSolicitudesInicialesUseCase(
             solicitudRepo, 
@@ -25,7 +27,8 @@ cron.schedule('0 1 * * *', async () => {
             clienteRepo,
             analistaRepository,
             comercianteRepository,
-            notificationService
+            notificationService,
+            historialRepository
         );
         
         await useCase.execute();

@@ -5,6 +5,7 @@ export interface VerazPort {
         status: 'aprobado' | 'rechazado' | 'pendiente';
         score: number;
         lastUpdated: Date;
+        motivo?: string;
     }>;
     getClienteDetails(dni: string): Promise<{
         dni: string;

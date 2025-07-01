@@ -27,6 +27,9 @@ import { AnalistaRepositoryAdapter } from '../../adapters/repository/AnalistaRep
 import { ClienteRepositoryAdapter } from '../../adapters/repository/ClienteRepositoryAdapter';
 import { GetSolicitudesInicialesByComercianteYEstadoUseCase } from '../../../application/use-cases/SolicitudInicial/GetSolicitudesInicialesByComercianteYEstadoUseCase';
 import { GetSolicitudesFormalesByComercianteYEstadoUseCase } from '../../../application/use-cases/SolicitudFormal/GetSolicitudesFormalesByComercianteYEstadoUseCase';
+import { HistorialRepositoryAdapter } from '../../adapters/repository/HistorialRepositoryAdapter';
+import { RegisterHistorialUseCase } from '../../../application/use-cases/Historial/RegisterHistorialUseCase';
+import { GetSolicitudesFormalesByComercianteIdUseCase } from '../../../application/use-cases/SolicitudFormal/GetSolicitudesFormalesByComercianteIdUseCase';
 
 // Inyección de dependencias (deberían venir de un contenedor DI)
 const verazService: VerazPort = new VerazAdapter();
@@ -36,9 +39,11 @@ const contratoRepo: ContratoRepositoryPort = new ContratoRepositoryAdapter();
 const solicitudFormalRepo: SolicitudFormalRepositoryPort = new SolicitudFormalRepositoryAdapter();
 const permisoRepo: PermisoRepositoryPort = new PermisoRepositoryAdapter();
 const clienteRepository = new ClienteRepositoryAdapter();
-
+const historialRepository = new HistorialRepositoryAdapter();
 
 const getSolicitudesInicialesByComercianteYEstado = new GetSolicitudesInicialesByComercianteYEstadoUseCase(solicitudInicialRepo)
+
+
 
 // Casos de uso inicializados
 const crearSolicitudInicialUC = new CrearSolicitudInicialUseCase(
@@ -47,7 +52,8 @@ const crearSolicitudInicialUC = new CrearSolicitudInicialUseCase(
   solicitudFormalRepo,
   verazService,
   notificationService,
-  clienteRepository
+  clienteRepository,
+  historialRepository
 );
 
 const getSolicitudesInicialesByEstadoUC = new GetSolicitudesInicialesByEstadoUseCase(solicitudInicialRepo);
@@ -64,17 +70,19 @@ const crearSolicitudFormalUC = new CrearSolicitudFormalUseCase(
   notificationService,
   new AnalistaRepositoryAdapter(),
   contratoRepo,
-  clienteRepository
+  clienteRepository,
+  historialRepository
 );
 
 const aprobarSolicitudesUC = new AprobarSolicitudesFormalesUseCase(
   solicitudFormalRepo,
-  notificationService
+  notificationService,
+  historialRepository
 );
 
 const getSolicitudesFormalesByEstadoUC = new GetSolicitudesFormalesByEstadoUseCase(solicitudFormalRepo);
 const getSolicitudesFormalesByFechaUC = new GetSolicitudesFormalesByFechaUseCase(solicitudFormalRepo);
-const updateSolicitudFormalUC = new UpdateSolicitudFormalUseCase(solicitudFormalRepo);
+const updateSolicitudFormalUC = new UpdateSolicitudFormalUseCase(solicitudFormalRepo,historialRepository);
 const getSolicitudFormalByIdUC = new GetSolicitudesFormalesByIdUseCase(solicitudFormalRepo);
 
 // Controladores
@@ -141,7 +149,6 @@ export const crearSolicitudFormal = async (req: Request, res: Response) => {
     if (!cliente.recibo) {
       return res.status(400).json({ error: 'El recibo es obligatorio' });
     }
-
     // Convertir base64 a Buffer
     const reciboBuffer = Buffer.from(cliente.recibo, 'base64');
     
@@ -383,6 +390,8 @@ export const actualizarSolicitudFormal = async (req: Request, res: Response) => 
   try {
     const id = Number(req.params.id);
     const updates = req.body;
+    const userId = parseInt(req.user?.id ?? '0', 10);
+    const userRole = req.user?.rol;
     
     const solicitudExistente = await getSolicitudFormalByIdUC.execute(id);
     if (!solicitudExistente) {
@@ -444,10 +453,7 @@ export const actualizarSolicitudFormal = async (req: Request, res: Response) => 
     }
 
     
-
-    console.log(`Actualizando solicitud formal ID: ${id} con datos:`, updates);
-    
-    const solicitudActualizada = await updateSolicitudFormalUC.execute(solicitudExistente);
+    const solicitudActualizada = await updateSolicitudFormalUC.execute(solicitudExistente, userId);
     res.status(200).json(solicitudActualizada);
   } catch (error) {
     if ((error as Error).message === 'Solicitud no encontrada') {
@@ -515,6 +521,28 @@ export const listarSolicitudesInicialesByComercianteYEstado = async (req: Reques
         // Filtro combinado
         const useCase = new GetSolicitudesFormalesByComercianteYEstadoUseCase(solicitudFormalRepo);
         const solicitudes = await useCase.execute(comercianteId, estado);
+        
+        res.json(solicitudes);
+    } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : String(error);
+        res.status(500).json({ error: errorMessage });
+    }
+};
+
+ export const listarSolicitudesFormalesByComerciante = async (req: Request, res: Response) => {
+    try {
+        const comercianteId = req.params.id;
+
+        console.log(`Listando solicitudes formales para comerciante ID: ${comercianteId}`);
+        
+        // Validar parámetros
+        if (!comercianteId) {
+            return res.status(400).json({ error: 'Se requieren id' });
+        }
+        
+        // Filtro combinado
+        const useCase = new GetSolicitudesFormalesByComercianteIdUseCase(solicitudFormalRepo);
+        const solicitudes = await useCase.execute(Number(comercianteId));
         
         res.json(solicitudes);
     } catch (error) {

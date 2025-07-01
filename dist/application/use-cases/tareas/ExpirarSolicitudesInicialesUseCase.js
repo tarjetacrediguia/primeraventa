@@ -10,35 +10,104 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.ExpirarSolicitudesInicialesUseCase = void 0;
+const historialActions_1 = require("../../constants/historialActions");
 class ExpirarSolicitudesInicialesUseCase {
-    constructor(solicitudInicialRepository, configuracionRepository, clienteRepository, analistaRepository, comercianteRepository, notificationService) {
+    constructor(solicitudInicialRepository, configuracionRepository, clienteRepository, analistaRepository, comercianteRepository, notificationService, historialRepository) {
         this.solicitudInicialRepository = solicitudInicialRepository;
         this.configuracionRepository = configuracionRepository;
         this.clienteRepository = clienteRepository;
         this.analistaRepository = analistaRepository;
         this.comercianteRepository = comercianteRepository;
         this.notificationService = notificationService;
+        this.historialRepository = historialRepository;
     }
     execute() {
         return __awaiter(this, void 0, void 0, function* () {
+            const sistemaUserId = 0; // ID para acciones del sistema
+            let solicitudesExpiradas = 0;
             try {
+                // Registrar inicio del proceso
+                yield this.historialRepository.registrarEvento({
+                    usuarioId: sistemaUserId,
+                    accion: historialActions_1.HISTORIAL_ACTIONS.START_EXPIRACION_SOLICITUDES_INICIALES,
+                    entidadAfectada: 'sistema',
+                    entidadId: 0,
+                    detalles: {
+                        mensaje: "Inicio del proceso de expiración de solicitudes iniciales"
+                    },
+                    solicitudInicialId: undefined
+                });
                 // 1. Obtener días de expiración desde configuración
                 const diasExpiracion = yield this.configuracionRepository.obtenerDiasExpiracion();
                 // 2. Obtener solicitudes a expirar
                 const solicitudes = yield this.solicitudInicialRepository.obtenerSolicitudesAExpirar(diasExpiracion);
                 if (solicitudes.length === 0) {
                     console.log('No hay solicitudes para expirar');
+                    // Registrar evento de no expiraciones
+                    yield this.historialRepository.registrarEvento({
+                        usuarioId: sistemaUserId,
+                        accion: historialActions_1.HISTORIAL_ACTIONS.NO_EXPIRACIONES_SOLICITUDES_INICIALES,
+                        entidadAfectada: 'sistema',
+                        entidadId: 0,
+                        detalles: {
+                            diasExpiracion,
+                            mensaje: "No se encontraron solicitudes para expirar"
+                        },
+                        solicitudInicialId: undefined
+                    });
                     return;
                 }
                 // 3. Procesar cada solicitud
                 for (const solicitud of solicitudes) {
+                    const solicitudId = solicitud.getId();
+                    // Registrar inicio de expiración para esta solicitud
+                    yield this.historialRepository.registrarEvento({
+                        usuarioId: sistemaUserId,
+                        accion: historialActions_1.HISTORIAL_ACTIONS.START_EXPIRAR_SOLICITUD_INICIAL,
+                        entidadAfectada: 'solicitudes_iniciales',
+                        entidadId: solicitudId,
+                        detalles: {
+                            estado_actual: solicitud.getEstado(),
+                            fecha_creacion: solicitud.getFechaCreacion(),
+                            dias_expiracion: diasExpiracion
+                        },
+                        solicitudInicialId: solicitudId
+                    });
                     // 3.1. Actualizar estado a expirada
                     yield this.solicitudInicialRepository.expirarSolicitud(solicitud.getId());
                     // 3.2. Obtener cliente asociado
                     const cliente = yield this.clienteRepository.findById(solicitud.getClienteId());
                     // 3.3. Notificar a todas las partes interesadas
                     yield this.notificarPartesInteresadas(cliente, solicitud);
+                    solicitudesExpiradas++;
+                    // Registrar expiración exitosa
+                    yield this.historialRepository.registrarEvento({
+                        usuarioId: sistemaUserId,
+                        accion: historialActions_1.HISTORIAL_ACTIONS.EXPIRAR_SOLICITUD_INICIAL,
+                        entidadAfectada: 'solicitudes_iniciales',
+                        entidadId: solicitudId,
+                        detalles: {
+                            cliente_id: cliente.getId(),
+                            cliente_nombre: cliente.getNombreCompleto(),
+                            estado_anterior: solicitud.getEstado(),
+                            estado_nuevo: "expirada"
+                        },
+                        solicitudInicialId: solicitudId
+                    });
                 }
+                // Registrar finalización del proceso
+                yield this.historialRepository.registrarEvento({
+                    usuarioId: sistemaUserId,
+                    accion: historialActions_1.HISTORIAL_ACTIONS.FINISH_EXPIRACION_SOLICITUDES_INICIALES,
+                    entidadAfectada: 'sistema',
+                    entidadId: 0,
+                    detalles: {
+                        total_solicitudes: solicitudes.length,
+                        exitosas: solicitudesExpiradas,
+                        errores: solicitudes.length - solicitudesExpiradas
+                    },
+                    solicitudInicialId: undefined
+                });
                 // 4. Notificar éxito al sistema
                 yield this.notificationService.emitNotification({
                     userId: 0, // Sistema

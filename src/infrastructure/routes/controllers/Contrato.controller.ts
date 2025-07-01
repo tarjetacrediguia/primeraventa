@@ -7,13 +7,17 @@ import { SolicitudFormalRepositoryAdapter } from '../../adapters/repository/Soli
 import { NotificationAdapter } from '../../adapters/notification/NotificationAdapter';
 import { PdfAdapter } from '../../adapters/pdf/pdfAdapter';
 import { ClienteRepositoryAdapter } from '../../adapters/repository/ClienteRepositoryAdapter';
+import { HistorialRepositoryAdapter } from '../../adapters/repository/HistorialRepositoryAdapter';
+import { SolicitudInicialRepositoryAdapter } from '../../adapters/repository/SolicitudInicialRepositoryAdapter';
 
 // Inicializar adapters
 const contratoRepository = new ContratoRepositoryAdapter();
-const solicitudRepository = new SolicitudFormalRepositoryAdapter(); // Asume que existe
+const solicitudRepository = new SolicitudFormalRepositoryAdapter();
 const pdfService = new PdfAdapter();
 const notificationService = new NotificationAdapter();
 const clienteRepository = new ClienteRepositoryAdapter();
+const historialRepository = new HistorialRepositoryAdapter();
+const solicitudInicialRepository = new SolicitudInicialRepositoryAdapter();
 
 export const generarContratoPDF = async (req: Request, res: Response) => {
   try {
@@ -41,9 +45,11 @@ export const generarContratoPDF = async (req: Request, res: Response) => {
       contratoRepository,
       pdfService,
       notificationService,
-      clienteRepository
+      clienteRepository,
+      historialRepository,
+      solicitudInicialRepository
     );
-    const contrato = await useCase.execute(solicitudId);
+    const contrato = await useCase.execute(solicitudId,userId);
     console.log('Contrato generado:', contrato);
     // Devolver URL con ID de contrato, no de solicitud
     res.status(200).json({ 

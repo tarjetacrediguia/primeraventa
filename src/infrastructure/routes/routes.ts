@@ -11,6 +11,7 @@ import permisosRoutes from './permisos.routes';
 import analistasRoutes from './analistas.routes';
 import configuracionRoutes from './configuracion.routes';
 import estadisticasRoutes from './estadisticas.routes';
+import historialRoutes from './historial.routes';
 
 
 const router = Router();
@@ -30,6 +31,7 @@ router.use('/contratos', contratosRoutes);
 router.use('/estadisticas', estadisticasRoutes);
 router.use('/notificaciones', notificacionesRoutes);
 router.use('/configuracion', configuracionRoutes);
+router.use('/historial', historialRoutes);
 //router.use('/tareas', tareasRoutes);
 //router.use('/sistema', sistemaRoutes);
 

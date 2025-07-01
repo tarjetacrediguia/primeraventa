@@ -11,15 +11,18 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.GenerarContratoUseCase = void 0;
 const Contrato_1 = require("../../../domain/entities/Contrato");
+const historialActions_1 = require("../../constants/historialActions");
 class GenerarContratoUseCase {
-    constructor(solicitudRepository, contratoRepository, pdfService, notificationService, clienteRepository) {
+    constructor(solicitudRepository, contratoRepository, pdfService, notificationService, clienteRepository, historialRepository, solicitudInicialRepository) {
         this.solicitudRepository = solicitudRepository;
         this.contratoRepository = contratoRepository;
         this.pdfService = pdfService;
         this.notificationService = notificationService;
         this.clienteRepository = clienteRepository;
+        this.historialRepository = historialRepository;
+        this.solicitudInicialRepository = solicitudInicialRepository;
     }
-    execute(numeroSolicitud) {
+    execute(numeroSolicitud, usuarioId) {
         return __awaiter(this, void 0, void 0, function* () {
             try {
                 // 1. Obtener solicitud formal
@@ -28,9 +31,27 @@ class GenerarContratoUseCase {
                 if (!solicitud) {
                     throw new Error(`Solicitud formal no encontrada: ${numeroSolicitud}`);
                 }
+                // Obtener solicitud inicial relacionada
+                const solicitudInicial = yield this.solicitudInicialRepository.getSolicitudInicialById(solicitud.getSolicitudInicialId());
+                if (!solicitudInicial) {
+                    throw new Error(`Solicitud inicial no encontrada para ID: ${solicitud.getSolicitudInicialId()}`);
+                }
                 // 2. Verificar estado aprobado
                 if (solicitud.getEstado() !== "aprobada") {
                     yield this.notificarSinPermisos(solicitud);
+                    // Registrar evento de error en historial
+                    yield this.historialRepository.registrarEvento({
+                        usuarioId: usuarioId,
+                        accion: historialActions_1.HISTORIAL_ACTIONS.ERROR_PROCESO,
+                        entidadAfectada: 'contratos',
+                        entidadId: 0,
+                        detalles: {
+                            error: "Intento de generar contrato sin aprobación",
+                            solicitud_formal_id: solicitud.getId(),
+                            estado_actual: solicitud.getEstado()
+                        },
+                        solicitudInicialId: solicitudInicial.getId()
+                    });
                     throw new Error("La solicitud no está aprobada, no se puede generar contrato");
                 }
                 console.log('clienteDNI:', solicitud.getDni());
@@ -41,6 +62,18 @@ class GenerarContratoUseCase {
                 // Verificar si ya existe un contrato para esta solicitud
                 const contratosExistentes = yield this.contratoRepository.getContratosBySolicitudFormalId(Number(solicitud.getId()));
                 if (contratosExistentes && contratosExistentes.length > 0) {
+                    // Registrar evento de duplicado en historial
+                    yield this.historialRepository.registrarEvento({
+                        usuarioId: usuarioId,
+                        accion: historialActions_1.HISTORIAL_ACTIONS.WARNING_DUPLICADO,
+                        entidadAfectada: 'contratos',
+                        entidadId: contratosExistentes[0].getId(),
+                        detalles: {
+                            mensaje: "Intento de generar contrato duplicado",
+                            solicitud_formal_id: solicitud.getId()
+                        },
+                        solicitudInicialId: solicitudInicial.getId()
+                    });
                     throw new Error(`Ya existe un contrato para la solicitud ${solicitud.getId()}`);
                 }
                 // Obtener el cliente por DNI
@@ -59,6 +92,19 @@ class GenerarContratoUseCase {
                 // 4. Guardar contrato
                 const contratoGuardado = yield this.contratoRepository.saveContrato(contrato);
                 console.log(`Contrato guardado: ${JSON.stringify(contratoGuardado)}`);
+                yield this.historialRepository.registrarEvento({
+                    usuarioId: usuarioId,
+                    accion: historialActions_1.HISTORIAL_ACTIONS.GENERAR_CONTRATO,
+                    entidadAfectada: 'contratos',
+                    entidadId: contratoGuardado.getId(),
+                    detalles: {
+                        monto: monto,
+                        numero_tarjeta: contratoGuardado.getNumeroTarjeta(),
+                        numero_cuenta: contratoGuardado.getNumeroCuenta(),
+                        solicitud_formal_id: solicitud.getId()
+                    },
+                    solicitudInicialId: solicitudInicial.getId()
+                });
                 // 5. Vincular contrato a solicitud
                 yield this.solicitudRepository.vincularContrato(solicitud.getSolicitudInicialId(), contratoGuardado.getId());
                 console.log(`Contrato vinculado a solicitud: ${solicitud.getId()} -> ${contratoGuardado.getId()}`);

@@ -12,14 +12,16 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.CrearSolicitudInicialUseCase = void 0;
 const SolicitudInicial_1 = require("../../../domain/entities/SolicitudInicial");
 const Cliente_1 = require("../../../domain/entities/Cliente");
+const historialActions_1 = require("../../constants/historialActions");
 class CrearSolicitudInicialUseCase {
-    constructor(solicitudInicialRepository, contratoRepository, solicitudFormalRepository, verazService, notificationService, clienteRepository) {
+    constructor(solicitudInicialRepository, contratoRepository, solicitudFormalRepository, verazService, notificationService, clienteRepository, historialRepository) {
         this.solicitudInicialRepository = solicitudInicialRepository;
         this.contratoRepository = contratoRepository;
         this.solicitudFormalRepository = solicitudFormalRepository;
         this.verazService = verazService;
         this.notificationService = notificationService;
         this.clienteRepository = clienteRepository;
+        this.historialRepository = historialRepository;
     }
     execute(dniCliente, cuilCliente, comercianteId, reciboSueldo) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -42,13 +44,39 @@ class CrearSolicitudInicialUseCase {
                         type: "solicitud_inicial",
                         message: `El cliente con DNI ${dniCliente} ya tiene un crédito activo`
                     });
+                    // Registrar evento de rechazo
+                    yield this.historialRepository.registrarEvento({
+                        usuarioId: comercianteId,
+                        accion: historialActions_1.HISTORIAL_ACTIONS.REJECT_SOLICITUD_INICIAL,
+                        entidadAfectada: 'solicitudes_iniciales',
+                        entidadId: 0, // No hay entidad aún
+                        detalles: {
+                            motivo: "Cliente con crédito activo",
+                            dni_cliente: dniCliente
+                        },
+                        solicitudInicialId: undefined // No hay solicitud aún
+                    });
                     throw new Error("El cliente ya tiene un crédito activo");
                 }
                 // Crear solicitud vinculada al cliente
                 const solicitud = new SolicitudInicial_1.SolicitudInicial(0, new Date(), "pendiente", dniCliente, cliente.getId(), cuilCliente, reciboSueldo, comercianteId);
                 // 3. Guardar solicitud inicial
                 const solicitudCreada = yield this.solicitudInicialRepository.createSolicitudInicial(solicitud);
+                const solicitudInicialId = solicitudCreada.getId();
                 console.log(`Solicitud inicial creada con ID: ${solicitudCreada.getId()}`);
+                // Registrar evento de creación
+                yield this.historialRepository.registrarEvento({
+                    usuarioId: comercianteId,
+                    accion: historialActions_1.HISTORIAL_ACTIONS.CREATE_SOLICITUD_INICIAL,
+                    entidadAfectada: 'solicitudes_iniciales',
+                    entidadId: solicitudCreada.getId(),
+                    detalles: {
+                        dni_cliente: dniCliente,
+                        comerciante_id: comercianteId,
+                        estado: "pendiente"
+                    },
+                    solicitudInicialId: solicitudInicialId
+                });
                 // 4. Consultar Veraz
                 const estadoVeraz = yield this.verazService.checkClienteStatus(dniCliente);
                 console.log(`Estado Veraz para DNI ${dniCliente}:`, estadoVeraz);
@@ -56,10 +84,36 @@ class CrearSolicitudInicialUseCase {
                 if (estadoVeraz.status === "aprobado") {
                     solicitudCreada.setEstado("aprobada");
                     yield this.solicitudInicialRepository.updateSolicitudInicial(solicitudCreada);
+                    // Registrar evento de aprobación automática
+                    yield this.historialRepository.registrarEvento({
+                        usuarioId: null, // Sistema automático
+                        accion: historialActions_1.HISTORIAL_ACTIONS.APPROVE_SOLICITUD_INICIAL,
+                        entidadAfectada: 'solicitudes_iniciales',
+                        entidadId: solicitudCreada.getId(),
+                        detalles: {
+                            sistema: "Veraz",
+                            score: estadoVeraz.score,
+                            motivo: estadoVeraz.motivo || "Aprobación automática"
+                        },
+                        solicitudInicialId: solicitudInicialId
+                    });
                 }
                 else if (estadoVeraz.status === "rechazado") {
                     solicitudCreada.setEstado("rechazada");
                     yield this.solicitudInicialRepository.updateSolicitudInicial(solicitudCreada);
+                    // Registrar evento de rechazo automático
+                    yield this.historialRepository.registrarEvento({
+                        usuarioId: null, // Sistema automático
+                        accion: historialActions_1.HISTORIAL_ACTIONS.REJECT_SOLICITUD_INICIAL,
+                        entidadAfectada: 'solicitudes_iniciales',
+                        entidadId: solicitudCreada.getId(),
+                        detalles: {
+                            sistema: "Veraz",
+                            score: estadoVeraz.score,
+                            motivo: estadoVeraz.motivo || "Rechazo automático"
+                        },
+                        solicitudInicialId: solicitudInicialId
+                    });
                     //throw new Error("Cliente no apto para crédito según Veraz");
                 }
                 else {
@@ -85,6 +139,19 @@ class CrearSolicitudInicialUseCase {
                     userId: Number(comercianteId),
                     type: "error",
                     message: `Error al crear solicitud: ${errorMessage}`
+                });
+                // Registrar evento de error
+                yield this.historialRepository.registrarEvento({
+                    usuarioId: comercianteId,
+                    accion: historialActions_1.HISTORIAL_ACTIONS.ERROR_PROCESO,
+                    entidadAfectada: 'solicitudes_iniciales',
+                    entidadId: 0, // No hay entidad aún
+                    detalles: {
+                        error: error instanceof Error ? error.message : String(error),
+                        etapa: "creacion_solicitud_inicial",
+                        dni_cliente: dniCliente
+                    },
+                    solicitudInicialId: undefined // No hay solicitud por error
                 });
                 throw error;
             }

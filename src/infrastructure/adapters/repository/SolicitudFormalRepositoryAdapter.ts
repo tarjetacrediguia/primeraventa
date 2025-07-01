@@ -692,7 +692,6 @@ async createSolicitudFormal(solicitudFormal: SolicitudFormal): Promise<Solicitud
                 c.telefono,
                 c.email,
                 sf.fecha_solicitud,
-                sf.recibo,
                 sf.estado,
                 sf.acepta_tarjeta,
                 c.fecha_nacimiento,

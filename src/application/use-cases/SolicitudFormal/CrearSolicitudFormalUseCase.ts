@@ -7,6 +7,8 @@ import { SolicitudFormal } from "../../../domain/entities/SolicitudFormal";
 import { AnalistaRepositoryPort } from "../../ports/AnalistaRepositoryPort";
 import { ContratoRepositoryPort } from "../../ports/ContratoRepositoryPort";
 import { ClienteRepositoryPort } from "../../ports/ClienteRepositoryPort";
+import { HistorialRepositoryPort } from "../../ports/HistorialRepositoryPort";
+import { HISTORIAL_ACTIONS } from "../../constants/historialActions";
 
 export class CrearSolicitudFormalUseCase {
     constructor(
@@ -16,7 +18,8 @@ export class CrearSolicitudFormalUseCase {
         private readonly notificationService: NotificationPort,
         private readonly analistaRepo: AnalistaRepositoryPort,
         private readonly contratoRepository: ContratoRepositoryPort,
-        private readonly clienteRepository: ClienteRepositoryPort
+        private readonly clienteRepository: ClienteRepositoryPort,
+        private readonly historialRepository: HistorialRepositoryPort
     ) {}
 
     async execute(
@@ -38,8 +41,25 @@ export class CrearSolicitudFormalUseCase {
         comentarioInicial: string = "Solicitud creada por comerciante"
     ): Promise<SolicitudFormal> {
         try {
-            //verificar que el cliente no tenga un crédito activo
-            this.tieneCreditoActivo(datosSolicitud.dni);
+            // Verificar crédito activo
+            const tieneCredito = await this.tieneCreditoActivo(datosSolicitud.dni);
+            if (tieneCredito) {
+                // Registrar evento de rechazo por crédito activo
+                await this.historialRepository.registrarEvento({
+                    usuarioId: comercianteId,
+                    accion: HISTORIAL_ACTIONS.REJECT_SOLICITUD_FORMAL,
+                    entidadAfectada: 'solicitudes_formales',
+                    entidadId: 0,
+                    detalles: {
+                        motivo: "Cliente con crédito activo",
+                        dni_cliente: datosSolicitud.dni,
+                        
+                    },
+                    solicitudInicialId: solicitudInicialId
+                });
+                
+                throw new Error("El cliente ya tiene un crédito activo");
+            }
             // 1. Verificar permisos del comerciante
             const tienePermiso = await this.permisoRepo.usuarioTienePermiso(
                 comercianteId, 
@@ -47,28 +67,89 @@ export class CrearSolicitudFormalUseCase {
             );
             
             if (!tienePermiso) {
+                // Registrar evento de falta de permisos
+                await this.historialRepository.registrarEvento({
+                    usuarioId: comercianteId,
+                    accion: HISTORIAL_ACTIONS.ERROR_PROCESO,
+                    entidadAfectada: 'solicitudes_formales',
+                    entidadId: 0,
+                    detalles: {
+                        motivo: "Falta de permisos",
+                        permiso_requerido: "create_solicitudFormal"
+                    },
+                    solicitudInicialId: solicitudInicialId
+                });
                 throw new Error("No tiene permisos para enviar solicitudes formales");
             }
 
             // 2. Obtener solicitud inicial
             const solicitudInicial = await this.solicitudInicialRepo.getSolicitudInicialById(solicitudInicialId);
             if (!solicitudInicial) {
+                // Registrar evento de solicitud inicial no encontrada
+                await this.historialRepository.registrarEvento({
+                    usuarioId: comercianteId,
+                    accion: HISTORIAL_ACTIONS.ERROR_PROCESO,
+                    entidadAfectada: 'solicitudes_formales',
+                    entidadId: 0,
+                    detalles: {
+                        error: "Solicitud inicial no encontrada",
+                        solicitud_inicial_id: solicitudInicialId
+                    },
+                    solicitudInicialId: solicitudInicialId
+                });
                 throw new Error("Solicitud inicial no encontrada");
             }
 
             // 3. Verificar estado de la solicitud inicial
             if (solicitudInicial.getEstado() !== "aprobada") {
+                // Registrar evento de estado no aprobado
+                await this.historialRepository.registrarEvento({
+                    usuarioId: comercianteId,
+                    accion: HISTORIAL_ACTIONS.ERROR_PROCESO,
+                    entidadAfectada: 'solicitudes_formales',
+                    entidadId: 0,
+                    detalles: {
+                        error: "Solicitud inicial no aprobada",
+                        estado_actual: solicitudInicial.getEstado(),
+                        solicitud_inicial_id: solicitudInicialId
+                    },
+                    solicitudInicialId: solicitudInicialId
+                });
                 throw new Error("La solicitud inicial no está aprobada");
             }
 
             // 4. Verificar que no exista ya una solicitud formal para esta inicial
             const existentes = await this.solicitudFormalRepo.getSolicitudesFormalesBySolicitudInicialId(solicitudInicialId);
             if (existentes.length > 0) {
+                // Registrar evento de solicitud duplicada
+                await this.historialRepository.registrarEvento({
+                    usuarioId: comercianteId,
+                    accion: HISTORIAL_ACTIONS.ERROR_PROCESO,
+                    entidadAfectada: 'solicitudes_formales',
+                    entidadId: 0,
+                    detalles: {
+                        error: "Solicitud formal ya existe",
+                        solicitud_inicial_id: solicitudInicialId,
+                        solicitud_formal_id: existentes[0].getId()
+                    },
+                    solicitudInicialId: solicitudInicialId
+                });
                 throw new Error("Ya existe una solicitud formal para esta solicitud inicial");
             }
 
             const signature = datosSolicitud.recibo.subarray(0, 3);
             if (!(signature[0] === 0xFF && signature[1] === 0xD8 && signature[2] === 0xFF)) {
+                // Registrar evento de recibo inválido
+                await this.historialRepository.registrarEvento({
+                    usuarioId: comercianteId,
+                    accion: HISTORIAL_ACTIONS.ERROR_PROCESO,
+                    entidadAfectada: 'solicitudes_formales',
+                    entidadId: 0,
+                    detalles: {
+                        error: "Recibo no es JPG válido"
+                    },
+                    solicitudInicialId: solicitudInicialId
+                });
             throw new Error('El recibo no es una imagen JPG válida');
             }
 
@@ -78,10 +159,32 @@ export class CrearSolicitudFormalUseCase {
             const type = await fileType.fileTypeFromBuffer(buffer);
             
             if (!type || !type.mime.startsWith('image/')) {
+                // Registrar evento de tipo inválido
+                    await this.historialRepository.registrarEvento({
+                        usuarioId: comercianteId,
+                        accion: HISTORIAL_ACTIONS.ERROR_PROCESO,
+                        entidadAfectada: 'solicitudes_formales',
+                        entidadId: 0,
+                        detalles: {
+                            error: "Recibo no es una imagen"
+                        },
+                        solicitudInicialId: solicitudInicialId
+                    });
                 throw new Error('El recibo debe ser una imagen válida');
             }
             
             if (type.mime !== 'image/jpeg') {
+                // Registrar evento de formato incorrecto
+                    await this.historialRepository.registrarEvento({
+                        usuarioId: comercianteId,
+                        accion: HISTORIAL_ACTIONS.ERROR_PROCESO,
+                        entidadAfectada: 'solicitudes_formales',
+                        entidadId: 0,
+                        detalles: {
+                            error: "Recibo no es JPG"
+                        },
+                        solicitudInicialId: solicitudInicialId
+                    });
                 throw new Error('Solo se aceptan imágenes en formato JPG');
             }
             
@@ -119,6 +222,19 @@ export class CrearSolicitudFormalUseCase {
             // 7. Guardar en la base de datos
             const solicitudCreada = await this.solicitudFormalRepo.createSolicitudFormal(solicitudFormal);
             console.log("Solicitud formal guardada en la base de datos:", solicitudCreada);
+             // Registrar evento de creación de solicitud formal
+            await this.historialRepository.registrarEvento({
+                usuarioId: comercianteId,
+                accion: HISTORIAL_ACTIONS.CREATE_SOLICITUD_FORMAL,
+                entidadAfectada: 'solicitudes_formales',
+                entidadId: solicitudCreada.getId(),
+                detalles: {
+                    solicitud_inicial_id: solicitudInicialId,
+                    estado: "pendiente",
+                    cliente: `${datosSolicitud.nombreCompleto} ${datosSolicitud.apellido}`
+                },
+                solicitudInicialId: solicitudInicialId
+            });
             // 8. Notificar al cliente
             await this.notificationService.emitNotification({
                 userId: solicitudCreada.getComercianteId(),
@@ -141,6 +257,20 @@ export class CrearSolicitudFormalUseCase {
                 userId: Number(comercianteId),
                 type: "error",
                 message: `Error al crear solicitud formal: ${errorMessage}`
+            });
+
+            // Registrar evento de error
+            await this.historialRepository.registrarEvento({
+                usuarioId: comercianteId,
+                accion: HISTORIAL_ACTIONS.ERROR_PROCESO,
+                entidadAfectada: 'solicitudes_formales',
+                entidadId: 0,
+                detalles: {
+                    error: error instanceof Error ? error.message : String(error),
+                    etapa: "creacion_solicitud_formal",
+                    solicitud_inicial_id: solicitudInicialId
+                },
+                solicitudInicialId: solicitudInicialId
             });
             
             throw error;
@@ -170,6 +300,19 @@ private async notificarAnalistas(solicitud: SolicitudFormal): Promise<void> {
             await Promise.all(notificaciones);
         } catch (error) {
             console.error("Error notificando a analistas:", error);
+
+            // Registrar evento de error en notificación
+            await this.historialRepository.registrarEvento({
+                usuarioId: solicitud.getComercianteId(),
+                accion: HISTORIAL_ACTIONS.ERROR_PROCESO,
+                entidadAfectada: 'solicitudes_formales',
+                entidadId: solicitud.getId(),
+                detalles: {
+                    error: "Error notificando a analistas",
+                    etapa: "notificacion_analistas"
+                },
+                solicitudInicialId: solicitud.getSolicitudInicialId()
+            });
             // Opcional: Notificar a administradores sobre fallo
         }
     }
@@ -193,6 +336,4 @@ private async notificarAnalistas(solicitud: SolicitudFormal): Promise<void> {
         
         return false;
     }
-
-
 }

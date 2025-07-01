@@ -18,5 +18,6 @@ router.put('/solicitudes-formales/:id/rechazar', rolesMiddleware_1.esAnalistaOAd
 router.get('/solicitudes-formales', rolesMiddleware_1.esComercianteOAnalista, Solicitudes_controller_1.listarSolicitudesFormales);
 router.put('/solicitudes-formales/:id', rolesMiddleware_1.esAnalista, Solicitudes_controller_1.actualizarSolicitudFormal);
 router.get('/solicitudes-formales/:id/detalle', rolesMiddleware_1.esComercianteOAnalista, Solicitudes_controller_1.obtenerDetalleSolicitudFormal);
-router.get('/solicitudes-formales-comerciante', rolesMiddleware_1.esComercianteOAnalista, Solicitudes_controller_1.listarSolicitudesFormalesByComercianteYEstado);
+router.get('/solicitudes-formales-comerciante-estado', rolesMiddleware_1.esComercianteOAnalista, Solicitudes_controller_1.listarSolicitudesFormalesByComercianteYEstado);
+router.get('/solicitudes-formales-comerciante/:id', rolesMiddleware_1.esComercianteOAnalista, Solicitudes_controller_1.listarSolicitudesFormalesByComerciante);
 exports.default = router;

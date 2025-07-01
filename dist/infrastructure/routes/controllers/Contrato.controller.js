@@ -17,12 +17,16 @@ const SolicitudFormalRepositoryAdapter_1 = require("../../adapters/repository/So
 const NotificationAdapter_1 = require("../../adapters/notification/NotificationAdapter");
 const pdfAdapter_1 = require("../../adapters/pdf/pdfAdapter");
 const ClienteRepositoryAdapter_1 = require("../../adapters/repository/ClienteRepositoryAdapter");
+const HistorialRepositoryAdapter_1 = require("../../adapters/repository/HistorialRepositoryAdapter");
+const SolicitudInicialRepositoryAdapter_1 = require("../../adapters/repository/SolicitudInicialRepositoryAdapter");
 // Inicializar adapters
 const contratoRepository = new ContratoRepositoryAdapter_1.ContratoRepositoryAdapter();
-const solicitudRepository = new SolicitudFormalRepositoryAdapter_1.SolicitudFormalRepositoryAdapter(); // Asume que existe
+const solicitudRepository = new SolicitudFormalRepositoryAdapter_1.SolicitudFormalRepositoryAdapter();
 const pdfService = new pdfAdapter_1.PdfAdapter();
 const notificationService = new NotificationAdapter_1.NotificationAdapter();
 const clienteRepository = new ClienteRepositoryAdapter_1.ClienteRepositoryAdapter();
+const historialRepository = new HistorialRepositoryAdapter_1.HistorialRepositoryAdapter();
+const solicitudInicialRepository = new SolicitudInicialRepositoryAdapter_1.SolicitudInicialRepositoryAdapter();
 const generarContratoPDF = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     var _a, _b;
     try {
@@ -43,8 +47,8 @@ const generarContratoPDF = (req, res) => __awaiter(void 0, void 0, void 0, funct
             }
         }
         // Generar contrato
-        const useCase = new GenerarContratoUseCase_1.GenerarContratoUseCase(solicitudRepository, contratoRepository, pdfService, notificationService, clienteRepository);
-        const contrato = yield useCase.execute(solicitudId);
+        const useCase = new GenerarContratoUseCase_1.GenerarContratoUseCase(solicitudRepository, contratoRepository, pdfService, notificationService, clienteRepository, historialRepository, solicitudInicialRepository);
+        const contrato = yield useCase.execute(solicitudId, userId);
         console.log('Contrato generado:', contrato);
         // Devolver URL con ID de contrato, no de solicitud
         res.status(200).json({

@@ -10,16 +10,31 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.AprobarSolicitudesFormalesUseCase = void 0;
+const historialActions_1 = require("../../constants/historialActions");
 class AprobarSolicitudesFormalesUseCase {
-    constructor(repository, notificationService) {
+    constructor(repository, notificationService, historialRepository) {
         this.repository = repository;
         this.notificationService = notificationService;
+        this.historialRepository = historialRepository;
     }
     aprobarSolicitud(solicitudId, numeroTarjeta, numeroCuenta, aprobadorId, esAdministrador, comentario) {
         return __awaiter(this, void 0, void 0, function* () {
             // 1. Obtener solicitud formal
             const solicitud = yield this.repository.getSolicitudFormalById(solicitudId);
+            const solicitudInicialId = solicitud === null || solicitud === void 0 ? void 0 : solicitud.getSolicitudInicialId();
             if (!solicitud) {
+                // Registrar evento de solicitud no encontrada
+                yield this.historialRepository.registrarEvento({
+                    usuarioId: aprobadorId,
+                    accion: historialActions_1.HISTORIAL_ACTIONS.ERROR_PROCESO,
+                    entidadAfectada: 'solicitudes_formales',
+                    entidadId: solicitudId,
+                    detalles: {
+                        error: "Solicitud formal no encontrada",
+                        solicitudId
+                    },
+                    solicitudInicialId: solicitudInicialId
+                });
                 throw new Error("Solicitud formal no encontrada");
             }
             if (esAdministrador) {
@@ -31,6 +46,19 @@ class AprobarSolicitudesFormalesUseCase {
             console.log("Solicitud formal encontrada:", solicitud);
             // 2. Verificar que esté en estado pendiente
             if (solicitud.getEstado() !== "pendiente") {
+                // Registrar evento de estado inválido
+                yield this.historialRepository.registrarEvento({
+                    usuarioId: aprobadorId,
+                    accion: historialActions_1.HISTORIAL_ACTIONS.ERROR_PROCESO,
+                    entidadAfectada: 'solicitudes_formales',
+                    entidadId: solicitudId,
+                    detalles: {
+                        error: "Estado no pendiente",
+                        estado_actual: solicitud.getEstado(),
+                        estado_requerido: "pendiente"
+                    },
+                    solicitudInicialId: solicitudInicialId
+                });
                 throw new Error("Solo se pueden aprobar solicitudes pendientes");
             }
             // 3. Agregar comentario si existe
@@ -44,6 +72,20 @@ class AprobarSolicitudesFormalesUseCase {
             console.log("Solicitud formal actualizada:", solicitud);
             // 5. Guardar cambios
             const solicitudActualizada = yield this.repository.updateSolicitudFormalAprobacion(solicitud);
+            // Registrar aprobación exitosa
+            yield this.historialRepository.registrarEvento({
+                usuarioId: aprobadorId,
+                accion: historialActions_1.HISTORIAL_ACTIONS.APPROVE_SOLICITUD_FORMAL,
+                entidadAfectada: 'solicitudes_formales',
+                entidadId: solicitudId,
+                detalles: {
+                    nuevo_estado: "aprobada",
+                    numero_tarjeta: numeroTarjeta,
+                    numero_cuenta: numeroCuenta,
+                    comentario: comentario || ""
+                },
+                solicitudInicialId: solicitudInicialId
+            });
             console.log("Solicitud formal actualizada:", solicitudActualizada);
             // 6. Notificar al cliente
             yield this.notificarCliente(solicitudActualizada, `Su solicitud formal de crédito ha sido aprobada. N° NumeroTarjeta: ${numeroTarjeta}, N° Cuenta: ${numeroCuenta}`);
@@ -54,7 +96,20 @@ class AprobarSolicitudesFormalesUseCase {
         return __awaiter(this, void 0, void 0, function* () {
             // 1. Obtener solicitud formal
             const solicitud = yield this.repository.getSolicitudFormalById(solicitudId);
+            const solicitudInicialId = solicitud === null || solicitud === void 0 ? void 0 : solicitud.getSolicitudInicialId();
             if (!solicitud) {
+                // Registrar evento de solicitud no encontrada
+                yield this.historialRepository.registrarEvento({
+                    usuarioId: aprobadorId,
+                    accion: historialActions_1.HISTORIAL_ACTIONS.ERROR_PROCESO,
+                    entidadAfectada: 'solicitudes_formales',
+                    entidadId: solicitudId,
+                    detalles: {
+                        error: "Solicitud formal no encontrada",
+                        solicitudId
+                    },
+                    solicitudInicialId: solicitudInicialId
+                });
                 throw new Error("Solicitud formal no encontrada");
             }
             // 2. Asignar aprobador según rol
@@ -70,15 +125,42 @@ class AprobarSolicitudesFormalesUseCase {
             }
             // 4. Validar comentario
             if (!comentario || comentario.trim().length < 10) {
+                // Registrar evento de comentario inválido
+                yield this.historialRepository.registrarEvento({
+                    usuarioId: aprobadorId,
+                    accion: historialActions_1.HISTORIAL_ACTIONS.ERROR_PROCESO,
+                    entidadAfectada: 'solicitudes_formales',
+                    entidadId: solicitudId,
+                    detalles: {
+                        error: "Comentario inválido",
+                        comentario,
+                        longitud: (comentario === null || comentario === void 0 ? void 0 : comentario.trim().length) || 0
+                    },
+                    solicitudInicialId: solicitudInicialId
+                });
                 throw new Error("El comentario es obligatorio y debe tener al menos 10 caracteres");
             }
             // 5. Agregar comentario con contexto
             const rol = esAdministrador ? 'administrador' : 'analista';
-            solicitud.agregarComentario(`Rechazo por ${rol} ${aprobadorId}: ${comentario}`);
+            const comentarioCompleto = `Rechazo por ${rol} ${aprobadorId}: ${comentario}`;
+            solicitud.agregarComentario(comentarioCompleto);
             // 6. Actualizar estado
             solicitud.setEstado("rechazada");
             // 7. Guardar cambios usando la nueva función específica
             const solicitudActualizada = yield this.repository.updateSolicitudFormalRechazo(solicitud);
+            // Registrar rechazo exitoso
+            yield this.historialRepository.registrarEvento({
+                usuarioId: aprobadorId,
+                accion: historialActions_1.HISTORIAL_ACTIONS.REJECT_SOLICITUD_FORMAL,
+                entidadAfectada: 'solicitudes_formales',
+                entidadId: solicitudId,
+                detalles: {
+                    nuevo_estado: "rechazada",
+                    comentario: comentarioCompleto,
+                    aprobador_rol: rol
+                },
+                solicitudInicialId: solicitudInicialId
+            });
             // 8. Notificar al cliente
             yield this.notificarCliente(solicitudActualizada, `Su solicitud formal de crédito ha sido rechazada. Comentario: ${comentario}`);
             return solicitudActualizada;

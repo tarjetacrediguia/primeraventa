@@ -3,7 +3,8 @@
 import { VerazPort } from "../../../application/ports/VerazPort";
 
 export class VerazAdapter implements VerazPort {
-    checkClienteStatus(dni: string): Promise<{ status: "aprobado" | "rechazado" | "pendiente"; score: number; lastUpdated: Date; }> {
+    checkClienteStatus(dni: string): Promise<{ status: "aprobado" | "rechazado" | "pendiente"; score: number; lastUpdated: Date; motivo?: string; }> {
+        
         console.log(`Consultando Veraz para el DNI: ${dni}`);
         return new Promise((resolve) => {
             setTimeout(() => {
@@ -13,14 +14,17 @@ export class VerazAdapter implements VerazPort {
                 
                 let status: "aprobado" | "rechazado" | "pendiente";
                 let score: number;
+                let motivo: string | undefined;
 
                 // Asignar estado según el último dígito
                 if (dniString === "225577") {
                     status = "aprobado";
                     score = 750;
+                    motivo = "Aprobación automática por Veraz";
                 } else if (dniString === "87654321") {
                     status = "rechazado";
                     score = 300;
+                    motivo = "Rechazo automático por Veraz";
                 } else {
                     switch(lastDigit) {
                         case '7':
@@ -44,7 +48,8 @@ export class VerazAdapter implements VerazPort {
                 resolve({
                     status,
                     score,
-                    lastUpdated: new Date()
+                    lastUpdated: new Date(),
+                    motivo
                 });
             }, 1000);
         });

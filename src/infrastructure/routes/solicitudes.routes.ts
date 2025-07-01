@@ -11,7 +11,8 @@ import {
   actualizarSolicitudFormal,
   obtenerDetalleSolicitudFormal,
   listarSolicitudesInicialesByComercianteYEstado,
-  listarSolicitudesFormalesByComercianteYEstado
+  listarSolicitudesFormalesByComercianteYEstado,
+  listarSolicitudesFormalesByComerciante
 } from './controllers/Solicitudes.controller';
 import { esComerciante, esAnalista, esComercianteOAnalista, esAdministrador, esAnalistaOAdministrador } from './middlewares/rolesMiddleware';
 
@@ -37,9 +38,15 @@ router.get('/solicitudes-formales', esComercianteOAnalista, listarSolicitudesFor
 router.put('/solicitudes-formales/:id', esAnalista, actualizarSolicitudFormal);
 router.get('/solicitudes-formales/:id/detalle', esComercianteOAnalista, obtenerDetalleSolicitudFormal);
 router.get(
-    '/solicitudes-formales-comerciante', 
+    '/solicitudes-formales-comerciante-estado', 
     esComercianteOAnalista, 
     listarSolicitudesFormalesByComercianteYEstado
+);
+
+router.get(
+    '/solicitudes-formales-comerciante/:id', 
+    esComercianteOAnalista, 
+    listarSolicitudesFormalesByComerciante
 );
 
 export default router;

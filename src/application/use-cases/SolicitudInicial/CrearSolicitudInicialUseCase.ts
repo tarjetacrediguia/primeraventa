@@ -7,6 +7,8 @@ import { NotificationPort } from "../../ports/NotificationPort";
 import { SolicitudInicial } from "../../../domain/entities/SolicitudInicial";
 import { Cliente } from "../../../domain/entities/Cliente";
 import { ClienteRepositoryPort } from "../../ports/ClienteRepositoryPort";
+import { HistorialRepositoryPort } from "../../ports/HistorialRepositoryPort";
+import { HISTORIAL_ACTIONS } from "../../constants/historialActions";
 
 export class CrearSolicitudInicialUseCase {
     constructor(
@@ -15,7 +17,8 @@ export class CrearSolicitudInicialUseCase {
         private readonly solicitudFormalRepository: SolicitudFormalRepositoryPort,
         private readonly verazService: VerazPort,
         private readonly notificationService: NotificationPort,
-        private readonly clienteRepository: ClienteRepositoryPort
+        private readonly clienteRepository: ClienteRepositoryPort,
+        private readonly historialRepository: HistorialRepositoryPort
     ) {}
 
     async execute(
@@ -48,6 +51,20 @@ export class CrearSolicitudInicialUseCase {
                     type: "solicitud_inicial",
                     message: `El cliente con DNI ${dniCliente} ya tiene un crédito activo`
                 });
+
+                // Registrar evento de rechazo
+                await this.historialRepository.registrarEvento({
+                    usuarioId: comercianteId,
+                    accion: HISTORIAL_ACTIONS.REJECT_SOLICITUD_INICIAL,
+                    entidadAfectada: 'solicitudes_iniciales',
+                    entidadId: 0, // No hay entidad aún
+                    detalles: {
+                        motivo: "Cliente con crédito activo",
+                        dni_cliente: dniCliente
+                    },
+                    solicitudInicialId: undefined // No hay solicitud aún
+                });
+
                 throw new Error("El cliente ya tiene un crédito activo");
             }
 
@@ -65,7 +82,25 @@ export class CrearSolicitudInicialUseCase {
 
             // 3. Guardar solicitud inicial
             const solicitudCreada = await this.solicitudInicialRepository.createSolicitudInicial(solicitud);
+
+            const solicitudInicialId = solicitudCreada.getId();
             console.log(`Solicitud inicial creada con ID: ${solicitudCreada.getId()}`);
+
+            // Registrar evento de creación
+            await this.historialRepository.registrarEvento({
+                usuarioId: comercianteId,
+                accion: HISTORIAL_ACTIONS.CREATE_SOLICITUD_INICIAL,
+                entidadAfectada: 'solicitudes_iniciales',
+                entidadId: solicitudCreada.getId(),
+                detalles: {
+                    dni_cliente: dniCliente,
+                    comerciante_id: comercianteId,
+                    estado: "pendiente"
+                },
+                    solicitudInicialId: solicitudInicialId
+            });
+
+
             // 4. Consultar Veraz
             const estadoVeraz = await this.verazService.checkClienteStatus(dniCliente);
             console.log(`Estado Veraz para DNI ${dniCliente}:`, estadoVeraz);
@@ -73,9 +108,35 @@ export class CrearSolicitudInicialUseCase {
             if (estadoVeraz.status === "aprobado") {
                 solicitudCreada.setEstado("aprobada");
                 await this.solicitudInicialRepository.updateSolicitudInicial(solicitudCreada);
+                // Registrar evento de aprobación automática
+                await this.historialRepository.registrarEvento({
+                    usuarioId: null, // Sistema automático
+                    accion: HISTORIAL_ACTIONS.APPROVE_SOLICITUD_INICIAL,
+                    entidadAfectada: 'solicitudes_iniciales',
+                    entidadId: solicitudCreada.getId(),
+                    detalles: {
+                        sistema: "Veraz",
+                        score: estadoVeraz.score,
+                        motivo: estadoVeraz.motivo || "Aprobación automática"
+                    },
+                    solicitudInicialId: solicitudInicialId
+                });
             } else if(estadoVeraz.status === "rechazado"){
                 solicitudCreada.setEstado("rechazada");
                 await this.solicitudInicialRepository.updateSolicitudInicial(solicitudCreada);
+                // Registrar evento de rechazo automático
+                await this.historialRepository.registrarEvento({
+                    usuarioId: null, // Sistema automático
+                    accion: HISTORIAL_ACTIONS.REJECT_SOLICITUD_INICIAL,
+                    entidadAfectada: 'solicitudes_iniciales',
+                    entidadId: solicitudCreada.getId(),
+                    detalles: {
+                        sistema: "Veraz",
+                        score: estadoVeraz.score,
+                        motivo: estadoVeraz.motivo || "Rechazo automático"
+                    },
+                    solicitudInicialId: solicitudInicialId
+                });
                 //throw new Error("Cliente no apto para crédito según Veraz");
             } else {
                 solicitudCreada.setEstado("pendiente");
@@ -103,6 +164,21 @@ export class CrearSolicitudInicialUseCase {
                 type: "error",
                 message: `Error al crear solicitud: ${errorMessage}`
             });
+
+            // Registrar evento de error
+            await this.historialRepository.registrarEvento({
+                usuarioId: comercianteId,
+                accion: HISTORIAL_ACTIONS.ERROR_PROCESO,
+                entidadAfectada: 'solicitudes_iniciales',
+                entidadId: 0, // No hay entidad aún
+                detalles: {
+                    error: error instanceof Error ? error.message : String(error),
+                    etapa: "creacion_solicitud_inicial",
+                    dni_cliente: dniCliente
+                },
+                    solicitudInicialId: undefined // No hay solicitud por error
+            });
+            
             throw error;
         }
     }

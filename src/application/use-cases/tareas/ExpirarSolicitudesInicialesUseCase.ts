@@ -7,6 +7,8 @@ import { Cliente } from "../../../domain/entities/Cliente";
 import { ConfiguracionRepositoryPort } from "../../ports/ConfiguracionRepositoryPort";
 import { AnalistaRepositoryPort } from "../../ports/AnalistaRepositoryPort";
 import { ComercianteRepositoryPort } from "../../ports/ComercianteRepositoryPort";
+import { HistorialRepositoryPort } from "../../ports/HistorialRepositoryPort";
+import { HISTORIAL_ACTIONS } from "../../constants/historialActions";
 
 export class ExpirarSolicitudesInicialesUseCase {
     constructor(
@@ -16,10 +18,25 @@ export class ExpirarSolicitudesInicialesUseCase {
         private readonly analistaRepository: AnalistaRepositoryPort,
         private readonly comercianteRepository: ComercianteRepositoryPort,
         private readonly notificationService: NotificationPort,
+        private readonly historialRepository: HistorialRepositoryPort
     ) {}
 
     async execute(): Promise<void> {
+        const sistemaUserId = 0; // ID para acciones del sistema
+        let solicitudesExpiradas = 0;
+
         try {
+            // Registrar inicio del proceso
+            await this.historialRepository.registrarEvento({
+                usuarioId: sistemaUserId,
+                accion: HISTORIAL_ACTIONS.START_EXPIRACION_SOLICITUDES_INICIALES,
+                entidadAfectada: 'sistema',
+                entidadId: 0,
+                detalles: {
+                    mensaje: "Inicio del proceso de expiración de solicitudes iniciales"
+                },
+                solicitudInicialId: undefined
+            });
             // 1. Obtener días de expiración desde configuración
             const diasExpiracion = await this.configuracionRepository.obtenerDiasExpiracion();
             
@@ -28,11 +45,38 @@ export class ExpirarSolicitudesInicialesUseCase {
             
             if (solicitudes.length === 0) {
                 console.log('No hay solicitudes para expirar');
+                // Registrar evento de no expiraciones
+                await this.historialRepository.registrarEvento({
+                    usuarioId: sistemaUserId,
+                    accion: HISTORIAL_ACTIONS.NO_EXPIRACIONES_SOLICITUDES_INICIALES,
+                    entidadAfectada: 'sistema',
+                    entidadId: 0,
+                    detalles: {
+                        diasExpiracion,
+                        mensaje: "No se encontraron solicitudes para expirar"
+                    },
+                    solicitudInicialId: undefined
+                });
                 return;
             }
             
             // 3. Procesar cada solicitud
             for (const solicitud of solicitudes) {
+                const solicitudId = solicitud.getId();
+                    
+                    // Registrar inicio de expiración para esta solicitud
+                    await this.historialRepository.registrarEvento({
+                        usuarioId: sistemaUserId,
+                        accion: HISTORIAL_ACTIONS.START_EXPIRAR_SOLICITUD_INICIAL,
+                        entidadAfectada: 'solicitudes_iniciales',
+                        entidadId: solicitudId,
+                        detalles: {
+                            estado_actual: solicitud.getEstado(),
+                            fecha_creacion: solicitud.getFechaCreacion(),
+                            dias_expiracion: diasExpiracion
+                        },
+                    solicitudInicialId: solicitudId
+                    });
                 // 3.1. Actualizar estado a expirada
                 await this.solicitudInicialRepository.expirarSolicitud(solicitud.getId());
                 
@@ -41,7 +85,38 @@ export class ExpirarSolicitudesInicialesUseCase {
                 
                 // 3.3. Notificar a todas las partes interesadas
                 await this.notificarPartesInteresadas(cliente, solicitud);
+
+                solicitudesExpiradas++;
+                    
+                    // Registrar expiración exitosa
+                    await this.historialRepository.registrarEvento({
+                        usuarioId: sistemaUserId,
+                        accion: HISTORIAL_ACTIONS.EXPIRAR_SOLICITUD_INICIAL,
+                        entidadAfectada: 'solicitudes_iniciales',
+                        entidadId: solicitudId,
+                        detalles: {
+                            cliente_id: cliente.getId(),
+                            cliente_nombre: cliente.getNombreCompleto(),
+                            estado_anterior: solicitud.getEstado(),
+                            estado_nuevo: "expirada"
+                        },
+                    solicitudInicialId: solicitudId
+                    });
             }
+
+            // Registrar finalización del proceso
+            await this.historialRepository.registrarEvento({
+                usuarioId: sistemaUserId,
+                accion: HISTORIAL_ACTIONS.FINISH_EXPIRACION_SOLICITUDES_INICIALES,
+                entidadAfectada: 'sistema',
+                entidadId: 0,
+                detalles: {
+                    total_solicitudes: solicitudes.length,
+                    exitosas: solicitudesExpiradas,
+                    errores: solicitudes.length - solicitudesExpiradas
+                },
+                    solicitudInicialId: undefined
+            });
             
             // 4. Notificar éxito al sistema
             await this.notificationService.emitNotification({

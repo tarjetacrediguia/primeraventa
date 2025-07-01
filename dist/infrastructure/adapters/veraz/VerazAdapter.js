@@ -12,14 +12,17 @@ class VerazAdapter {
                 const lastDigit = dniString.charAt(dniString.length - 1);
                 let status;
                 let score;
+                let motivo;
                 // Asignar estado según el último dígito
                 if (dniString === "225577") {
                     status = "aprobado";
                     score = 750;
+                    motivo = "Aprobación automática por Veraz";
                 }
                 else if (dniString === "87654321") {
                     status = "rechazado";
                     score = 300;
+                    motivo = "Rechazo automático por Veraz";
                 }
                 else {
                     switch (lastDigit) {
@@ -43,7 +46,8 @@ class VerazAdapter {
                 resolve({
                     status,
                     score,
-                    lastUpdated: new Date()
+                    lastUpdated: new Date(),
+                    motivo
                 });
             }, 1000);
         });

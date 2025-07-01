@@ -6,6 +6,9 @@ import { NotificationPort } from "../../ports/NotificationPort";
 import { SolicitudFormal } from "../../../domain/entities/SolicitudFormal";
 import { Contrato } from "../../../domain/entities/Contrato";
 import { ClienteRepositoryAdapter } from "../../../infrastructure/adapters/repository/ClienteRepositoryAdapter";
+import { HistorialRepositoryPort } from "../../ports/HistorialRepositoryPort";
+import { SolicitudInicialRepositoryPort } from "../../ports/SolicitudInicialRepositoryPort";
+import { HISTORIAL_ACTIONS } from "../../constants/historialActions";
 
 export class GenerarContratoUseCase {
     constructor(
@@ -13,10 +16,12 @@ export class GenerarContratoUseCase {
         private readonly contratoRepository: ContratoRepositoryPort,
         private readonly pdfService: PdfPort,
         private readonly notificationService: NotificationPort,
-        private readonly clienteRepository: ClienteRepositoryAdapter
+        private readonly clienteRepository: ClienteRepositoryAdapter,
+        private readonly historialRepository: HistorialRepositoryPort,
+        private readonly solicitudInicialRepository: SolicitudInicialRepositoryPort
     ) {}
 
-    async execute(numeroSolicitud: number): Promise<Contrato> {
+    async execute(numeroSolicitud: number, usuarioId: number): Promise<Contrato> {
         try {
             // 1. Obtener solicitud formal
             const solicitud = await this.solicitudRepository.getSolicitudFormalById(numeroSolicitud);
@@ -25,9 +30,30 @@ export class GenerarContratoUseCase {
                 throw new Error(`Solicitud formal no encontrada: ${numeroSolicitud}`);
             }
 
+            // Obtener solicitud inicial relacionada
+            const solicitudInicial = await this.solicitudInicialRepository.getSolicitudInicialById(solicitud.getSolicitudInicialId());
+            if (!solicitudInicial) {
+                throw new Error(`Solicitud inicial no encontrada para ID: ${solicitud.getSolicitudInicialId()}`);
+            }
+
             // 2. Verificar estado aprobado
             if (solicitud.getEstado() !== "aprobada") {
                 await this.notificarSinPermisos(solicitud);
+
+                // Registrar evento de error en historial
+                await this.historialRepository.registrarEvento({
+                    usuarioId: usuarioId,
+                    accion: HISTORIAL_ACTIONS.ERROR_PROCESO,
+                    entidadAfectada: 'contratos',
+                    entidadId: 0,
+                    detalles: {
+                        error: "Intento de generar contrato sin aprobación",
+                        solicitud_formal_id: solicitud.getId(),
+                        estado_actual: solicitud.getEstado()
+                    },
+                    solicitudInicialId: solicitudInicial.getId()
+                });
+                
                 throw new Error("La solicitud no está aprobada, no se puede generar contrato");
             }
 
@@ -40,6 +66,19 @@ export class GenerarContratoUseCase {
             // Verificar si ya existe un contrato para esta solicitud
             const contratosExistentes = await this.contratoRepository.getContratosBySolicitudFormalId(Number(solicitud.getId()));
             if (contratosExistentes && contratosExistentes.length > 0) {
+
+                // Registrar evento de duplicado en historial
+                await this.historialRepository.registrarEvento({
+                    usuarioId: usuarioId,
+                    accion: HISTORIAL_ACTIONS.WARNING_DUPLICADO,
+                    entidadAfectada: 'contratos',
+                    entidadId: contratosExistentes[0].getId(),
+                    detalles: {
+                        mensaje: "Intento de generar contrato duplicado",
+                        solicitud_formal_id: solicitud.getId()
+                    },
+                    solicitudInicialId: solicitudInicial.getId()
+                });
                 throw new Error(`Ya existe un contrato para la solicitud ${solicitud.getId()}`);
             }
 
@@ -68,6 +107,19 @@ export class GenerarContratoUseCase {
             // 4. Guardar contrato
             const contratoGuardado = await this.contratoRepository.saveContrato(contrato);
             console.log(`Contrato guardado: ${JSON.stringify(contratoGuardado)}`);
+            await this.historialRepository.registrarEvento({
+                usuarioId: usuarioId,
+                accion: HISTORIAL_ACTIONS.GENERAR_CONTRATO,
+                entidadAfectada: 'contratos',
+                entidadId: contratoGuardado.getId(),
+                detalles: {
+                    monto: monto,
+                    numero_tarjeta: contratoGuardado.getNumeroTarjeta(),
+                    numero_cuenta: contratoGuardado.getNumeroCuenta(),
+                    solicitud_formal_id: solicitud.getId()
+                },
+                solicitudInicialId: solicitudInicial.getId()
+            });
             // 5. Vincular contrato a solicitud
             await this.solicitudRepository.vincularContrato(solicitud.getSolicitudInicialId(), contratoGuardado.getId());
 
@@ -85,6 +137,8 @@ export class GenerarContratoUseCase {
         } catch (error) {
             // Manejo de errores y notificación
             const err = error instanceof Error ? error : new Error(String(error));
+
+            
             await this.manejarErrorGeneracion(err, numeroSolicitud);
             throw error;
         }
