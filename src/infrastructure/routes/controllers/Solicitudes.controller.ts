@@ -30,6 +30,7 @@ import { GetSolicitudesFormalesByComercianteYEstadoUseCase } from '../../../appl
 import { HistorialRepositoryAdapter } from '../../adapters/repository/HistorialRepositoryAdapter';
 import { RegisterHistorialUseCase } from '../../../application/use-cases/Historial/RegisterHistorialUseCase';
 import { GetSolicitudesFormalesByComercianteIdUseCase } from '../../../application/use-cases/SolicitudFormal/GetSolicitudesFormalesByComercianteIdUseCase';
+import { AprobarRechazarSolicitudInicialUseCase } from '../../../application/use-cases/SolicitudInicial/AprobarRechazarSolicitudInicialUseCase';
 
 // Inyección de dependencias (deberían venir de un contenedor DI)
 const verazService: VerazPort = new VerazAdapter();
@@ -54,6 +55,12 @@ const crearSolicitudInicialUC = new CrearSolicitudInicialUseCase(
   notificationService,
   clienteRepository,
   historialRepository
+);
+
+const aprobarRechazarSolicitudInicialUC = new AprobarRechazarSolicitudInicialUseCase(
+    solicitudInicialRepo,
+    notificationService,
+    historialRepository
 );
 
 const getSolicitudesInicialesByEstadoUC = new GetSolicitudesInicialesByEstadoUseCase(solicitudInicialRepo);
@@ -550,3 +557,67 @@ export const listarSolicitudesInicialesByComercianteYEstado = async (req: Reques
         res.status(500).json({ error: errorMessage });
     }
 };
+
+
+
+export const aprobarSolicitudInicial = async (req: Request, res: Response) => {
+    try {
+        const id = parseInt(req.params.id, 10);
+        const { comentario } = req.body;
+        
+        if (!req.user?.id || !req.user?.rol) {
+            return res.status(401).json({ error: 'Usuario no autenticado' });
+        }
+        
+        const esAdministrador = req.user.rol === 'administrador';
+        const aprobadorId = Number(req.user.id);
+
+        const solicitudActualizada = await aprobarRechazarSolicitudInicialUC.aprobarSolicitud(
+            Number(id),
+            aprobadorId,
+            esAdministrador,
+            comentario
+        );
+
+        res.status(200).json(solicitudActualizada);
+    } catch (error: any) {
+        handleErrorResponse(res, error);
+    }
+};
+
+export const rechazarSolicitudInicial = async (req: Request, res: Response) => {
+    try {
+        const id = req.params.id;
+        const { comentario } = req.body;
+        
+        if (!req.user?.id || !req.user?.rol) {
+            return res.status(401).json({ error: 'Usuario no autenticado' });
+        }
+        
+        const esAdministrador = req.user.rol === 'administrador';
+        const aprobadorId = Number(req.user.id);
+
+        const solicitudActualizada = await aprobarRechazarSolicitudInicialUC.rechazarSolicitud(
+            Number(id),
+            comentario,
+            aprobadorId,
+            esAdministrador
+        );
+
+        res.status(200).json(solicitudActualizada);
+    } catch (error: any) {
+        handleErrorResponse(res, error);
+    }
+};
+
+// Función auxiliar para manejar errores
+function handleErrorResponse(res: Response, error: any) {
+    const message = error.message || 'Error desconocido';
+    if (message.includes('no encontrada')) {
+        res.status(404).json({ error: message });
+    } else if (message.includes('pendientes') || message.includes('obligatorio')) {
+        res.status(400).json({ error: message });
+    } else {
+        res.status(500).json({ error: message });
+    }
+}

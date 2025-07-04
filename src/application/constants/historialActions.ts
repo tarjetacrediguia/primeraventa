@@ -17,5 +17,5 @@ export const HISTORIAL_ACTIONS = {
     FINISH_EXPIRACION_SOLICITUDES_INICIALES: 'finish_expiracion_solicitudes_iniciales',
     NO_EXPIRACIONES_SOLICITUDES_INICIALES: 'no_expiraciones_solicitudes_iniciales',
     WARNING_DUPLICADO: 'warning_duplicado',
-    GENERAR_CONTRATO: 'generar_contrato',
+    GENERAR_CONTRATO: 'generar_contrato'
 } as const;

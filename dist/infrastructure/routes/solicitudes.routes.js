@@ -6,9 +6,11 @@ const Solicitudes_controller_1 = require("./controllers/Solicitudes.controller")
 const rolesMiddleware_1 = require("./middlewares/rolesMiddleware");
 const router = (0, express_1.Router)();
 // Rutas para solicitudes iniciales
-router.post('/solicitudes-iniciales', rolesMiddleware_1.esComercianteOAnalista, Solicitudes_controller_1.crearSolicitudInicial); //Analizar si solo comerciante puede crear solicitudes iniciales
+router.post('/solicitudes-iniciales', rolesMiddleware_1.esComercianteOAnalista, Solicitudes_controller_1.crearSolicitudInicial);
 router.get('/solicitudes-iniciales', rolesMiddleware_1.esComercianteOAnalista, Solicitudes_controller_1.listarSolicitudesIniciales);
 router.get('/solicitudes-iniciales-comerciante', rolesMiddleware_1.esComercianteOAnalista, Solicitudes_controller_1.listarSolicitudesInicialesByComercianteYEstado);
+router.put('/solicitudes-iniciales/:id/aprobar', rolesMiddleware_1.esAnalistaOAdministrador, Solicitudes_controller_1.aprobarSolicitudInicial);
+router.put('/solicitudes-iniciales/:id/rechazar', rolesMiddleware_1.esAnalistaOAdministrador, Solicitudes_controller_1.rechazarSolicitudInicial);
 // Ruta para verificación crediticia (NOSIS/VERAZ)
 router.post('/verificacion-crediticia', rolesMiddleware_1.esComerciante, Solicitudes_controller_1.verificarEstadoCrediticio); //Analizar si este ednpoint debe existir.
 // Rutas para solicitudes formales

@@ -147,12 +147,20 @@ class SolicitudInicialRepositoryAdapter {
         return __awaiter(this, void 0, void 0, function* () {
             const query = `
             SELECT 
-                si.id, si.fecha_creacion, si.estado, si.reciboSueldo, 
-                si.comentarios, si.comerciante_id,
-                c.dni as dni_cliente, c.cuil as cuil_cliente
-            FROM solicitudes_iniciales si
-            INNER JOIN clientes c ON si.cliente_id = c.id
-            WHERE si.id = $1
+            si.id, 
+            si.fecha_creacion, 
+            si.estado, 
+            si.reciboSueldo, 
+            si.comentarios, 
+            si.comerciante_id,
+            si.analista_aprobador_id,
+            si.administrador_aprobador_id,
+            c.dni as dni_cliente, 
+            c.id as cliente_id,
+            c.cuil as cuil_cliente
+        FROM solicitudes_iniciales si
+        INNER JOIN clientes c ON si.cliente_id = c.id
+        WHERE si.id = $1
         `;
             const result = yield DatabaseDonfig_1.pool.query(query, [id]);
             if (result.rows.length === 0) {
@@ -174,23 +182,85 @@ class SolicitudInicialRepositoryAdapter {
                 }
                 const clienteId = clienteResult.rows[0].id;
                 const query = `
-                UPDATE solicitudes_iniciales
-                SET 
-                    cliente_id = $1,
-                    comerciante_id = $2,
-                    estado = $3,
-                    reciboSueldo = $4,
-                    comentarios = $5,
-                    fecha_actualizacion = CURRENT_TIMESTAMP
-                WHERE id = $6
-                RETURNING *
-            `;
+            UPDATE solicitudes_iniciales
+            SET 
+                cliente_id = $1,
+                comerciante_id = $2,
+                estado = $3,
+                reciboSueldo = $4,
+                comentarios = $5,
+                analista_aprobador_id = $6,   -- Cambiado a $6
+                administrador_aprobador_id = $7, -- Cambiado a $7
+                fecha_actualizacion = CURRENT_TIMESTAMP
+            WHERE id = $8  -- Cambiado a $8
+            RETURNING *
+        `;
                 const values = [
                     clienteId,
                     solicitudInicial.getComercianteId() || null,
                     solicitudInicial.getEstado(),
                     solicitudInicial.getReciboSueldo() || null,
                     solicitudInicial.getComentarios(),
+                    solicitudInicial.getAnalistaAprobadorId() === undefined ?
+                        null : Number(solicitudInicial.getAnalistaAprobadorId()),
+                    solicitudInicial.getAdministradorAprobadorId() === undefined ?
+                        null : Number(solicitudInicial.getAdministradorAprobadorId()),
+                    solicitudInicial.getId()
+                ];
+                const result = yield client.query(query, values);
+                if (result.rows.length === 0) {
+                    throw new Error(`Solicitud inicial con ID ${solicitudInicial.getId()} no encontrada`);
+                }
+                yield client.query('COMMIT');
+                // Obtener los datos completos para retornar
+                const solicitudActualizada = yield this.getSolicitudInicialById(solicitudInicial.getId());
+                return solicitudActualizada;
+            }
+            catch (error) {
+                yield client.query('ROLLBACK');
+                throw error;
+            }
+            finally {
+                client.release();
+            }
+        });
+    }
+    updateSolicitudInicialAprobaciónRechazo(solicitudInicial) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const client = yield DatabaseDonfig_1.pool.connect();
+            try {
+                yield client.query('BEGIN');
+                // Verificar que el cliente existe y obtener su ID
+                const clienteQuery = `SELECT id FROM clientes WHERE dni = $1`;
+                const clienteResult = yield client.query(clienteQuery, [solicitudInicial.getDniCliente()]);
+                if (clienteResult.rows.length === 0) {
+                    throw new Error(`Cliente con DNI ${solicitudInicial.getDniCliente()} no encontrado`);
+                }
+                const clienteId = clienteResult.rows[0].id;
+                const query = `
+            UPDATE solicitudes_iniciales
+            SET 
+                cliente_id = $1,
+                comerciante_id = $2,
+                estado = $3,
+                reciboSueldo = $4,
+                comentarios = $5,
+                analista_aprobador_id = $6,   -- Cambiado a $6
+                administrador_aprobador_id = $7, -- Cambiado a $7
+                fecha_aprobacion = CURRENT_TIMESTAMP
+            WHERE id = $8  -- Cambiado a $8
+            RETURNING *
+        `;
+                const values = [
+                    clienteId,
+                    solicitudInicial.getComercianteId() || null,
+                    solicitudInicial.getEstado(),
+                    solicitudInicial.getReciboSueldo() || null,
+                    solicitudInicial.getComentarios(),
+                    solicitudInicial.getAnalistaAprobadorId() === undefined ?
+                        null : Number(solicitudInicial.getAnalistaAprobadorId()),
+                    solicitudInicial.getAdministradorAprobadorId() === undefined ?
+                        null : Number(solicitudInicial.getAdministradorAprobadorId()),
                     solicitudInicial.getId()
                 ];
                 const result = yield client.query(query, values);
@@ -307,9 +377,7 @@ class SolicitudInicialRepositoryAdapter {
         });
     }
     mapRowToSolicitudInicial(row) {
-        var _a;
-        return new SolicitudInicial_1.SolicitudInicial(row.id.toString(), row.fecha_creacion, row.estado, row.dni_cliente, row.cuil_cliente, row.recibosueldo || undefined, // BYTEA field
-        ((_a = row.comerciante_id) === null || _a === void 0 ? void 0 : _a.toString()) || undefined, row.comentarios || []);
+        return new SolicitudInicial_1.SolicitudInicial(Number(row.id), new Date(row.fecha_creacion), row.estado, row.dni_cliente, Number(row.cliente_id), row.cuil_cliente, row.recibosueldo || undefined, row.comerciante_id ? Number(row.comerciante_id) : undefined, row.comentarios || [], row.analista_aprobador_id ? Number(row.analista_aprobador_id) : undefined, row.administrador_aprobador_id ? Number(row.administrador_aprobador_id) : undefined);
     }
     getSolicitudesInicialesByComercianteYEstado(comercianteId, estado) {
         return __awaiter(this, void 0, void 0, function* () {

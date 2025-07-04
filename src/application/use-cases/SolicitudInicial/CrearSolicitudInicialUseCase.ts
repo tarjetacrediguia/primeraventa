@@ -100,7 +100,8 @@ export class CrearSolicitudInicialUseCase {
                     solicitudInicialId: solicitudInicialId
             });
 
-
+            // VERIFICACION AUTOMÁTICA DE SOLICITUDES INICIALES POR VERAZ
+            /*
             // 4. Consultar Veraz
             const estadoVeraz = await this.verazService.checkClienteStatus(dniCliente);
             console.log(`Estado Veraz para DNI ${dniCliente}:`, estadoVeraz);
@@ -142,7 +143,7 @@ export class CrearSolicitudInicialUseCase {
                 solicitudCreada.setEstado("pendiente");
                 await this.solicitudInicialRepository.updateSolicitudInicial(solicitudCreada);
             }
-
+*/
             // 6. Notificar al cliente (simulado)
             console.log(`Notificación enviada al cliente DNI:${dniCliente} sobre su solicitud`);
 

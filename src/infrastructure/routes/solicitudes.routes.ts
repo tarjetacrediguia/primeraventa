@@ -12,19 +12,32 @@ import {
   obtenerDetalleSolicitudFormal,
   listarSolicitudesInicialesByComercianteYEstado,
   listarSolicitudesFormalesByComercianteYEstado,
-  listarSolicitudesFormalesByComerciante
+  listarSolicitudesFormalesByComerciante,
+  aprobarSolicitudInicial,
+  rechazarSolicitudInicial
 } from './controllers/Solicitudes.controller';
 import { esComerciante, esAnalista, esComercianteOAnalista, esAdministrador, esAnalistaOAdministrador } from './middlewares/rolesMiddleware';
 
 const router = Router();
 
 // Rutas para solicitudes iniciales
-router.post('/solicitudes-iniciales',esComercianteOAnalista, crearSolicitudInicial);//Analizar si solo comerciante puede crear solicitudes iniciales
+router.post('/solicitudes-iniciales',esComercianteOAnalista, crearSolicitudInicial);
 router.get('/solicitudes-iniciales', esComercianteOAnalista, listarSolicitudesIniciales);
 router.get(
     '/solicitudes-iniciales-comerciante', 
     esComercianteOAnalista, 
     listarSolicitudesInicialesByComercianteYEstado
+);
+router.put(
+    '/solicitudes-iniciales/:id/aprobar', 
+    esAnalistaOAdministrador, 
+    aprobarSolicitudInicial
+);
+
+router.put(
+    '/solicitudes-iniciales/:id/rechazar', 
+    esAnalistaOAdministrador, 
+    rechazarSolicitudInicial
 );
 
 // Ruta para verificación crediticia (NOSIS/VERAZ)

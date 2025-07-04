@@ -10,7 +10,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.listarSolicitudesFormalesByComerciante = exports.listarSolicitudesFormalesByComercianteYEstado = exports.listarSolicitudesInicialesByComercianteYEstado = exports.obtenerDetalleSolicitudFormal = exports.actualizarSolicitudFormal = exports.listarSolicitudesFormales = exports.rechazarSolicitudFormal = exports.aprobarSolicitudFormal = exports.obtenerReciboSolicitudFormal = exports.crearSolicitudFormal = exports.verificarEstadoCrediticio = exports.listarSolicitudesIniciales = exports.crearSolicitudInicial = void 0;
+exports.rechazarSolicitudInicial = exports.aprobarSolicitudInicial = exports.listarSolicitudesFormalesByComerciante = exports.listarSolicitudesFormalesByComercianteYEstado = exports.listarSolicitudesInicialesByComercianteYEstado = exports.obtenerDetalleSolicitudFormal = exports.actualizarSolicitudFormal = exports.listarSolicitudesFormales = exports.rechazarSolicitudFormal = exports.aprobarSolicitudFormal = exports.obtenerReciboSolicitudFormal = exports.crearSolicitudFormal = exports.verificarEstadoCrediticio = exports.listarSolicitudesIniciales = exports.crearSolicitudInicial = void 0;
 const CrearSolicitudInicialUseCase_1 = require("../../../application/use-cases/SolicitudInicial/CrearSolicitudInicialUseCase");
 const GetSolicitudesInicialesByEstadoUseCase_1 = require("../../../application/use-cases/SolicitudInicial/GetSolicitudesInicialesByEstadoUseCase");
 const VerificarAprobacionSolicitudInicialUseCase_1 = require("../../../application/use-cases/SolicitudInicial/VerificarAprobacionSolicitudInicialUseCase");
@@ -33,6 +33,7 @@ const GetSolicitudesInicialesByComercianteYEstadoUseCase_1 = require("../../../a
 const GetSolicitudesFormalesByComercianteYEstadoUseCase_1 = require("../../../application/use-cases/SolicitudFormal/GetSolicitudesFormalesByComercianteYEstadoUseCase");
 const HistorialRepositoryAdapter_1 = require("../../adapters/repository/HistorialRepositoryAdapter");
 const GetSolicitudesFormalesByComercianteIdUseCase_1 = require("../../../application/use-cases/SolicitudFormal/GetSolicitudesFormalesByComercianteIdUseCase");
+const AprobarRechazarSolicitudInicialUseCase_1 = require("../../../application/use-cases/SolicitudInicial/AprobarRechazarSolicitudInicialUseCase");
 // Inyección de dependencias (deberían venir de un contenedor DI)
 const verazService = new VerazAdapter_1.VerazAdapter();
 const notificationService = new NotificationAdapter_1.NotificationAdapter();
@@ -45,6 +46,7 @@ const historialRepository = new HistorialRepositoryAdapter_1.HistorialRepository
 const getSolicitudesInicialesByComercianteYEstado = new GetSolicitudesInicialesByComercianteYEstadoUseCase_1.GetSolicitudesInicialesByComercianteYEstadoUseCase(solicitudInicialRepo);
 // Casos de uso inicializados
 const crearSolicitudInicialUC = new CrearSolicitudInicialUseCase_1.CrearSolicitudInicialUseCase(solicitudInicialRepo, contratoRepo, solicitudFormalRepo, verazService, notificationService, clienteRepository, historialRepository);
+const aprobarRechazarSolicitudInicialUC = new AprobarRechazarSolicitudInicialUseCase_1.AprobarRechazarSolicitudInicialUseCase(solicitudInicialRepo, notificationService, historialRepository);
 const getSolicitudesInicialesByEstadoUC = new GetSolicitudesInicialesByEstadoUseCase_1.GetSolicitudesInicialesByEstadoUseCase(solicitudInicialRepo);
 const verificarAprobacionUC = new VerificarAprobacionSolicitudInicialUseCase_1.VerificarAprobacionSolicitudInicialUseCase(solicitudInicialRepo, verazService, notificationService);
 const crearSolicitudFormalUC = new CrearSolicitudFormalUseCase_1.CrearSolicitudFormalUseCase(solicitudInicialRepo, solicitudFormalRepo, permisoRepo, notificationService, new AnalistaRepositoryAdapter_1.AnalistaRepositoryAdapter(), contratoRepo, clienteRepository, historialRepository);
@@ -471,3 +473,52 @@ const listarSolicitudesFormalesByComerciante = (req, res) => __awaiter(void 0, v
     }
 });
 exports.listarSolicitudesFormalesByComerciante = listarSolicitudesFormalesByComerciante;
+const aprobarSolicitudInicial = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    var _a, _b;
+    try {
+        const id = parseInt(req.params.id, 10);
+        const { comentario } = req.body;
+        if (!((_a = req.user) === null || _a === void 0 ? void 0 : _a.id) || !((_b = req.user) === null || _b === void 0 ? void 0 : _b.rol)) {
+            return res.status(401).json({ error: 'Usuario no autenticado' });
+        }
+        const esAdministrador = req.user.rol === 'administrador';
+        const aprobadorId = Number(req.user.id);
+        const solicitudActualizada = yield aprobarRechazarSolicitudInicialUC.aprobarSolicitud(Number(id), aprobadorId, esAdministrador, comentario);
+        res.status(200).json(solicitudActualizada);
+    }
+    catch (error) {
+        handleErrorResponse(res, error);
+    }
+});
+exports.aprobarSolicitudInicial = aprobarSolicitudInicial;
+const rechazarSolicitudInicial = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    var _a, _b;
+    try {
+        const id = req.params.id;
+        const { comentario } = req.body;
+        if (!((_a = req.user) === null || _a === void 0 ? void 0 : _a.id) || !((_b = req.user) === null || _b === void 0 ? void 0 : _b.rol)) {
+            return res.status(401).json({ error: 'Usuario no autenticado' });
+        }
+        const esAdministrador = req.user.rol === 'administrador';
+        const aprobadorId = Number(req.user.id);
+        const solicitudActualizada = yield aprobarRechazarSolicitudInicialUC.rechazarSolicitud(Number(id), comentario, aprobadorId, esAdministrador);
+        res.status(200).json(solicitudActualizada);
+    }
+    catch (error) {
+        handleErrorResponse(res, error);
+    }
+});
+exports.rechazarSolicitudInicial = rechazarSolicitudInicial;
+// Función auxiliar para manejar errores
+function handleErrorResponse(res, error) {
+    const message = error.message || 'Error desconocido';
+    if (message.includes('no encontrada')) {
+        res.status(404).json({ error: message });
+    }
+    else if (message.includes('pendientes') || message.includes('obligatorio')) {
+        res.status(400).json({ error: message });
+    }
+    else {
+        res.status(500).json({ error: message });
+    }
+}

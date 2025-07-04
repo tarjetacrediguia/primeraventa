@@ -3,7 +3,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.SolicitudInicial = void 0;
 // src/domain/entities/SolicitudInicial.ts
 class SolicitudInicial {
-    constructor(id, fechaCreacion, estado, dniCliente, clienteId, cuilCliente, reciboSueldo, comercianteId, comentarios = []) {
+    constructor(id, fechaCreacion, estado, dniCliente, clienteId, cuilCliente, reciboSueldo, comercianteId, comentarios = [], analistaAprobadorId, administradorAprobadorId) {
         this.id = id;
         this.fechaCreacion = fechaCreacion;
         this.estado = estado;
@@ -13,8 +13,22 @@ class SolicitudInicial {
         this.comercianteId = comercianteId;
         this.comentarios = comentarios;
         this.clienteId = clienteId;
+        this.analistaAprobadorId = analistaAprobadorId;
+        this.administradorAprobadorId = administradorAprobadorId;
     }
     // Getters y Setters
+    setAnalistaAprobadorId(id) {
+        this.analistaAprobadorId = Number(id);
+    }
+    setAdministradorAprobadorId(id) {
+        this.administradorAprobadorId = Number(id);
+    }
+    getAnalistaAprobadorId() {
+        return this.analistaAprobadorId;
+    }
+    getAdministradorAprobadorId() {
+        return this.administradorAprobadorId;
+    }
     getClienteId() {
         return this.clienteId;
     }
@@ -83,11 +97,13 @@ class SolicitudInicial {
             cuilCliente: this.cuilCliente,
             reciboSueldo: this.reciboSueldo,
             comercianteId: this.comercianteId,
-            comentarios: this.comentarios, // Nuevo campo
+            comentarios: this.comentarios,
+            analistaAprobadorId: this.analistaAprobadorId,
+            administradorAprobadorId: this.administradorAprobadorId,
         };
     }
     static fromMap(map) {
-        return new SolicitudInicial(map.id, map.fechaCreacion, map.estado, map.dniCliente, map.clienteId || 0, map.cuilCliente, map.reciboSueldo, map.comercianteId, map.comentarios || []);
+        return new SolicitudInicial(map.id, map.fechaCreacion, map.estado, map.dniCliente, map.clienteId || 0, map.cuilCliente, map.reciboSueldo, map.comercianteId, map.comentarios || [], map.analista_aprobador_id ? Number(map.analista_aprobador_id) : undefined, map.administrador_aprobador_id ? Number(map.administrador_aprobador_id) : undefined);
     }
     validar() {
         return !!this.dniCliente && !!this.cuilCliente;

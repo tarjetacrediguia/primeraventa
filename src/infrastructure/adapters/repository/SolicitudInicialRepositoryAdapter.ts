@@ -159,12 +159,20 @@ export class SolicitudInicialRepositoryAdapter implements SolicitudInicialReposi
     async getSolicitudInicialById(id: number): Promise<SolicitudInicial | null> {
         const query = `
             SELECT 
-                si.id, si.fecha_creacion, si.estado, si.reciboSueldo, 
-                si.comentarios, si.comerciante_id,
-                c.dni as dni_cliente, c.cuil as cuil_cliente
-            FROM solicitudes_iniciales si
-            INNER JOIN clientes c ON si.cliente_id = c.id
-            WHERE si.id = $1
+            si.id, 
+            si.fecha_creacion, 
+            si.estado, 
+            si.reciboSueldo, 
+            si.comentarios, 
+            si.comerciante_id,
+            si.analista_aprobador_id,
+            si.administrador_aprobador_id,
+            c.dni as dni_cliente, 
+            c.id as cliente_id,
+            c.cuil as cuil_cliente
+        FROM solicitudes_iniciales si
+        INNER JOIN clientes c ON si.cliente_id = c.id
+        WHERE si.id = $1
         `;
         
         const result = await pool.query(query, [id]);
@@ -184,7 +192,6 @@ export class SolicitudInicialRepositoryAdapter implements SolicitudInicialReposi
             // Verificar que el cliente existe y obtener su ID
             const clienteQuery = `SELECT id FROM clientes WHERE dni = $1`;
             const clienteResult = await client.query(clienteQuery, [solicitudInicial.getDniCliente()]);
-            
             if (clienteResult.rows.length === 0) {
                 throw new Error(`Cliente con DNI ${solicitudInicial.getDniCliente()} no encontrado`);
             }
@@ -192,29 +199,96 @@ export class SolicitudInicialRepositoryAdapter implements SolicitudInicialReposi
             const clienteId = clienteResult.rows[0].id;
             
             const query = `
-                UPDATE solicitudes_iniciales
-                SET 
-                    cliente_id = $1,
-                    comerciante_id = $2,
-                    estado = $3,
-                    reciboSueldo = $4,
-                    comentarios = $5,
-                    fecha_actualizacion = CURRENT_TIMESTAMP
-                WHERE id = $6
-                RETURNING *
-            `;
-            
-            const values = [
-                clienteId,
-                solicitudInicial.getComercianteId() || null,
-                solicitudInicial.getEstado(),
-                solicitudInicial.getReciboSueldo() || null,
-                solicitudInicial.getComentarios(),
-                solicitudInicial.getId()
-            ];
+            UPDATE solicitudes_iniciales
+            SET 
+                cliente_id = $1,
+                comerciante_id = $2,
+                estado = $3,
+                reciboSueldo = $4,
+                comentarios = $5,
+                analista_aprobador_id = $6,   -- Cambiado a $6
+                administrador_aprobador_id = $7, -- Cambiado a $7
+                fecha_actualizacion = CURRENT_TIMESTAMP
+            WHERE id = $8  -- Cambiado a $8
+            RETURNING *
+        `;
+        
+        
+        const values = [
+            clienteId,
+            solicitudInicial.getComercianteId() || null,
+            solicitudInicial.getEstado(),
+            solicitudInicial.getReciboSueldo() || null,
+            solicitudInicial.getComentarios(),
+            solicitudInicial.getAnalistaAprobadorId() === undefined ? 
+                null : Number(solicitudInicial.getAnalistaAprobadorId()),
+            solicitudInicial.getAdministradorAprobadorId() === undefined ? 
+                null : Number(solicitudInicial.getAdministradorAprobadorId()),
+            solicitudInicial.getId()
+        ];
             
             const result = await client.query(query, values);
+            if (result.rows.length === 0) {
+                throw new Error(`Solicitud inicial con ID ${solicitudInicial.getId()} no encontrada`);
+            }
             
+            await client.query('COMMIT');
+            
+            // Obtener los datos completos para retornar
+            const solicitudActualizada = await this.getSolicitudInicialById(solicitudInicial.getId());
+            return solicitudActualizada!;
+        } catch (error) {
+            await client.query('ROLLBACK');
+            throw error;
+        } finally {
+            client.release();
+        }
+    }
+
+        async updateSolicitudInicialAprobaciónRechazo(solicitudInicial: SolicitudInicial): Promise<SolicitudInicial> {
+        const client = await pool.connect();
+        try {
+            await client.query('BEGIN');
+            
+            // Verificar que el cliente existe y obtener su ID
+            const clienteQuery = `SELECT id FROM clientes WHERE dni = $1`;
+            const clienteResult = await client.query(clienteQuery, [solicitudInicial.getDniCliente()]);
+            if (clienteResult.rows.length === 0) {
+                throw new Error(`Cliente con DNI ${solicitudInicial.getDniCliente()} no encontrado`);
+            }
+            
+            const clienteId = clienteResult.rows[0].id;
+            
+            const query = `
+            UPDATE solicitudes_iniciales
+            SET 
+                cliente_id = $1,
+                comerciante_id = $2,
+                estado = $3,
+                reciboSueldo = $4,
+                comentarios = $5,
+                analista_aprobador_id = $6,   -- Cambiado a $6
+                administrador_aprobador_id = $7, -- Cambiado a $7
+                fecha_aprobacion = CURRENT_TIMESTAMP
+            WHERE id = $8  -- Cambiado a $8
+            RETURNING *
+        `;
+        
+        
+        const values = [
+            clienteId,
+            solicitudInicial.getComercianteId() || null,
+            solicitudInicial.getEstado(),
+            solicitudInicial.getReciboSueldo() || null,
+            solicitudInicial.getComentarios(),
+            solicitudInicial.getAnalistaAprobadorId() === undefined ? 
+                null : Number(solicitudInicial.getAnalistaAprobadorId()),
+            solicitudInicial.getAdministradorAprobadorId() === undefined ? 
+                null : Number(solicitudInicial.getAdministradorAprobadorId()),
+            solicitudInicial.getId()
+        ];
+            
+            const result = await client.query(query, values);
             if (result.rows.length === 0) {
                 throw new Error(`Solicitud inicial con ID ${solicitudInicial.getId()} no encontrada`);
             }
@@ -328,17 +402,20 @@ export class SolicitudInicialRepositoryAdapter implements SolicitudInicialReposi
     }
 
     private mapRowToSolicitudInicial(row: any): SolicitudInicial {
-        return new SolicitudInicial(
-            row.id.toString(),
-            row.fecha_creacion,
-            row.estado as 'pendiente' | 'aprobada' | 'rechazada' | 'expirada',
-            row.dni_cliente,
-            row.cuil_cliente,
-            row.recibosueldo || undefined, // BYTEA field
-            row.comerciante_id?.toString() || undefined,
-            row.comentarios || []
-        );
-    }
+    return new SolicitudInicial(
+        Number(row.id), 
+        new Date(row.fecha_creacion), 
+        row.estado as 'pendiente' | 'aprobada' | 'rechazada' | 'expirada',
+        row.dni_cliente,
+        Number(row.cliente_id),
+        row.cuil_cliente,
+        row.recibosueldo || undefined,
+        row.comerciante_id ? Number(row.comerciante_id) : undefined,
+        row.comentarios || [],
+        row.analista_aprobador_id ? Number(row.analista_aprobador_id) : undefined,
+        row.administrador_aprobador_id ? Number(row.administrador_aprobador_id) : undefined
+    );
+}
     async getSolicitudesInicialesByComercianteYEstado(
     comercianteId: number, 
     estado: string

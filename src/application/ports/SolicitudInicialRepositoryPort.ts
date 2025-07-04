@@ -17,4 +17,5 @@ export interface SolicitudInicialRepositoryPort {
         comercianteId: number, 
         estado: string
     ): Promise<SolicitudInicial[]>;
+    updateSolicitudInicialAprobaciónRechazo(solicitudInicial: SolicitudInicial): Promise<SolicitudInicial>
 }

@@ -9,6 +9,8 @@ export class SolicitudInicial {
   private comercianteId?: number;
   private comentarios: string[];
   private clienteId: number;
+  private analistaAprobadorId?: number;
+  private administradorAprobadorId?: number;
 
   constructor(
     id: number,
@@ -19,7 +21,9 @@ export class SolicitudInicial {
     cuilCliente?: string,
     reciboSueldo?: Buffer,
     comercianteId?: number,
-    comentarios: string[] = []
+    comentarios: string[] = [],
+    analistaAprobadorId?: number,
+    administradorAprobadorId?: number
   ) {
     this.id = id;
     this.fechaCreacion = fechaCreacion;
@@ -30,9 +34,27 @@ export class SolicitudInicial {
     this.comercianteId = comercianteId;
     this.comentarios = comentarios;
     this.clienteId = clienteId;
+    this.analistaAprobadorId = analistaAprobadorId;
+    this.administradorAprobadorId = administradorAprobadorId;
   }
 
   // Getters y Setters
+
+  public setAnalistaAprobadorId(id: number): void {
+    this.analistaAprobadorId = Number(id);
+}
+
+public setAdministradorAprobadorId(id: number): void {
+    this.administradorAprobadorId = Number(id);
+}
+
+public getAnalistaAprobadorId(): number | undefined {
+    return this.analistaAprobadorId;
+}
+
+public getAdministradorAprobadorId(): number | undefined {
+    return this.administradorAprobadorId;
+}
 
   public getClienteId(): number {
     return this.clienteId;
@@ -123,7 +145,9 @@ export class SolicitudInicial {
       cuilCliente: this.cuilCliente,
       reciboSueldo: this.reciboSueldo,
       comercianteId: this.comercianteId,
-      comentarios: this.comentarios, // Nuevo campo
+      comentarios: this.comentarios,
+      analistaAprobadorId: this.analistaAprobadorId,
+      administradorAprobadorId: this.administradorAprobadorId,
     };
   }
 
@@ -137,7 +161,9 @@ export class SolicitudInicial {
       map.cuilCliente,
       map.reciboSueldo,
       map.comercianteId,
-      map.comentarios || []
+      map.comentarios || [],
+      map.analista_aprobador_id ? Number(map.analista_aprobador_id) : undefined,
+      map.administrador_aprobador_id ? Number(map.administrador_aprobador_id) : undefined
     );
   }
 

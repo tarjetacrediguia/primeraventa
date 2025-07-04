@@ -77,17 +77,19 @@ class CrearSolicitudInicialUseCase {
                     },
                     solicitudInicialId: solicitudInicialId
                 });
+                // VERIFICACION AUTOMÁTICA DE SOLICITUDES INICIALES POR VERAZ
+                /*
                 // 4. Consultar Veraz
-                const estadoVeraz = yield this.verazService.checkClienteStatus(dniCliente);
+                const estadoVeraz = await this.verazService.checkClienteStatus(dniCliente);
                 console.log(`Estado Veraz para DNI ${dniCliente}:`, estadoVeraz);
                 // 5. Actualizar estado según Veraz
                 if (estadoVeraz.status === "aprobado") {
                     solicitudCreada.setEstado("aprobada");
-                    yield this.solicitudInicialRepository.updateSolicitudInicial(solicitudCreada);
+                    await this.solicitudInicialRepository.updateSolicitudInicial(solicitudCreada);
                     // Registrar evento de aprobación automática
-                    yield this.historialRepository.registrarEvento({
+                    await this.historialRepository.registrarEvento({
                         usuarioId: null, // Sistema automático
-                        accion: historialActions_1.HISTORIAL_ACTIONS.APPROVE_SOLICITUD_INICIAL,
+                        accion: HISTORIAL_ACTIONS.APPROVE_SOLICITUD_INICIAL,
                         entidadAfectada: 'solicitudes_iniciales',
                         entidadId: solicitudCreada.getId(),
                         detalles: {
@@ -97,14 +99,13 @@ class CrearSolicitudInicialUseCase {
                         },
                         solicitudInicialId: solicitudInicialId
                     });
-                }
-                else if (estadoVeraz.status === "rechazado") {
+                } else if(estadoVeraz.status === "rechazado"){
                     solicitudCreada.setEstado("rechazada");
-                    yield this.solicitudInicialRepository.updateSolicitudInicial(solicitudCreada);
+                    await this.solicitudInicialRepository.updateSolicitudInicial(solicitudCreada);
                     // Registrar evento de rechazo automático
-                    yield this.historialRepository.registrarEvento({
+                    await this.historialRepository.registrarEvento({
                         usuarioId: null, // Sistema automático
-                        accion: historialActions_1.HISTORIAL_ACTIONS.REJECT_SOLICITUD_INICIAL,
+                        accion: HISTORIAL_ACTIONS.REJECT_SOLICITUD_INICIAL,
                         entidadAfectada: 'solicitudes_iniciales',
                         entidadId: solicitudCreada.getId(),
                         detalles: {
@@ -115,11 +116,11 @@ class CrearSolicitudInicialUseCase {
                         solicitudInicialId: solicitudInicialId
                     });
                     //throw new Error("Cliente no apto para crédito según Veraz");
-                }
-                else {
+                } else {
                     solicitudCreada.setEstado("pendiente");
-                    yield this.solicitudInicialRepository.updateSolicitudInicial(solicitudCreada);
+                    await this.solicitudInicialRepository.updateSolicitudInicial(solicitudCreada);
                 }
+    */
                 // 6. Notificar al cliente (simulado)
                 console.log(`Notificación enviada al cliente DNI:${dniCliente} sobre su solicitud`);
                 yield this.notificationService.emitNotification({
