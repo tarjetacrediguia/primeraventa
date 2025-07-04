@@ -12,7 +12,6 @@ import { HistorialRepositoryAdapter } from '../repository/HistorialRepositoryAda
 // Ejecutar todos los días a la 1:00 AM
 cron.schedule('0 1 * * *', async () => {
     try {
-        console.log('🔔 Iniciando tarea de expiración de solicitudes iniciales...');
         const solicitudRepo = new SolicitudInicialRepositoryAdapter();
         const configRepo = new ConfiguracionRepositoryAdapter();
         const clienteRepo = new ClienteRepositoryAdapter();
@@ -33,7 +32,6 @@ cron.schedule('0 1 * * *', async () => {
         
         await useCase.execute();
         
-        console.log('✅ Tarea de expiración de solicitudes completada');
     } catch (error) {
         console.error('❌ Error en la tarea de expiración de solicitudes:', error);
     }

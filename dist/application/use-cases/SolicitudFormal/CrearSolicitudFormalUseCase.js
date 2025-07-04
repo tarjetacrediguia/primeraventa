@@ -204,10 +204,8 @@ class CrearSolicitudFormalUseCase {
                 solicitudFormal.comercianteId = comercianteId;
                 // 6. Vincular con solicitud inicial (propiedad adicional necesaria)
                 solicitudFormal.solicitudInicialId = solicitudInicialId;
-                console.log("Solicitud formal creada:", solicitudFormal);
                 // 7. Guardar en la base de datos
                 const solicitudCreada = yield this.solicitudFormalRepo.createSolicitudFormal(solicitudFormal);
-                console.log("Solicitud formal guardada en la base de datos:", solicitudCreada);
                 // Registrar evento de creación de solicitud formal
                 yield this.historialRepository.registrarEvento({
                     usuarioId: comercianteId,
@@ -227,7 +225,6 @@ class CrearSolicitudFormalUseCase {
                     type: "solicitud_formal",
                     message: "Solicitud formal creada exitosamente"
                 });
-                console.log("Solicitud formal guardada:", solicitudCreada);
                 // 9. Notificar a los analistas
                 yield this.notificarAnalistas(solicitudCreada);
                 return solicitudCreada;
@@ -265,7 +262,6 @@ class CrearSolicitudFormalUseCase {
             try {
                 // 1. Obtener todos los IDs de analistas usando el repositorio
                 const analistaIds = yield this.analistaRepo.obtenerIdsAnalistasActivos();
-                console.log("IDs de analistas activos:", analistaIds);
                 // 2. Enviar notificación individual a cada analista
                 const notificaciones = analistaIds.map(analistaId => this.notificationService.emitNotification({
                     userId: analistaId,
@@ -303,10 +299,8 @@ class CrearSolicitudFormalUseCase {
             // Obtener todas las solicitudes formales del cliente por DNI
             //const solicitudesFormales = await this.solicitudFormalRepo.getSolicitudesFormalesByDni(dniCliente);
             const cliente = yield this.clienteRepository.findByDni(dniCliente);
-            console.log("Cliente encontrado:", cliente);
             //verificar si el cliente tiene un contrato generado
             const contrato = yield this.contratoRepository.getContratoById(cliente.getId().toString());
-            console.log("Contrato encontrado:", contrato);
             // Verificar cada solicitud formal para ver si tiene un contrato activo asociado
             if (contrato) {
                 const tieneContratoActivo = contrato.getEstado() === "generado";

@@ -21,9 +21,7 @@ const getNotifications = (req, res) => __awaiter(void 0, void 0, void 0, functio
             return res.status(401).json({ error: 'Usuario no autenticado' });
         }
         const userId = Number(req.user.id);
-        console.log('ID del usuario autenticado:', userId);
         const role = req.user.rol;
-        console.log('Rol del usuario autenticado:', role);
         const useCase = new GetNotificationsByUserIdUseCase_1.GetNotificationsByUserIdUseCase(notificationAdapter);
         const notifications = yield useCase.execute(userId);
         // Convertir a objetos planos

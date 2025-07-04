@@ -25,7 +25,6 @@ export class GenerarContratoUseCase {
         try {
             // 1. Obtener solicitud formal
             const solicitud = await this.solicitudRepository.getSolicitudFormalById(numeroSolicitud);
-            console.log(`Solicitud obtenida: ${JSON.stringify(solicitud)}`);
             if (!solicitud) {
                 throw new Error(`Solicitud formal no encontrada: ${numeroSolicitud}`);
             }
@@ -57,7 +56,6 @@ export class GenerarContratoUseCase {
                 throw new Error("La solicitud no está aprobada, no se puede generar contrato");
             }
 
-            console.log('clienteDNI:', solicitud.getDni());
             const cliente = await this.clienteRepository.findByDni(solicitud.getDni());
             if (!cliente) {
                 throw new Error(`Cliente no encontrado para el ID: ${solicitud.getClienteId()}`);
@@ -103,10 +101,8 @@ export class GenerarContratoUseCase {
                 solicitud.getNumeroTarjeta(), // Usar el número de tarjeta de la solicitud
                 solicitud.getNumeroCuenta()   // Usar el número de cuenta de la solicitud
             );
-            console.log(`Contrato generado: ${contrato}`);
             // 4. Guardar contrato
             const contratoGuardado = await this.contratoRepository.saveContrato(contrato);
-            console.log(`Contrato guardado: ${JSON.stringify(contratoGuardado)}`);
             await this.historialRepository.registrarEvento({
                 usuarioId: usuarioId,
                 accion: HISTORIAL_ACTIONS.GENERAR_CONTRATO,
@@ -123,13 +119,11 @@ export class GenerarContratoUseCase {
             // 5. Vincular contrato a solicitud
             await this.solicitudRepository.vincularContrato(solicitud.getSolicitudInicialId(), contratoGuardado.getId());
 
-            console.log(`Contrato vinculado a solicitud: ${solicitud.getId()} -> ${contratoGuardado.getId()}`);
             // 6. Generar PDF
             const pdfBuffer = await this.pdfService.generateContractPdf({
                 contrato: contratoGuardado.toPlainObject(),
                 solicitud: solicitud.toPlainObject()
             });
-            console.log(`PDF generado para contrato: ${contratoGuardado.getId()}`);
             // 7. Notificar al solicitante
             await this.notificarContratoGenerado(solicitud, contratoGuardado, pdfBuffer);
 

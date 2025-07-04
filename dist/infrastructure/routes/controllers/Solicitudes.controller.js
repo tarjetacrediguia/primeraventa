@@ -59,12 +59,10 @@ const getSolicitudFormalByIdUC = new GetSolicitudFormalByIdUseCase_1.GetSolicitu
 const crearSolicitudInicial = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const { dniCliente, cuilCliente, reciboSueldo } = req.body;
-        console.log(`Creando solicitud inicial para cliente DNI: ${dniCliente}, CUIL: ${cuilCliente}`);
         if (!req.user || !req.user.id) {
             return res.status(401).json({ error: 'Usuario no autenticado' });
         }
         const comercianteId = Number(req.user.id);
-        console.log(`Creando solicitud inicial para comerciante ID: ${comercianteId}`);
         const solicitud = yield crearSolicitudInicialUC.execute(dniCliente, cuilCliente, comercianteId, reciboSueldo ? Buffer.from(reciboSueldo, 'base64') : undefined);
         res.status(201).json(solicitud);
     }
@@ -89,7 +87,6 @@ exports.crearSolicitudInicial = crearSolicitudInicial;
 const listarSolicitudesIniciales = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const estado = req.query.estado;
-        console.log(`Listando solicitudes iniciales con estado: ${estado}`);
         const solicitudes = yield getSolicitudesInicialesByEstadoUC.execute(estado);
         res.status(200).json(solicitudes);
     }
@@ -112,8 +109,6 @@ exports.verificarEstadoCrediticio = verificarEstadoCrediticio;
 const crearSolicitudFormal = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const { idSolicitudInicial, cliente, referentes } = req.body;
-        console.log(`Creando solicitud formal para solicitud inicial ID: ${idSolicitudInicial}`);
-        console.log("recibo de sueldo:", cliente.recibo);
         // Validar que el recibo sea proporcionado
         if (!cliente.recibo) {
             return res.status(400).json({ error: 'El recibo es obligatorio' });
@@ -418,7 +413,6 @@ const listarSolicitudesInicialesByComercianteYEstado = (req, res) => __awaiter(v
     try {
         const comercianteId = req.query.id ? parseInt(req.query.id) : undefined;
         const estado = req.query.estado;
-        console.log(`Listando solicitudes iniciales para comerciante ID: ${comercianteId} con estado: ${estado}`);
         // Validar parámetros
         if (!comercianteId || !estado) {
             return res.status(400).json({ error: 'Se requieren id y estado' });
@@ -438,7 +432,6 @@ const listarSolicitudesFormalesByComercianteYEstado = (req, res) => __awaiter(vo
     try {
         const comercianteId = req.query.id ? parseInt(req.query.id) : undefined;
         const estado = req.query.estado;
-        console.log(`Listando solicitudes formales para comerciante ID: ${comercianteId} con estado: ${estado}`);
         // Validar parámetros
         if (!comercianteId || !estado) {
             return res.status(400).json({ error: 'Se requieren id y estado' });
@@ -457,7 +450,6 @@ exports.listarSolicitudesFormalesByComercianteYEstado = listarSolicitudesFormale
 const listarSolicitudesFormalesByComerciante = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const comercianteId = req.params.id;
-        console.log(`Listando solicitudes formales para comerciante ID: ${comercianteId}`);
         // Validar parámetros
         if (!comercianteId) {
             return res.status(400).json({ error: 'Se requieren id' });

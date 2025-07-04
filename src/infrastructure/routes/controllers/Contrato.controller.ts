@@ -23,10 +23,8 @@ export const generarContratoPDF = async (req: Request, res: Response) => {
   try {
     const solicitudId = parseInt(req.params.id, 10);
     const userId = Number(req.user?.id);
-    console.log('Solicitud ID:', solicitudId);
     // Obtener solicitud
     const solicitud = await solicitudRepository.getSolicitudFormalById(solicitudId);
-    console.log('Solicitud encontrada:', solicitud);
     if (!solicitud) {
       return res.status(404).json({ error: 'Solicitud no encontrada' });
     }
@@ -50,7 +48,6 @@ export const generarContratoPDF = async (req: Request, res: Response) => {
       solicitudInicialRepository
     );
     const contrato = await useCase.execute(solicitudId,userId);
-    console.log('Contrato generado:', contrato);
     // Devolver URL con ID de contrato, no de solicitud
     res.status(200).json({ 
       url: `/API/v1/contratos/${contrato.getId()}` 

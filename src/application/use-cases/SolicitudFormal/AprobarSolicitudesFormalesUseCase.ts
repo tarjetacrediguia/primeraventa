@@ -45,7 +45,6 @@ export class AprobarSolicitudesFormalesUseCase {
         } else {
             solicitud.setAnalistaAprobadorId(aprobadorId);
         }
-        console.log("Solicitud formal encontrada:", solicitud);
         // 2. Verificar que esté en estado pendiente
         if (solicitud.getEstado() !== "pendiente") {
             // Registrar evento de estado inválido
@@ -73,7 +72,6 @@ export class AprobarSolicitudesFormalesUseCase {
         solicitud.setEstado("aprobada");
         solicitud.setNumeroTarjeta(numeroTarjeta);
         solicitud.setNumeroCuenta(numeroCuenta);
-        console.log("Solicitud formal actualizada:", solicitud);
         
         // 5. Guardar cambios
         const solicitudActualizada = await this.repository.updateSolicitudFormalAprobacion(solicitud);
@@ -91,7 +89,6 @@ export class AprobarSolicitudesFormalesUseCase {
                 },
                     solicitudInicialId: solicitudInicialId
             });
-        console.log("Solicitud formal actualizada:", solicitudActualizada);
         // 6. Notificar al cliente
         await this.notificarCliente(
             solicitudActualizada, 

@@ -42,7 +42,6 @@ class ExpirarSolicitudesInicialesUseCase {
                 // 2. Obtener solicitudes a expirar
                 const solicitudes = yield this.solicitudInicialRepository.obtenerSolicitudesAExpirar(diasExpiracion);
                 if (solicitudes.length === 0) {
-                    console.log('No hay solicitudes para expirar');
                     // Registrar evento de no expiraciones
                     yield this.historialRepository.registrarEvento({
                         usuarioId: sistemaUserId,

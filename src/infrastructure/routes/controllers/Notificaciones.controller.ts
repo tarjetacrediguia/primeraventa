@@ -13,9 +13,7 @@ export const getNotifications = async (req: Request, res: Response) => {
             return res.status(401).json({ error: 'Usuario no autenticado' });
         }
         const userId = Number(req.user.id);
-        console.log('ID del usuario autenticado:', userId);
         const role = req.user.rol;
-        console.log('Rol del usuario autenticado:', role);
         const useCase = new GetNotificationsByUserIdUseCase(notificationAdapter);
         const notifications = await useCase.execute(userId);
         

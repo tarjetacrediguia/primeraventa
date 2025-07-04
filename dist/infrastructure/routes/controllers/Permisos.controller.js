@@ -53,8 +53,6 @@ const asignarPermisosARol = (req, res) => __awaiter(void 0, void 0, void 0, func
         if (!permisos || !Array.isArray(permisos)) {
             return res.status(400).json({ error: 'Se esperaba un arreglo de permisos' });
         }
-        console.log('Rol:', rol);
-        console.log('Permisos:', permisos);
         const useCase = new AsignarPermisosRolUseCase_1.AsignarPermisosRolUseCase(permisoRepository);
         yield useCase.execute(rol, permisos);
         res.status(200).json({ message: 'Permisos asignados correctamente al rol' });

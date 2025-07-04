@@ -32,10 +32,8 @@ const generarContratoPDF = (req, res) => __awaiter(void 0, void 0, void 0, funct
     try {
         const solicitudId = parseInt(req.params.id, 10);
         const userId = Number((_a = req.user) === null || _a === void 0 ? void 0 : _a.id);
-        console.log('Solicitud ID:', solicitudId);
         // Obtener solicitud
         const solicitud = yield solicitudRepository.getSolicitudFormalById(solicitudId);
-        console.log('Solicitud encontrada:', solicitud);
         if (!solicitud) {
             return res.status(404).json({ error: 'Solicitud no encontrada' });
         }
@@ -49,7 +47,6 @@ const generarContratoPDF = (req, res) => __awaiter(void 0, void 0, void 0, funct
         // Generar contrato
         const useCase = new GenerarContratoUseCase_1.GenerarContratoUseCase(solicitudRepository, contratoRepository, pdfService, notificationService, clienteRepository, historialRepository, solicitudInicialRepository);
         const contrato = yield useCase.execute(solicitudId, userId);
-        console.log('Contrato generado:', contrato);
         // Devolver URL con ID de contrato, no de solicitud
         res.status(200).json({
             url: `/API/v1/contratos/${contrato.getId()}`

@@ -12,14 +12,11 @@ export class AsignarPermisosRolUseCase {
         }
         
         const permisosValidos: Permiso[] = await this.repository.getAllPermisos();
-        console.log('Permisos válidos:', permisosValidos);
         // Extraer solo los nombres de los permisos válidos
         const nombresPermisosValidos = permisosValidos.map(p => p.nombre);
-        console.log('Nombres de permisos válidos:', nombresPermisosValidos);
         const permisosInvalidos = permisos.filter(
             p => !nombresPermisosValidos.includes(p)
         );
-        console.log('Permisos inválidos:', permisosInvalidos);
         if (permisosInvalidos.length > 0) {
             throw new Error(`Permisos inválidos: ${permisosInvalidos.join(', ')}`);
         }

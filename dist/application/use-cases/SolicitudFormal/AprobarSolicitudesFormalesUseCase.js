@@ -43,7 +43,6 @@ class AprobarSolicitudesFormalesUseCase {
             else {
                 solicitud.setAnalistaAprobadorId(aprobadorId);
             }
-            console.log("Solicitud formal encontrada:", solicitud);
             // 2. Verificar que esté en estado pendiente
             if (solicitud.getEstado() !== "pendiente") {
                 // Registrar evento de estado inválido
@@ -69,7 +68,6 @@ class AprobarSolicitudesFormalesUseCase {
             solicitud.setEstado("aprobada");
             solicitud.setNumeroTarjeta(numeroTarjeta);
             solicitud.setNumeroCuenta(numeroCuenta);
-            console.log("Solicitud formal actualizada:", solicitud);
             // 5. Guardar cambios
             const solicitudActualizada = yield this.repository.updateSolicitudFormalAprobacion(solicitud);
             // Registrar aprobación exitosa
@@ -86,7 +84,6 @@ class AprobarSolicitudesFormalesUseCase {
                 },
                 solicitudInicialId: solicitudInicialId
             });
-            console.log("Solicitud formal actualizada:", solicitudActualizada);
             // 6. Notificar al cliente
             yield this.notificarCliente(solicitudActualizada, `Su solicitud formal de crédito ha sido aprobada. N° NumeroTarjeta: ${numeroTarjeta}, N° Cuenta: ${numeroCuenta}`);
             return solicitudActualizada;

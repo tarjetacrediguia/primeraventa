@@ -45,7 +45,6 @@ async generarToken(usuario: Usuario): Promise<string> {
             'SELECT * FROM usuarios WHERE email = $1',
             [email]
         );
-        console.log('userResult:', userResult.rows);
         if (userResult.rows.length === 0) {
             throw new Error('Credenciales inválidas');
         }
@@ -54,7 +53,6 @@ async generarToken(usuario: Usuario): Promise<string> {
         const userRow = userResult.rows[0];
         const saltRounds = 10;
         const passwordMatch = await bcrypt.compare(password, userRow.password_hash);
-        console.log('passwordMatch:', passwordMatch);
         
         if (!passwordMatch) {
             throw new Error('Credenciales inválidas');

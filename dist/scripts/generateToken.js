@@ -20,11 +20,4 @@ exports.generateToken = generateToken;
 // Script para generar un token desde la línea de comandos
 if (require.main === module) {
     const token = (0, exports.generateToken)();
-    console.log('\n=== Token de API Generado ===');
-    console.log('\nToken:');
-    console.log(token);
-    console.log('\nPara usar el token, inclúyelo en el header de tus peticiones:');
-    console.log('Authorization: Bearer <token>');
-    console.log('\nEjemplo:');
-    console.log('curl -H "Authorization: Bearer ' + token + '" http://localhost:3000/API/v1/getdata\n');
 }

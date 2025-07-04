@@ -4,7 +4,6 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.VerazAdapter = void 0;
 class VerazAdapter {
     checkClienteStatus(dni) {
-        console.log(`Consultando Veraz para el DNI: ${dni}`);
         return new Promise((resolve) => {
             setTimeout(() => {
                 // Convertir DNI a string para asegurar el correcto manejo

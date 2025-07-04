@@ -2,7 +2,6 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.esAnalistaOAdministrador = exports.esComercianteOAnalista = exports.esAnalista = exports.esComerciante = exports.esAdministrador = void 0;
 const esAdministrador = (req, res, next) => {
-    console.log(req.user); // Para depuración, ver el usuario autenticado
     if (!req.user) {
         return res.status(401).json({ error: 'No autenticado' });
     }
@@ -20,7 +19,6 @@ const esComerciante = (req, res, next) => {
     if (!req.user)
         return res.status(401).json({ error: 'No autenticado' });
     if (req.user.rol !== 'comerciante') {
-        console.log(req.user); // Para depuración, ver el usuario autenticado
         return res.status(403).json({ error: 'Acceso no autorizado. Se requiere rol de comerciante' });
     }
     next();

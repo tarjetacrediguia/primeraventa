@@ -111,8 +111,6 @@ class AdministradorRepositoryAdapter {
                     administrador.getTelefono(),
                     administrador.getId()
                 ]);
-                console.log("administrador ID", administrador.getId());
-                console.log("administrador", administrador);
                 yield client.query('COMMIT');
                 return administrador;
             }
@@ -155,7 +153,6 @@ class AdministradorRepositoryAdapter {
                 throw new Error(`Permiso '${permisoNombre}' no encontrado`);
             }
             const permisoId = permisoRes.rows[0].id;
-            console.log("permiso ID", permisoId);
             // Asignar permiso al usuario
             yield client.query(`
             INSERT INTO usuario_permisos (usuario_id, permiso_id)

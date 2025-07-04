@@ -33,7 +33,6 @@ export class ClienteRepositoryAdapter implements ClienteRepositoryPort {
         if (result.rows.length === 0) {
             throw new Error('Cliente no encontrado');
         }
-        console.log(result.rows[0]);
         
         return this.mapRowToCliente(result.rows[0]);
     }

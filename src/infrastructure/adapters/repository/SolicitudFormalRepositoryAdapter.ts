@@ -160,7 +160,6 @@ async createSolicitudFormal(solicitudFormal: SolicitudFormal): Promise<Solicitud
         `;
         
         const result = await pool.query(query, [id]);
-        console.log(`Resultado de la consulta: ${JSON.stringify(result.rows)}`);
         if (result.rows.length === 0) {
             return null;
         }
@@ -185,7 +184,6 @@ async createSolicitudFormal(solicitudFormal: SolicitudFormal): Promise<Solicitud
                 refRow.telefono
             )
         );
-        console.log('row', row);
         return new SolicitudFormal(
             Number(row.id), // Convertir a número
             row.solicitud_inicial_id,
@@ -776,7 +774,6 @@ async createSolicitudFormal(solicitudFormal: SolicitudFormal): Promise<Solicitud
             }
             
             const solicitudFormalId = buscarResult.rows[0].id;
-            console.log(`Solicitud formal encontrada: ${solicitudFormalId}`);
             // Actualizar el contrato para vincularlo con la solicitud formal
             const vincularQuery = `
                 UPDATE contratos 
@@ -785,7 +782,6 @@ async createSolicitudFormal(solicitudFormal: SolicitudFormal): Promise<Solicitud
             `;
             
             const result = await client.query(vincularQuery, [solicitudFormalId, contratoId]);
-            console.log(`Resultado de la actualización del contrato: ${result.rowCount} filas afectadas`);
             if (result.rowCount === 0) {
                 throw new Error(`No existe un contrato con ID: ${contratoId}`);
             }

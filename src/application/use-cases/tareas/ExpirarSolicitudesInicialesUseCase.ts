@@ -44,7 +44,6 @@ export class ExpirarSolicitudesInicialesUseCase {
             const solicitudes = await this.solicitudInicialRepository.obtenerSolicitudesAExpirar(diasExpiracion);
             
             if (solicitudes.length === 0) {
-                console.log('No hay solicitudes para expirar');
                 // Registrar evento de no expiraciones
                 await this.historialRepository.registrarEvento({
                     usuarioId: sistemaUserId,

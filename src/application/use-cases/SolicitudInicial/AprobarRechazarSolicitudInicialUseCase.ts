@@ -19,10 +19,6 @@ export class AprobarRechazarSolicitudInicialUseCase {
         comentario?: string
     ): Promise<SolicitudInicial> {
         const solicitud = await this.repository.getSolicitudInicialById(solicitudId);
-        console.log("Aprobando solicitud:", solicitudId, "por usuario:", aprobadorId);
-        console.log("Es administrador:", esAdministrador);
-        console.log("Comentario:", comentario);
-        console.log("Estado actual de la solicitud:", solicitud);
 
         if (!solicitud) {
             await this.historialRepository.registrarEvento({
@@ -61,7 +57,6 @@ export class AprobarRechazarSolicitudInicialUseCase {
         solicitud.setEstado("aprobada");
         
         const solicitudActualizada = await this.repository.updateSolicitudInicialAprobaciónRechazo(solicitud);
-        console.log("Solicitud actualizada:", solicitudActualizada);
         await this.historialRepository.registrarEvento({
             usuarioId: aprobadorId,
             accion: HISTORIAL_ACTIONS.APPROVE_SOLICITUD_INICIAL,

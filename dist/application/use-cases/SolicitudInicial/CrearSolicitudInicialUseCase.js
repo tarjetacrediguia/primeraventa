@@ -63,7 +63,6 @@ class CrearSolicitudInicialUseCase {
                 // 3. Guardar solicitud inicial
                 const solicitudCreada = yield this.solicitudInicialRepository.createSolicitudInicial(solicitud);
                 const solicitudInicialId = solicitudCreada.getId();
-                console.log(`Solicitud inicial creada con ID: ${solicitudCreada.getId()}`);
                 // Registrar evento de creación
                 yield this.historialRepository.registrarEvento({
                     usuarioId: comercianteId,
@@ -81,7 +80,6 @@ class CrearSolicitudInicialUseCase {
                 /*
                 // 4. Consultar Veraz
                 const estadoVeraz = await this.verazService.checkClienteStatus(dniCliente);
-                console.log(`Estado Veraz para DNI ${dniCliente}:`, estadoVeraz);
                 // 5. Actualizar estado según Veraz
                 if (estadoVeraz.status === "aprobado") {
                     solicitudCreada.setEstado("aprobada");
@@ -122,7 +120,6 @@ class CrearSolicitudInicialUseCase {
                 }
     */
                 // 6. Notificar al cliente (simulado)
-                console.log(`Notificación enviada al cliente DNI:${dniCliente} sobre su solicitud`);
                 yield this.notificationService.emitNotification({
                     userId: Number(comercianteId),
                     type: "solicitud_inicial",
@@ -162,15 +159,12 @@ class CrearSolicitudInicialUseCase {
         return __awaiter(this, void 0, void 0, function* () {
             // Obtener todas las solicitudes formales del cliente por DNI
             const solicitudesFormales = yield this.solicitudFormalRepository.getSolicitudesFormalesByDni(dniCliente);
-            console.log(`Solicitudes formales encontradas para DNI ${dniCliente}:`, solicitudesFormales.length);
             // Verificar cada solicitud formal para ver si tiene un contrato activo asociado
             for (const solicitud of solicitudesFormales) {
                 const contratos = yield this.contratoRepository.getContratosBySolicitudFormalId(solicitud.getId());
-                console.log(`Contratos encontrados para solicitud formal ID ${solicitud.getId()}:`, contratos.length);
                 // Verificar si hay al menos un contrato activo para esta solicitud
                 const tieneContratoActivo = contratos.some(contrato => {
                     const estado = contrato.getEstado().toLowerCase();
-                    console.log(`Estado del contrato ID ${contrato.getId()}: ${estado}`);
                     return estado === "generado";
                 });
                 if (tieneContratoActivo) {

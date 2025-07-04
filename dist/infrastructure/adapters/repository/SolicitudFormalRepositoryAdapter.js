@@ -174,7 +174,6 @@ class SolicitudFormalRepositoryAdapter {
             WHERE sf.id = $1
         `;
             const result = yield DatabaseDonfig_1.pool.query(query, [id]);
-            console.log(`Resultado de la consulta: ${JSON.stringify(result.rows)}`);
             if (result.rows.length === 0) {
                 return null;
             }
@@ -189,7 +188,6 @@ class SolicitudFormalRepositoryAdapter {
         `;
             const referentesResult = yield DatabaseDonfig_1.pool.query(referentesQuery, [id]);
             const referentes = referentesResult.rows.map(refRow => new Referente_1.Referente(refRow.nombre_completo, refRow.apellido, refRow.vinculo, refRow.telefono));
-            console.log('row', row);
             return new SolicitudFormal_1.SolicitudFormal(Number(row.id), // Convertir a número
             row.solicitud_inicial_id, row.comerciante_id, row.nombre_completo, row.apellido, row.dni, row.telefono, row.email, new Date(row.fecha_solicitud), row.recibo, row.estado, row.acepta_tarjeta, new Date(row.fecha_nacimiento), row.domicilio, row.datos_empleador, referentes, row.comentarios || [], row.cliente_id || 0, row.numero_tarjeta, row.numero_cuenta, row.fecha_aprobacion ? new Date(row.fecha_aprobacion) : undefined, row.analista_aprobador_id, row.administrador_aprobador_id);
         });
@@ -674,7 +672,6 @@ class SolicitudFormalRepositoryAdapter {
                     throw new Error(`No existe una solicitud formal con solicitud_inicial_id: ${solicitudId}`);
                 }
                 const solicitudFormalId = buscarResult.rows[0].id;
-                console.log(`Solicitud formal encontrada: ${solicitudFormalId}`);
                 // Actualizar el contrato para vincularlo con la solicitud formal
                 const vincularQuery = `
                 UPDATE contratos 
@@ -682,7 +679,6 @@ class SolicitudFormalRepositoryAdapter {
                 WHERE id = $2
             `;
                 const result = yield client.query(vincularQuery, [solicitudFormalId, contratoId]);
-                console.log(`Resultado de la actualización del contrato: ${result.rowCount} filas afectadas`);
                 if (result.rowCount === 0) {
                     throw new Error(`No existe un contrato con ID: ${contratoId}`);
                 }

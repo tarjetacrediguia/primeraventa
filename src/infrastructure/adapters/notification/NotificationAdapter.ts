@@ -5,7 +5,6 @@ import { pool } from "../../config/Database/DatabaseDonfig";
 export class NotificationAdapter implements NotificationPort {
     async emitNotification(notification: Omit<Notification, 'id' | 'read' | 'createdAt'>): Promise<Notification> {
         const { userId, type, message, metadata } = notification;
-        console.log('Emitiendo notificación:', notification);
         const query = `
             INSERT INTO notificaciones (usuario_id, tipo, mensaje, detalles)
             VALUES ($1, $2, $3, $4)
@@ -20,7 +19,6 @@ export class NotificationAdapter implements NotificationPort {
 
         const result = await pool.query(query, values);
         const row = result.rows[0];
-        console.log('Notificación emitida:', row);
         return this.mapRowToNotification(row);
     }
 

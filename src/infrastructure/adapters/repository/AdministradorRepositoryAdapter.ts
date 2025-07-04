@@ -110,10 +110,8 @@ export class AdministradorRepositoryAdapter implements AdministradorRepositoryPo
                 administrador.getTelefono(),
                 administrador.getId()
             ]);
-            console.log("administrador ID",administrador.getId())
             
             
-            console.log("administrador",administrador)
             await client.query('COMMIT');
             
             return administrador;
@@ -163,7 +161,6 @@ export class AdministradorRepositoryAdapter implements AdministradorRepositoryPo
             throw new Error(`Permiso '${permisoNombre}' no encontrado`);
         }
         const permisoId = permisoRes.rows[0].id;
-        console.log("permiso ID",permisoId)
         // Asignar permiso al usuario
         await client.query(`
             INSERT INTO usuario_permisos (usuario_id, permiso_id)

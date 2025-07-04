@@ -84,7 +84,6 @@ export class CrearSolicitudInicialUseCase {
             const solicitudCreada = await this.solicitudInicialRepository.createSolicitudInicial(solicitud);
 
             const solicitudInicialId = solicitudCreada.getId();
-            console.log(`Solicitud inicial creada con ID: ${solicitudCreada.getId()}`);
 
             // Registrar evento de creación
             await this.historialRepository.registrarEvento({
@@ -104,7 +103,6 @@ export class CrearSolicitudInicialUseCase {
             /*
             // 4. Consultar Veraz
             const estadoVeraz = await this.verazService.checkClienteStatus(dniCliente);
-            console.log(`Estado Veraz para DNI ${dniCliente}:`, estadoVeraz);
             // 5. Actualizar estado según Veraz
             if (estadoVeraz.status === "aprobado") {
                 solicitudCreada.setEstado("aprobada");
@@ -145,7 +143,6 @@ export class CrearSolicitudInicialUseCase {
             }
 */
             // 6. Notificar al cliente (simulado)
-            console.log(`Notificación enviada al cliente DNI:${dniCliente} sobre su solicitud`);
 
             await this.notificationService.emitNotification({
                 userId: Number(comercianteId),
@@ -187,15 +184,12 @@ export class CrearSolicitudInicialUseCase {
     private async tieneCreditoActivo(dniCliente: string): Promise<boolean> {
         // Obtener todas las solicitudes formales del cliente por DNI
         const solicitudesFormales = await this.solicitudFormalRepository.getSolicitudesFormalesByDni(dniCliente);
-        console.log(`Solicitudes formales encontradas para DNI ${dniCliente}:`, solicitudesFormales.length);
         // Verificar cada solicitud formal para ver si tiene un contrato activo asociado
         for (const solicitud of solicitudesFormales) {
             const contratos = await this.contratoRepository.getContratosBySolicitudFormalId(solicitud.getId());
-            console.log(`Contratos encontrados para solicitud formal ID ${solicitud.getId()}:`, contratos.length);
             // Verificar si hay al menos un contrato activo para esta solicitud
             const tieneContratoActivo = contratos.some(contrato => {
                 const estado = contrato.getEstado().toLowerCase();
-                console.log(`Estado del contrato ID ${contrato.getId()}: ${estado}`);
                 return estado === "generado";
             });
             

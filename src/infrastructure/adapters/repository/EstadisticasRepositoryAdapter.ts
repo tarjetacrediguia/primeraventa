@@ -97,7 +97,6 @@ export class EstadisticasRepositoryAdapter implements EstadisticasRepositoryPort
   }
 
 async getEstadisticasComerciantes(desde?: string, hasta?: string): Promise<any> {
-  console.log('Obteniendo estadísticas de comerciantes desde:', desde, 'hasta:', hasta);
   
   const query = `SELECT 
     c.usuario_id AS comerciante_id,
@@ -171,7 +170,6 @@ GROUP BY a.usuario_id, u.nombre, u.apellido
 ORDER BY tiempo_promedio_aprobadas ASC;
     `;
     const result = await pool.query(query, [desde, hasta]);
-    console.log('Estadísticas de analistas obtenidas:', result.rows);
     return result.rows;
   }
 

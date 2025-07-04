@@ -5,7 +5,6 @@ import { VerazPort } from "../../../application/ports/VerazPort";
 export class VerazAdapter implements VerazPort {
     checkClienteStatus(dni: string): Promise<{ status: "aprobado" | "rechazado" | "pendiente"; score: number; lastUpdated: Date; motivo?: string; }> {
         
-        console.log(`Consultando Veraz para el DNI: ${dni}`);
         return new Promise((resolve) => {
             setTimeout(() => {
                 // Convertir DNI a string para asegurar el correcto manejo

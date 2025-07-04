@@ -51,14 +51,12 @@ class AuthAdapter {
         return __awaiter(this, void 0, void 0, function* () {
             // Buscar usuario por email
             const userResult = yield DatabaseDonfig_1.pool.query('SELECT * FROM usuarios WHERE email = $1', [email]);
-            console.log('userResult:', userResult.rows);
             if (userResult.rows.length === 0) {
                 throw new Error('Credenciales inválidas');
             }
             const userRow = userResult.rows[0];
             const saltRounds = 10;
             const passwordMatch = yield bcrypt_1.default.compare(password, userRow.password_hash);
-            console.log('passwordMatch:', passwordMatch);
             if (!passwordMatch) {
                 throw new Error('Credenciales inválidas');
             }

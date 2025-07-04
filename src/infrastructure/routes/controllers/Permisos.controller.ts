@@ -48,8 +48,6 @@ export const asignarPermisosARol = async (req: Request, res: Response) => {
         if (!permisos || !Array.isArray(permisos)) {
             return res.status(400).json({ error: 'Se esperaba un arreglo de permisos' });
         }
-        console.log('Rol:', rol);
-        console.log('Permisos:', permisos);
         const useCase = new AsignarPermisosRolUseCase(permisoRepository);
         await useCase.execute(rol, permisos);
 

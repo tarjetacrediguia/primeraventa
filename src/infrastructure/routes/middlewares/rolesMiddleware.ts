@@ -2,7 +2,6 @@
 import { Request, Response, NextFunction } from 'express';
 
 export const esAdministrador = (req: Request, res: Response, next: NextFunction) => {
-  console.log(req.user); // Para depuración, ver el usuario autenticado
   if (!req.user) {
     return res.status(401).json({ error: 'No autenticado' });
   }
@@ -20,7 +19,6 @@ export const esAdministrador = (req: Request, res: Response, next: NextFunction)
 export const esComerciante = (req: Request, res: Response, next: NextFunction) => {
   if (!req.user) return res.status(401).json({ error: 'No autenticado' });
   if (req.user.rol !== 'comerciante') {
-    console.log(req.user); // Para depuración, ver el usuario autenticado
     return res.status(403).json({ error: 'Acceso no autorizado. Se requiere rol de comerciante' });
   }
   next();

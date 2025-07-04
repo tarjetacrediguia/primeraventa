@@ -11,20 +11,16 @@ export class DescargarContratoUseCase {
     ) {}
 
     async execute(contratoId: string, dniSolicitante: string): Promise<Buffer> {
-        console.log("contratoId: ", contratoId);
-        console.log("dniSolicitante: ", dniSolicitante);
         // 1. Obtener contrato
         const contrato = await this.contratoRepository.getContratoById(contratoId);
         if (!contrato) {
             throw new Error(`Contrato no encontrado: ${contratoId}`);
         }
-        console.log("contrato: ", contrato);
         // 2. Obtener solicitud asociada
         const solicitud = await this.solicitudRepository.getSolicitudFormalById(contrato.getSolicitudFormalId());
         if (!solicitud) {
             throw new Error(`Solicitud formal asociada no encontrada`);
         }
-        console.log("solicitud: ", solicitud);  
         // 3. Verificar que el DNI del solicitante coincide
         if (solicitud.getDni() !== dniSolicitante) {
             throw new Error("No tiene permiso para acceder a este contrato");

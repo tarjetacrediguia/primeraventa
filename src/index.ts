@@ -10,14 +10,14 @@ const start = async () => {
     // Crear servidor HTTP con el router principal
     const app = createHTTPServer(router);
 
-    app.listen(appConfig.port,'0.0.0.0', () => {
-      console.log(`
-      🚀 Servidor en ejecución en modo ${appConfig.environment.toUpperCase()}
-      ✅ Puerto: ${appConfig.port}
-      ✅ Base URL: http://0.0.0.0:${appConfig.port}/API/v1
-      ✅ JWT Secret: ${appConfig.jwtSecret ? 'Configurado' : 'NO configurado!'}
-      `);
-    });
+        app.listen(appConfig.port, '0.0.0.0', () => {
+          console.log(`
+    🚀 Servidor en ejecución en modo ${appConfig.environment.toUpperCase()}
+    ✅ Puerto: ${appConfig.port}
+    ✅ Base URL: http://0.0.0.0:${appConfig.port}/API/v1
+    ✅ JWT Secret: ${appConfig.jwtSecret ? 'Configurado' : 'NO configurado!'}
+          `);
+        });
   } catch (error) {
     console.error("⛔ Error crítico durante el inicio:", error);
     process.exit(1);

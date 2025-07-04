@@ -16,7 +16,6 @@ class NotificationAdapter {
     emitNotification(notification) {
         return __awaiter(this, void 0, void 0, function* () {
             const { userId, type, message, metadata } = notification;
-            console.log('Emitiendo notificación:', notification);
             const query = `
             INSERT INTO notificaciones (usuario_id, tipo, mensaje, detalles)
             VALUES ($1, $2, $3, $4)
@@ -30,7 +29,6 @@ class NotificationAdapter {
             ];
             const result = yield DatabaseDonfig_1.pool.query(query, values);
             const row = result.rows[0];
-            console.log('Notificación emitida:', row);
             return this.mapRowToNotification(row);
         });
     }
