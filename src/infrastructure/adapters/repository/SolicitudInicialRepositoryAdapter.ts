@@ -1,10 +1,22 @@
 //src/infrastructure/adapters/repository/SolicitudInicialRepositoryAdapter.ts
 
+/**
+ * ADAPTADOR: Repositorio de Solicitudes Iniciales
+ *
+ * Este archivo implementa el adaptador para el repositorio de solicitudes iniciales del sistema.
+ * Proporciona métodos para gestionar solicitudes iniciales y su relación con clientes y comerciantes.
+ */
+
 import { SolicitudInicialRepositoryPort } from "../../../application/ports/SolicitudInicialRepositoryPort";
 import { SolicitudInicial } from "../../../domain/entities/SolicitudInicial";
 import { pool } from "../../config/Database/DatabaseDonfig";
 
 export class SolicitudInicialRepositoryAdapter implements SolicitudInicialRepositoryPort {
+    /**
+     * Obtiene las solicitudes iniciales que están próximas a expirar.
+     * @param diasExpiracion - Número de días después de los cuales una solicitud se considera expirada.
+     * @returns Promise<SolicitudInicial[]> - Array de solicitudes iniciales que están próximas a expirar.
+     */
     async obtenerSolicitudesAExpirar(diasExpiracion: number): Promise<SolicitudInicial[]> {
         const query = `
             SELECT 
@@ -37,6 +49,11 @@ export class SolicitudInicialRepositoryAdapter implements SolicitudInicialReposi
             []        // comentarios (inicializar como array vacío)
         ));
     }
+    /**
+     * Marca una solicitud inicial como expirada.
+     * @param solicitudId - ID de la solicitud inicial a expirar.
+     * @returns Promise<void> - No retorna valor.
+     */
     async expirarSolicitud(solicitudId: number): Promise<void> {
         const client = await pool.connect();
         try {
@@ -69,6 +86,11 @@ export class SolicitudInicialRepositoryAdapter implements SolicitudInicialReposi
     }
 
     
+    /**
+     * Crea una nueva solicitud inicial en la base de datos.
+     * @param solicitudInicial - Objeto SolicitudInicial a crear.
+     * @returns Promise<SolicitudInicial> - La solicitud inicial creada con su ID asignado.
+     */
     async createSolicitudInicial(solicitudInicial: SolicitudInicial): Promise<SolicitudInicial> {
         const client = await pool.connect();
         try {
@@ -156,6 +178,11 @@ export class SolicitudInicialRepositoryAdapter implements SolicitudInicialReposi
         }
     }
 
+    /**
+     * Obtiene una solicitud inicial por su ID.
+     * @param id - ID de la solicitud inicial a buscar.
+     * @returns Promise<SolicitudInicial | null> - La solicitud inicial encontrada o null si no existe.
+     */
     async getSolicitudInicialById(id: number): Promise<SolicitudInicial | null> {
         const query = `
             SELECT 
@@ -184,6 +211,11 @@ export class SolicitudInicialRepositoryAdapter implements SolicitudInicialReposi
         return this.mapRowToSolicitudInicial(result.rows[0]);
     }
 
+    /**
+     * Actualiza los datos de una solicitud inicial existente.
+     * @param solicitudInicial - Objeto SolicitudInicial con los datos actualizados.
+     * @returns Promise<SolicitudInicial> - La solicitud inicial actualizada.
+     */
     async updateSolicitudInicial(solicitudInicial: SolicitudInicial): Promise<SolicitudInicial> {
         const client = await pool.connect();
         try {
@@ -245,7 +277,12 @@ export class SolicitudInicialRepositoryAdapter implements SolicitudInicialReposi
         }
     }
 
-        async updateSolicitudInicialAprobaciónRechazo(solicitudInicial: SolicitudInicial): Promise<SolicitudInicial> {
+    /**
+     * Actualiza el estado de aprobación o rechazo de una solicitud inicial.
+     * @param solicitudInicial - Objeto SolicitudInicial con el nuevo estado.
+     * @returns Promise<SolicitudInicial> - La solicitud inicial actualizada.
+     */
+    async updateSolicitudInicialAprobaciónRechazo(solicitudInicial: SolicitudInicial): Promise<SolicitudInicial> {
         const client = await pool.connect();
         try {
             await client.query('BEGIN');
@@ -306,6 +343,10 @@ export class SolicitudInicialRepositoryAdapter implements SolicitudInicialReposi
         }
     }
 
+    /**
+     * Obtiene todas las solicitudes iniciales del sistema.
+     * @returns Promise<SolicitudInicial[]> - Array de todas las solicitudes iniciales.
+     */
     async getAllSolicitudesIniciales(): Promise<SolicitudInicial[]> {
         const query = `
             SELECT 
@@ -321,6 +362,11 @@ export class SolicitudInicialRepositoryAdapter implements SolicitudInicialReposi
         return result.rows.map(row => this.mapRowToSolicitudInicial(row));
     }
 
+    /**
+     * Obtiene las solicitudes iniciales por DNI del cliente.
+     * @param dni - DNI del cliente.
+     * @returns Promise<SolicitudInicial[]> - Array de solicitudes iniciales del cliente.
+     */
     async getSolicitudesInicialesByDni(dni: string): Promise<SolicitudInicial[]> {
         const query = `
             SELECT 
@@ -337,6 +383,11 @@ export class SolicitudInicialRepositoryAdapter implements SolicitudInicialReposi
         return result.rows.map(row => this.mapRowToSolicitudInicial(row));
     }
 
+    /**
+     * Obtiene las solicitudes iniciales por estado.
+     * @param estado - Estado de las solicitudes a buscar.
+     * @returns Promise<SolicitudInicial[]> - Array de solicitudes iniciales con el estado especificado.
+     */
     async getSolicitudesInicialesByEstado(estado: string): Promise<SolicitudInicial[]> {
         const query = `
             SELECT 
@@ -353,6 +404,11 @@ export class SolicitudInicialRepositoryAdapter implements SolicitudInicialReposi
         return result.rows.map(row => this.mapRowToSolicitudInicial(row));
     }
 
+    /**
+     * Obtiene las solicitudes iniciales por fecha de creación.
+     * @param fecha - Fecha de creación de las solicitudes.
+     * @returns Promise<SolicitudInicial[]> - Array de solicitudes iniciales creadas en esa fecha.
+     */
     async getSolicitudesInicialesByFecha(fecha: Date): Promise<SolicitudInicial[]> {
         const query = `
             SELECT 
@@ -369,6 +425,11 @@ export class SolicitudInicialRepositoryAdapter implements SolicitudInicialReposi
         return result.rows.map(row => this.mapRowToSolicitudInicial(row));
     }
 
+    /**
+     * Obtiene las solicitudes iniciales por ID del comerciante.
+     * @param comercianteId - ID del comerciante.
+     * @returns Promise<SolicitudInicial[]> - Array de solicitudes iniciales del comerciante.
+     */
     async getSolicitudesInicialesByComercianteId(comercianteId: number): Promise<SolicitudInicial[]> {
         const query = `
             SELECT 
@@ -385,6 +446,11 @@ export class SolicitudInicialRepositoryAdapter implements SolicitudInicialReposi
         return result.rows.map(row => this.mapRowToSolicitudInicial(row));
     }
 
+    /**
+     * Obtiene las solicitudes iniciales por ID del cliente.
+     * @param clienteId - ID del cliente.
+     * @returns Promise<SolicitudInicial[]> - Array de solicitudes iniciales del cliente.
+     */
     async getSolicitudesInicialesByClienteId(clienteId: number): Promise<SolicitudInicial[]> {
         const query = `
             SELECT 
@@ -416,6 +482,12 @@ export class SolicitudInicialRepositoryAdapter implements SolicitudInicialReposi
         row.administrador_aprobador_id ? Number(row.administrador_aprobador_id) : undefined
     );
 }
+    /**
+     * Obtiene las solicitudes iniciales por comerciante y estado.
+     * @param comercianteId - ID del comerciante.
+     * @param estado - Estado de las solicitudes.
+     * @returns Promise<SolicitudInicial[]> - Array de solicitudes iniciales del comerciante con el estado especificado.
+     */
     async getSolicitudesInicialesByComercianteYEstado(
     comercianteId: number, 
     estado: string

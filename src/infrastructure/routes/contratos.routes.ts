@@ -1,4 +1,12 @@
 // src/infrastructure/routes/contratos.routes.ts
+
+/**
+ * RUTAS: Contratos
+ *
+ * Este archivo define las rutas para la generación y descarga de contratos en formato PDF.
+ * Permite a los comerciantes generar contratos y a comerciantes o analistas descargarlos.
+ * Todas las rutas están protegidas por los middlewares de roles correspondientes.
+ */
 import { Router } from 'express';
 import { 
   generarContratoPDF, 

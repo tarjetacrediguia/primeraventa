@@ -1,4 +1,21 @@
 // src/application/use-cases/SolicitudInicial/CrearSolicitudInicialUseCase.ts
+
+/**
+ * MÓDULO: Caso de Uso - Crear Solicitud Inicial
+ *
+ * Este módulo implementa la lógica de negocio para crear una nueva solicitud inicial de crédito.
+ * Maneja la validación de clientes, verificación de créditos activos, creación de solicitudes
+ * y notificaciones correspondientes.
+ *
+ * RESPONSABILIDADES:
+ * - Validar que el cliente no tenga créditos activos
+ * - Crear o recuperar información del cliente
+ * - Crear la solicitud inicial con estado pendiente
+ * - Registrar eventos en el historial del sistema
+ * - Enviar notificaciones al comerciante
+ * - Manejar errores y excepciones
+ */
+
 import { SolicitudInicialRepositoryPort } from "../../ports/SolicitudInicialRepositoryPort";
 import { ContratoRepositoryPort } from "../../ports/ContratoRepositoryPort";
 import { SolicitudFormalRepositoryPort } from "../../ports/SolicitudFormalRepositoryPort";
@@ -10,7 +27,24 @@ import { ClienteRepositoryPort } from "../../ports/ClienteRepositoryPort";
 import { HistorialRepositoryPort } from "../../ports/HistorialRepositoryPort";
 import { HISTORIAL_ACTIONS } from "../../constants/historialActions";
 
+/**
+ * Caso de uso para crear una nueva solicitud inicial de crédito.
+ * 
+ * Esta clase implementa la lógica completa para crear una solicitud inicial,
+ * incluyendo validaciones de negocio, creación de entidades y manejo de eventos.
+ */
 export class CrearSolicitudInicialUseCase {
+    /**
+     * Constructor del caso de uso.
+     * 
+     * @param solicitudInicialRepository - Puerto para operaciones de solicitudes iniciales
+     * @param contratoRepository - Puerto para operaciones de contratos
+     * @param solicitudFormalRepository - Puerto para operaciones de solicitudes formales
+     * @param verazService - Puerto para servicios de Veraz (actualmente deshabilitado)
+     * @param notificationService - Puerto para servicios de notificación
+     * @param clienteRepository - Puerto para operaciones de clientes
+     * @param historialRepository - Puerto para registro de eventos en historial
+     */
     constructor(
         private readonly solicitudInicialRepository: SolicitudInicialRepositoryPort,
         private readonly contratoRepository: ContratoRepositoryPort,
@@ -21,6 +55,23 @@ export class CrearSolicitudInicialUseCase {
         private readonly historialRepository: HistorialRepositoryPort
     ) {}
 
+    /**
+     * Ejecuta la creación de una solicitud inicial de crédito.
+     * 
+     * Este método implementa el flujo completo de creación de solicitud inicial:
+     * 1. Busca o crea el cliente según el DNI proporcionado
+     * 2. Verifica que el cliente no tenga créditos activos
+     * 3. Crea la solicitud inicial con estado pendiente
+     * 4. Registra el evento en el historial
+     * 5. Envía notificaciones al comerciante
+     * 
+     * @param dniCliente - DNI del cliente para la solicitud
+     * @param cuilCliente - CUIL del cliente para la solicitud
+     * @param comercianteId - ID del comerciante que crea la solicitud
+     * @param reciboSueldo - Buffer opcional con el recibo de sueldo del cliente
+     * @returns Promise<SolicitudInicial> - La solicitud inicial creada
+     * @throws Error - Si el cliente ya tiene un crédito activo o si ocurre un error en el proceso
+     */
     async execute(
         dniCliente: string,
         cuilCliente: string,
@@ -181,6 +232,15 @@ export class CrearSolicitudInicialUseCase {
         }
     }
 
+    /**
+     * Verifica si un cliente tiene un crédito activo basado en sus solicitudes formales y contratos.
+     * 
+     * Este método privado consulta todas las solicitudes formales del cliente por DNI
+     * y verifica si alguna tiene contratos asociados con estado "generado" (activo).
+     * 
+     * @param dniCliente - DNI del cliente a verificar
+     * @returns Promise<boolean> - true si el cliente tiene un crédito activo, false en caso contrario
+     */
     private async tieneCreditoActivo(dniCliente: string): Promise<boolean> {
         // Obtener todas las solicitudes formales del cliente por DNI
         const solicitudesFormales = await this.solicitudFormalRepository.getSolicitudesFormalesByDni(dniCliente);

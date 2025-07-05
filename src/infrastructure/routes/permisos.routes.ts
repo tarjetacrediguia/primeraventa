@@ -1,4 +1,12 @@
 // src/infrastructure/routes/permisos.routes.ts
+
+/**
+ * RUTAS: Permisos
+ *
+ * Este archivo define las rutas para la gestión de permisos en el sistema.
+ * Permite crear permisos, asignarlos a roles y usuarios, y verificar permisos.
+ * Todas las rutas están protegidas por los middlewares de autenticación y rol de administrador.
+ */
 import { Router } from 'express';
 import { authMiddleware } from './middlewares/auth.middleware';
 import { esAdministrador } from './middlewares/rolesMiddleware';

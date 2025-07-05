@@ -1,3 +1,25 @@
+/**
+ * MÓDULO: Entidad Notificación
+ *
+ * Este archivo define la clase Notificacion que representa las notificaciones
+ * del sistema enviadas a los usuarios para informar sobre eventos importantes.
+ * 
+ * Responsabilidades:
+ * - Representar notificaciones del sistema
+ * - Gestionar el estado de lectura de notificaciones
+ * - Proporcionar funcionalidades de creación y gestión
+ * - Manejar metadatos específicos de cada tipo de notificación
+ * - Facilitar la verificación de notificaciones recientes
+ * 
+ * @author Sistema de Gestión
+ * @version 1.0.0
+ */
+
+/**
+ * Clase que representa una notificación en el sistema.
+ * Contiene información sobre el mensaje, destinatario, tipo y estado
+ * de lectura de la notificación.
+ */
 export class Notificacion {
     private _id: number;
     private _userId: number;
@@ -7,6 +29,18 @@ export class Notificacion {
     private _createdAt: Date;
     private _metadata?: any;
 
+    /**
+     * Constructor de la clase Notificacion.
+     * Inicializa una notificación con todos sus datos básicos.
+     * 
+     * @param id - Identificador único de la notificación.
+     * @param userId - ID del usuario destinatario.
+     * @param type - Tipo de notificación.
+     * @param message - Mensaje de la notificación.
+     * @param read - Indica si la notificación ha sido leída.
+     * @param createdAt - Fecha de creación de la notificación.
+     * @param metadata - Metadatos adicionales de la notificación (opcional).
+     */
     constructor(
         id: number,
         userId: number,
@@ -25,78 +59,162 @@ export class Notificacion {
         this._metadata = metadata;
     }
 
-    // Getters
+    /**
+     * Obtiene el ID único de la notificación.
+     * 
+     * @returns number - ID de la notificación.
+     */
     public get id(): number {
         return this._id;
     }
 
+    /**
+     * Obtiene el ID del usuario destinatario.
+     * 
+     * @returns number - ID del usuario.
+     */
     public get userId(): number {
         return this._userId;
     }
 
+    /**
+     * Obtiene el tipo de notificación.
+     * 
+     * @returns string - Tipo de notificación.
+     */
     public get type(): string {
         return this._type;
     }
 
+    /**
+     * Obtiene el mensaje de la notificación.
+     * 
+     * @returns string - Mensaje de la notificación.
+     */
     public get message(): string {
         return this._message;
     }
 
+    /**
+     * Obtiene si la notificación ha sido leída.
+     * 
+     * @returns boolean - true si ha sido leída, false en caso contrario.
+     */
     public get read(): boolean {
         return this._read;
     }
 
+    /**
+     * Obtiene la fecha de creación de la notificación.
+     * 
+     * @returns Date - Fecha de creación.
+     */
     public get createdAt(): Date {
         return this._createdAt;
     }
 
+    /**
+     * Obtiene los metadatos de la notificación.
+     * 
+     * @returns any | undefined - Metadatos de la notificación o undefined.
+     */
     public get metadata(): any | undefined {
         return this._metadata;
     }
 
-    // Setters
+    /**
+     * Establece el ID único de la notificación.
+     * 
+     * @param value - Nuevo ID de la notificación.
+     */
     public set id(value: number) {
         this._id = value;
     }
 
+    /**
+     * Establece el ID del usuario destinatario.
+     * 
+     * @param value - Nuevo ID del usuario.
+     */
     public set userId(value: number) {
         this._userId = value;
     }
 
+    /**
+     * Establece el tipo de notificación.
+     * 
+     * @param value - Nuevo tipo de notificación.
+     */
     public set type(value: string) {
         this._type = value;
     }
 
+    /**
+     * Establece el mensaje de la notificación.
+     * 
+     * @param value - Nuevo mensaje de la notificación.
+     */
     public set message(value: string) {
         this._message = value;
     }
 
+    /**
+     * Establece si la notificación ha sido leída.
+     * 
+     * @param value - Nuevo estado de lectura.
+     */
     public set read(value: boolean) {
         this._read = value;
     }
 
+    /**
+     * Establece la fecha de creación de la notificación.
+     * 
+     * @param value - Nueva fecha de creación.
+     */
     public set createdAt(value: Date) {
         this._createdAt = value;
     }
 
+    /**
+     * Establece los metadatos de la notificación.
+     * 
+     * @param value - Nuevos metadatos de la notificación.
+     */
     public set metadata(value: any | undefined) {
         this._metadata = value;
     }
 
-    // Métodos para cambiar el estado de lectura
+    /**
+     * Marca la notificación como leída.
+     */
     markAsRead(): void {
         this._read = true;
     }
 
+    /**
+     * Marca la notificación como no leída.
+     */
     markAsUnread(): void {
         this._read = false;
     }
 
-    // Métodos adicionales
+    /**
+     * Convierte la notificación a una representación de string.
+     * Útil para logging y debugging.
+     * 
+     * @returns string - Representación en string de la notificación.
+     */
     public toString(): string {
         return `Notificación [ID: ${this._id}, Usuario: ${this._userId}, Tipo: ${this._type}, Leída: ${this._read}]`;
     }
 
+    /**
+     * Convierte la notificación a un objeto plano.
+     * Útil para serialización y transferencia de datos.
+     * 
+     * @returns any - Objeto plano con todos los datos de la notificación.
+     */
     public toPlainObject(): any {
         return {
             id: this._id,
@@ -109,6 +227,13 @@ export class Notificacion {
         };
     }
 
+    /**
+     * Crea una instancia de Notificacion desde un mapa de datos.
+     * Método estático para crear notificaciones desde datos serializados.
+     * 
+     * @param map - Mapa de datos para crear la instancia.
+     * @returns Notificacion - Nueva instancia de Notificacion.
+     */
     public static fromMap(map: any): Notificacion {
         return new Notificacion(
             map.id,
@@ -121,7 +246,16 @@ export class Notificacion {
         );
     }
 
-    // Método estático para crear una notificación
+    /**
+     * Crea un objeto de notificación para ser enviado.
+     * Método estático para crear notificaciones sin persistir.
+     * 
+     * @param userId - ID del usuario destinatario.
+     * @param type - Tipo de notificación.
+     * @param message - Mensaje de la notificación.
+     * @param metadata - Metadatos adicionales (opcional).
+     * @returns object - Objeto de notificación para envío.
+     */
     public static create(
         userId: string,
         type: string,
@@ -136,12 +270,22 @@ export class Notificacion {
         };
     }
 
-    // Método para verificar si es de un tipo específico
+    /**
+     * Verifica si la notificación es de un tipo específico.
+     * 
+     * @param notificationType - Tipo de notificación a verificar.
+     * @returns boolean - true si es del tipo especificado, false en caso contrario.
+     */
     public isOfType(notificationType: string): boolean {
         return this._type === notificationType;
     }
 
-    // Método para verificar si es reciente (en los últimos X minutos)
+    /**
+     * Verifica si la notificación es reciente (en los últimos X minutos).
+     * 
+     * @param minutes - Número de minutos para considerar como reciente.
+     * @returns boolean - true si es reciente, false en caso contrario.
+     */
     public isRecent(minutes: number): boolean {
         const now = new Date();
         const diffInMinutes = (now.getTime() - this._createdAt.getTime()) / (1000 * 60);

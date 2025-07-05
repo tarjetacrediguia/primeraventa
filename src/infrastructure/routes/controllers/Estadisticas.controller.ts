@@ -1,5 +1,13 @@
 //src/infrastructure/routes/controllers/Estadisticas.controller.ts
 
+/**
+ * CONTROLADOR: Estadísticas
+ *
+ * Este archivo contiene los controladores para la obtención de estadísticas del sistema.
+ * Permite obtener estadísticas de comerciantes, analistas y solicitudes.
+ * Cada función está diseñada para ser utilizada como handler de rutas Express.
+ */
+
 import { Request, Response } from 'express';
 import { GetSolicitudesInicialesStatsUseCase } from '../../../application/use-cases/Estadisticas/GetSolicitudesInicialesStatsUseCase';
 import { GetSolicitudesFormalesStatsUseCase } from '../../../application/use-cases/Estadisticas/GetSolicitudesFormalesStatsUseCase';
@@ -14,6 +22,12 @@ import { GetEstadisticasComerciantesUseCase } from '../../../application/use-cas
 
 const estadisticasRepository = new EstadisticasRepositoryAdapter();
 
+/**
+ * Obtiene estadísticas de solicitudes iniciales en un rango de fechas.
+ * @param req - Request de Express con los parámetros de fecha en query params.
+ * @param res - Response de Express para enviar la respuesta.
+ * @returns Devuelve las estadísticas de solicitudes iniciales o un error en caso de fallo.
+ */
 export const getSolicitudesInicialesStats = async (req: Request, res: Response) => {
   try {
     const { desde, hasta } = req.query;
@@ -28,6 +42,12 @@ export const getSolicitudesInicialesStats = async (req: Request, res: Response) 
   }
 };
 
+/**
+ * Obtiene estadísticas de solicitudes formales en un rango de fechas.
+ * @param req - Request de Express con los parámetros de fecha en query params.
+ * @param res - Response de Express para enviar la respuesta.
+ * @returns Devuelve las estadísticas de solicitudes formales o un error en caso de fallo.
+ */
 export const getSolicitudesFormalesStats = async (req: Request, res: Response) => {
   try {
     const { desde, hasta } = req.query;
@@ -42,6 +62,12 @@ export const getSolicitudesFormalesStats = async (req: Request, res: Response) =
   }
 };
 
+/**
+ * Obtiene estadísticas de tiempos de aprobación en un rango de fechas.
+ * @param req - Request de Express con los parámetros de fecha en query params.
+ * @param res - Response de Express para enviar la respuesta.
+ * @returns Devuelve las estadísticas de tiempos de aprobación o un error en caso de fallo.
+ */
 export const getTiemposAprobacionStats = async (req: Request, res: Response) => {
   try {
     const { desde, hasta } = req.query;
@@ -56,6 +82,12 @@ export const getTiemposAprobacionStats = async (req: Request, res: Response) => 
   }
 };
 
+/**
+ * Obtiene estadísticas de tasa de conversión en un rango de fechas.
+ * @param req - Request de Express con los parámetros de fecha en query params.
+ * @param res - Response de Express para enviar la respuesta.
+ * @returns Devuelve las estadísticas de tasa de conversión o un error en caso de fallo.
+ */
 export const getTasaConversionStats = async (req: Request, res: Response) => {
   try {
     const { desde, hasta } = req.query;
@@ -70,6 +102,12 @@ export const getTasaConversionStats = async (req: Request, res: Response) => {
   }
 };
 
+/**
+ * Obtiene estadísticas de contratos en un rango de fechas.
+ * @param req - Request de Express con los parámetros de fecha en query params.
+ * @param res - Response de Express para enviar la respuesta.
+ * @returns Devuelve las estadísticas de contratos o un error en caso de fallo.
+ */
 export const getContratosStats = async (req: Request, res: Response) => {
   try {
     const { desde, hasta } = req.query;
@@ -84,6 +122,12 @@ export const getContratosStats = async (req: Request, res: Response) => {
   }
 };
 
+/**
+ * Obtiene estadísticas de comerciantes en un rango de fechas.
+ * @param req - Request de Express con los parámetros de fecha en query params.
+ * @param res - Response de Express para enviar la respuesta.
+ * @returns Devuelve las estadísticas de comerciantes o un error en caso de fallo.
+ */
 export const getEstadisticasComerciantes = async (req: Request, res: Response) => {
   try {
     const { desde, hasta } = req.query;
@@ -110,6 +154,12 @@ export const getEstadisticasComerciantes = async (req: Request, res: Response) =
       return date.toISOString();
     };
 
+/**
+ * Obtiene estadísticas de analistas en un rango de fechas.
+ * @param req - Request de Express con los parámetros de fecha en query params.
+ * @param res - Response de Express para enviar la respuesta.
+ * @returns Devuelve las estadísticas de analistas o un error en caso de fallo.
+ */
 export const getEstadisticasAnalistas = async (req: Request, res: Response) => {
   try {
     const { desde, hasta } = req.query;
@@ -124,6 +174,12 @@ export const getEstadisticasAnalistas = async (req: Request, res: Response) => {
   }
 };
 
+/**
+ * Obtiene estadísticas de actividad del sistema en un rango de fechas.
+ * @param req - Request de Express con los parámetros de fecha en query params.
+ * @param res - Response de Express para enviar la respuesta.
+ * @returns Devuelve las estadísticas de actividad del sistema o un error en caso de fallo.
+ */
 export const getActividadSistema = async (req: Request, res: Response) => {
   try {
     const { desde, hasta } = req.query;
@@ -138,6 +194,12 @@ export const getActividadSistema = async (req: Request, res: Response) => {
   }
 };
 
+/**
+ * Obtiene estadísticas de tiempos de resolución en un rango de fechas.
+ * @param req - Request de Express con los parámetros de fecha en query params.
+ * @param res - Response de Express para enviar la respuesta.
+ * @returns Devuelve las estadísticas de tiempos de resolución o un error en caso de fallo.
+ */
 export const getTiemposResolucion = async (req: Request, res: Response) => {
   try {
     const { desde, hasta } = req.query;

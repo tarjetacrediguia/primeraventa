@@ -1,17 +1,64 @@
 // src/application/use-cases/SolicitudFormal/AprobarSolicitudesFormalesUseCase.ts
+
+/**
+ * MÓDULO: Caso de Uso - Aprobar/Rechazar Solicitudes Formales
+ *
+ * Este módulo implementa la lógica de negocio para aprobar o rechazar solicitudes
+ * formales de crédito por parte de analistas o administradores del sistema.
+ *
+ * RESPONSABILIDADES:
+ * - Validar el estado de la solicitud formal antes de aprobar/rechazar
+ * - Procesar la aprobación con datos de tarjeta y cuenta bancaria
+ * - Procesar el rechazo con comentarios obligatorios
+ * - Actualizar el estado y comentarios de la solicitud
+ * - Registrar eventos en el historial del sistema
+ * - Enviar notificaciones al comerciante sobre el resultado
+ * - Validar comentarios obligatorios para rechazos
+ */
+
 import { SolicitudFormalRepositoryPort } from "../../ports/SolicitudFormalRepositoryPort";
 import { NotificationPort } from "../../ports/NotificationPort";
 import { SolicitudFormal } from "../../../domain/entities/SolicitudFormal";
 import { HISTORIAL_ACTIONS } from "../../constants/historialActions";
 import { HistorialRepositoryPort } from "../../ports/HistorialRepositoryPort";
 
+/**
+ * Caso de uso para aprobar o rechazar solicitudes formales de crédito.
+ * 
+ * Esta clase implementa la lógica para que analistas y administradores puedan
+ * aprobar o rechazar solicitudes formales, incluyendo la asignación de datos
+ * bancarios para aprobaciones y comentarios detallados para rechazos.
+ */
 export class AprobarSolicitudesFormalesUseCase {
+    /**
+     * Constructor del caso de uso.
+     * 
+     * @param repository - Puerto para operaciones de solicitudes formales
+     * @param notificationService - Puerto para servicios de notificación
+     * @param historialRepository - Puerto para registro de eventos en historial
+     */
     constructor(
         private readonly repository: SolicitudFormalRepositoryPort,
         private readonly notificationService: NotificationPort,
         private readonly historialRepository: HistorialRepositoryPort
     ) {}
 
+    /**
+     * Aprueba una solicitud formal de crédito.
+     * 
+     * Este método valida que la solicitud exista y esté en estado pendiente,
+     * establece el aprobador según su rol (administrador o analista),
+     * asigna los datos bancarios (tarjeta y cuenta) y actualiza el estado a "aprobada".
+     * 
+     * @param solicitudId - ID de la solicitud formal a aprobar
+     * @param numeroTarjeta - Número de tarjeta asignada al cliente
+     * @param numeroCuenta - Número de cuenta bancaria asignada al cliente
+     * @param aprobadorId - ID del usuario que aprueba la solicitud
+     * @param esAdministrador - Indica si el aprobador es administrador (true) o analista (false)
+     * @param comentario - Comentario opcional para la aprobación
+     * @returns Promise<SolicitudFormal> - La solicitud formal actualizada
+     * @throws Error - Si la solicitud no existe, no está pendiente o ocurre un error en el proceso
+     */
     async aprobarSolicitud(
         solicitudId: number,
         numeroTarjeta: string,
@@ -98,6 +145,20 @@ export class AprobarSolicitudesFormalesUseCase {
         return solicitudActualizada;
     }
 
+    /**
+     * Rechaza una solicitud formal de crédito.
+     * 
+     * Este método valida que la solicitud exista, esté en estado pendiente y
+     * que se proporcione un comentario válido (mínimo 10 caracteres).
+     * Establece el rechazador según su rol y actualiza el estado a "rechazada".
+     * 
+     * @param solicitudId - ID de la solicitud formal a rechazar
+     * @param comentario - Comentario obligatorio explicando el motivo del rechazo (mín. 10 caracteres)
+     * @param aprobadorId - ID del usuario que rechaza la solicitud
+     * @param esAdministrador - Indica si el rechazador es administrador (true) o analista (false)
+     * @returns Promise<SolicitudFormal> - La solicitud formal actualizada
+     * @throws Error - Si la solicitud no existe, no está pendiente, el comentario es inválido o ocurre un error
+     */
     async rechazarSolicitud(
     solicitudId: number,
     comentario: string,
@@ -187,6 +248,16 @@ export class AprobarSolicitudesFormalesUseCase {
     return solicitudActualizada;
 }
 
+    /**
+     * Envía notificación al comerciante sobre el resultado de su solicitud formal.
+     * 
+     * Este método privado se encarga de notificar al comerciante asociado a la solicitud
+     * sobre el resultado de la aprobación o rechazo de su solicitud formal.
+     * 
+     * @param solicitud - La solicitud formal procesada
+     * @param mensaje - Mensaje a enviar en la notificación
+     * @returns Promise<void> - No retorna valor
+     */
     private async notificarCliente(solicitud: SolicitudFormal, mensaje: string): Promise<void> {
         await this.notificationService.emitNotification({
             userId: solicitud.getComercianteId(), // Referencia al cliente

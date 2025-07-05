@@ -1,5 +1,13 @@
 // src/infrastructure/repositories/ClienteRepositoryAdapter.ts
 
+/**
+ * ADAPTADOR: Repositorio de Clientes
+ *
+ * Este archivo implementa el adaptador para el repositorio de clientes.
+ * Proporciona métodos para interactuar con la base de datos PostgreSQL
+ * y gestionar las operaciones CRUD de clientes.
+ */
+
 import { ClienteRepositoryPort } from "../../../application/ports/ClienteRepositoryPort";
 import { Cliente } from "../../../domain/entities/Cliente";
 import { pool } from "../../config/Database/DatabaseDonfig";
@@ -26,6 +34,12 @@ export class ClienteRepositoryAdapter implements ClienteRepositoryPort {
         );
     }
 
+    /**
+     * Obtiene un cliente por su ID.
+     * @param id - ID del cliente a buscar.
+     * @returns Promise<Cliente> - El cliente encontrado.
+     * @throws Error si el cliente no existe.
+     */
     async findById(id: number): Promise<Cliente> {
         const query = 'SELECT * FROM clientes WHERE id = $1';
         const result = await pool.query(query, [id]);
@@ -37,6 +51,12 @@ export class ClienteRepositoryAdapter implements ClienteRepositoryPort {
         return this.mapRowToCliente(result.rows[0]);
     }
 
+    /**
+     * Obtiene un cliente por su DNI.
+     * @param dni - DNI del cliente a buscar.
+     * @returns Promise<Cliente> - El cliente encontrado.
+     * @throws Error si el cliente no existe.
+     */
     async findByDni(dni: string): Promise<Cliente> {
         const query = 'SELECT * FROM clientes WHERE dni = $1';
         const result = await pool.query(query, [dni]);
@@ -48,6 +68,12 @@ export class ClienteRepositoryAdapter implements ClienteRepositoryPort {
         return this.mapRowToCliente(result.rows[0]);
     }
 
+    /**
+     * Obtiene un cliente por su CUIL.
+     * @param cuil - CUIL del cliente a buscar.
+     * @returns Promise<Cliente> - El cliente encontrado.
+     * @throws Error si el cliente no existe.
+     */
     async findByCuil(cuil: string): Promise<Cliente> {
         const query = 'SELECT * FROM clientes WHERE cuil = $1';
         const result = await pool.query(query, [cuil]);
@@ -59,6 +85,12 @@ export class ClienteRepositoryAdapter implements ClienteRepositoryPort {
         return this.mapRowToCliente(result.rows[0]);
     }
 
+    /**
+     * Obtiene un cliente por su email.
+     * @param email - Email del cliente a buscar.
+     * @returns Promise<Cliente> - El cliente encontrado.
+     * @throws Error si el cliente no existe.
+     */
     async findByEmail(email: string): Promise<Cliente> {
         const query = 'SELECT * FROM clientes WHERE email = $1';
         const result = await pool.query(query, [email]);
@@ -70,12 +102,21 @@ export class ClienteRepositoryAdapter implements ClienteRepositoryPort {
         return this.mapRowToCliente(result.rows[0]);
     }
 
+    /**
+     * Obtiene todos los clientes del sistema.
+     * @returns Promise<Cliente[]> - Array de todos los clientes.
+     */
     async findAll(): Promise<Cliente[]> {
         const query = 'SELECT * FROM clientes';
         const result = await pool.query(query);
         return result.rows.map((row: any) => this.mapRowToCliente(row));
     }
 
+    /**
+     * Guarda un nuevo cliente en la base de datos.
+     * @param cliente - Objeto Cliente a guardar.
+     * @returns Promise<void> - No retorna valor.
+     */
     async save(cliente: Cliente): Promise<void> {
         const query = `
             INSERT INTO clientes (
@@ -109,6 +150,11 @@ export class ClienteRepositoryAdapter implements ClienteRepositoryPort {
         await pool.query(query, values);
     }
 
+    /**
+     * Actualiza los datos de un cliente existente.
+     * @param cliente - Objeto Cliente con los datos actualizados.
+     * @returns Promise<void> - No retorna valor.
+     */
     async update(cliente: Cliente): Promise<void> {
         const query = `
             UPDATE clientes SET
@@ -142,6 +188,11 @@ export class ClienteRepositoryAdapter implements ClienteRepositoryPort {
         await pool.query(query, values);
     }
 
+    /**
+     * Elimina un cliente por su ID.
+     * @param id - ID del cliente a eliminar.
+     * @returns Promise<void> - No retorna valor.
+     */
     async delete(id: number): Promise<void> {
         const query = 'DELETE FROM clientes WHERE id = $1';
         await pool.query(query, [id]);

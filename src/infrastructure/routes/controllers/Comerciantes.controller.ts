@@ -4,6 +4,12 @@ import { ComercianteRepositoryAdapter } from '../../adapters/repository/Comercia
 
 const comercianteRepository = new ComercianteRepositoryAdapter();
 
+/**
+ * Crea un nuevo comerciante.
+ * @param req - Request de Express con los datos del comerciante en el body.
+ * @param res - Response de Express para enviar la respuesta.
+ * @returns Devuelve el comerciante creado o un error en caso de fallo.
+ */
 export const createComerciante = async (req: Request, res: Response) => {
     try {
         const {
@@ -43,6 +49,12 @@ export const createComerciante = async (req: Request, res: Response) => {
     }
 };
 
+/**
+ * Actualiza un comerciante existente.
+ * @param req - Request de Express con el ID en params y los datos a actualizar en el body.
+ * @param res - Response de Express para enviar la respuesta.
+ * @returns Devuelve el comerciante actualizado o un error en caso de fallo.
+ */
 export const updateComerciante = async (req: Request, res: Response) => {
     try {
         const id = Number(req.params.id);
@@ -80,6 +92,12 @@ export const updateComerciante = async (req: Request, res: Response) => {
     }
 };
 
+/**
+ * Elimina un comerciante por su ID.
+ * @param req - Request de Express con el ID en params.
+ * @param res - Response de Express para enviar la respuesta.
+ * @returns Devuelve un status 204 si se elimina correctamente o un error en caso de fallo.
+ */
 export const deleteComerciante = async (req: Request, res: Response) => {
     try {
         const id = Number(req.params.id);
@@ -94,6 +112,12 @@ export const deleteComerciante = async (req: Request, res: Response) => {
     }
 };
 
+/**
+ * Obtiene un comerciante por su ID.
+ * @param req - Request de Express con el ID en params.
+ * @param res - Response de Express para enviar la respuesta.
+ * @returns Devuelve el comerciante encontrado o un error si no existe.
+ */
 export const getComerciante = async (req: Request, res: Response) => {
     try {
         const id = Number(req.params.id);
@@ -112,6 +136,12 @@ export const getComerciante = async (req: Request, res: Response) => {
     }
 };
 
+/**
+ * Lista todos los comerciantes registrados en el sistema.
+ * @param req - Request de Express.
+ * @param res - Response de Express para enviar la respuesta.
+ * @returns Devuelve un array de comerciantes o un error en caso de fallo.
+ */
 export const listComerciantes = async (req: Request, res: Response) => {
     try {
         const comerciantes = await comercianteRepository.getAllComerciantes();

@@ -1,12 +1,46 @@
 // src/application/use-cases/Administrador/CreateAdminUseCase.ts
+
+/**
+ * MÓDULO: Caso de Uso - Crear Administrador
+ *
+ * Este módulo implementa la lógica de negocio para el registro de un nuevo administrador
+ * en el sistema, incluyendo validaciones y encriptación de contraseña.
+ *
+ * RESPONSABILIDADES:
+ * - Validar los datos de entrada del administrador
+ * - Encriptar la contraseña antes de guardar
+ * - Registrar el administrador en el repositorio
+ */
+
 import { Administrador } from "../../../domain/entities/Administrador";
-import { Permiso } from "../../../domain/entities/Permiso";
 import { AdministradorRepositoryPort } from "../../ports/AdministradorRepositoryPort";
 import bcrypt from 'bcrypt';
 
+/**
+ * Caso de uso para crear un nuevo administrador.
+ *
+ * Esta clase encapsula la lógica de validación, encriptación y registro
+ * de administradores en el sistema.
+ */
 export class CreateAdminUseCase {
+    /**
+     * Constructor del caso de uso.
+     *
+     * @param repository - Puerto de acceso al repositorio de administradores
+     */
     constructor(private readonly repository: AdministradorRepositoryPort) {}
 
+    /**
+     * Ejecuta el registro de un nuevo administrador.
+     *
+     * @param nombre - Nombre del administrador
+     * @param apellido - Apellido del administrador
+     * @param email - Correo electrónico
+     * @param password - Contraseña en texto plano
+     * @param telefono - Teléfono de contacto
+     * @returns Promise<Administrador> - Administrador registrado
+     * @throws Error si falta algún campo obligatorio
+     */
     async execute(
         nombre: string,
         apellido: string,

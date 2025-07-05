@@ -1,4 +1,12 @@
-// src/infrastructure/controllers/Contrato.controller.ts
+// src/infrastructure/routes/controllers/Contrato.controller.ts
+
+/**
+ * CONTROLADOR: Contratos
+ *
+ * Este archivo contiene los controladores para la gestión de contratos en el sistema.
+ * Permite generar, obtener y listar contratos asociados a solicitudes.
+ * Cada función está diseñada para ser utilizada como handler de rutas Express.
+ */
 import { Request, Response } from 'express';
 import { GenerarContratoUseCase } from '../../../application/use-cases/Contrato/GenerarContratoUseCase';
 import { DescargarContratoUseCase } from '../../../application/use-cases/Contrato/DescargarContratoUseCase';
@@ -19,6 +27,12 @@ const clienteRepository = new ClienteRepositoryAdapter();
 const historialRepository = new HistorialRepositoryAdapter();
 const solicitudInicialRepository = new SolicitudInicialRepositoryAdapter();
 
+/**
+ * Genera un nuevo contrato a partir de una solicitud.
+ * @param req - Request de Express con el ID de la solicitud en body.
+ * @param res - Response de Express para enviar la respuesta.
+ * @returns Devuelve el contrato generado o un error en caso de fallo.
+ */
 export const generarContratoPDF = async (req: Request, res: Response) => {
   try {
     const solicitudId = parseInt(req.params.id, 10);
@@ -59,6 +73,12 @@ export const generarContratoPDF = async (req: Request, res: Response) => {
   }
 };
 
+/**
+ * Obtiene un contrato por su ID.
+ * @param req - Request de Express con el ID del contrato en params.
+ * @param res - Response de Express para enviar la respuesta.
+ * @returns Devuelve el contrato encontrado o un error si no existe.
+ */
 export const descargarContratoPDF = async (req: Request, res: Response) => {
   try {
     const contratoId = req.params.id;

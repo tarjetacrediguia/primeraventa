@@ -1,5 +1,12 @@
 //src/infrastructure/adapters/repository/SolicitudFormalRepositoryAdapter.ts
 
+/**
+ * ADAPTADOR: Repositorio de Solicitudes Formales
+ *
+ * Este archivo implementa el adaptador para el repositorio de solicitudes formales del sistema.
+ * Proporciona métodos para gestionar solicitudes formales y sus relaciones con referentes y contratos.
+ */
+
 import { SolicitudFormalRepositoryPort } from "../../../application/ports/SolicitudFormalRepositoryPort";
 import { SolicitudFormal } from "../../../domain/entities/SolicitudFormal";
 import { Referente } from "../../../domain/entities/Referente";
@@ -8,128 +15,138 @@ import { pool } from "../../config/Database/DatabaseDonfig";
 export class SolicitudFormalRepositoryAdapter implements SolicitudFormalRepositoryPort {
     
     // src/infrastructure/adapters/repository/SolicitudFormalRepositoryAdapter.ts
-async createSolicitudFormal(solicitudFormal: SolicitudFormal): Promise<SolicitudFormal> {
-    const client = await pool.connect();
-    try {
-        await client.query('BEGIN');
-        
-        // 1. Obtener cliente_id de la solicitud inicial asociada
-        const initQuery = `SELECT cliente_id FROM solicitudes_iniciales WHERE id = $1`;
-        const initResult = await client.query(initQuery, [solicitudFormal.getSolicitudInicialId()]);
-        
-        if (initResult.rows.length === 0) {
-            throw new Error('Solicitud inicial no encontrada');
-        }
-        
-        const clienteId = initResult.rows[0].cliente_id;
-        if (!clienteId) {
-            throw new Error('La solicitud inicial no tiene un cliente asociado');
-        }
+    /**
+     * Crea una nueva solicitud formal en la base de datos.
+     * @param solicitudFormal - Objeto SolicitudFormal a crear.
+     * @returns Promise<SolicitudFormal> - La solicitud formal creada con su ID asignado.
+     */
+    async createSolicitudFormal(solicitudFormal: SolicitudFormal): Promise<SolicitudFormal> {
+        const client = await pool.connect();
+        try {
+            await client.query('BEGIN');
+            
+            // 1. Obtener cliente_id de la solicitud inicial asociada
+            const initQuery = `SELECT cliente_id FROM solicitudes_iniciales WHERE id = $1`;
+            const initResult = await client.query(initQuery, [solicitudFormal.getSolicitudInicialId()]);
+            
+            if (initResult.rows.length === 0) {
+                throw new Error('Solicitud inicial no encontrada');
+            }
+            
+            const clienteId = initResult.rows[0].cliente_id;
+            if (!clienteId) {
+                throw new Error('La solicitud inicial no tiene un cliente asociado');
+            }
 
-        // 2. Actualizar cliente con los nuevos datos
-        const updateClienteQuery = `
-            UPDATE clientes SET
-                nombre_completo = $1,
-                apellido = $2,
-                telefono = $3,
-                email = $4,
-                fecha_nacimiento = $5,
-                domicilio = $6,
-                datos_empleador = $7,
-                acepta_tarjeta = $8
-            WHERE id = $9
+            // 2. Actualizar cliente con los nuevos datos
+            const updateClienteQuery = `
+                UPDATE clientes SET
+                    nombre_completo = $1,
+                    apellido = $2,
+                    telefono = $3,
+                    email = $4,
+                    fecha_nacimiento = $5,
+                    domicilio = $6,
+                    datos_empleador = $7,
+                    acepta_tarjeta = $8
+                WHERE id = $9
+            `;
+            await client.query(updateClienteQuery, [
+                solicitudFormal.getNombreCompleto(),
+                solicitudFormal.getApellido(),
+                solicitudFormal.getTelefono(),
+                solicitudFormal.getEmail(),
+                solicitudFormal.getFechaNacimiento(),
+                solicitudFormal.getDomicilio(),
+                solicitudFormal.getDatosEmpleador(),
+                solicitudFormal.getAceptaTarjeta(),
+                clienteId
+            ]);
+
+            // 3. Crear solicitud formal usando el mismo cliente_id
+            const reciboStream = solicitudFormal.getReciboStream();
+            const chunks: Uint8Array[] = [];
+            
+            for await (const chunk of reciboStream) {
+            chunks.push(chunk);
+            }
+            
+            const reciboBuffer = Buffer.concat(chunks);
+
+            // Insertar en la base de datos
+            const solicitudQuery = `
+          INSERT INTO solicitudes_formales (
+            cliente_id, 
+            solicitud_inicial_id, 
+            comerciante_id,
+            fecha_solicitud, 
+            recibo, 
+            estado, 
+            acepta_tarjeta, 
+            comentarios
+          )
+          VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+          RETURNING id
         `;
-        await client.query(updateClienteQuery, [
-            solicitudFormal.getNombreCompleto(),
-            solicitudFormal.getApellido(),
-            solicitudFormal.getTelefono(),
-            solicitudFormal.getEmail(),
-            solicitudFormal.getFechaNacimiento(),
-            solicitudFormal.getDomicilio(),
-            solicitudFormal.getDatosEmpleador(),
-            solicitudFormal.getAceptaTarjeta(),
-            clienteId
-        ]);
-
-        // 3. Crear solicitud formal usando el mismo cliente_id
-        const reciboStream = solicitudFormal.getReciboStream();
-        const chunks: Uint8Array[] = [];
         
-        for await (const chunk of reciboStream) {
-        chunks.push(chunk);
-        }
-        
-        const reciboBuffer = Buffer.concat(chunks);
-
-        // Insertar en la base de datos
-        const solicitudQuery = `
-      INSERT INTO solicitudes_formales (
-        cliente_id, 
-        solicitud_inicial_id, 
-        comerciante_id,
-        fecha_solicitud, 
-        recibo, 
-        estado, 
-        acepta_tarjeta, 
-        comentarios
-      )
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-      RETURNING id
-    `;
-    
-    const solicitudValues = [
-      clienteId,
-      solicitudFormal.getSolicitudInicialId(),
-      solicitudFormal.getComercianteId(),
-      solicitudFormal.getFechaSolicitud(),
-      solicitudFormal.getRecibo(),
-      solicitudFormal.getEstado(),
-      solicitudFormal.getAceptaTarjeta(),
-      solicitudFormal.getComentarios()
-    ];
-        
-        const solicitudResult = await client.query(solicitudQuery, solicitudValues);
-        const solicitudId = solicitudResult.rows[0].id;
-        
-        // 4. Insertar referentes
-        for (let i = 0; i < solicitudFormal.getReferentes().length; i++) {
-            const referente = solicitudFormal.getReferentes()[i];
+        const solicitudValues = [
+          clienteId,
+          solicitudFormal.getSolicitudInicialId(),
+          solicitudFormal.getComercianteId(),
+          solicitudFormal.getFechaSolicitud(),
+          solicitudFormal.getRecibo(),
+          solicitudFormal.getEstado(),
+          solicitudFormal.getAceptaTarjeta(),
+          solicitudFormal.getComentarios()
+        ];
             
-            const referenteQuery = `
-                INSERT INTO referentes (nombre_completo, apellido, vinculo, telefono)
-                VALUES ($1, $2, $3, $4)
-                RETURNING id
-            `;
-            const referenteValues = [
-                referente.getNombreCompleto(),
-                referente.getApellido(),
-                referente.getVinculo(),
-                referente.getTelefono()
-            ];
+            const solicitudResult = await client.query(solicitudQuery, solicitudValues);
+            const solicitudId = solicitudResult.rows[0].id;
             
-            const referenteResult = await client.query(referenteQuery, referenteValues);
-            const referenteId = referenteResult.rows[0].id;
+            // 4. Insertar referentes
+            for (let i = 0; i < solicitudFormal.getReferentes().length; i++) {
+                const referente = solicitudFormal.getReferentes()[i];
+                
+                const referenteQuery = `
+                    INSERT INTO referentes (nombre_completo, apellido, vinculo, telefono)
+                    VALUES ($1, $2, $3, $4)
+                    RETURNING id
+                `;
+                const referenteValues = [
+                    referente.getNombreCompleto(),
+                    referente.getApellido(),
+                    referente.getVinculo(),
+                    referente.getTelefono()
+                ];
+                
+                const referenteResult = await client.query(referenteQuery, referenteValues);
+                const referenteId = referenteResult.rows[0].id;
 
-            const relacionQuery = `
-                INSERT INTO solicitud_referente (solicitud_formal_id, referente_id, orden)
-                VALUES ($1, $2, $3)
-            `;
-            await client.query(relacionQuery, [solicitudId, referenteId, i + 1]);
+                const relacionQuery = `
+                    INSERT INTO solicitud_referente (solicitud_formal_id, referente_id, orden)
+                    VALUES ($1, $2, $3)
+                `;
+                await client.query(relacionQuery, [solicitudId, referenteId, i + 1]);
+            }
+
+            await client.query('COMMIT');
+            
+            // Retornar la solicitud creada
+            return await this.getSolicitudFormalById(solicitudId) as SolicitudFormal;
+            
+        } catch (error) {
+            await client.query('ROLLBACK');
+            throw new Error(`Error al crear solicitud formal: ${error instanceof Error ? error.message : 'Error desconocido'}`);
+        } finally {
+            client.release();
         }
-
-        await client.query('COMMIT');
-        
-        // Retornar la solicitud creada
-        return await this.getSolicitudFormalById(solicitudId) as SolicitudFormal;
-        
-    } catch (error) {
-        await client.query('ROLLBACK');
-        throw new Error(`Error al crear solicitud formal: ${error instanceof Error ? error.message : 'Error desconocido'}`);
-    } finally {
-        client.release();
     }
-}
 
+    /**
+     * Obtiene una solicitud formal por su ID.
+     * @param id - ID de la solicitud formal a buscar.
+     * @returns Promise<SolicitudFormal | null> - La solicitud formal encontrada o null si no existe.
+     */
     async getSolicitudFormalById(id: number): Promise<SolicitudFormal | null> {
         const query = `
             SELECT 
@@ -211,6 +228,11 @@ async createSolicitudFormal(solicitudFormal: SolicitudFormal): Promise<Solicitud
         );
     }
 
+    /**
+     * Actualiza los datos de una solicitud formal existente.
+     * @param solicitudFormal - Objeto SolicitudFormal con los datos actualizados.
+     * @returns Promise<SolicitudFormal> - La solicitud formal actualizada.
+     */
     async updateSolicitudFormal(solicitudFormal: SolicitudFormal): Promise<SolicitudFormal> {
         const client = await pool.connect();
         try {
@@ -316,7 +338,12 @@ async createSolicitudFormal(solicitudFormal: SolicitudFormal): Promise<Solicitud
         }
     }
 
-        async updateSolicitudFormalAprobacion(solicitudFormal: SolicitudFormal): Promise<SolicitudFormal> {
+    /**
+     * Actualiza el estado de aprobación de una solicitud formal.
+     * @param solicitudFormal - Objeto SolicitudFormal con el nuevo estado de aprobación.
+     * @returns Promise<SolicitudFormal> - La solicitud formal actualizada.
+     */
+    async updateSolicitudFormalAprobacion(solicitudFormal: SolicitudFormal): Promise<SolicitudFormal> {
         const client = await pool.connect();
         try {
             await client.query('BEGIN');
@@ -431,6 +458,11 @@ async createSolicitudFormal(solicitudFormal: SolicitudFormal): Promise<Solicitud
         }
     }
 
+    /**
+     * Actualiza el estado de rechazo de una solicitud formal.
+     * @param solicitudFormal - Objeto SolicitudFormal con el nuevo estado de rechazo.
+     * @returns Promise<SolicitudFormal> - La solicitud formal actualizada.
+     */
     async updateSolicitudFormalRechazo(solicitudFormal: SolicitudFormal): Promise<SolicitudFormal> {
     const client = await pool.connect();
     try {
@@ -488,6 +520,11 @@ async createSolicitudFormal(solicitudFormal: SolicitudFormal): Promise<Solicitud
     }
 }
 
+    /**
+     * Elimina una solicitud formal por su ID.
+     * @param id - ID de la solicitud formal a eliminar.
+     * @returns Promise<void> - No retorna valor.
+     */
     async deleteSolicitudFormal(id: number): Promise<void> {
         const client = await pool.connect();
         try {
@@ -529,6 +566,10 @@ async createSolicitudFormal(solicitudFormal: SolicitudFormal): Promise<Solicitud
         }
     }
 
+    /**
+     * Obtiene todas las solicitudes formales del sistema.
+     * @returns Promise<SolicitudFormal[]> - Array de todas las solicitudes formales.
+     */
     async getAllSolicitudesFormales(): Promise<SolicitudFormal[]> {
         const query = `
             SELECT 
@@ -599,6 +640,11 @@ async createSolicitudFormal(solicitudFormal: SolicitudFormal): Promise<Solicitud
         return solicitudes;
     }
 
+    /**
+     * Obtiene las solicitudes formales por DNI del cliente.
+     * @param dni - DNI del cliente.
+     * @returns Promise<SolicitudFormal[]> - Array de solicitudes formales del cliente.
+     */
     async getSolicitudesFormalesByDni(dni: string): Promise<SolicitudFormal[]> {
         const query = `
             SELECT 
@@ -626,6 +672,11 @@ async createSolicitudFormal(solicitudFormal: SolicitudFormal): Promise<Solicitud
         return await this.executeSolicitudesQuery(query, [dni]);
     }
 
+    /**
+     * Obtiene las solicitudes formales por estado.
+     * @param estado - Estado de las solicitudes a buscar.
+     * @returns Promise<SolicitudFormal[]> - Array de solicitudes formales con el estado especificado.
+     */
     async getSolicitudesFormalesByEstado(estado: string): Promise<SolicitudFormal[]> {
         const query = `
             SELECT 
@@ -653,6 +704,11 @@ async createSolicitudFormal(solicitudFormal: SolicitudFormal): Promise<Solicitud
         return await this.executeSolicitudesQuery(query, [estado]);
     }
 
+    /**
+     * Obtiene las solicitudes formales por fecha de solicitud.
+     * @param fecha - Fecha de solicitud.
+     * @returns Promise<SolicitudFormal[]> - Array de solicitudes formales creadas en esa fecha.
+     */
     async getSolicitudesFormalesByFecha(fecha: Date): Promise<SolicitudFormal[]> {
         const query = `
             SELECT 
@@ -680,6 +736,11 @@ async createSolicitudFormal(solicitudFormal: SolicitudFormal): Promise<Solicitud
         return await this.executeSolicitudesQuery(query, [fecha]);
     }
 
+    /**
+     * Obtiene las solicitudes formales por ID del comerciante.
+     * @param comercianteId - ID del comerciante.
+     * @returns Promise<SolicitudFormal[]> - Array de solicitudes formales del comerciante.
+     */
     async getSolicitudesFormalesByComercianteId(comercianteId: number): Promise<SolicitudFormal[]> {
         const query = `
             SELECT 
@@ -706,6 +767,11 @@ async createSolicitudFormal(solicitudFormal: SolicitudFormal): Promise<Solicitud
         return await this.executeSolicitudesQuery(query, [comercianteId]);
     }
 
+    /**
+     * Obtiene las solicitudes formales por ID del analista.
+     * @param analistaId - ID del analista.
+     * @returns Promise<SolicitudFormal[]> - Array de solicitudes formales aprobadas por el analista.
+     */
     async getSolicitudesFormalesByAnalistaId(analistaId: number): Promise<SolicitudFormal[]> {
         const query = `
             SELECT 
@@ -733,6 +799,11 @@ async createSolicitudFormal(solicitudFormal: SolicitudFormal): Promise<Solicitud
         return await this.executeSolicitudesQuery(query, [analistaId]);
     }
 
+    /**
+     * Obtiene las solicitudes formales por ID de la solicitud inicial.
+     * @param solicitudInicialId - ID de la solicitud inicial.
+     * @returns Promise<SolicitudFormal[]> - Array de solicitudes formales asociadas a la solicitud inicial.
+     */
     async getSolicitudesFormalesBySolicitudInicialId(solicitudInicialId: number): Promise<SolicitudFormal[]> {
         const query = `
             SELECT 
@@ -760,6 +831,12 @@ async createSolicitudFormal(solicitudFormal: SolicitudFormal): Promise<Solicitud
         return await this.executeSolicitudesQuery(query, [solicitudInicialId]);
     }
 
+    /**
+     * Vincula un contrato a una solicitud formal.
+     * @param solicitudId - ID de la solicitud formal.
+     * @param contratoId - ID del contrato a vincular.
+     * @returns Promise<void> - No retorna valor.
+     */
     async vincularContrato(solicitudId: number, contratoId: number): Promise<void> {
         const client = await pool.connect();
         try {
@@ -845,6 +922,12 @@ async createSolicitudFormal(solicitudFormal: SolicitudFormal): Promise<Solicitud
         return solicitudes;
     }
 
+    /**
+     * Obtiene las solicitudes formales por comerciante y estado.
+     * @param comercianteId - ID del comerciante.
+     * @param estado - Estado de las solicitudes.
+     * @returns Promise<SolicitudFormal[]> - Array de solicitudes formales del comerciante con el estado especificado.
+     */
     async getSolicitudesFormalesByComercianteYEstado(
     comercianteId: number, 
     estado: string

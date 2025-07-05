@@ -1,4 +1,12 @@
 // src/infrastructure/routes/controllers/Configuracion.controller.ts
+
+/**
+ * CONTROLADOR: Configuración
+ *
+ * Este archivo contiene los controladores para la gestión de la configuración del sistema.
+ * Permite obtener y actualizar configuraciones generales.
+ * Cada función está diseñada para ser utilizada como handler de rutas Express.
+ */
 import { Request, Response } from 'express';
 import { GetConfUseCase } from '../../../application/use-cases/Configuraciones/GetConfUseCase';
 import { UpdateConfUseCase } from '../../../application/use-cases/Configuraciones/UpdateConfUseCase';
@@ -8,6 +16,12 @@ import { Configuracion } from '../../../domain/entities/Configuracion';
 
 const configuracionRepository = new ConfiguracionRepositoryAdapter();
 
+/**
+ * Obtiene la configuración general del sistema.
+ * @param req - Request de Express.
+ * @param res - Response de Express para enviar la respuesta.
+ * @returns Devuelve la configuración actual o un error en caso de fallo.
+ */
 export const getConfiguracion = async (req: Request, res: Response) => {
     try {
         const useCase = new GetConfUseCase(configuracionRepository);
@@ -19,6 +33,12 @@ export const getConfiguracion = async (req: Request, res: Response) => {
     }
 };
 
+/**
+ * Actualiza la configuración general del sistema.
+ * @param req - Request de Express con los datos de configuración en el body.
+ * @param res - Response de Express para enviar la respuesta.
+ * @returns Devuelve la configuración actualizada o un error en caso de fallo.
+ */
 export const updateConfiguracion = async (req: Request, res: Response) => {
     try {
         const { clave, valor } = req.body;

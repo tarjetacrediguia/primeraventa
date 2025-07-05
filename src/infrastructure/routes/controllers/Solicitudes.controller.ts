@@ -1,5 +1,13 @@
 //src/infrastructure/routes/controllers/Solicitudes.controller.ts
 
+/**
+ * CONTROLADOR: Solicitudes
+ *
+ * Este archivo contiene los controladores para la gestión de solicitudes iniciales y formales,
+ * así como la verificación crediticia, aprobación y rechazo de solicitudes.
+ * Cada función está diseñada para ser utilizada como handler de rutas Express.
+ */
+
 import { Request, Response } from 'express';
 import { NotificationPort } from '../../../application/ports/NotificationPort';
 import { VerazPort } from '../../../application/ports/VerazPort';
@@ -92,7 +100,12 @@ const getSolicitudesFormalesByFechaUC = new GetSolicitudesFormalesByFechaUseCase
 const updateSolicitudFormalUC = new UpdateSolicitudFormalUseCase(solicitudFormalRepo,historialRepository);
 const getSolicitudFormalByIdUC = new GetSolicitudesFormalesByIdUseCase(solicitudFormalRepo);
 
-// Controladores
+/**
+ * Crea una nueva solicitud inicial.
+ * @param req - Request de Express con los datos del cliente y recibo en el body.
+ * @param res - Response de Express para enviar la respuesta.
+ * @returns Devuelve la solicitud creada o un error en caso de fallo.
+ */
 export const crearSolicitudInicial = async (req: Request, res: Response) => {
   try {
     const { dniCliente, cuilCliente, reciboSueldo } = req.body;
@@ -124,6 +137,12 @@ export const crearSolicitudInicial = async (req: Request, res: Response) => {
   }
 };
 
+/**
+ * Lista las solicitudes iniciales filtradas por estado.
+ * @param req - Request de Express con el estado en query params.
+ * @param res - Response de Express para enviar la respuesta.
+ * @returns Devuelve un array de solicitudes o un error en caso de fallo.
+ */
 export const listarSolicitudesIniciales = async (req: Request, res: Response) => {
   try {
     const estado = req.query.estado as string;
@@ -134,6 +153,12 @@ export const listarSolicitudesIniciales = async (req: Request, res: Response) =>
   }
 };
 
+/**
+ * Verifica el estado crediticio de un cliente.
+ * @param req - Request de Express con el dni y cuil en el body.
+ * @param res - Response de Express para enviar la respuesta.
+ * @returns Devuelve el resultado de la verificación o un error en caso de fallo.
+ */
 export const verificarEstadoCrediticio = async (req: Request, res: Response) => {
   try {
     const { dni, cuil } = req.body;
@@ -144,6 +169,12 @@ export const verificarEstadoCrediticio = async (req: Request, res: Response) => 
   }
 };
 
+/**
+ * Crea una nueva solicitud formal.
+ * @param req - Request de Express con los datos de la solicitud formal en el body.
+ * @param res - Response de Express para enviar la respuesta.
+ * @returns Devuelve la solicitud formal creada o un error en caso de fallo.
+ */
 export const crearSolicitudFormal = async (req: Request, res: Response) => {
   try {
     const { idSolicitudInicial, cliente, referentes } = req.body;

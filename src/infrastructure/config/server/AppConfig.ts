@@ -1,4 +1,13 @@
 // src/infrastructure/config/app.config.ts
+
+/**
+ * CONFIGURACIÓN: Aplicación Principal
+ *
+ * Este archivo define la configuración principal de la aplicación.
+ * Maneja variables de entorno como el puerto, secretos JWT y tokens del sistema.
+ * Valida que las configuraciones críticas estén presentes en producción.
+ */
+
 interface AppConfig {
   environment: string;
   port: number;

@@ -1,4 +1,12 @@
 // src/infrastructure/routes/administradores.routes.ts
+
+/**
+ * RUTAS: Administradores
+ *
+ * Este archivo define las rutas para la gestión de administradores en el sistema.
+ * Permite crear, actualizar, eliminar, obtener y listar administradores.
+ * Todas las rutas están protegidas por el middleware de rol de administrador.
+ */
 import { Router } from 'express';
 import { esAdministrador } from './middlewares/rolesMiddleware';
 import { createAdministrador, deleteAdministrador, getAdministrador, listAdministradores, updateAdministrador } from './controllers/Administradores.controller';

@@ -1,10 +1,22 @@
 //src/infrastructure/adapters/repository/AdministradorRepositoryAdapter.ts
 
+/**
+ * ADAPTADOR: Repositorio de Administradores
+ *
+ * Este archivo implementa el adaptador para el repositorio de administradores.
+ * Proporciona métodos para interactuar con la base de datos PostgreSQL
+ * y gestionar las operaciones CRUD de administradores.
+ */
+
 import { AdministradorRepositoryPort } from "../../../application/ports/AdministradorRepositoryPort";
 import { Administrador } from "../../../domain/entities/Administrador";
 import { pool } from "../../config/Database/DatabaseDonfig";
 
 export class AdministradorRepositoryAdapter implements AdministradorRepositoryPort {
+    /**
+     * Obtiene todos los administradores del sistema.
+     * @returns Promise<Administrador[]> - Array de administradores con sus permisos.
+     */
     async getAllAdministradores(): Promise<Administrador[]> {
         const query = `
             SELECT u.id, u.nombre, u.apellido, u.email, u.telefono,
@@ -19,6 +31,11 @@ export class AdministradorRepositoryAdapter implements AdministradorRepositoryPo
         const result = await pool.query(query);
         return result.rows.map(row => this.mapRowToAdministrador(row));
     }
+    /**
+     * Guarda un nuevo administrador en la base de datos.
+     * @param administrador - Objeto Administrador a guardar.
+     * @returns Promise<Administrador> - El administrador guardado con su ID asignado.
+     */
     async saveAdministrador(administrador: Administrador): Promise<Administrador> {
         const client = await pool.connect();
         try {
@@ -74,6 +91,11 @@ export class AdministradorRepositoryAdapter implements AdministradorRepositoryPo
             client.release();
         }
     }
+    /**
+     * Obtiene un administrador por su ID.
+     * @param id - ID del administrador a buscar.
+     * @returns Promise<Administrador | null> - El administrador encontrado o null si no existe.
+     */
     async getAdministradorById(id: number): Promise<Administrador | null> {
         const query = `
             SELECT u.id, u.nombre, u.apellido, u.email, u.telefono,
@@ -93,6 +115,11 @@ export class AdministradorRepositoryAdapter implements AdministradorRepositoryPo
         
         return this.mapRowToAdministrador(result.rows[0]);
     }
+    /**
+     * Actualiza los datos de un administrador existente.
+     * @param administrador - Objeto Administrador con los datos actualizados.
+     * @returns Promise<Administrador> - El administrador actualizado.
+     */
     async updateAdministrador(administrador: Administrador): Promise<Administrador> {
         const client = await pool.connect();
         try {
@@ -122,6 +149,11 @@ export class AdministradorRepositoryAdapter implements AdministradorRepositoryPo
             client.release();
         }
     }
+    /**
+     * Elimina un administrador por su ID.
+     * @param id - ID del administrador a eliminar.
+     * @returns Promise<void> - No retorna valor.
+     */
     async deleteAdministrador(id: number): Promise<void> {
         const client = await pool.connect();
         try {

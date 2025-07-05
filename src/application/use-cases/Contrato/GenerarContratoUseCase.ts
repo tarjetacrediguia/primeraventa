@@ -1,4 +1,20 @@
 // src/application/use-cases/Contrato/GenerarContratoUseCase.ts
+
+/**
+ * MÓDULO: Caso de Uso - Generar Contrato
+ *
+ * Este módulo implementa la lógica de negocio para la generación de contratos a partir de una solicitud formal aprobada.
+ * Incluye validaciones, generación de PDF, notificaciones y registro en historial.
+ *
+ * RESPONSABILIDADES:
+ * - Validar el estado de la solicitud formal y la existencia de cliente
+ * - Evitar duplicidad de contratos para la misma solicitud
+ * - Crear y guardar el contrato en el sistema
+ * - Generar el PDF del contrato
+ * - Notificar al solicitante y registrar eventos en el historial
+ * - Manejar errores y registrar intentos fallidos
+ */
+
 import { SolicitudFormalRepositoryPort } from "../../ports/SolicitudFormalRepositoryPort";
 import { ContratoRepositoryPort } from "../../ports/ContratoRepositoryPort";
 import { PdfPort } from "../../ports/PdfPort";
@@ -10,7 +26,24 @@ import { HistorialRepositoryPort } from "../../ports/HistorialRepositoryPort";
 import { SolicitudInicialRepositoryPort } from "../../ports/SolicitudInicialRepositoryPort";
 import { HISTORIAL_ACTIONS } from "../../constants/historialActions";
 
+/**
+ * Caso de uso para la generación de contratos a partir de solicitudes formales aprobadas.
+ * 
+ * Esta clase implementa la lógica completa para validar, crear, guardar y notificar
+ * la generación de un contrato, incluyendo la generación de PDF y el registro en historial.
+ */
 export class GenerarContratoUseCase {
+    /**
+     * Constructor del caso de uso.
+     * 
+     * @param solicitudRepository - Puerto para operaciones de solicitudes formales
+     * @param contratoRepository - Puerto para operaciones de contratos
+     * @param pdfService - Puerto para generación de PDF
+     * @param notificationService - Puerto para servicios de notificación
+     * @param clienteRepository - Adaptador para operaciones de clientes
+     * @param historialRepository - Puerto para registro de eventos en historial
+     * @param solicitudInicialRepository - Puerto para operaciones de solicitudes iniciales
+     */
     constructor(
         private readonly solicitudRepository: SolicitudFormalRepositoryPort,
         private readonly contratoRepository: ContratoRepositoryPort,
@@ -21,6 +54,21 @@ export class GenerarContratoUseCase {
         private readonly solicitudInicialRepository: SolicitudInicialRepositoryPort
     ) {}
 
+    /**
+     * Ejecuta la generación de un contrato a partir de una solicitud formal aprobada.
+     * 
+     * Este método implementa el flujo completo de generación de contrato:
+     * 1. Valida la existencia y estado de la solicitud formal
+     * 2. Verifica que no exista un contrato previo para la solicitud
+     * 3. Crea y guarda el contrato
+     * 4. Genera el PDF y notifica al solicitante
+     * 5. Registra eventos en el historial y maneja errores
+     * 
+     * @param numeroSolicitud - ID de la solicitud formal aprobada
+     * @param usuarioId - ID del usuario que genera el contrato
+     * @returns Promise<Contrato> - El contrato generado y guardado
+     * @throws Error - Si la solicitud no existe, no está aprobada, el cliente no existe o ya hay contrato
+     */
     async execute(numeroSolicitud: number, usuarioId: number): Promise<Contrato> {
         try {
             // 1. Obtener solicitud formal
@@ -138,11 +186,21 @@ export class GenerarContratoUseCase {
         }
     }
 
+    /**
+     * Notifica al solicitante que no tiene permisos para generar contrato.
+     * @param solicitud - Solicitud formal a notificar
+     */
     private async notificarSinPermisos(solicitud: SolicitudFormal): Promise<void> {
         const mensaje = "Su solicitud no ha sido aprobada, por lo tanto no puede generar un contrato. Por favor contacte al administrador.";
         await this.enviarNotificacion(solicitud, mensaje);
     }
 
+    /**
+     * Notifica al solicitante que el contrato fue generado exitosamente.
+     * @param solicitud - Solicitud formal asociada
+     * @param contrato - Contrato generado
+     * @param pdfBuffer - PDF generado del contrato
+     */
     private async notificarContratoGenerado(
         solicitud: SolicitudFormal,
         contrato: Contrato,
@@ -152,6 +210,11 @@ export class GenerarContratoUseCase {
         await this.enviarNotificacion(solicitud, mensaje, pdfBuffer);
     }
 
+    /**
+     * Maneja el registro y notificación de errores durante la generación de contrato.
+     * @param error - Error ocurrido
+     * @param numeroSolicitud - ID de la solicitud formal
+     */
     private async manejarErrorGeneracion(error: Error, numeroSolicitud: number): Promise<void> {
         console.error(`Error generando contrato para solicitud ${numeroSolicitud}:`, error);
         
@@ -163,6 +226,12 @@ export class GenerarContratoUseCase {
         }
     }
 
+    /**
+     * Envía una notificación al solicitante, opcionalmente adjuntando el PDF del contrato.
+     * @param solicitud - Solicitud formal asociada
+     * @param mensaje - Mensaje a enviar
+     * @param pdf - Buffer opcional con el PDF generado
+     */
     private async enviarNotificacion(
         solicitud: SolicitudFormal,
         mensaje: string,
@@ -183,20 +252,37 @@ export class GenerarContratoUseCase {
         // Aquí podrías agregar envío por email/SMS si tu NotificationPort lo soporta
     }
 
+    /**
+     * Calcula el monto del contrato basado en la solicitud formal.
+     * @param solicitud - Solicitud formal
+     * @returns number - Monto calculado
+     */
     private calcularMontoContrato(solicitud: SolicitudFormal): number {
         // Lógica para calcular el monto del contrato basado en la solicitud
         // Esta es una implementación de ejemplo - ajusta según tu lógica de negocio
         return 10000; // Valor de ejemplo
     }
 
+    /**
+     * Genera un identificador único para el contrato.
+     * @returns string - ID generado
+     */
     private generarIdContrato(): string {
         return `CONTR-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
     }
 
+    /**
+     * Genera un número de autorización único.
+     * @returns string - Número de autorización generado
+     */
     private generarNumeroAutorizacion(): string {
         return `AUTH-${Date.now()}`;
     }
 
+    /**
+     * Genera un número de cuenta único.
+     * @returns string - Número de cuenta generado
+     */
     private generarNumeroCuenta(): string {
         return `CTA-${Math.floor(Math.random() * 10000000000).toString().padStart(10, '0')}`;
     }

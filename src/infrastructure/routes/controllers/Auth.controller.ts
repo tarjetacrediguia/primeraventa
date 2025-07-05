@@ -1,10 +1,24 @@
 // src/infrastructure/routes/controllers/Auth.controller.ts
+
+/**
+ * CONTROLADOR: Autenticación
+ *
+ * Este archivo contiene los controladores para la autenticación de usuarios en el sistema.
+ * Permite el login, el restablecimiento de contraseña y la verificación de tokens.
+ * Cada función está diseñada para ser utilizada como handler de rutas Express.
+ */
 import { Request, Response } from 'express';
 import { LoginUseCase } from '../../../application/use-cases/autenticacion/LoginUseCase';
 import { LogOutUseCase } from '../../../application/use-cases/autenticacion/LogOutUseCase';
 import { ResetPwdUseCase } from '../../../application/use-cases/autenticacion/ResetPwdUseCase';
 import { AuthAdapter } from '../../adapters/authorization/AuthAdapter';
 
+/**
+ * Realiza el login de un usuario.
+ * @param req - Request de Express con las credenciales en el body.
+ * @param res - Response de Express para enviar la respuesta.
+ * @returns Devuelve el token de autenticación o un error en caso de fallo.
+ */
 export const login = async (req: Request, res: Response) => {
   try {
     const { email, password } = req.body;
@@ -51,6 +65,12 @@ export const logout = async (req: Request, res: Response) => {
   }
 };
 
+/**
+ * Restablece la contraseña de un usuario.
+ * @param req - Request de Express con el token y la nueva contraseña en el body.
+ * @param res - Response de Express para enviar la respuesta.
+ * @returns Devuelve un mensaje de éxito o un error en caso de fallo.
+ */
 export const resetPassword = async (req: Request, res: Response) => {
   try {
     const { token, newPassword } = req.body;

@@ -1,4 +1,12 @@
 //src/infrastructure/routes/solicitudes.routes.ts
+
+/**
+ * RUTAS: Solicitudes
+ *
+ * Este archivo define las rutas para la gestión de solicitudes iniciales y formales,
+ * así como la verificación crediticia y operaciones de aprobación/rechazo.
+ * Cada ruta está protegida por los middlewares de roles correspondientes.
+ */
 import { Router } from 'express';
 import {
   crearSolicitudInicial,

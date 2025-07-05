@@ -1,4 +1,23 @@
 // src/application/use-cases/SolicitudFormal/CrearSolicitudFormalUseCase.ts
+
+/**
+ * MÓDULO: Caso de Uso - Crear Solicitud Formal
+ *
+ * Este módulo implementa la lógica de negocio para crear una nueva solicitud formal
+ * de crédito basada en una solicitud inicial aprobada. Incluye validaciones exhaustivas
+ * de permisos, estado de solicitud inicial, créditos activos y formato de documentos.
+ *
+ * RESPONSABILIDADES:
+ * - Validar permisos del comerciante para crear solicitudes formales
+ * - Verificar que la solicitud inicial esté aprobada
+ * - Validar que el cliente no tenga créditos activos
+ * - Verificar formato y validez del recibo de sueldo (JPG)
+ * - Crear la solicitud formal con todos los datos del cliente
+ * - Registrar eventos en el historial del sistema
+ * - Notificar al comerciante y analistas sobre la nueva solicitud
+ * - Manejar errores y excepciones del proceso
+ */
+
 import { SolicitudInicialRepositoryPort } from "../../ports/SolicitudInicialRepositoryPort";
 import { SolicitudFormalRepositoryPort } from "../../ports/SolicitudFormalRepositoryPort";
 import { NotificationPort } from "../../ports/NotificationPort";
@@ -10,7 +29,26 @@ import { ClienteRepositoryPort } from "../../ports/ClienteRepositoryPort";
 import { HistorialRepositoryPort } from "../../ports/HistorialRepositoryPort";
 import { HISTORIAL_ACTIONS } from "../../constants/historialActions";
 
+/**
+ * Caso de uso para crear una nueva solicitud formal de crédito.
+ * 
+ * Esta clase implementa la lógica completa para crear una solicitud formal,
+ * incluyendo validaciones de negocio, verificación de documentos, creación
+ * de entidades y notificaciones correspondientes.
+ */
 export class CrearSolicitudFormalUseCase {
+    /**
+     * Constructor del caso de uso.
+     * 
+     * @param solicitudInicialRepo - Puerto para operaciones de solicitudes iniciales
+     * @param solicitudFormalRepo - Puerto para operaciones de solicitudes formales
+     * @param permisoRepo - Puerto para verificación de permisos
+     * @param notificationService - Puerto para servicios de notificación
+     * @param analistaRepo - Puerto para operaciones de analistas
+     * @param contratoRepository - Puerto para operaciones de contratos
+     * @param clienteRepository - Puerto para operaciones de clientes
+     * @param historialRepository - Puerto para registro de eventos en historial
+     */
     constructor(
         private readonly solicitudInicialRepo: SolicitudInicialRepositoryPort,
         private readonly solicitudFormalRepo: SolicitudFormalRepositoryPort,
@@ -22,6 +60,25 @@ export class CrearSolicitudFormalUseCase {
         private readonly historialRepository: HistorialRepositoryPort
     ) {}
 
+    /**
+     * Ejecuta la creación de una solicitud formal de crédito.
+     * 
+     * Este método implementa el flujo completo de creación de solicitud formal:
+     * 1. Verifica que el cliente no tenga créditos activos
+     * 2. Valida permisos del comerciante
+     * 3. Verifica que la solicitud inicial esté aprobada
+     * 4. Valida que no exista una solicitud formal previa
+     * 5. Verifica formato y validez del recibo de sueldo
+     * 6. Crea la solicitud formal con todos los datos
+     * 7. Registra eventos y envía notificaciones
+     * 
+     * @param solicitudInicialId - ID de la solicitud inicial aprobada
+     * @param comercianteId - ID del comerciante que crea la solicitud
+     * @param datosSolicitud - Objeto con todos los datos del cliente y la solicitud
+     * @param comentarioInicial - Comentario opcional para la solicitud (por defecto: "Solicitud creada por comerciante")
+     * @returns Promise<SolicitudFormal> - La solicitud formal creada
+     * @throws Error - Si no se cumplen las validaciones o ocurre un error en el proceso
+     */
     async execute(
         solicitudInicialId: number,
         comercianteId: number,
@@ -274,7 +331,16 @@ export class CrearSolicitudFormalUseCase {
         }
     }
 
-private async notificarAnalistas(solicitud: SolicitudFormal): Promise<void> {
+    /**
+     * Notifica a todos los analistas activos sobre una nueva solicitud formal.
+     * 
+     * Este método privado obtiene todos los analistas activos del sistema y les
+     * envía una notificación sobre la nueva solicitud formal que requiere revisión.
+     * 
+     * @param solicitud - La solicitud formal creada que requiere notificación
+     * @returns Promise<void> - No retorna valor
+     */
+    private async notificarAnalistas(solicitud: SolicitudFormal): Promise<void> {
         try {
             // 1. Obtener todos los IDs de analistas usando el repositorio
             const analistaIds = await this.analistaRepo.obtenerIdsAnalistasActivos();
@@ -313,6 +379,15 @@ private async notificarAnalistas(solicitud: SolicitudFormal): Promise<void> {
         }
     }
 
+    /**
+     * Verifica si un cliente tiene un crédito activo basado en sus contratos.
+     * 
+     * Este método privado consulta si el cliente tiene un contrato con estado
+     * "generado" (activo) asociado a su ID.
+     * 
+     * @param dniCliente - DNI del cliente a verificar
+     * @returns Promise<boolean> - true si el cliente tiene un crédito activo, false en caso contrario
+     */
     private async tieneCreditoActivo(dniCliente: string): Promise<boolean> {
         // Obtener todas las solicitudes formales del cliente por DNI
         //const solicitudesFormales = await this.solicitudFormalRepo.getSolicitudesFormalesByDni(dniCliente);

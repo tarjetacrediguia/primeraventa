@@ -1,4 +1,12 @@
 // src/infrastructure/routes/routes.ts
+
+/**
+ * RUTAS PRINCIPALES: Router Central
+ *
+ * Este archivo define el router principal que agrupa todas las rutas del sistema.
+ * Configura los middlewares de autenticación y organiza las rutas por módulos.
+ * Es el punto de entrada para todas las rutas de la API.
+ */
 import { Router } from 'express';
 import authRoutes from './auth.routes';
 import administradoresRoutes from './administradores.routes';

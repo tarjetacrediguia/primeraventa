@@ -1,10 +1,22 @@
 // src/infrastructure/adapters/repository/ReferenteRepositoryAdapter.ts
+
+/**
+ * ADAPTADOR: Repositorio de Referentes
+ *
+ * Este archivo implementa el adaptador para el repositorio de referentes del sistema.
+ * Proporciona métodos para gestionar referentes asociados a solicitudes formales.
+ */
 import { ReferenteRepositoryPort } from "../../../application/ports/ReferenteRepositoryPort";
 import { Referente } from "../../../domain/entities/Referente";
 import { pool } from "../../config/Database/DatabaseDonfig";
 
 export class ReferenteRepositoryAdapter implements ReferenteRepositoryPort {
     
+    /**
+     * Guarda un nuevo referente en la base de datos.
+     * @param referente - Objeto Referente a guardar.
+     * @returns Promise<Referente> - El referente guardado con su ID asignado.
+     */
     async saveReferente(referente: Referente): Promise<Referente> {
         const client = await pool.connect();
         try {
@@ -27,6 +39,11 @@ export class ReferenteRepositoryAdapter implements ReferenteRepositoryPort {
         }
     }
 
+    /**
+     * Obtiene un referente por su ID.
+     * @param id - ID del referente a buscar.
+     * @returns Promise<Referente | null> - El referente encontrado o null si no existe.
+     */
     async getReferenteById(id: number): Promise<Referente | null> {
         const client = await pool.connect();
         try {
@@ -47,6 +64,11 @@ export class ReferenteRepositoryAdapter implements ReferenteRepositoryPort {
         }
     }
 
+    /**
+     * Actualiza los datos de un referente existente.
+     * @param referente - Objeto Referente con los datos actualizados.
+     * @returns Promise<Referente> - El referente actualizado.
+     */
     async updateReferente(referente: Referente): Promise<Referente> {
         const id = referente.getId();
         if (!id) {
@@ -75,6 +97,11 @@ export class ReferenteRepositoryAdapter implements ReferenteRepositoryPort {
         }
     }
 
+    /**
+     * Elimina un referente por su ID.
+     * @param id - ID del referente a eliminar.
+     * @returns Promise<void> - No retorna valor.
+     */
     async deleteReferente(id: number): Promise<void> {
         const client = await pool.connect();
         try {
@@ -87,6 +114,10 @@ export class ReferenteRepositoryAdapter implements ReferenteRepositoryPort {
         }
     }
 
+    /**
+     * Obtiene todos los referentes del sistema.
+     * @returns Promise<Referente[]> - Array de todos los referentes.
+     */
     async getAllReferentes(): Promise<Referente[]> {
         const client = await pool.connect();
         try {
@@ -99,6 +130,11 @@ export class ReferenteRepositoryAdapter implements ReferenteRepositoryPort {
         }
     }
 
+    /**
+     * Obtiene los referentes asociados a una solicitud formal.
+     * @param solicitudFormalId - ID de la solicitud formal.
+     * @returns Promise<Referente[]> - Array de referentes asociados a la solicitud.
+     */
     async getReferentesBySolicitudFormalId(solicitudFormalId: number): Promise<Referente[]> {
         const client = await pool.connect();
         try {
@@ -116,6 +152,11 @@ export class ReferenteRepositoryAdapter implements ReferenteRepositoryPort {
         }
     }
 
+    /**
+     * Obtiene los referentes por número de teléfono.
+     * @param telefono - Teléfono del referente a buscar.
+     * @returns Promise<Referente[]> - Array de referentes con ese teléfono.
+     */
     async getReferentesByTelefono(telefono: string): Promise<Referente[]> {
         const client = await pool.connect();
         try {

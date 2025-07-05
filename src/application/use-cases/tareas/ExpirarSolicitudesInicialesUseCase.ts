@@ -1,4 +1,22 @@
 // src/application/use-cases/tareas/ExpirarSolicitudesInicialesUseCase.ts
+
+/**
+ * MÓDULO: Caso de Uso - Expiración de Solicitudes Iniciales
+ *
+ * Este archivo define el caso de uso ExpirarSolicitudesInicialesUseCase que maneja
+ * el proceso automático de expiración de solicitudes iniciales vencidas.
+ * 
+ * Responsabilidades:
+ * - Identificar solicitudes iniciales que han superado el tiempo límite
+ * - Actualizar el estado de las solicitudes a "expirada"
+ * - Notificar a todas las partes interesadas sobre la expiración
+ * - Registrar eventos en el historial del sistema
+ * - Gestionar errores y notificaciones del proceso
+ * 
+ * @author Sistema de Gestión
+ * @version 1.0.0
+ */
+
 import { SolicitudInicialRepositoryPort } from "../../ports/SolicitudInicialRepositoryPort";
 import { NotificationPort } from "../../ports/NotificationPort";
 import { ClienteRepositoryPort } from "../../ports/ClienteRepositoryPort";
@@ -10,7 +28,25 @@ import { ComercianteRepositoryPort } from "../../ports/ComercianteRepositoryPort
 import { HistorialRepositoryPort } from "../../ports/HistorialRepositoryPort";
 import { HISTORIAL_ACTIONS } from "../../constants/historialActions";
 
+/**
+ * Caso de uso que maneja la expiración automática de solicitudes iniciales.
+ * Procesa solicitudes que han superado el tiempo límite configurado y
+ * notifica a todas las partes interesadas sobre la expiración.
+ */
 export class ExpirarSolicitudesInicialesUseCase {
+    
+    /**
+     * Constructor del caso de uso.
+     * Inicializa todas las dependencias necesarias para el proceso de expiración.
+     * 
+     * @param solicitudInicialRepository - Repositorio para gestionar solicitudes iniciales.
+     * @param configuracionRepository - Repositorio para obtener configuraciones del sistema.
+     * @param clienteRepository - Repositorio para gestionar clientes.
+     * @param analistaRepository - Repositorio para gestionar analistas.
+     * @param comercianteRepository - Repositorio para gestionar comerciantes.
+     * @param notificationService - Servicio de notificaciones.
+     * @param historialRepository - Repositorio para registrar eventos del historial.
+     */
     constructor(
         private readonly solicitudInicialRepository: SolicitudInicialRepositoryPort,
         private readonly configuracionRepository: ConfiguracionRepositoryPort,
@@ -21,6 +57,14 @@ export class ExpirarSolicitudesInicialesUseCase {
         private readonly historialRepository: HistorialRepositoryPort
     ) {}
 
+    /**
+     * Ejecuta el proceso de expiración de solicitudes iniciales.
+     * Identifica solicitudes vencidas, las marca como expiradas y notifica
+     * a todas las partes interesadas.
+     * 
+     * @returns Promise<void> - Promesa que se resuelve cuando el proceso termina.
+     * @throws Error - Si ocurre algún error durante el proceso.
+     */
     async execute(): Promise<void> {
         const sistemaUserId = 0; // ID para acciones del sistema
         let solicitudesExpiradas = 0;
@@ -145,6 +189,14 @@ export class ExpirarSolicitudesInicialesUseCase {
         }
     }
     
+    /**
+     * Coordina la notificación a todas las partes interesadas sobre la expiración.
+     * Envía notificaciones al cliente, comerciante y analistas.
+     * 
+     * @param cliente - Cliente asociado a la solicitud expirada.
+     * @param solicitud - Solicitud inicial que ha expirado.
+     * @returns Promise<void> - Promesa que se resuelve cuando todas las notificaciones se envían.
+     */
     private async notificarPartesInteresadas(cliente: Cliente, solicitud: SolicitudInicial): Promise<void> {
         const mensaje = `La solicitud inicial #${solicitud.getId()} del cliente ${cliente.getNombreCompleto()} ha expirado.`;
         const metadata = {
@@ -164,6 +216,16 @@ export class ExpirarSolicitudesInicialesUseCase {
         await this.notificarAnalistas(mensaje, metadata);
     }
     
+    /**
+     * Notifica al cliente sobre la expiración de su solicitud inicial.
+     * Envía una notificación al sistema para el cliente.
+     * 
+     * @param cliente - Cliente a notificar.
+     * @param solicitud - Solicitud inicial expirada.
+     * @param mensaje - Mensaje de notificación.
+     * @param metadata - Metadatos adicionales de la notificación.
+     * @returns Promise<void> - Promesa que se resuelve cuando se envía la notificación.
+     */
     private async notificarCliente(cliente: Cliente, solicitud: SolicitudInicial, mensaje: string, metadata: any): Promise<void> {
         // Notificación en el sistema
         await this.notificationService.emitNotification({
@@ -178,6 +240,15 @@ export class ExpirarSolicitudesInicialesUseCase {
         });
     }
     
+    /**
+     * Notifica al comerciante asociado sobre la expiración de la solicitud.
+     * Busca el comerciante asociado y le envía una notificación.
+     * 
+     * @param solicitud - Solicitud inicial expirada.
+     * @param mensaje - Mensaje de notificación.
+     * @param metadata - Metadatos adicionales de la notificación.
+     * @returns Promise<void> - Promesa que se resuelve cuando se envía la notificación.
+     */
     private async notificarComerciante(solicitud: SolicitudInicial, mensaje: string, metadata: any): Promise<void> {
         try {
             const comercianteId = solicitud.getComercianteId();
@@ -199,6 +270,14 @@ export class ExpirarSolicitudesInicialesUseCase {
         }
     }
     
+    /**
+     * Notifica a todos los analistas activos sobre la expiración de la solicitud.
+     * Obtiene todos los IDs de analistas activos y les envía notificaciones.
+     * 
+     * @param mensaje - Mensaje de notificación.
+     * @param metadata - Metadatos adicionales de la notificación.
+     * @returns Promise<void> - Promesa que se resuelve cuando se envían todas las notificaciones.
+     */
     private async notificarAnalistas(mensaje: string, metadata: any): Promise<void> {
         try {
             // 1. Obtener todos los IDs de analistas

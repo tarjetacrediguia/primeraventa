@@ -1,10 +1,23 @@
 //src/infrastructure/adapters/repository/ComercianteRepositoryAdapter.ts
 
+/**
+ * ADAPTADOR: Repositorio de Comerciantes
+ *
+ * Este archivo implementa el adaptador para el repositorio de comerciantes.
+ * Proporciona métodos para interactuar con la base de datos PostgreSQL
+ * y gestionar las operaciones CRUD de comerciantes.
+ */
+
 import { ComercianteRepositoryPort } from "../../../application/ports/ComercianteRepositoryPort";
 import { Comerciante } from "../../../domain/entities/Comerciante";
 import { pool } from "../../config/Database/DatabaseDonfig";
 
 export class ComercianteRepositoryAdapter implements ComercianteRepositoryPort {
+    /**
+     * Busca un comerciante por su email.
+     * @param email - Email del comerciante a buscar.
+     * @returns Promise<Comerciante | null> - El comerciante encontrado o null si no existe.
+     */
     async findByEmail(email: string): Promise<Comerciante | null> {
         const query = `
             SELECT u.id, u.nombre, u.apellido, u.email, u.telefono,
@@ -26,6 +39,11 @@ export class ComercianteRepositoryAdapter implements ComercianteRepositoryPort {
         return this.mapRowToComerciante(result.rows[0]);
     }
 
+    /**
+     * Busca un comerciante por su CUIL.
+     * @param cuil - CUIL del comerciante a buscar.
+     * @returns Promise<Comerciante | null> - El comerciante encontrado o null si no existe.
+     */
     async findByCuil(cuil: string): Promise<Comerciante | null> {
         const query = `
             SELECT u.id, u.nombre, u.apellido, u.email, u.telefono,
@@ -47,6 +65,11 @@ export class ComercianteRepositoryAdapter implements ComercianteRepositoryPort {
         return this.mapRowToComerciante(result.rows[0]);
     }
 
+    /**
+     * Guarda un nuevo comerciante en la base de datos.
+     * @param comerciante - Objeto Comerciante a guardar.
+     * @returns Promise<Comerciante> - El comerciante guardado con su ID asignado.
+     */
     async saveComerciante(comerciante: Comerciante): Promise<Comerciante> {
         const client = await pool.connect();
         try {
@@ -111,6 +134,11 @@ export class ComercianteRepositoryAdapter implements ComercianteRepositoryPort {
         }
     }
 
+    /**
+     * Obtiene un comerciante por su ID.
+     * @param id - ID del comerciante a buscar.
+     * @returns Promise<Comerciante | null> - El comerciante encontrado o null si no existe.
+     */
     async getComercianteById(id: number): Promise<Comerciante | null> {
         const query = `
             SELECT u.id, u.nombre, u.apellido, u.email, u.telefono,
@@ -132,6 +160,11 @@ export class ComercianteRepositoryAdapter implements ComercianteRepositoryPort {
         return this.mapRowToComerciante(result.rows[0]);
     }
 
+    /**
+     * Actualiza los datos de un comerciante existente.
+     * @param comerciante - Objeto Comerciante con los datos actualizados.
+     * @returns Promise<Comerciante> - El comerciante actualizado.
+     */
     async updateComerciante(comerciante: Comerciante): Promise<Comerciante> {
         const client = await pool.connect();
         const id = comerciante.getId();
@@ -179,6 +212,11 @@ export class ComercianteRepositoryAdapter implements ComercianteRepositoryPort {
         }
     }
 
+    /**
+     * Elimina un comerciante por su ID.
+     * @param id - ID del comerciante a eliminar.
+     * @returns Promise<void> - No retorna valor.
+     */
     async deleteComerciante(id: number): Promise<void> {
         const client = await pool.connect();
         try {
@@ -211,6 +249,10 @@ export class ComercianteRepositoryAdapter implements ComercianteRepositoryPort {
         }
     }
 
+    /**
+     * Obtiene todos los comerciantes del sistema.
+     * @returns Promise<Comerciante[]> - Array de comerciantes con sus permisos.
+     */
     async getAllComerciantes(): Promise<Comerciante[]> {
         const query = `
             SELECT u.id, u.nombre, u.apellido, u.email, u.telefono,

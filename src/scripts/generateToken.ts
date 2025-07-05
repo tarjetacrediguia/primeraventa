@@ -1,5 +1,12 @@
 // File: src/scripts/generateToken.ts
 
+/**
+ * SCRIPT: Generador de Token de API
+ *
+ * Este script permite generar un token JWT para pruebas o uso manual en la API.
+ * Imprime el token generado y ejemplos de uso por consola.
+ */
+
 import jwt from 'jsonwebtoken';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'kjhskdf65454sdfkhvxtu_clave_secreta_muy_segura';

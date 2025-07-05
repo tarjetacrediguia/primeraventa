@@ -1,14 +1,32 @@
 // src/infrastructure/adapters/repository/ContratoRepositoryAdapter.ts
 
+/**
+ * ADAPTADOR: Repositorio de Contratos
+ *
+ * Este archivo implementa el adaptador para el repositorio de contratos.
+ * Proporciona métodos para interactuar con la base de datos PostgreSQL
+ * y gestionar las operaciones CRUD de contratos.
+ */
+
 import { ContratoRepositoryPort } from "../../../application/ports/ContratoRepositoryPort";
 import { Contrato } from "../../../domain/entities/Contrato";
 import { pool } from '../../config/Database/DatabaseDonfig';
 
 export class ContratoRepositoryAdapter implements ContratoRepositoryPort {
+    /**
+     * Guarda un contrato en la base de datos (alias de createContrato).
+     * @param contrato - Objeto Contrato a guardar.
+     * @returns Promise<Contrato> - El contrato guardado con su ID asignado.
+     */
     async saveContrato(contrato: Contrato): Promise<Contrato> {
         return this.createContrato(contrato);
     }
 
+    /**
+     * Obtiene un contrato por su ID.
+     * @param id - ID del contrato a buscar.
+     * @returns Promise<Contrato | null> - El contrato encontrado o null si no existe.
+     */
     async getContratoById(id: string): Promise<Contrato | null> {
         const query = `
             SELECT id, fecha_generacion, monto, estado, solicitud_formal_id, 
@@ -25,6 +43,11 @@ export class ContratoRepositoryAdapter implements ContratoRepositoryPort {
         return this.mapRowToContrato(result.rows[0]);
     }
 
+    /**
+     * Actualiza los datos de un contrato existente.
+     * @param contrato - Objeto Contrato con los datos actualizados.
+     * @returns Promise<Contrato> - El contrato actualizado.
+     */
     async updateContrato(contrato: Contrato): Promise<Contrato> {
         const client = await pool.connect();
         try {
@@ -68,6 +91,11 @@ export class ContratoRepositoryAdapter implements ContratoRepositoryPort {
         }
     }
 
+    /**
+     * Elimina un contrato por su ID.
+     * @param id - ID del contrato a eliminar.
+     * @returns Promise<void> - No retorna valor.
+     */
     async deleteContrato(id: string): Promise<void> {
         const client = await pool.connect();
         try {
@@ -82,6 +110,11 @@ export class ContratoRepositoryAdapter implements ContratoRepositoryPort {
         }
     }
 
+    /**
+     * Crea un nuevo contrato en la base de datos.
+     * @param contrato - Objeto Contrato a crear.
+     * @returns Promise<Contrato> - El contrato creado con su ID asignado.
+     */
     async createContrato(contrato: Contrato): Promise<Contrato> {
         const client = await pool.connect();
         try {
@@ -118,6 +151,10 @@ export class ContratoRepositoryAdapter implements ContratoRepositoryPort {
         }
     }
 
+    /**
+     * Obtiene todos los contratos del sistema.
+     * @returns Promise<Contrato[]> - Array de todos los contratos.
+     */
     async getAllContratos(): Promise<Contrato[]> {
         const query = `
             SELECT id, fecha_generacion, monto, estado, solicitud_formal_id, 
@@ -128,6 +165,11 @@ export class ContratoRepositoryAdapter implements ContratoRepositoryPort {
         return result.rows.map(row => this.mapRowToContrato(row));
     }
 
+    /**
+     * Obtiene contratos por ID de solicitud formal.
+     * @param solicitudFormalId - ID de la solicitud formal.
+     * @returns Promise<Contrato[]> - Array de contratos asociados a la solicitud.
+     */
     async getContratosBySolicitudFormalId(solicitudFormalId: number): Promise<Contrato[]> {
         const query = `
             SELECT id, fecha_generacion, monto, estado, solicitud_formal_id, 
@@ -139,6 +181,11 @@ export class ContratoRepositoryAdapter implements ContratoRepositoryPort {
         return result.rows.map(row => this.mapRowToContrato(row));
     }
 
+    /**
+     * Obtiene contratos por ID de analista.
+     * @param analistaId - ID del analista.
+     * @returns Promise<Contrato[]> - Array de contratos aprobados por el analista.
+     */
     async getContratosByAnalistaId(analistaId: number): Promise<Contrato[]> {
         const query = `
             SELECT c.id, c.fecha_generacion, c.monto, c.estado, 
@@ -152,6 +199,11 @@ export class ContratoRepositoryAdapter implements ContratoRepositoryPort {
         return result.rows.map(row => this.mapRowToContrato(row));
     }
 
+    /**
+     * Obtiene contratos por ID de comerciante.
+     * @param comercianteId - ID del comerciante.
+     * @returns Promise<Contrato[]> - Array de contratos del comerciante.
+     */
     async getContratosByComercianteId(comercianteId: number): Promise<Contrato[]> {
         const query = `
             SELECT c.id, c.fecha_generacion, c.monto, c.estado, 
@@ -165,6 +217,11 @@ export class ContratoRepositoryAdapter implements ContratoRepositoryPort {
         return result.rows.map(row => this.mapRowToContrato(row));
     }
 
+    /**
+     * Obtiene contratos por estado.
+     * @param estado - Estado de los contratos a buscar.
+     * @returns Promise<Contrato[]> - Array de contratos con el estado especificado.
+     */
     async getContratosByEstado(estado: string): Promise<Contrato[]> {
         const query = `
             SELECT id, fecha_generacion, monto, estado, solicitud_formal_id, 

@@ -1,8 +1,21 @@
 import { EstadisticasRepositoryPort } from '../../../application/ports/EstadisticasRepositoryPort';
 import { pool } from '../../config/Database/DatabaseDonfig';
 
+/**
+ * ADAPTADOR: Repositorio de Estadísticas
+ *
+ * Este archivo implementa el adaptador para el repositorio de estadísticas del sistema.
+ * Proporciona métodos para obtener estadísticas de solicitudes, contratos, usuarios y actividad del sistema.
+ */
+
 export class EstadisticasRepositoryAdapter implements EstadisticasRepositoryPort {
   
+  /**
+   * Obtiene estadísticas de solicitudes iniciales por estado y fecha.
+   * @param desde - Fecha de inicio para filtrar (opcional).
+   * @param hasta - Fecha de fin para filtrar (opcional).
+   * @returns Promise<any> - Estadísticas de solicitudes iniciales agrupadas por estado y día.
+   */
   async getSolicitudesInicialesStats(desde?: Date, hasta?: Date): Promise<any> {
     const query = `
       SELECT 
@@ -19,6 +32,12 @@ export class EstadisticasRepositoryAdapter implements EstadisticasRepositoryPort
     return result.rows;
   }
 
+  /**
+   * Obtiene estadísticas de solicitudes formales por estado y fecha.
+   * @param desde - Fecha de inicio para filtrar (opcional).
+   * @param hasta - Fecha de fin para filtrar (opcional).
+   * @returns Promise<any> - Estadísticas de solicitudes formales agrupadas por estado y día.
+   */
   async getSolicitudesFormalesStats(desde?: Date, hasta?: Date): Promise<any> {
     const query = `
       SELECT 
@@ -35,6 +54,12 @@ export class EstadisticasRepositoryAdapter implements EstadisticasRepositoryPort
     return result.rows;
   }
 
+  /**
+   * Obtiene estadísticas de tiempos de aprobación de solicitudes.
+   * @param desde - Fecha de inicio para filtrar (opcional).
+   * @param hasta - Fecha de fin para filtrar (opcional).
+   * @returns Promise<any> - Estadísticas de tiempos promedio de aprobación por día.
+   */
   async getTiemposAprobacionStats(desde?: Date, hasta?: Date): Promise<any> {
     const query = `
       SELECT 
@@ -51,6 +76,12 @@ export class EstadisticasRepositoryAdapter implements EstadisticasRepositoryPort
     return result.rows;
   }
 
+  /**
+   * Obtiene estadísticas de tasa de conversión de solicitudes iniciales a formales.
+   * @param desde - Fecha de inicio para filtrar (opcional).
+   * @param hasta - Fecha de fin para filtrar (opcional).
+   * @returns Promise<any> - Estadísticas de tasa de conversión.
+   */
   async getTasaConversionStats(desde?: Date, hasta?: Date): Promise<any> {
     const query = `
       WITH iniciales_aprobadas AS (
@@ -79,6 +110,12 @@ export class EstadisticasRepositoryAdapter implements EstadisticasRepositoryPort
     return result.rows[0];
   }
 
+  /**
+   * Obtiene estadísticas de contratos por fecha.
+   * @param desde - Fecha de inicio para filtrar (opcional).
+   * @param hasta - Fecha de fin para filtrar (opcional).
+   * @returns Promise<any> - Estadísticas de contratos agrupadas por día.
+   */
   async getContratosStats(desde?: Date, hasta?: Date): Promise<any> {
     const query = `
       SELECT 
@@ -96,83 +133,100 @@ export class EstadisticasRepositoryAdapter implements EstadisticasRepositoryPort
     return result.rows;
   }
 
-async getEstadisticasComerciantes(desde?: string, hasta?: string): Promise<any> {
-  
-  const query = `SELECT 
-    c.usuario_id AS comerciante_id,
-    u.nombre || ' ' || u.apellido AS nombre_comerciante,
-    COUNT(DISTINCT si.id) AS solicitudes_iniciales,
-    COUNT(DISTINCT CASE WHEN si.estado = 'aprobada' THEN si.id END) AS solicitudes_iniciales_aprobadas,
-    COUNT(DISTINCT CASE WHEN si.estado = 'rechazada' THEN si.id END) AS solicitudes_iniciales_rechazadas,
-    COUNT(DISTINCT CASE WHEN si.estado = 'pendiente' THEN si.id END) AS solicitudes_iniciales_pendientes,
-    COUNT(DISTINCT CASE WHEN si.estado = 'expirada' THEN si.id END) AS solicitudes_iniciales_expiradas,
-    COUNT(DISTINCT sf.id) AS solicitudes_formales,
-    COUNT(DISTINCT CASE WHEN sf.estado = 'aprobada' THEN sf.id END) AS solicitudes_formales_aprobadas,
-    COUNT(DISTINCT CASE WHEN sf.estado = 'rechazada' THEN sf.id END) AS solicitudes_formales_rechazadas,
-    COUNT(DISTINCT CASE WHEN sf.estado = 'pendiente' THEN sf.id END) AS solicitudes_formales_pendientes,
-    COUNT(DISTINCT ct.id) AS creditos_aprobados
-FROM comerciantes c
-JOIN usuarios u ON c.usuario_id = u.id
-LEFT JOIN solicitudes_iniciales si 
-    ON si.comerciante_id = c.usuario_id
-    AND ($1::TIMESTAMP IS NULL OR si.fecha_creacion >= $1::TIMESTAMP)
-    AND ($2::TIMESTAMP IS NULL OR si.fecha_creacion <= $2::TIMESTAMP)
-LEFT JOIN solicitudes_formales sf 
-    ON sf.comerciante_id = c.usuario_id
-    AND ($1::TIMESTAMP IS NULL OR sf.fecha_solicitud >= $1::TIMESTAMP)
-    AND ($2::TIMESTAMP IS NULL OR sf.fecha_solicitud <= $2::TIMESTAMP)
-LEFT JOIN contratos ct 
-    ON ct.solicitud_formal_id = sf.id
-    AND ct.estado = 'aprobado'
-GROUP BY c.usuario_id, u.nombre, u.apellido
-ORDER BY solicitudes_iniciales DESC;`;
+  /**
+   * Obtiene estadísticas de comerciantes con sus solicitudes y créditos.
+   * @param desde - Fecha de inicio para filtrar (opcional).
+   * @param hasta - Fecha de fin para filtrar (opcional).
+   * @returns Promise<any> - Estadísticas detalladas por comerciante.
+   */
+  async getEstadisticasComerciantes(desde?: string, hasta?: string): Promise<any> {
+    const query = `SELECT 
+      c.usuario_id AS comerciante_id,
+      u.nombre || ' ' || u.apellido AS nombre_comerciante,
+      COUNT(DISTINCT si.id) AS solicitudes_iniciales,
+      COUNT(DISTINCT CASE WHEN si.estado = 'aprobada' THEN si.id END) AS solicitudes_iniciales_aprobadas,
+      COUNT(DISTINCT CASE WHEN si.estado = 'rechazada' THEN si.id END) AS solicitudes_iniciales_rechazadas,
+      COUNT(DISTINCT CASE WHEN si.estado = 'pendiente' THEN si.id END) AS solicitudes_iniciales_pendientes,
+      COUNT(DISTINCT CASE WHEN si.estado = 'expirada' THEN si.id END) AS solicitudes_iniciales_expiradas,
+      COUNT(DISTINCT sf.id) AS solicitudes_formales,
+      COUNT(DISTINCT CASE WHEN sf.estado = 'aprobada' THEN sf.id END) AS solicitudes_formales_aprobadas,
+      COUNT(DISTINCT CASE WHEN sf.estado = 'rechazada' THEN sf.id END) AS solicitudes_formales_rechazadas,
+      COUNT(DISTINCT CASE WHEN sf.estado = 'pendiente' THEN sf.id END) AS solicitudes_formales_pendientes,
+      COUNT(DISTINCT ct.id) AS creditos_aprobados
+    FROM comerciantes c
+    JOIN usuarios u ON c.usuario_id = u.id
+    LEFT JOIN solicitudes_iniciales si 
+        ON si.comerciante_id = c.usuario_id
+        AND ($1::TIMESTAMP IS NULL OR si.fecha_creacion >= $1::TIMESTAMP)
+        AND ($2::TIMESTAMP IS NULL OR si.fecha_creacion <= $2::TIMESTAMP)
+    LEFT JOIN solicitudes_formales sf 
+        ON sf.comerciante_id = c.usuario_id
+        AND ($1::TIMESTAMP IS NULL OR sf.fecha_solicitud >= $1::TIMESTAMP)
+        AND ($2::TIMESTAMP IS NULL OR sf.fecha_solicitud <= $2::TIMESTAMP)
+    LEFT JOIN contratos ct 
+        ON ct.solicitud_formal_id = sf.id
+        AND ct.estado = 'aprobado'
+    GROUP BY c.usuario_id, u.nombre, u.apellido
+    ORDER BY solicitudes_iniciales DESC;`;
 
-  // Asegurar que los valores sean nulos si no están definidos
-  const params = [
-    desde ? desde : null,
-    hasta ? hasta : null
-  ];
+    // Asegurar que los valores sean nulos si no están definidos
+    const params = [
+      desde ? desde : null,
+      hasta ? hasta : null
+    ];
 
-  const result = await pool.query(query, params);
-  return result.rows;
-}
+    const result = await pool.query(query, params);
+    return result.rows;
+  }
 
+  /**
+   * Obtiene estadísticas de analistas con tiempos de procesamiento.
+   * @param desde - Fecha de inicio para filtrar (opcional).
+   * @param hasta - Fecha de fin para filtrar (opcional).
+   * @returns Promise<any> - Estadísticas de rendimiento por analista.
+   */
   async getEstadisticasAnalistas(desde?: string, hasta?: string): Promise<any> {
     const query = `
-SELECT
-    a.usuario_id AS analista_id,
-    u.nombre || ' ' || u.apellido AS nombre_analista,
-    -- Solicitudes aprobadas
-    COUNT(sf.id) FILTER (WHERE sf.estado = 'aprobada') AS total_aprobadas,
-    AVG(CASE WHEN sf.estado = 'aprobada' THEN EXTRACT(EPOCH FROM (sf.fecha_aprobacion - sf.fecha_solicitud)) / 3600 END) AS tiempo_promedio_aprobadas,
-    MIN(CASE WHEN sf.estado = 'aprobada' THEN EXTRACT(EPOCH FROM (sf.fecha_aprobacion - sf.fecha_solicitud)) / 3600 END) AS tiempo_minimo_aprobadas,
-    MAX(CASE WHEN sf.estado = 'aprobada' THEN EXTRACT(EPOCH FROM (sf.fecha_aprobacion - sf.fecha_solicitud)) / 3600 END) AS tiempo_maximo_aprobadas,
-    PERCENTILE_CONT(0.5) WITHIN GROUP (ORDER BY CASE WHEN sf.estado = 'aprobada' THEN EXTRACT(EPOCH FROM (sf.fecha_aprobacion - sf.fecha_solicitud)) / 3600 END) AS mediana_aprobadas,
-    -- Solicitudes rechazadas
-    COUNT(sf.id) FILTER (WHERE sf.estado = 'rechazada') AS total_rechazadas,
-    AVG(CASE WHEN sf.estado = 'rechazada' THEN EXTRACT(EPOCH FROM (sf.fecha_actualizacion - sf.fecha_solicitud)) / 3600 END) AS tiempo_promedio_rechazadas,
-    MIN(CASE WHEN sf.estado = 'rechazada' THEN EXTRACT(EPOCH FROM (sf.fecha_actualizacion - sf.fecha_solicitud)) / 3600 END) AS tiempo_minimo_rechazadas,
-    MAX(CASE WHEN sf.estado = 'rechazada' THEN EXTRACT(EPOCH FROM (sf.fecha_actualizacion - sf.fecha_solicitud)) / 3600 END) AS tiempo_maximo_rechazadas,
-    PERCENTILE_CONT(0.5) WITHIN GROUP (ORDER BY CASE WHEN sf.estado = 'rechazada' THEN EXTRACT(EPOCH FROM (sf.fecha_actualizacion - sf.fecha_solicitud)) / 3600 END) AS mediana_rechazadas
-FROM solicitudes_formales sf
-JOIN analistas a ON sf.analista_aprobador_id = a.usuario_id
-JOIN usuarios u ON a.usuario_id = u.id
-WHERE 
-    sf.estado IN ('aprobada', 'rechazada')  -- Incluir ambos estados
-    AND (
-        (sf.estado = 'aprobada' AND sf.fecha_aprobacion IS NOT NULL) 
-        OR 
-        (sf.estado = 'rechazada')
-    )
-    AND ($1::TIMESTAMP IS NULL OR sf.fecha_solicitud >= $1)
-    AND ($2::TIMESTAMP IS NULL OR sf.fecha_solicitud <= $2)
-GROUP BY a.usuario_id, u.nombre, u.apellido
-ORDER BY tiempo_promedio_aprobadas ASC;
+      SELECT
+          a.usuario_id AS analista_id,
+          u.nombre || ' ' || u.apellido AS nombre_analista,
+          -- Solicitudes aprobadas
+          COUNT(sf.id) FILTER (WHERE sf.estado = 'aprobada') AS total_aprobadas,
+          AVG(CASE WHEN sf.estado = 'aprobada' THEN EXTRACT(EPOCH FROM (sf.fecha_aprobacion - sf.fecha_solicitud)) / 3600 END) AS tiempo_promedio_aprobadas,
+          MIN(CASE WHEN sf.estado = 'aprobada' THEN EXTRACT(EPOCH FROM (sf.fecha_aprobacion - sf.fecha_solicitud)) / 3600 END) AS tiempo_minimo_aprobadas,
+          MAX(CASE WHEN sf.estado = 'aprobada' THEN EXTRACT(EPOCH FROM (sf.fecha_aprobacion - sf.fecha_solicitud)) / 3600 END) AS tiempo_maximo_aprobadas,
+          PERCENTILE_CONT(0.5) WITHIN GROUP (ORDER BY CASE WHEN sf.estado = 'aprobada' THEN EXTRACT(EPOCH FROM (sf.fecha_aprobacion - sf.fecha_solicitud)) / 3600 END) AS mediana_aprobadas,
+          -- Solicitudes rechazadas
+          COUNT(sf.id) FILTER (WHERE sf.estado = 'rechazada') AS total_rechazadas,
+          AVG(CASE WHEN sf.estado = 'rechazada' THEN EXTRACT(EPOCH FROM (sf.fecha_actualizacion - sf.fecha_solicitud)) / 3600 END) AS tiempo_promedio_rechazadas,
+          MIN(CASE WHEN sf.estado = 'rechazada' THEN EXTRACT(EPOCH FROM (sf.fecha_actualizacion - sf.fecha_solicitud)) / 3600 END) AS tiempo_minimo_rechazadas,
+          MAX(CASE WHEN sf.estado = 'rechazada' THEN EXTRACT(EPOCH FROM (sf.fecha_actualizacion - sf.fecha_solicitud)) / 3600 END) AS tiempo_maximo_rechazadas,
+          PERCENTILE_CONT(0.5) WITHIN GROUP (ORDER BY CASE WHEN sf.estado = 'rechazada' THEN EXTRACT(EPOCH FROM (sf.fecha_actualizacion - sf.fecha_solicitud)) / 3600 END) AS mediana_rechazadas
+      FROM solicitudes_formales sf
+      JOIN analistas a ON sf.analista_aprobador_id = a.usuario_id
+      JOIN usuarios u ON a.usuario_id = u.id
+      WHERE 
+          sf.estado IN ('aprobada', 'rechazada')  -- Incluir ambos estados
+          AND (
+              (sf.estado = 'aprobada' AND sf.fecha_aprobacion IS NOT NULL) 
+              OR 
+              (sf.estado = 'rechazada')
+          )
+          AND ($1::TIMESTAMP IS NULL OR sf.fecha_solicitud >= $1)
+          AND ($2::TIMESTAMP IS NULL OR sf.fecha_solicitud <= $2)
+      GROUP BY a.usuario_id, u.nombre, u.apellido
+      ORDER BY tiempo_promedio_aprobadas ASC;
     `;
     const result = await pool.query(query, [desde, hasta]);
     return result.rows;
   }
 
+  /**
+   * Obtiene estadísticas de actividad general del sistema.
+   * @param desde - Fecha de inicio para filtrar (opcional).
+   * @param hasta - Fecha de fin para filtrar (opcional).
+   * @returns Promise<any> - Estadísticas de actividad del sistema por día.
+   */
   async getActividadSistema(desde?: string, hasta?: string): Promise<any> {
     const query = `
       SELECT 
@@ -196,6 +250,12 @@ ORDER BY tiempo_promedio_aprobadas ASC;
     return result.rows;
   }
 
+  /**
+   * Obtiene estadísticas de tiempos de resolución.
+   * @param desde - Fecha de inicio para filtrar (opcional).
+   * @param hasta - Fecha de fin para filtrar (opcional).
+   * @returns Promise<any> - Estadísticas de tiempos de resolución.
+   */
   async getTiemposResolucion(desde?: string, hasta?: string): Promise<any> {
     const query = `
       SELECT 

@@ -6,6 +6,20 @@ import { MarkNotificationAsReadUseCase } from '../../../application/use-cases/No
 
 const notificationAdapter = new NotificationAdapter();
 
+/**
+ * CONTROLADOR: Notificaciones
+ *
+ * Este archivo contiene los controladores para la gestión de notificaciones en el sistema.
+ * Permite obtener y crear notificaciones para los usuarios.
+ * Cada función está diseñada para ser utilizada como handler de rutas Express.
+ */
+
+/**
+ * Obtiene las notificaciones de un usuario autenticado.
+ * @param req - Request de Express con el usuario autenticado.
+ * @param res - Response de Express para enviar la respuesta.
+ * @returns Devuelve un array de notificaciones o un error en caso de fallo.
+ */
 export const getNotifications = async (req: Request, res: Response) => {
     try {
         // Obtener el ID del usuario autenticado

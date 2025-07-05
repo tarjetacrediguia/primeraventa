@@ -1,10 +1,22 @@
 //src/infrastructure/adapters/repository/AnalistaRepositoryAdapter.ts
 
+/**
+ * ADAPTADOR: Repositorio de Analistas
+ *
+ * Este archivo implementa el adaptador para el repositorio de analistas.
+ * Proporciona métodos para interactuar con la base de datos PostgreSQL
+ * y gestionar las operaciones CRUD de analistas.
+ */
+
 import { AnalistaRepositoryPort } from "../../../application/ports/AnalistaRepositoryPort";
 import { Analista } from "../../../domain/entities/Analista";
 import { pool } from "../../config/Database/DatabaseDonfig";
 
 export class AnalistaRepositoryAdapter implements AnalistaRepositoryPort {
+    /**
+     * Obtiene los IDs de todos los analistas activos.
+     * @returns Promise<number[]> - Array de IDs de analistas activos.
+     */
     async obtenerIdsAnalistasActivos(): Promise<number[]> {
         const query = `
             SELECT id 
@@ -15,6 +27,11 @@ export class AnalistaRepositoryAdapter implements AnalistaRepositoryPort {
         const result = await pool.query(query);
         return result.rows.map(row => row.id);
     }
+    /**
+     * Busca un analista por su email.
+     * @param email - Email del analista a buscar.
+     * @returns Promise<Analista | null> - El analista encontrado o null si no existe.
+     */
     async findByEmail(email: string): Promise<Analista | null> {
         const query = `
             SELECT u.id, u.nombre, u.apellido, u.email, u.telefono,
@@ -35,6 +52,11 @@ export class AnalistaRepositoryAdapter implements AnalistaRepositoryPort {
         return this.mapRowToAnalista(result.rows[0]);
     }
 
+    /**
+     * Guarda un nuevo analista en la base de datos.
+     * @param analista - Objeto Analista a guardar.
+     * @returns Promise<Analista> - El analista guardado con su ID asignado.
+     */
     async saveAnalista(analista: Analista): Promise<Analista> {
         const client = await pool.connect();
         try {
@@ -91,6 +113,11 @@ export class AnalistaRepositoryAdapter implements AnalistaRepositoryPort {
         }
     }
     
+    /**
+     * Obtiene un analista por su ID.
+     * @param id - ID del analista a buscar.
+     * @returns Promise<Analista | null> - El analista encontrado o null si no existe.
+     */
     async getAnalistaById(id: number): Promise<Analista | null> {
         const query = `
             SELECT u.id, u.nombre, u.apellido, u.email, u.telefono,
@@ -111,6 +138,11 @@ export class AnalistaRepositoryAdapter implements AnalistaRepositoryPort {
         return this.mapRowToAnalista(result.rows[0]);
     }
     
+    /**
+     * Actualiza los datos de un analista existente.
+     * @param analista - Objeto Analista con los datos actualizados.
+     * @returns Promise<Analista> - El analista actualizado.
+     */
     async updateAnalista(analista: Analista): Promise<Analista> {
         const client = await pool.connect();
         try {
@@ -141,6 +173,11 @@ export class AnalistaRepositoryAdapter implements AnalistaRepositoryPort {
         }
     }
     
+    /**
+     * Elimina un analista por su ID.
+     * @param id - ID del analista a eliminar.
+     * @returns Promise<void> - No retorna valor.
+     */
     async deleteAnalista(id: number): Promise<void> {
         const client = await pool.connect();
         try {
@@ -173,6 +210,10 @@ export class AnalistaRepositoryAdapter implements AnalistaRepositoryPort {
         }
     }
     
+    /**
+     * Obtiene todos los analistas del sistema.
+     * @returns Promise<Analista[]> - Array de analistas con sus permisos.
+     */
     async getAllAnalistas(): Promise<Analista[]> {
         const query = `
             SELECT u.id, u.nombre, u.apellido, u.email, u.telefono,

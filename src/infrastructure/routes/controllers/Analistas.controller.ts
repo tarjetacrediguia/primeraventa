@@ -9,6 +9,12 @@ import { AnalistaRepositoryAdapter } from '../../adapters/repository/AnalistaRep
 
 const analistaRepository = new AnalistaRepositoryAdapter();
 
+/**
+ * Crea un nuevo analista.
+ * @param req - Request de Express con los datos del analista en el body.
+ * @param res - Response de Express para enviar la respuesta.
+ * @returns Devuelve el analista creado o un error en caso de fallo.
+ */
 export const createAnalista = async (req: Request, res: Response) => {
   try {
     const { nombre, apellido, email, password, telefono, permisos } = req.body;
@@ -33,6 +39,12 @@ export const createAnalista = async (req: Request, res: Response) => {
   }
 };
 
+/**
+ * Actualiza un analista existente.
+ * @param req - Request de Express con el ID en params y los datos a actualizar en el body.
+ * @param res - Response de Express para enviar la respuesta.
+ * @returns Devuelve el analista actualizado o un error en caso de fallo.
+ */
 export const updateAnalista = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
@@ -58,6 +70,12 @@ export const updateAnalista = async (req: Request, res: Response) => {
   }
 };
 
+/**
+ * Elimina un analista por su ID.
+ * @param req - Request de Express con el ID en params.
+ * @param res - Response de Express para enviar la respuesta.
+ * @returns Devuelve un status 204 si se elimina correctamente o un error en caso de fallo.
+ */
 export const deleteAnalista = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
@@ -75,6 +93,12 @@ export const deleteAnalista = async (req: Request, res: Response) => {
   }
 };
 
+/**
+ * Obtiene un analista por su ID.
+ * @param req - Request de Express con el ID en params.
+ * @param res - Response de Express para enviar la respuesta.
+ * @returns Devuelve el analista encontrado o un error si no existe.
+ */
 export const getAnalista = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
@@ -92,6 +116,12 @@ export const getAnalista = async (req: Request, res: Response) => {
   }
 };
 
+/**
+ * Lista todos los analistas registrados en el sistema.
+ * @param req - Request de Express.
+ * @param res - Response de Express para enviar la respuesta.
+ * @returns Devuelve un array de analistas o un error en caso de fallo.
+ */
 export const listAnalistas = async (req: Request, res: Response) => {
   try {
     const useCase = new GetAllAnalistaUseCase(analistaRepository);

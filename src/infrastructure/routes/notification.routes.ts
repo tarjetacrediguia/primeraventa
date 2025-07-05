@@ -1,5 +1,12 @@
 //src/infrastructure/routes/notification.routes.ts
 
+/**
+ * RUTAS: Notificaciones
+ *
+ * Este archivo define las rutas para la gestión de notificaciones de los usuarios.
+ * Permite obtener las notificaciones y marcarlas como leídas.
+ */
+
 import { Router } from 'express';
 import { getNotifications, markNotificationAsRead } from './controllers/Notificaciones.controller';
 

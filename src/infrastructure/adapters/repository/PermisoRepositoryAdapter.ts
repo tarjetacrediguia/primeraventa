@@ -1,5 +1,13 @@
 // src/infrastructure/repositories/PermisoRepositoryAdapter.ts
 
+/**
+ * ADAPTADOR: Repositorio de Permisos
+ *
+ * Este archivo implementa el adaptador para el repositorio de permisos del sistema.
+ * Proporciona métodos para gestionar permisos, asignarlos a roles y usuarios,
+ * y verificar permisos de usuarios.
+ */
+
 import { PermisoRepositoryPort } from "../../../application/ports/PermisoRepositoryPort";
 import { Usuario } from "../../../domain/entities/Usuario";
 import { Administrador } from "../../../domain/entities/Administrador";
@@ -9,6 +17,12 @@ import { Comerciante } from "../../../domain/entities/Comerciante";
 import { Permiso } from "../../../domain/entities/Permiso";
 
 export class PermisoRepositoryAdapter implements PermisoRepositoryPort {
+    /**
+     * Asigna permisos a todos los usuarios de un rol específico.
+     * @param rol - Nombre del rol al que asignar permisos.
+     * @param permisos - Array de nombres de permisos a asignar.
+     * @returns Promise<void> - No retorna valor.
+     */
     async asignarPermisosARol(rol: string, permisos: string[]): Promise<void> {
         const client = await pool.connect();
         try {
@@ -43,12 +57,22 @@ export class PermisoRepositoryAdapter implements PermisoRepositoryPort {
         }
     }
     
+    /**
+     * Obtiene todos los permisos del sistema.
+     * @returns Promise<Permiso[]> - Array de todos los permisos disponibles.
+     */
     async getAllPermisos(): Promise<Permiso[]> {
         const query = 'SELECT nombre, descripcion FROM permisos';
         const result = await pool.query(query);
         return result.rows.map(row => Permiso.fromMap(row));
     }
 
+    /**
+     * Asigna permisos a un usuario específico.
+     * @param usuarioId - ID del usuario al que asignar permisos.
+     * @param permisos - Array de nombres de permisos a asignar.
+     * @returns Promise<Usuario> - El usuario con los permisos asignados.
+     */
     async asignarPermisos(usuarioId: number, permisos: string[]): Promise<Usuario> {
         const client = await pool.connect();
         try {
@@ -98,6 +122,13 @@ export class PermisoRepositoryAdapter implements PermisoRepositoryPort {
         }
     }
 
+    /**
+     * Crea un nuevo permiso en el sistema.
+     * @param nombre - Nombre del permiso.
+     * @param descripcion - Descripción del permiso.
+     * @param categoria - Categoría del permiso (opcional).
+     * @returns Promise<Permiso> - El permiso creado.
+     */
     async crearPermiso(nombre: string, descripcion: string, categoria: string = ""): Promise<Permiso> {
         const query = `
             INSERT INTO permisos (nombre, descripcion)
@@ -108,6 +139,12 @@ export class PermisoRepositoryAdapter implements PermisoRepositoryPort {
         return Permiso.fromMap(result.rows[0]);
     }
 
+    /**
+     * Verifica si un usuario tiene un permiso específico.
+     * @param usuarioId - ID del usuario a verificar.
+     * @param permiso - Nombre del permiso a verificar.
+     * @returns Promise<boolean> - True si el usuario tiene el permiso, false en caso contrario.
+     */
     async usuarioTienePermiso(usuarioId: number, permiso: string): Promise<boolean> {
         const query = `
             SELECT COUNT(*) AS count
@@ -119,6 +156,11 @@ export class PermisoRepositoryAdapter implements PermisoRepositoryPort {
         return parseInt(result.rows[0].count) > 0;
     }
 
+    /**
+     * Obtiene todos los permisos de un usuario específico.
+     * @param usuarioId - ID del usuario.
+     * @returns Promise<Permiso[]> - Array de permisos del usuario.
+     */
     async getPermisosUsuario(usuarioId: number): Promise<Permiso[]> {
         const query = `
             SELECT p.nombre, p.descripcion
@@ -130,6 +172,11 @@ export class PermisoRepositoryAdapter implements PermisoRepositoryPort {
         return result.rows.map(row => Permiso.fromMap(row));
     }
 
+    /**
+     * Obtiene todos los usuarios que tienen un permiso específico.
+     * @param permiso - Nombre del permiso.
+     * @returns Promise<Usuario[]> - Array de usuarios con el permiso.
+     */
     async getUsuariosConPermiso(permiso: string): Promise<Usuario[]> {
         const query = `
             SELECT u.id, u.nombre, u.apellido, u.email, u.telefono, u.rol
@@ -146,6 +193,11 @@ export class PermisoRepositoryAdapter implements PermisoRepositoryPort {
         }));
     }
 
+    /**
+     * Obtiene detalles de un permiso específico.
+     * @param permiso - Nombre del permiso.
+     * @returns Promise<object | null> - Detalles del permiso o null si no existe.
+     */
     async getPermisoDetalle(permiso: string): Promise<{ 
         nombre: string; 
         descripcion: string; 
@@ -172,6 +224,12 @@ export class PermisoRepositoryAdapter implements PermisoRepositoryPort {
         };
     }
 
+    /**
+     * Actualiza la descripción de un permiso existente.
+     * @param permiso - Nombre del permiso a actualizar.
+     * @param nuevaDescripcion - Nueva descripción del permiso.
+     * @returns Promise<Permiso> - El permiso actualizado.
+     */
     async actualizarPermiso(permiso: string, nuevaDescripcion: string): Promise<Permiso> {
         const query = `
             UPDATE permisos 

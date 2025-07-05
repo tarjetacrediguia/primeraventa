@@ -1,4 +1,13 @@
 // src/infrastructure/routes/middlewares/auth.middleware.ts
+
+/**
+ * MIDDLEWARE: Autenticación
+ *
+ * Este archivo define el middleware de autenticación para proteger rutas privadas.
+ * Verifica la validez del token JWT y la sesión activa en la base de datos.
+ * Si la autenticación es exitosa, agrega la información del usuario al objeto Request.
+ */
+
 import { Request, Response, NextFunction } from 'express';
 import { AuthAdapter } from '../../adapters/authorization/AuthAdapter';
 import { pool } from '../../config/Database/DatabaseDonfig';
@@ -14,6 +23,13 @@ declare global {
   }
 }
 
+/**
+ * Middleware de autenticación para rutas protegidas.
+ * @param req - Request de Express, espera el token en el header Authorization.
+ * @param res - Response de Express para enviar la respuesta en caso de error.
+ * @param next - NextFunction de Express para continuar con la siguiente función middleware.
+ * @returns Llama a next() si la autenticación es exitosa, o responde con error si falla.
+ */
 export const authMiddleware = async (req: Request, res: Response, next: NextFunction) => {
   // Rutas públicas que no requieren autenticación
   const publicRoutes = [

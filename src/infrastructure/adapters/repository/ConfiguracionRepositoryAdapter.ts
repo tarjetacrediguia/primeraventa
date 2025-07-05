@@ -1,9 +1,22 @@
 // src/infrastructure/adapters/repository/ConfiguracionRepositoryAdapter.ts
+
+/**
+ * ADAPTADOR: Repositorio de Configuración
+ *
+ * Este archivo implementa el adaptador para el repositorio de configuración del sistema.
+ * Proporciona métodos para interactuar con la base de datos PostgreSQL
+ * y gestionar las configuraciones del sistema.
+ */
 import { ConfiguracionRepositoryPort } from "../../../application/ports/ConfiguracionRepositoryPort";
 import { Configuracion } from "../../../domain/entities/Configuracion";
 import { pool } from "../../config/Database/DatabaseDonfig";
 
 export class ConfiguracionRepositoryAdapter implements ConfiguracionRepositoryPort {
+    /**
+     * Obtiene todas las configuraciones del sistema.
+     * @returns Promise<Configuracion[]> - Array de configuraciones del sistema.
+     * @throws Error si hay un problema al obtener la configuración.
+     */
     async obtenerConfiguracion(): Promise<Configuracion[]> {
         try {
             const query = 'SELECT clave, valor, descripcion, fecha_actualizacion FROM configuracion';
@@ -19,6 +32,13 @@ export class ConfiguracionRepositoryAdapter implements ConfiguracionRepositoryPo
             throw new Error('Error al obtener configuración');
         }
     }
+    /**
+     * Actualiza una configuración existente.
+     * @param clave - Clave de la configuración a actualizar.
+     * @param valor - Nuevo valor para la configuración.
+     * @returns Promise<Configuracion> - La configuración actualizada.
+     * @throws Error si la configuración no existe o hay un problema al actualizar.
+     */
     async actualizarConfiguracion(clave: string, valor: any): Promise<Configuracion> {
     const client = await pool.connect();
     try {
@@ -57,6 +77,12 @@ export class ConfiguracionRepositoryAdapter implements ConfiguracionRepositoryPo
         client.release();
     }
 }
+    /**
+     * Crea una nueva configuración en el sistema.
+     * @param configuracion - Objeto Configuracion a crear.
+     * @returns Promise<Configuracion> - La configuración creada.
+     * @throws Error si hay un problema al crear la configuración.
+     */
     async crearConfiguracion(configuracion: Configuracion): Promise<Configuracion> {
         const client = await pool.connect();
         try {
@@ -87,6 +113,10 @@ export class ConfiguracionRepositoryAdapter implements ConfiguracionRepositoryPo
             client.release();
         }
     }
+    /**
+     * Obtiene los días de expiración para solicitudes iniciales.
+     * @returns Promise<number> - Número de días de expiración (30 por defecto).
+     */
     async obtenerDiasExpiracion(): Promise<number> {
         const clave = 'dias_expiracion_solicitudes_iniciales';
         

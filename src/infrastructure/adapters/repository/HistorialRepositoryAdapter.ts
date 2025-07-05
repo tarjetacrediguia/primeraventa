@@ -1,10 +1,23 @@
 //src/infrastructure/adapters/repository/HistorialRepositoryAdapter.ts
 
+/**
+ * ADAPTADOR: Repositorio de Historial
+ *
+ * Este archivo implementa el adaptador para el repositorio de historial del sistema.
+ * Proporciona métodos para registrar y consultar eventos del historial de acciones.
+ */
+
 import { HistorialRepositoryPort } from "../../../application/ports/HistorialRepositoryPort";
 import { Historial } from "../../../domain/entities/Historial";
 import { pool } from "../../config/Database/DatabaseDonfig";
 
 export class HistorialRepositoryAdapter implements HistorialRepositoryPort {
+    /**
+     * Registra un nuevo evento en el historial del sistema.
+     * @param historialData - Datos del evento a registrar (sin ID ni fecha).
+     * @returns Promise<Historial> - El evento registrado con su ID y fecha asignados.
+     * @throws Error si hay un problema al registrar el evento.
+     */
     async registrarEvento(historialData: Omit<Historial, 'id' | 'fechaHora' | 'toPlainObject'>): Promise<Historial> {
         const { usuarioId, accion, entidadAfectada, entidadId, solicitudInicialId, detalles } = historialData;
         const query = `
@@ -33,6 +46,11 @@ export class HistorialRepositoryAdapter implements HistorialRepositoryPort {
         }
     }
 
+    /**
+     * Obtiene el historial de eventos de una solicitud inicial específica.
+     * @param solicitudInicialId - ID de la solicitud inicial.
+     * @returns Promise<Historial[]> - Array de eventos del historial ordenados por fecha.
+     */
     async obtenerPorSolicitudInicial(solicitudInicialId: number): Promise<Historial[]> {
         const query = `
             SELECT * FROM historial 
