@@ -6,6 +6,14 @@
  * Este archivo contiene los controladores para la gestión de solicitudes iniciales y formales,
  * así como la verificación crediticia, aprobación y rechazo de solicitudes.
  * Cada función está diseñada para ser utilizada como handler de rutas Express.
+ *
+ * RESPONSABILIDADES:
+ * - Crear, listar, aprobar, rechazar y actualizar solicitudes iniciales y formales.
+ * - Verificar el estado crediticio de clientes.
+ * - Obtener detalles y recibos asociados a solicitudes.
+ * - Filtrar solicitudes por estado, fecha y comerciante.
+ *
+ * Cada función está documentada con sus parámetros, retornos y posibles errores.
  */
 
 import { Request, Response } from 'express';
@@ -36,7 +44,6 @@ import { ClienteRepositoryAdapter } from '../../adapters/repository/ClienteRepos
 import { GetSolicitudesInicialesByComercianteYEstadoUseCase } from '../../../application/use-cases/SolicitudInicial/GetSolicitudesInicialesByComercianteYEstadoUseCase';
 import { GetSolicitudesFormalesByComercianteYEstadoUseCase } from '../../../application/use-cases/SolicitudFormal/GetSolicitudesFormalesByComercianteYEstadoUseCase';
 import { HistorialRepositoryAdapter } from '../../adapters/repository/HistorialRepositoryAdapter';
-import { RegisterHistorialUseCase } from '../../../application/use-cases/Historial/RegisterHistorialUseCase';
 import { GetSolicitudesFormalesByComercianteIdUseCase } from '../../../application/use-cases/SolicitudFormal/GetSolicitudesFormalesByComercianteIdUseCase';
 import { AprobarRechazarSolicitudInicialUseCase } from '../../../application/use-cases/SolicitudInicial/AprobarRechazarSolicitudInicialUseCase';
 
@@ -50,7 +57,6 @@ const permisoRepo: PermisoRepositoryPort = new PermisoRepositoryAdapter();
 const clienteRepository = new ClienteRepositoryAdapter();
 const historialRepository = new HistorialRepositoryAdapter();
 const analistaRepository = new AnalistaRepositoryAdapter();
-
 const getSolicitudesInicialesByComercianteYEstado = new GetSolicitudesInicialesByComercianteYEstadoUseCase(solicitudInicialRepo)
 
 
@@ -266,6 +272,11 @@ export const crearSolicitudFormal = async (req: Request, res: Response) => {
   }
 };
 
+/**
+ * Obtiene el tipo MIME de una imagen a partir de su buffer.
+ * @param buffer - Buffer de la imagen.
+ * @returns Devuelve el tipo MIME como string o null si no se puede determinar.
+ */
 async function getImageMimeType(buffer: Buffer): Promise<string | null> {
   try {
     // Verificar la firma del archivo (magic number)
@@ -296,6 +307,12 @@ async function getImageMimeType(buffer: Buffer): Promise<string | null> {
   }
 }
 
+/**
+ * Obtiene el recibo de una solicitud formal por su ID.
+ * @param req - Request de Express con el ID de la solicitud en los parámetros.
+ * @param res - Response de Express para enviar la imagen del recibo.
+ * @returns Devuelve la imagen del recibo o un error en caso de fallo.
+ */
 export const obtenerReciboSolicitudFormal = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
@@ -324,6 +341,12 @@ export const obtenerReciboSolicitudFormal = async (req: Request, res: Response) 
   }
 };
 
+/**
+ * Aprueba una solicitud formal.
+ * @param req - Request de Express con el ID de la solicitud en los parámetros y datos de aprobación en el body.
+ * @param res - Response de Express para enviar la respuesta.
+ * @returns Devuelve la solicitud aprobada o un error en caso de fallo.
+ */
 export const aprobarSolicitudFormal = async (req: Request, res: Response) => {
   try {
     const id = req.params.id;
@@ -357,6 +380,12 @@ export const aprobarSolicitudFormal = async (req: Request, res: Response) => {
   }
 };
 
+/**
+ * Rechaza una solicitud formal.
+ * @param req - Request de Express con el ID de la solicitud en los parámetros y comentario en el body.
+ * @param res - Response de Express para enviar la respuesta.
+ * @returns Devuelve la solicitud rechazada o un error en caso de fallo.
+ */
 export const rechazarSolicitudFormal = async (req: Request, res: Response) => {
   try {
     const id = req.params.id;
@@ -392,6 +421,12 @@ export const rechazarSolicitudFormal = async (req: Request, res: Response) => {
   }
 };
 
+/**
+ * Lista las solicitudes formales filtradas por estado y/o fecha.
+ * @param req - Request de Express con los filtros en query params.
+ * @param res - Response de Express para enviar la respuesta.
+ * @returns Devuelve un array de solicitudes formales o un error en caso de fallo.
+ */
 export const listarSolicitudesFormales = async (req: Request, res: Response) => {
   try {
     const estado = req.query.estado as string;
@@ -422,6 +457,12 @@ export const listarSolicitudesFormales = async (req: Request, res: Response) => 
   }
 };
 
+/**
+ * Obtiene las solicitudes formales de un comerciante por su ID y estado.
+ * @param req - Request de Express con el ID del comerciante y estado en query params.
+ * @param res - Response de Express para enviar la respuesta.
+ * @returns Devuelve un array de solicitudes formales o un error en caso de fallo.
+ */
 export const actualizarSolicitudFormal = async (req: Request, res: Response) => {
   try {
     const id = Number(req.params.id);
@@ -502,6 +543,13 @@ export const actualizarSolicitudFormal = async (req: Request, res: Response) => 
   }
 };
 
+/**
+ * Obtiene el detalle de una solicitud formal por su ID.
+ * @param req - Request de Express con el ID de la solicitud en los parámetros.
+ * @param res - Response de Express para enviar la respuesta.
+ * @returns Devuelve el detalle de la solicitud formal o un error en caso de fallo.
+ * @throws 404 si la solicitud no existe.
+ */
 export const obtenerDetalleSolicitudFormal = async (req: Request, res: Response) => {
   try {
     const id = Number(req.params.id);
@@ -517,45 +565,51 @@ export const obtenerDetalleSolicitudFormal = async (req: Request, res: Response)
   }
 };
 
+/**
+ * Lista las solicitudes iniciales de un comerciante filtradas por estado.
+ * @param req - Request de Express con el id del comerciante y el estado en query params.
+ * @param res - Response de Express para enviar la respuesta.
+ * @returns Devuelve un array de solicitudes iniciales o un error en caso de fallo.
+ * @throws 400 si faltan parámetros obligatorios.
+ */
 export const listarSolicitudesInicialesByComercianteYEstado = async (req: Request, res: Response) => {
     try {
         const comercianteId = req.query.id ? parseInt(req.query.id as string) : undefined;
         const estado = req.query.estado as string;
 
-        
         // Validar parámetros
         if (!comercianteId || !estado) {
             return res.status(400).json({ error: 'Se requieren id y estado' });
         }
-        
         // Filtro combinado
         const useCase = getSolicitudesInicialesByComercianteYEstado;
         const solicitudes = await useCase.execute(comercianteId, estado);
-        
         res.json(solicitudes);
     } catch (error) {
         const errorMessage = error instanceof Error ? error.message : String(error);
         res.status(500).json({ error: errorMessage });
     }
-
-   
 };
 
- export const listarSolicitudesFormalesByComercianteYEstado = async (req: Request, res: Response) => {
+/**
+ * Lista las solicitudes formales de un comerciante filtradas por estado.
+ * @param req - Request de Express con el id del comerciante y el estado en query params.
+ * @param res - Response de Express para enviar la respuesta.
+ * @returns Devuelve un array de solicitudes formales o un error en caso de fallo.
+ * @throws 400 si faltan parámetros obligatorios.
+ */
+export const listarSolicitudesFormalesByComercianteYEstado = async (req: Request, res: Response) => {
     try {
         const comercianteId = req.query.id ? parseInt(req.query.id as string) : undefined;
         const estado = req.query.estado as string;
 
-        
         // Validar parámetros
         if (!comercianteId || !estado) {
             return res.status(400).json({ error: 'Se requieren id y estado' });
         }
-        
         // Filtro combinado
         const useCase = new GetSolicitudesFormalesByComercianteYEstadoUseCase(solicitudFormalRepo);
         const solicitudes = await useCase.execute(comercianteId, estado);
-        
         res.json(solicitudes);
     } catch (error) {
         const errorMessage = error instanceof Error ? error.message : String(error);
@@ -563,20 +617,23 @@ export const listarSolicitudesInicialesByComercianteYEstado = async (req: Reques
     }
 };
 
- export const listarSolicitudesFormalesByComerciante = async (req: Request, res: Response) => {
+/**
+ * Lista todas las solicitudes formales de un comerciante por su ID.
+ * @param req - Request de Express con el id del comerciante en los parámetros.
+ * @param res - Response de Express para enviar la respuesta.
+ * @returns Devuelve un array de solicitudes formales o un error en caso de fallo.
+ * @throws 400 si falta el parámetro id.
+ */
+export const listarSolicitudesFormalesByComerciante = async (req: Request, res: Response) => {
     try {
         const comercianteId = req.params.id;
-
-        
         // Validar parámetros
         if (!comercianteId) {
             return res.status(400).json({ error: 'Se requieren id' });
         }
-        
         // Filtro combinado
         const useCase = new GetSolicitudesFormalesByComercianteIdUseCase(solicitudFormalRepo);
         const solicitudes = await useCase.execute(Number(comercianteId));
-        
         res.json(solicitudes);
     } catch (error) {
         const errorMessage = error instanceof Error ? error.message : String(error);
@@ -584,59 +641,63 @@ export const listarSolicitudesInicialesByComercianteYEstado = async (req: Reques
     }
 };
 
-
-
+/**
+ * Aprueba una solicitud inicial por su ID.
+ * @param req - Request de Express con el id de la solicitud en los parámetros y comentario en el body.
+ * @param res - Response de Express para enviar la respuesta.
+ * @returns Devuelve la solicitud aprobada o un error en caso de fallo.
+ * @throws 401 si el usuario no está autenticado.
+ */
 export const aprobarSolicitudInicial = async (req: Request, res: Response) => {
     try {
         const id = parseInt(req.params.id, 10);
         const { comentario } = req.body;
-        
         if (!req.user?.id || !req.user?.rol) {
             return res.status(401).json({ error: 'Usuario no autenticado' });
         }
-        
         const esAdministrador = req.user.rol === 'administrador';
         const aprobadorId = Number(req.user.id);
-
         const solicitudActualizada = await aprobarRechazarSolicitudInicialUC.aprobarSolicitud(
             Number(id),
             aprobadorId,
             esAdministrador,
             comentario
         );
-
         res.status(200).json(solicitudActualizada);
     } catch (error: any) {
         handleErrorResponse(res, error);
     }
 };
 
+/**
+ * Rechaza una solicitud inicial por su ID.
+ * @param req - Request de Express con el id de la solicitud en los parámetros y comentario en el body.
+ * @param res - Response de Express para enviar la respuesta.
+ * @returns Devuelve la solicitud rechazada o un error en caso de fallo.
+ * @throws 401 si el usuario no está autenticado.
+ */
 export const rechazarSolicitudInicial = async (req: Request, res: Response) => {
     try {
         const id = req.params.id;
         const { comentario } = req.body;
-        
         if (!req.user?.id || !req.user?.rol) {
             return res.status(401).json({ error: 'Usuario no autenticado' });
         }
-        
         const esAdministrador = req.user.rol === 'administrador';
         const aprobadorId = Number(req.user.id);
-
         const solicitudActualizada = await aprobarRechazarSolicitudInicialUC.rechazarSolicitud(
             Number(id),
             comentario,
             aprobadorId,
             esAdministrador
         );
-
         res.status(200).json(solicitudActualizada);
     } catch (error: any) {
         handleErrorResponse(res, error);
     }
 };
 
-// Función auxiliar para manejar errores
+// Función auxiliar para manejar respuestas de error de forma uniforme.
 function handleErrorResponse(res: Response, error: any) {
     const message = error.message || 'Error desconocido';
     if (message.includes('no encontrada')) {
