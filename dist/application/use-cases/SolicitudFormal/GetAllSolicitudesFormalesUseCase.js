@@ -1,4 +1,5 @@
 "use strict";
+//src/application/use-cases/SolicitudFormal/GetAllSolicitudesFormalesUseCase.ts
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
     return new (P || (P = Promise))(function (resolve, reject) {
@@ -10,10 +11,30 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.GetAllSolicitudesFormalesUseCase = void 0;
+/**
+ * Caso de uso para obtener todas las solicitudes formales del sistema.
+ *
+ * Esta clase implementa la lógica para obtener la lista completa de solicitudes
+ * formales, principalmente utilizada por administradores y analistas para
+ * tener una visión general de todas las solicitudes formales en el sistema.
+ */
 class GetAllSolicitudesFormalesUseCase {
+    /**
+     * Constructor del caso de uso.
+     *
+     * @param repository - Puerto para operaciones de solicitudes formales
+     */
     constructor(repository) {
         this.repository = repository;
     }
+    /**
+     * Ejecuta la obtención de todas las solicitudes formales.
+     *
+     * Este método retorna todas las solicitudes formales almacenadas en el sistema
+     * sin aplicar filtros específicos.
+     *
+     * @returns Promise<SolicitudFormal[]> - Array con todas las solicitudes formales del sistema
+     */
     execute() {
         return __awaiter(this, void 0, void 0, function* () {
             return this.repository.getAllSolicitudesFormales();

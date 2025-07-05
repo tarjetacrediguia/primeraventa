@@ -1,6 +1,13 @@
 "use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
 //src/infrastructure/routes/analistas.routes.ts
+Object.defineProperty(exports, "__esModule", { value: true });
+/**
+ * RUTAS: Analistas
+ *
+ * Este archivo define las rutas para la gestión de analistas en el sistema.
+ * Permite crear, actualizar, eliminar, obtener y listar analistas.
+ * Todas las rutas están protegidas por el middleware de rol de analista o administrador.
+ */
 const express_1 = require("express");
 const rolesMiddleware_1 = require("./middlewares/rolesMiddleware");
 const Analistas_controller_1 = require("./controllers/Analistas.controller");

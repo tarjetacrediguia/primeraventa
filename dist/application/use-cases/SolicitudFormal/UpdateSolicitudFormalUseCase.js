@@ -1,4 +1,5 @@
 "use strict";
+// src/application/use-cases/SolicitudFormal/UpdateSolicitudFormalUseCase.ts
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
     return new (P || (P = Promise))(function (resolve, reject) {
@@ -11,11 +12,40 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.UpdateSolicitudFormalUseCase = void 0;
 const historialActions_1 = require("../../constants/historialActions");
+/**
+ * Caso de uso para actualizar solicitudes formales de crédito.
+ *
+ * Esta clase implementa la lógica para actualizar solicitudes formales,
+ * incluyendo la detección automática de cambios y el registro de modificaciones
+ * en el historial del sistema para auditoría.
+ */
 class UpdateSolicitudFormalUseCase {
+    /**
+     * Constructor del caso de uso.
+     *
+     * @param repository - Puerto para operaciones de solicitudes formales
+     * @param historialRepository - Puerto para registro de eventos en historial
+     */
     constructor(repository, historialRepository) {
         this.repository = repository;
         this.historialRepository = historialRepository;
     }
+    /**
+     * Ejecuta la actualización de una solicitud formal.
+     *
+     * Este método implementa el flujo completo de actualización:
+     * 1. Obtiene la versión original de la solicitud
+     * 2. Valida que la solicitud no esté aprobada
+     * 3. Detecta cambios entre la versión original y la actualizada
+     * 4. Actualiza la solicitud en la base de datos
+     * 5. Registra los cambios en el historial si los hay
+     *
+     * @param solicitud - La solicitud formal con los datos actualizados
+     * @param usuarioId - ID del usuario que realiza la actualización
+     * @param comentario - Comentario opcional sobre la actualización
+     * @returns Promise<SolicitudFormal> - La solicitud formal actualizada
+     * @throws Error - Si la solicitud no existe, está aprobada o ocurre un error en el proceso
+     */
     execute(solicitud, usuarioId, comentario) {
         return __awaiter(this, void 0, void 0, function* () {
             // 1. Obtener la versión anterior para comparar cambios
@@ -65,6 +95,17 @@ class UpdateSolicitudFormalUseCase {
             }
         });
     }
+    /**
+     * Detecta cambios entre la versión original y la actualizada de una solicitud formal.
+     *
+     * Este método privado compara todos los campos relevantes de la solicitud
+     * y retorna un array con los cambios detectados, incluyendo el campo modificado,
+     * el valor anterior y el nuevo valor.
+     *
+     * @param original - La solicitud formal original
+     * @param actualizada - La solicitud formal con los cambios
+     * @returns any[] - Array con los cambios detectados
+     */
     detectarCambios(original, actualizada) {
         const cambios = [];
         // Lista de campos a monitorear
@@ -98,6 +139,16 @@ class UpdateSolicitudFormalUseCase {
         }
         return cambios;
     }
+    /**
+     * Compara si dos arrays son iguales, incluyendo comparación de objetos.
+     *
+     * Este método privado realiza una comparación profunda de arrays,
+     * manejando tanto valores primitivos como objetos mediante JSON.stringify.
+     *
+     * @param arr1 - Primer array a comparar
+     * @param arr2 - Segundo array a comparar
+     * @returns boolean - true si los arrays son iguales, false en caso contrario
+     */
     sonArraysIguales(arr1, arr2) {
         if (arr1.length !== arr2.length)
             return false;

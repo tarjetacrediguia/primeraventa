@@ -14,11 +14,21 @@ exports.ContratoRepositoryAdapter = void 0;
 const Contrato_1 = require("../../../domain/entities/Contrato");
 const DatabaseDonfig_1 = require("../../config/Database/DatabaseDonfig");
 class ContratoRepositoryAdapter {
+    /**
+     * Guarda un contrato en la base de datos (alias de createContrato).
+     * @param contrato - Objeto Contrato a guardar.
+     * @returns Promise<Contrato> - El contrato guardado con su ID asignado.
+     */
     saveContrato(contrato) {
         return __awaiter(this, void 0, void 0, function* () {
             return this.createContrato(contrato);
         });
     }
+    /**
+     * Obtiene un contrato por su ID.
+     * @param id - ID del contrato a buscar.
+     * @returns Promise<Contrato | null> - El contrato encontrado o null si no existe.
+     */
     getContratoById(id) {
         return __awaiter(this, void 0, void 0, function* () {
             const query = `
@@ -34,6 +44,11 @@ class ContratoRepositoryAdapter {
             return this.mapRowToContrato(result.rows[0]);
         });
     }
+    /**
+     * Actualiza los datos de un contrato existente.
+     * @param contrato - Objeto Contrato con los datos actualizados.
+     * @returns Promise<Contrato> - El contrato actualizado.
+     */
     updateContrato(contrato) {
         return __awaiter(this, void 0, void 0, function* () {
             const client = yield DatabaseDonfig_1.pool.connect();
@@ -77,6 +92,11 @@ class ContratoRepositoryAdapter {
             }
         });
     }
+    /**
+     * Elimina un contrato por su ID.
+     * @param id - ID del contrato a eliminar.
+     * @returns Promise<void> - No retorna valor.
+     */
     deleteContrato(id) {
         return __awaiter(this, void 0, void 0, function* () {
             const client = yield DatabaseDonfig_1.pool.connect();
@@ -94,6 +114,11 @@ class ContratoRepositoryAdapter {
             }
         });
     }
+    /**
+     * Crea un nuevo contrato en la base de datos.
+     * @param contrato - Objeto Contrato a crear.
+     * @returns Promise<Contrato> - El contrato creado con su ID asignado.
+     */
     createContrato(contrato) {
         return __awaiter(this, void 0, void 0, function* () {
             const client = yield DatabaseDonfig_1.pool.connect();
@@ -130,6 +155,10 @@ class ContratoRepositoryAdapter {
             }
         });
     }
+    /**
+     * Obtiene todos los contratos del sistema.
+     * @returns Promise<Contrato[]> - Array de todos los contratos.
+     */
     getAllContratos() {
         return __awaiter(this, void 0, void 0, function* () {
             const query = `
@@ -141,6 +170,11 @@ class ContratoRepositoryAdapter {
             return result.rows.map(row => this.mapRowToContrato(row));
         });
     }
+    /**
+     * Obtiene contratos por ID de solicitud formal.
+     * @param solicitudFormalId - ID de la solicitud formal.
+     * @returns Promise<Contrato[]> - Array de contratos asociados a la solicitud.
+     */
     getContratosBySolicitudFormalId(solicitudFormalId) {
         return __awaiter(this, void 0, void 0, function* () {
             const query = `
@@ -153,6 +187,11 @@ class ContratoRepositoryAdapter {
             return result.rows.map(row => this.mapRowToContrato(row));
         });
     }
+    /**
+     * Obtiene contratos por ID de analista.
+     * @param analistaId - ID del analista.
+     * @returns Promise<Contrato[]> - Array de contratos aprobados por el analista.
+     */
     getContratosByAnalistaId(analistaId) {
         return __awaiter(this, void 0, void 0, function* () {
             const query = `
@@ -167,6 +206,11 @@ class ContratoRepositoryAdapter {
             return result.rows.map(row => this.mapRowToContrato(row));
         });
     }
+    /**
+     * Obtiene contratos por ID de comerciante.
+     * @param comercianteId - ID del comerciante.
+     * @returns Promise<Contrato[]> - Array de contratos del comerciante.
+     */
     getContratosByComercianteId(comercianteId) {
         return __awaiter(this, void 0, void 0, function* () {
             const query = `
@@ -181,6 +225,11 @@ class ContratoRepositoryAdapter {
             return result.rows.map(row => this.mapRowToContrato(row));
         });
     }
+    /**
+     * Obtiene contratos por estado.
+     * @param estado - Estado de los contratos a buscar.
+     * @returns Promise<Contrato[]> - Array de contratos con el estado especificado.
+     */
     getContratosByEstado(estado) {
         return __awaiter(this, void 0, void 0, function* () {
             const query = `

@@ -5,6 +5,12 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.generateToken = void 0;
+/**
+ * SCRIPT: Generador de Token de API
+ *
+ * Este script permite generar un token JWT para pruebas o uso manual en la API.
+ * Imprime el token generado y ejemplos de uso por consola.
+ */
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
 const JWT_SECRET = process.env.JWT_SECRET || 'kjhskdf65454sdfkhvxtu_clave_secreta_muy_segura';
 const generateToken = () => {

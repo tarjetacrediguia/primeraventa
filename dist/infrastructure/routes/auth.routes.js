@@ -1,6 +1,13 @@
 "use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
 // src/infrastructure/routes/auth.routes.ts
+Object.defineProperty(exports, "__esModule", { value: true });
+/**
+ * RUTAS: Autenticación
+ *
+ * Este archivo define las rutas para la autenticación de usuarios en el sistema.
+ * Permite el login, logout y el restablecimiento de contraseña.
+ * Estas rutas son públicas y no requieren autenticación previa.
+ */
 const express_1 = require("express");
 const Auth_controller_1 = require("./controllers/Auth.controller");
 const router = (0, express_1.Router)();

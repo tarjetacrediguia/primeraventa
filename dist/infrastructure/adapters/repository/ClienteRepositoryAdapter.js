@@ -19,6 +19,12 @@ class ClienteRepositoryAdapter {
         return new Cliente_1.Cliente(row.id, row.nombre_completo, row.apellido, row.dni, row.cuil || '', row.telefono, row.email, row.fecha_nacimiento ? new Date(row.fecha_nacimiento) : null, row.domicilio, row.datos_empleador, row.acepta_tarjeta, row.fecha_creacion ? new Date(row.fecha_creacion) : new Date(), 0 // comercianteId no está en la tabla clientes
         );
     }
+    /**
+     * Obtiene un cliente por su ID.
+     * @param id - ID del cliente a buscar.
+     * @returns Promise<Cliente> - El cliente encontrado.
+     * @throws Error si el cliente no existe.
+     */
     findById(id) {
         return __awaiter(this, void 0, void 0, function* () {
             const query = 'SELECT * FROM clientes WHERE id = $1';
@@ -29,6 +35,12 @@ class ClienteRepositoryAdapter {
             return this.mapRowToCliente(result.rows[0]);
         });
     }
+    /**
+     * Obtiene un cliente por su DNI.
+     * @param dni - DNI del cliente a buscar.
+     * @returns Promise<Cliente> - El cliente encontrado.
+     * @throws Error si el cliente no existe.
+     */
     findByDni(dni) {
         return __awaiter(this, void 0, void 0, function* () {
             const query = 'SELECT * FROM clientes WHERE dni = $1';
@@ -39,6 +51,12 @@ class ClienteRepositoryAdapter {
             return this.mapRowToCliente(result.rows[0]);
         });
     }
+    /**
+     * Obtiene un cliente por su CUIL.
+     * @param cuil - CUIL del cliente a buscar.
+     * @returns Promise<Cliente> - El cliente encontrado.
+     * @throws Error si el cliente no existe.
+     */
     findByCuil(cuil) {
         return __awaiter(this, void 0, void 0, function* () {
             const query = 'SELECT * FROM clientes WHERE cuil = $1';
@@ -49,6 +67,12 @@ class ClienteRepositoryAdapter {
             return this.mapRowToCliente(result.rows[0]);
         });
     }
+    /**
+     * Obtiene un cliente por su email.
+     * @param email - Email del cliente a buscar.
+     * @returns Promise<Cliente> - El cliente encontrado.
+     * @throws Error si el cliente no existe.
+     */
     findByEmail(email) {
         return __awaiter(this, void 0, void 0, function* () {
             const query = 'SELECT * FROM clientes WHERE email = $1';
@@ -59,6 +83,10 @@ class ClienteRepositoryAdapter {
             return this.mapRowToCliente(result.rows[0]);
         });
     }
+    /**
+     * Obtiene todos los clientes del sistema.
+     * @returns Promise<Cliente[]> - Array de todos los clientes.
+     */
     findAll() {
         return __awaiter(this, void 0, void 0, function* () {
             const query = 'SELECT * FROM clientes';
@@ -66,6 +94,11 @@ class ClienteRepositoryAdapter {
             return result.rows.map((row) => this.mapRowToCliente(row));
         });
     }
+    /**
+     * Guarda un nuevo cliente en la base de datos.
+     * @param cliente - Objeto Cliente a guardar.
+     * @returns Promise<void> - No retorna valor.
+     */
     save(cliente) {
         return __awaiter(this, void 0, void 0, function* () {
             const query = `
@@ -98,6 +131,11 @@ class ClienteRepositoryAdapter {
             yield DatabaseDonfig_1.pool.query(query, values);
         });
     }
+    /**
+     * Actualiza los datos de un cliente existente.
+     * @param cliente - Objeto Cliente con los datos actualizados.
+     * @returns Promise<void> - No retorna valor.
+     */
     update(cliente) {
         return __awaiter(this, void 0, void 0, function* () {
             const query = `
@@ -130,6 +168,11 @@ class ClienteRepositoryAdapter {
             yield DatabaseDonfig_1.pool.query(query, values);
         });
     }
+    /**
+     * Elimina un cliente por su ID.
+     * @param id - ID del cliente a eliminar.
+     * @returns Promise<void> - No retorna valor.
+     */
     delete(id) {
         return __awaiter(this, void 0, void 0, function* () {
             const query = 'DELETE FROM clientes WHERE id = $1';

@@ -11,10 +11,30 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.GetSolicitudesFormalesByFechaUseCase = void 0;
+/**
+ * Caso de uso para obtener solicitudes formales filtradas por fecha de creación.
+ *
+ * Esta clase implementa la lógica para recuperar solicitudes formales que fueron
+ * creadas en una fecha específica, útil para reportes y análisis temporales.
+ */
 class GetSolicitudesFormalesByFechaUseCase {
+    /**
+     * Constructor del caso de uso.
+     *
+     * @param repository - Puerto para operaciones de solicitudes formales
+     */
     constructor(repository) {
         this.repository = repository;
     }
+    /**
+     * Ejecuta la obtención de solicitudes formales por fecha de creación.
+     *
+     * Este método busca y retorna todas las solicitudes formales que fueron
+     * creadas en la fecha especificada.
+     *
+     * @param fecha - Fecha de creación para filtrar las solicitudes formales
+     * @returns Promise<SolicitudFormal[]> - Array con las solicitudes formales de la fecha especificada
+     */
     execute(fecha) {
         return __awaiter(this, void 0, void 0, function* () {
             return this.repository.getSolicitudesFormalesByFecha(fecha);

@@ -1,4 +1,5 @@
 "use strict";
+// src/infrastructure/routes/middlewares/auth.middleware.ts
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
     return new (P || (P = Promise))(function (resolve, reject) {
@@ -12,6 +13,13 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.authMiddleware = void 0;
 const AuthAdapter_1 = require("../../adapters/authorization/AuthAdapter");
 const DatabaseDonfig_1 = require("../../config/Database/DatabaseDonfig");
+/**
+ * Middleware de autenticación para rutas protegidas.
+ * @param req - Request de Express, espera el token en el header Authorization.
+ * @param res - Response de Express para enviar la respuesta en caso de error.
+ * @param next - NextFunction de Express para continuar con la siguiente función middleware.
+ * @returns Llama a next() si la autenticación es exitosa, o responde con error si falla.
+ */
 const authMiddleware = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     // Rutas públicas que no requieren autenticación
     const publicRoutes = [

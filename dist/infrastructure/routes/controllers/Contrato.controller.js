@@ -1,4 +1,5 @@
 "use strict";
+// src/infrastructure/routes/controllers/Contrato.controller.ts
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
     return new (P || (P = Promise))(function (resolve, reject) {
@@ -27,6 +28,12 @@ const notificationService = new NotificationAdapter_1.NotificationAdapter();
 const clienteRepository = new ClienteRepositoryAdapter_1.ClienteRepositoryAdapter();
 const historialRepository = new HistorialRepositoryAdapter_1.HistorialRepositoryAdapter();
 const solicitudInicialRepository = new SolicitudInicialRepositoryAdapter_1.SolicitudInicialRepositoryAdapter();
+/**
+ * Genera un nuevo contrato a partir de una solicitud.
+ * @param req - Request de Express con el ID de la solicitud en body.
+ * @param res - Response de Express para enviar la respuesta.
+ * @returns Devuelve el contrato generado o un error en caso de fallo.
+ */
 const generarContratoPDF = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     var _a, _b;
     try {
@@ -59,6 +66,12 @@ const generarContratoPDF = (req, res) => __awaiter(void 0, void 0, void 0, funct
     }
 });
 exports.generarContratoPDF = generarContratoPDF;
+/**
+ * Obtiene un contrato por su ID.
+ * @param req - Request de Express con el ID del contrato en params.
+ * @param res - Response de Express para enviar la respuesta.
+ * @returns Devuelve el contrato encontrado o un error si no existe.
+ */
 const descargarContratoPDF = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     var _a;
     try {

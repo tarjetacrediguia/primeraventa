@@ -22,6 +22,12 @@ const GetActividadSistemaUseCase_1 = require("../../../application/use-cases/Est
 const GetEstadisticasAnalistasUseCase_1 = require("../../../application/use-cases/Estadisticas/GetEstadisticasAnalistasUseCase");
 const GetEstadisticasComerciantesUseCase_1 = require("../../../application/use-cases/Estadisticas/GetEstadisticasComerciantesUseCase");
 const estadisticasRepository = new EstadisticasRepositoryAdapter_1.EstadisticasRepositoryAdapter();
+/**
+ * Obtiene estadísticas de solicitudes iniciales en un rango de fechas.
+ * @param req - Request de Express con los parámetros de fecha en query params.
+ * @param res - Response de Express para enviar la respuesta.
+ * @returns Devuelve las estadísticas de solicitudes iniciales o un error en caso de fallo.
+ */
 const getSolicitudesInicialesStats = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const { desde, hasta } = req.query;
@@ -34,6 +40,12 @@ const getSolicitudesInicialesStats = (req, res) => __awaiter(void 0, void 0, voi
     }
 });
 exports.getSolicitudesInicialesStats = getSolicitudesInicialesStats;
+/**
+ * Obtiene estadísticas de solicitudes formales en un rango de fechas.
+ * @param req - Request de Express con los parámetros de fecha en query params.
+ * @param res - Response de Express para enviar la respuesta.
+ * @returns Devuelve las estadísticas de solicitudes formales o un error en caso de fallo.
+ */
 const getSolicitudesFormalesStats = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const { desde, hasta } = req.query;
@@ -46,6 +58,12 @@ const getSolicitudesFormalesStats = (req, res) => __awaiter(void 0, void 0, void
     }
 });
 exports.getSolicitudesFormalesStats = getSolicitudesFormalesStats;
+/**
+ * Obtiene estadísticas de tiempos de aprobación en un rango de fechas.
+ * @param req - Request de Express con los parámetros de fecha en query params.
+ * @param res - Response de Express para enviar la respuesta.
+ * @returns Devuelve las estadísticas de tiempos de aprobación o un error en caso de fallo.
+ */
 const getTiemposAprobacionStats = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const { desde, hasta } = req.query;
@@ -58,6 +76,12 @@ const getTiemposAprobacionStats = (req, res) => __awaiter(void 0, void 0, void 0
     }
 });
 exports.getTiemposAprobacionStats = getTiemposAprobacionStats;
+/**
+ * Obtiene estadísticas de tasa de conversión en un rango de fechas.
+ * @param req - Request de Express con los parámetros de fecha en query params.
+ * @param res - Response de Express para enviar la respuesta.
+ * @returns Devuelve las estadísticas de tasa de conversión o un error en caso de fallo.
+ */
 const getTasaConversionStats = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const { desde, hasta } = req.query;
@@ -70,6 +94,12 @@ const getTasaConversionStats = (req, res) => __awaiter(void 0, void 0, void 0, f
     }
 });
 exports.getTasaConversionStats = getTasaConversionStats;
+/**
+ * Obtiene estadísticas de contratos en un rango de fechas.
+ * @param req - Request de Express con los parámetros de fecha en query params.
+ * @param res - Response de Express para enviar la respuesta.
+ * @returns Devuelve las estadísticas de contratos o un error en caso de fallo.
+ */
 const getContratosStats = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const { desde, hasta } = req.query;
@@ -82,6 +112,12 @@ const getContratosStats = (req, res) => __awaiter(void 0, void 0, void 0, functi
     }
 });
 exports.getContratosStats = getContratosStats;
+/**
+ * Obtiene estadísticas de comerciantes en un rango de fechas.
+ * @param req - Request de Express con los parámetros de fecha en query params.
+ * @param res - Response de Express para enviar la respuesta.
+ * @returns Devuelve las estadísticas de comerciantes o un error en caso de fallo.
+ */
 const getEstadisticasComerciantes = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const { desde, hasta } = req.query;
@@ -102,6 +138,12 @@ const formatDate = (dateString) => {
     const date = new Date(dateString);
     return date.toISOString();
 };
+/**
+ * Obtiene estadísticas de analistas en un rango de fechas.
+ * @param req - Request de Express con los parámetros de fecha en query params.
+ * @param res - Response de Express para enviar la respuesta.
+ * @returns Devuelve las estadísticas de analistas o un error en caso de fallo.
+ */
 const getEstadisticasAnalistas = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const { desde, hasta } = req.query;
@@ -114,6 +156,12 @@ const getEstadisticasAnalistas = (req, res) => __awaiter(void 0, void 0, void 0,
     }
 });
 exports.getEstadisticasAnalistas = getEstadisticasAnalistas;
+/**
+ * Obtiene estadísticas de actividad del sistema en un rango de fechas.
+ * @param req - Request de Express con los parámetros de fecha en query params.
+ * @param res - Response de Express para enviar la respuesta.
+ * @returns Devuelve las estadísticas de actividad del sistema o un error en caso de fallo.
+ */
 const getActividadSistema = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const { desde, hasta } = req.query;
@@ -126,6 +174,12 @@ const getActividadSistema = (req, res) => __awaiter(void 0, void 0, void 0, func
     }
 });
 exports.getActividadSistema = getActividadSistema;
+/**
+ * Obtiene estadísticas de tiempos de resolución en un rango de fechas.
+ * @param req - Request de Express con los parámetros de fecha en query params.
+ * @param res - Response de Express para enviar la respuesta.
+ * @returns Devuelve las estadísticas de tiempos de resolución o un error en caso de fallo.
+ */
 const getTiemposResolucion = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const { desde, hasta } = req.query;

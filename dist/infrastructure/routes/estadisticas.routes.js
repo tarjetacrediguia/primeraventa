@@ -1,6 +1,13 @@
 "use strict";
 //src/infrastructure/routes/estadisticas.routes.ts
 Object.defineProperty(exports, "__esModule", { value: true });
+/**
+ * RUTAS: Estadísticas
+ *
+ * Este archivo define las rutas para la obtención de estadísticas del sistema.
+ * Permite a los administradores consultar estadísticas de solicitudes, tiempos, tasas y usuarios.
+ * Todas las rutas están protegidas por el middleware de rol de administrador.
+ */
 const express_1 = require("express");
 const rolesMiddleware_1 = require("./middlewares/rolesMiddleware");
 const Estadisticas_controller_1 = require("./controllers/Estadisticas.controller");

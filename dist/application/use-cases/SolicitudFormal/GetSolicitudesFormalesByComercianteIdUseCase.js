@@ -11,10 +11,31 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.GetSolicitudesFormalesByComercianteIdUseCase = void 0;
+/**
+ * Caso de uso para obtener solicitudes formales de un comerciante específico.
+ *
+ * Esta clase implementa la lógica para recuperar todas las solicitudes formales
+ * que fueron creadas por un comerciante específico, permitiendo que cada comerciante
+ * gestione sus propias solicitudes.
+ */
 class GetSolicitudesFormalesByComercianteIdUseCase {
+    /**
+     * Constructor del caso de uso.
+     *
+     * @param repository - Puerto para operaciones de solicitudes formales
+     */
     constructor(repository) {
         this.repository = repository;
     }
+    /**
+     * Ejecuta la obtención de solicitudes formales por comerciante.
+     *
+     * Este método busca y retorna todas las solicitudes formales que fueron
+     * creadas por el comerciante especificado.
+     *
+     * @param comercianteId - ID del comerciante cuyas solicitudes se quieren obtener
+     * @returns Promise<SolicitudFormal[]> - Array con las solicitudes formales del comerciante
+     */
     execute(comercianteId) {
         return __awaiter(this, void 0, void 0, function* () {
             return this.repository.getSolicitudesFormalesByComercianteId(comercianteId);

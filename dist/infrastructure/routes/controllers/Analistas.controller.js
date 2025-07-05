@@ -17,6 +17,12 @@ const GetAllAnalistaUseCase_1 = require("../../../application/use-cases/Analista
 const UpdateAnalistaUseCase_1 = require("../../../application/use-cases/Analista/UpdateAnalistaUseCase");
 const AnalistaRepositoryAdapter_1 = require("../../adapters/repository/AnalistaRepositoryAdapter");
 const analistaRepository = new AnalistaRepositoryAdapter_1.AnalistaRepositoryAdapter();
+/**
+ * Crea un nuevo analista.
+ * @param req - Request de Express con los datos del analista en el body.
+ * @param res - Response de Express para enviar la respuesta.
+ * @returns Devuelve el analista creado o un error en caso de fallo.
+ */
 const createAnalista = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const { nombre, apellido, email, password, telefono, permisos } = req.body;
@@ -35,6 +41,12 @@ const createAnalista = (req, res) => __awaiter(void 0, void 0, void 0, function*
     }
 });
 exports.createAnalista = createAnalista;
+/**
+ * Actualiza un analista existente.
+ * @param req - Request de Express con el ID en params y los datos a actualizar en el body.
+ * @param res - Response de Express para enviar la respuesta.
+ * @returns Devuelve el analista actualizado o un error en caso de fallo.
+ */
 const updateAnalista = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const { id } = req.params;
@@ -56,6 +68,12 @@ const updateAnalista = (req, res) => __awaiter(void 0, void 0, void 0, function*
     }
 });
 exports.updateAnalista = updateAnalista;
+/**
+ * Elimina un analista por su ID.
+ * @param req - Request de Express con el ID en params.
+ * @param res - Response de Express para enviar la respuesta.
+ * @returns Devuelve un status 204 si se elimina correctamente o un error en caso de fallo.
+ */
 const deleteAnalista = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const { id } = req.params;
@@ -73,6 +91,12 @@ const deleteAnalista = (req, res) => __awaiter(void 0, void 0, void 0, function*
     }
 });
 exports.deleteAnalista = deleteAnalista;
+/**
+ * Obtiene un analista por su ID.
+ * @param req - Request de Express con el ID en params.
+ * @param res - Response de Express para enviar la respuesta.
+ * @returns Devuelve el analista encontrado o un error si no existe.
+ */
 const getAnalista = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const { id } = req.params;
@@ -90,6 +114,12 @@ const getAnalista = (req, res) => __awaiter(void 0, void 0, void 0, function* ()
     }
 });
 exports.getAnalista = getAnalista;
+/**
+ * Lista todos los analistas registrados en el sistema.
+ * @param req - Request de Express.
+ * @param res - Response de Express para enviar la respuesta.
+ * @returns Devuelve un array de analistas o un error en caso de fallo.
+ */
 const listAnalistas = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const useCase = new GetAllAnalistaUseCase_1.GetAllAnalistaUseCase(analistaRepository);

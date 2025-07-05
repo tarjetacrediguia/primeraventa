@@ -14,6 +14,10 @@ exports.AdministradorRepositoryAdapter = void 0;
 const Administrador_1 = require("../../../domain/entities/Administrador");
 const DatabaseDonfig_1 = require("../../config/Database/DatabaseDonfig");
 class AdministradorRepositoryAdapter {
+    /**
+     * Obtiene todos los administradores del sistema.
+     * @returns Promise<Administrador[]> - Array de administradores con sus permisos.
+     */
     getAllAdministradores() {
         return __awaiter(this, void 0, void 0, function* () {
             const query = `
@@ -30,6 +34,11 @@ class AdministradorRepositoryAdapter {
             return result.rows.map(row => this.mapRowToAdministrador(row));
         });
     }
+    /**
+     * Guarda un nuevo administrador en la base de datos.
+     * @param administrador - Objeto Administrador a guardar.
+     * @returns Promise<Administrador> - El administrador guardado con su ID asignado.
+     */
     saveAdministrador(administrador) {
         return __awaiter(this, void 0, void 0, function* () {
             const client = yield DatabaseDonfig_1.pool.connect();
@@ -75,6 +84,11 @@ class AdministradorRepositoryAdapter {
             }
         });
     }
+    /**
+     * Obtiene un administrador por su ID.
+     * @param id - ID del administrador a buscar.
+     * @returns Promise<Administrador | null> - El administrador encontrado o null si no existe.
+     */
     getAdministradorById(id) {
         return __awaiter(this, void 0, void 0, function* () {
             const query = `
@@ -94,6 +108,11 @@ class AdministradorRepositoryAdapter {
             return this.mapRowToAdministrador(result.rows[0]);
         });
     }
+    /**
+     * Actualiza los datos de un administrador existente.
+     * @param administrador - Objeto Administrador con los datos actualizados.
+     * @returns Promise<Administrador> - El administrador actualizado.
+     */
     updateAdministrador(administrador) {
         return __awaiter(this, void 0, void 0, function* () {
             const client = yield DatabaseDonfig_1.pool.connect();
@@ -123,6 +142,11 @@ class AdministradorRepositoryAdapter {
             }
         });
     }
+    /**
+     * Elimina un administrador por su ID.
+     * @param id - ID del administrador a eliminar.
+     * @returns Promise<void> - No retorna valor.
+     */
     deleteAdministrador(id) {
         return __awaiter(this, void 0, void 0, function* () {
             const client = yield DatabaseDonfig_1.pool.connect();

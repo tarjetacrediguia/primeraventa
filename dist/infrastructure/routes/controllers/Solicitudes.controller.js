@@ -43,9 +43,11 @@ const solicitudFormalRepo = new SolicitudFormalRepositoryAdapter_1.SolicitudForm
 const permisoRepo = new PermisoRepositoryAdapter_1.PermisoRepositoryAdapter();
 const clienteRepository = new ClienteRepositoryAdapter_1.ClienteRepositoryAdapter();
 const historialRepository = new HistorialRepositoryAdapter_1.HistorialRepositoryAdapter();
+const analistaRepository = new AnalistaRepositoryAdapter_1.AnalistaRepositoryAdapter();
 const getSolicitudesInicialesByComercianteYEstado = new GetSolicitudesInicialesByComercianteYEstadoUseCase_1.GetSolicitudesInicialesByComercianteYEstadoUseCase(solicitudInicialRepo);
 // Casos de uso inicializados
-const crearSolicitudInicialUC = new CrearSolicitudInicialUseCase_1.CrearSolicitudInicialUseCase(solicitudInicialRepo, contratoRepo, solicitudFormalRepo, verazService, notificationService, clienteRepository, historialRepository);
+const crearSolicitudInicialUC = new CrearSolicitudInicialUseCase_1.CrearSolicitudInicialUseCase(solicitudInicialRepo, contratoRepo, solicitudFormalRepo, verazService, notificationService, clienteRepository, historialRepository, analistaRepository, process.env.VERAZ_AUTO === 'true' // Modo automático de Veraz
+);
 const aprobarRechazarSolicitudInicialUC = new AprobarRechazarSolicitudInicialUseCase_1.AprobarRechazarSolicitudInicialUseCase(solicitudInicialRepo, notificationService, historialRepository);
 const getSolicitudesInicialesByEstadoUC = new GetSolicitudesInicialesByEstadoUseCase_1.GetSolicitudesInicialesByEstadoUseCase(solicitudInicialRepo);
 const verificarAprobacionUC = new VerificarAprobacionSolicitudInicialUseCase_1.VerificarAprobacionSolicitudInicialUseCase(solicitudInicialRepo, verazService, notificationService);
@@ -55,7 +57,12 @@ const getSolicitudesFormalesByEstadoUC = new GetSolicitudesFormalesByEstadoUseCa
 const getSolicitudesFormalesByFechaUC = new GetSolicitudesFormalesByFechaUseCase_1.GetSolicitudesFormalesByFechaUseCase(solicitudFormalRepo);
 const updateSolicitudFormalUC = new UpdateSolicitudFormalUseCase_1.UpdateSolicitudFormalUseCase(solicitudFormalRepo, historialRepository);
 const getSolicitudFormalByIdUC = new GetSolicitudFormalByIdUseCase_1.GetSolicitudesFormalesByIdUseCase(solicitudFormalRepo);
-// Controladores
+/**
+ * Crea una nueva solicitud inicial.
+ * @param req - Request de Express con los datos del cliente y recibo en el body.
+ * @param res - Response de Express para enviar la respuesta.
+ * @returns Devuelve la solicitud creada o un error en caso de fallo.
+ */
 const crearSolicitudInicial = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const { dniCliente, cuilCliente, reciboSueldo } = req.body;
@@ -84,6 +91,12 @@ const crearSolicitudInicial = (req, res) => __awaiter(void 0, void 0, void 0, fu
     }
 });
 exports.crearSolicitudInicial = crearSolicitudInicial;
+/**
+ * Lista las solicitudes iniciales filtradas por estado.
+ * @param req - Request de Express con el estado en query params.
+ * @param res - Response de Express para enviar la respuesta.
+ * @returns Devuelve un array de solicitudes o un error en caso de fallo.
+ */
 const listarSolicitudesIniciales = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const estado = req.query.estado;
@@ -95,6 +108,12 @@ const listarSolicitudesIniciales = (req, res) => __awaiter(void 0, void 0, void 
     }
 });
 exports.listarSolicitudesIniciales = listarSolicitudesIniciales;
+/**
+ * Verifica el estado crediticio de un cliente.
+ * @param req - Request de Express con el dni y cuil en el body.
+ * @param res - Response de Express para enviar la respuesta.
+ * @returns Devuelve el resultado de la verificación o un error en caso de fallo.
+ */
 const verificarEstadoCrediticio = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const { dni, cuil } = req.body;
@@ -106,6 +125,12 @@ const verificarEstadoCrediticio = (req, res) => __awaiter(void 0, void 0, void 0
     }
 });
 exports.verificarEstadoCrediticio = verificarEstadoCrediticio;
+/**
+ * Crea una nueva solicitud formal.
+ * @param req - Request de Express con los datos de la solicitud formal en el body.
+ * @param res - Response de Express para enviar la respuesta.
+ * @returns Devuelve la solicitud formal creada o un error en caso de fallo.
+ */
 const crearSolicitudFormal = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const { idSolicitudInicial, cliente, referentes } = req.body;

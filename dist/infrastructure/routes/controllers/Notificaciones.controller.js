@@ -14,6 +14,19 @@ const NotificationAdapter_1 = require("../../adapters/notification/NotificationA
 const GetNotificationsByUserIdUseCase_1 = require("../../../application/use-cases/Notificacion/GetNotificationsByUserIdUseCase");
 const MarkNotificationAsReadUseCase_1 = require("../../../application/use-cases/Notificacion/MarkNotificationAsReadUseCase");
 const notificationAdapter = new NotificationAdapter_1.NotificationAdapter();
+/**
+ * CONTROLADOR: Notificaciones
+ *
+ * Este archivo contiene los controladores para la gestión de notificaciones en el sistema.
+ * Permite obtener y crear notificaciones para los usuarios.
+ * Cada función está diseñada para ser utilizada como handler de rutas Express.
+ */
+/**
+ * Obtiene las notificaciones de un usuario autenticado.
+ * @param req - Request de Express con el usuario autenticado.
+ * @param res - Response de Express para enviar la respuesta.
+ * @returns Devuelve un array de notificaciones o un error en caso de fallo.
+ */
 const getNotifications = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         // Obtener el ID del usuario autenticado

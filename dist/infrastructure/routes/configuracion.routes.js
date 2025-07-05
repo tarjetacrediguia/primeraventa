@@ -1,6 +1,13 @@
 "use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
 // src/infrastructure/routes/configuracion.routes.ts
+Object.defineProperty(exports, "__esModule", { value: true });
+/**
+ * RUTAS: Configuración
+ *
+ * Este archivo define las rutas para la gestión de la configuración del sistema.
+ * Permite a los administradores obtener, actualizar y crear configuraciones.
+ * Todas las rutas están protegidas por el middleware de rol de administrador.
+ */
 const express_1 = require("express");
 const rolesMiddleware_1 = require("./middlewares/rolesMiddleware");
 const Configuracion_controller_1 = require("./controllers/Configuracion.controller");

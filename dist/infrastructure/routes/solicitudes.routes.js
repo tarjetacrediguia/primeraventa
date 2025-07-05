@@ -1,6 +1,13 @@
 "use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
 //src/infrastructure/routes/solicitudes.routes.ts
+Object.defineProperty(exports, "__esModule", { value: true });
+/**
+ * RUTAS: Solicitudes
+ *
+ * Este archivo define las rutas para la gestión de solicitudes iniciales y formales,
+ * así como la verificación crediticia y operaciones de aprobación/rechazo.
+ * Cada ruta está protegida por los middlewares de roles correspondientes.
+ */
 const express_1 = require("express");
 const Solicitudes_controller_1 = require("./controllers/Solicitudes.controller");
 const rolesMiddleware_1 = require("./middlewares/rolesMiddleware");

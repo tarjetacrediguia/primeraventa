@@ -1,4 +1,5 @@
 "use strict";
+// src/application/use-cases/Administrador/DeleteAdminUseCase.ts
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
     return new (P || (P = Promise))(function (resolve, reject) {
@@ -10,10 +11,28 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.DeleteAdminUseCase = void 0;
+/**
+ * Caso de uso para eliminar un administrador existente.
+ *
+ * Esta clase permite eliminar un administrador del sistema,
+ * validando previamente su existencia.
+ */
 class DeleteAdminUseCase {
+    /**
+     * Constructor del caso de uso.
+     *
+     * @param repository - Puerto de acceso al repositorio de administradores
+     */
     constructor(repository) {
         this.repository = repository;
     }
+    /**
+     * Ejecuta la eliminación de un administrador.
+     *
+     * @param id - Identificador único del administrador a eliminar
+     * @returns Promise<void>
+     * @throws Error si el administrador no existe
+     */
     execute(id) {
         return __awaiter(this, void 0, void 0, function* () {
             // Verificar existencia antes de eliminar

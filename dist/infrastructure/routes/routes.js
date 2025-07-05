@@ -1,9 +1,16 @@
 "use strict";
+// src/infrastructure/routes/routes.ts
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-// src/infrastructure/routes/routes.ts
+/**
+ * RUTAS PRINCIPALES: Router Central
+ *
+ * Este archivo define el router principal que agrupa todas las rutas del sistema.
+ * Configura los middlewares de autenticación y organiza las rutas por módulos.
+ * Es el punto de entrada para todas las rutas de la API.
+ */
 const express_1 = require("express");
 const auth_routes_1 = __importDefault(require("./auth.routes"));
 const administradores_routes_1 = __importDefault(require("./administradores.routes"));

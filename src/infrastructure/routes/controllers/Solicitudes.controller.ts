@@ -49,6 +49,7 @@ const solicitudFormalRepo: SolicitudFormalRepositoryPort = new SolicitudFormalRe
 const permisoRepo: PermisoRepositoryPort = new PermisoRepositoryAdapter();
 const clienteRepository = new ClienteRepositoryAdapter();
 const historialRepository = new HistorialRepositoryAdapter();
+const analistaRepository = new AnalistaRepositoryAdapter();
 
 const getSolicitudesInicialesByComercianteYEstado = new GetSolicitudesInicialesByComercianteYEstadoUseCase(solicitudInicialRepo)
 
@@ -62,7 +63,9 @@ const crearSolicitudInicialUC = new CrearSolicitudInicialUseCase(
   verazService,
   notificationService,
   clienteRepository,
-  historialRepository
+  historialRepository,
+  analistaRepository,
+  process.env.VERAZ_AUTO === 'true' // Modo automático de Veraz
 );
 
 const aprobarRechazarSolicitudInicialUC = new AprobarRechazarSolicitudInicialUseCase(

@@ -1,4 +1,5 @@
 "use strict";
+// src/infrastructure/routes/controllers/Configuracion.controller.ts
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
     return new (P || (P = Promise))(function (resolve, reject) {
@@ -16,6 +17,12 @@ const CreateConfUseCase_1 = require("../../../application/use-cases/Configuracio
 const ConfiguracionRepositoryAdapter_1 = require("../../adapters/repository/ConfiguracionRepositoryAdapter");
 const Configuracion_1 = require("../../../domain/entities/Configuracion");
 const configuracionRepository = new ConfiguracionRepositoryAdapter_1.ConfiguracionRepositoryAdapter();
+/**
+ * Obtiene la configuración general del sistema.
+ * @param req - Request de Express.
+ * @param res - Response de Express para enviar la respuesta.
+ * @returns Devuelve la configuración actual o un error en caso de fallo.
+ */
 const getConfiguracion = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const useCase = new GetConfUseCase_1.GetConfUseCase(configuracionRepository);
@@ -28,6 +35,12 @@ const getConfiguracion = (req, res) => __awaiter(void 0, void 0, void 0, functio
     }
 });
 exports.getConfiguracion = getConfiguracion;
+/**
+ * Actualiza la configuración general del sistema.
+ * @param req - Request de Express con los datos de configuración en el body.
+ * @param res - Response de Express para enviar la respuesta.
+ * @returns Devuelve la configuración actualizada o un error en caso de fallo.
+ */
 const updateConfiguracion = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const { clave, valor } = req.body;

@@ -1,4 +1,5 @@
 "use strict";
+// src/application/use-cases/Analista/GetAnalistaByIdUseCase.ts
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
     return new (P || (P = Promise))(function (resolve, reject) {
@@ -10,10 +11,28 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.GetAnalistaByIdUseCase = void 0;
+/**
+ * Caso de uso para obtener un analista por su identificador.
+ *
+ * Esta clase permite consultar los datos de un analista específico,
+ * validando su existencia en el sistema.
+ */
 class GetAnalistaByIdUseCase {
+    /**
+     * Constructor del caso de uso.
+     *
+     * @param repository - Puerto de acceso al repositorio de analistas
+     */
     constructor(repository) {
         this.repository = repository;
     }
+    /**
+     * Ejecuta la consulta de un analista por ID.
+     *
+     * @param id - Identificador único del analista
+     * @returns Promise<Analista> - Analista encontrado
+     * @throws Error si el analista no existe
+     */
     execute(id) {
         return __awaiter(this, void 0, void 0, function* () {
             const analista = yield this.repository.getAnalistaById(id);

@@ -17,6 +17,12 @@ const DatabaseDonfig_1 = require("../../config/Database/DatabaseDonfig");
 const Comerciante_1 = require("../../../domain/entities/Comerciante");
 const Permiso_1 = require("../../../domain/entities/Permiso");
 class PermisoRepositoryAdapter {
+    /**
+     * Asigna permisos a todos los usuarios de un rol específico.
+     * @param rol - Nombre del rol al que asignar permisos.
+     * @param permisos - Array de nombres de permisos a asignar.
+     * @returns Promise<void> - No retorna valor.
+     */
     asignarPermisosARol(rol, permisos) {
         return __awaiter(this, void 0, void 0, function* () {
             const client = yield DatabaseDonfig_1.pool.connect();
@@ -50,6 +56,10 @@ class PermisoRepositoryAdapter {
             }
         });
     }
+    /**
+     * Obtiene todos los permisos del sistema.
+     * @returns Promise<Permiso[]> - Array de todos los permisos disponibles.
+     */
     getAllPermisos() {
         return __awaiter(this, void 0, void 0, function* () {
             const query = 'SELECT nombre, descripcion FROM permisos';
@@ -57,6 +67,12 @@ class PermisoRepositoryAdapter {
             return result.rows.map(row => Permiso_1.Permiso.fromMap(row));
         });
     }
+    /**
+     * Asigna permisos a un usuario específico.
+     * @param usuarioId - ID del usuario al que asignar permisos.
+     * @param permisos - Array de nombres de permisos a asignar.
+     * @returns Promise<Usuario> - El usuario con los permisos asignados.
+     */
     asignarPermisos(usuarioId, permisos) {
         return __awaiter(this, void 0, void 0, function* () {
             const client = yield DatabaseDonfig_1.pool.connect();
@@ -98,6 +114,13 @@ class PermisoRepositoryAdapter {
             }
         });
     }
+    /**
+     * Crea un nuevo permiso en el sistema.
+     * @param nombre - Nombre del permiso.
+     * @param descripcion - Descripción del permiso.
+     * @param categoria - Categoría del permiso (opcional).
+     * @returns Promise<Permiso> - El permiso creado.
+     */
     crearPermiso(nombre_1, descripcion_1) {
         return __awaiter(this, arguments, void 0, function* (nombre, descripcion, categoria = "") {
             const query = `
@@ -109,6 +132,12 @@ class PermisoRepositoryAdapter {
             return Permiso_1.Permiso.fromMap(result.rows[0]);
         });
     }
+    /**
+     * Verifica si un usuario tiene un permiso específico.
+     * @param usuarioId - ID del usuario a verificar.
+     * @param permiso - Nombre del permiso a verificar.
+     * @returns Promise<boolean> - True si el usuario tiene el permiso, false en caso contrario.
+     */
     usuarioTienePermiso(usuarioId, permiso) {
         return __awaiter(this, void 0, void 0, function* () {
             const query = `
@@ -121,6 +150,11 @@ class PermisoRepositoryAdapter {
             return parseInt(result.rows[0].count) > 0;
         });
     }
+    /**
+     * Obtiene todos los permisos de un usuario específico.
+     * @param usuarioId - ID del usuario.
+     * @returns Promise<Permiso[]> - Array de permisos del usuario.
+     */
     getPermisosUsuario(usuarioId) {
         return __awaiter(this, void 0, void 0, function* () {
             const query = `
@@ -133,6 +167,11 @@ class PermisoRepositoryAdapter {
             return result.rows.map(row => Permiso_1.Permiso.fromMap(row));
         });
     }
+    /**
+     * Obtiene todos los usuarios que tienen un permiso específico.
+     * @param permiso - Nombre del permiso.
+     * @returns Promise<Usuario[]> - Array de usuarios con el permiso.
+     */
     getUsuariosConPermiso(permiso) {
         return __awaiter(this, void 0, void 0, function* () {
             const query = `
@@ -149,6 +188,11 @@ class PermisoRepositoryAdapter {
             })));
         });
     }
+    /**
+     * Obtiene detalles de un permiso específico.
+     * @param permiso - Nombre del permiso.
+     * @returns Promise<object | null> - Detalles del permiso o null si no existe.
+     */
     getPermisoDetalle(permiso) {
         return __awaiter(this, void 0, void 0, function* () {
             const query = `
@@ -169,6 +213,12 @@ class PermisoRepositoryAdapter {
             };
         });
     }
+    /**
+     * Actualiza la descripción de un permiso existente.
+     * @param permiso - Nombre del permiso a actualizar.
+     * @param nuevaDescripcion - Nueva descripción del permiso.
+     * @returns Promise<Permiso> - El permiso actualizado.
+     */
     actualizarPermiso(permiso, nuevaDescripcion) {
         return __awaiter(this, void 0, void 0, function* () {
             const query = `

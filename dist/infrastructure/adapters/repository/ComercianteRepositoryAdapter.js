@@ -14,6 +14,11 @@ exports.ComercianteRepositoryAdapter = void 0;
 const Comerciante_1 = require("../../../domain/entities/Comerciante");
 const DatabaseDonfig_1 = require("../../config/Database/DatabaseDonfig");
 class ComercianteRepositoryAdapter {
+    /**
+     * Busca un comerciante por su email.
+     * @param email - Email del comerciante a buscar.
+     * @returns Promise<Comerciante | null> - El comerciante encontrado o null si no existe.
+     */
     findByEmail(email) {
         return __awaiter(this, void 0, void 0, function* () {
             const query = `
@@ -34,6 +39,11 @@ class ComercianteRepositoryAdapter {
             return this.mapRowToComerciante(result.rows[0]);
         });
     }
+    /**
+     * Busca un comerciante por su CUIL.
+     * @param cuil - CUIL del comerciante a buscar.
+     * @returns Promise<Comerciante | null> - El comerciante encontrado o null si no existe.
+     */
     findByCuil(cuil) {
         return __awaiter(this, void 0, void 0, function* () {
             const query = `
@@ -54,6 +64,11 @@ class ComercianteRepositoryAdapter {
             return this.mapRowToComerciante(result.rows[0]);
         });
     }
+    /**
+     * Guarda un nuevo comerciante en la base de datos.
+     * @param comerciante - Objeto Comerciante a guardar.
+     * @returns Promise<Comerciante> - El comerciante guardado con su ID asignado.
+     */
     saveComerciante(comerciante) {
         return __awaiter(this, void 0, void 0, function* () {
             const client = yield DatabaseDonfig_1.pool.connect();
@@ -104,6 +119,11 @@ class ComercianteRepositoryAdapter {
             }
         });
     }
+    /**
+     * Obtiene un comerciante por su ID.
+     * @param id - ID del comerciante a buscar.
+     * @returns Promise<Comerciante | null> - El comerciante encontrado o null si no existe.
+     */
     getComercianteById(id) {
         return __awaiter(this, void 0, void 0, function* () {
             const query = `
@@ -124,6 +144,11 @@ class ComercianteRepositoryAdapter {
             return this.mapRowToComerciante(result.rows[0]);
         });
     }
+    /**
+     * Actualiza los datos de un comerciante existente.
+     * @param comerciante - Objeto Comerciante con los datos actualizados.
+     * @returns Promise<Comerciante> - El comerciante actualizado.
+     */
     updateComerciante(comerciante) {
         return __awaiter(this, void 0, void 0, function* () {
             const client = yield DatabaseDonfig_1.pool.connect();
@@ -170,6 +195,11 @@ class ComercianteRepositoryAdapter {
             }
         });
     }
+    /**
+     * Elimina un comerciante por su ID.
+     * @param id - ID del comerciante a eliminar.
+     * @returns Promise<void> - No retorna valor.
+     */
     deleteComerciante(id) {
         return __awaiter(this, void 0, void 0, function* () {
             const client = yield DatabaseDonfig_1.pool.connect();
@@ -192,6 +222,10 @@ class ComercianteRepositoryAdapter {
             }
         });
     }
+    /**
+     * Obtiene todos los comerciantes del sistema.
+     * @returns Promise<Comerciante[]> - Array de comerciantes con sus permisos.
+     */
     getAllComerciantes() {
         return __awaiter(this, void 0, void 0, function* () {
             const query = `

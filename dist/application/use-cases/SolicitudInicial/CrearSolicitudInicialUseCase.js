@@ -1,4 +1,5 @@
 "use strict";
+// src/application/use-cases/SolicitudInicial/CrearSolicitudInicialUseCase.ts
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
     return new (P || (P = Promise))(function (resolve, reject) {
@@ -13,8 +14,27 @@ exports.CrearSolicitudInicialUseCase = void 0;
 const SolicitudInicial_1 = require("../../../domain/entities/SolicitudInicial");
 const Cliente_1 = require("../../../domain/entities/Cliente");
 const historialActions_1 = require("../../constants/historialActions");
+/**
+ * Caso de uso para crear una nueva solicitud inicial de crédito.
+ *
+ * Esta clase implementa la lógica completa para crear una solicitud inicial,
+ * incluyendo validaciones de negocio, creación de entidades y manejo de eventos.
+ */
 class CrearSolicitudInicialUseCase {
-    constructor(solicitudInicialRepository, contratoRepository, solicitudFormalRepository, verazService, notificationService, clienteRepository, historialRepository) {
+    /**
+     * Constructor del caso de uso.
+     *
+     * @param solicitudInicialRepository - Puerto para operaciones de solicitudes iniciales
+     * @param contratoRepository - Puerto para operaciones de contratos
+     * @param solicitudFormalRepository - Puerto para operaciones de solicitudes formales
+     * @param verazService - Puerto para servicios de Veraz (actualmente deshabilitado)
+     * @param notificationService - Puerto para servicios de notificación
+     * @param clienteRepository - Puerto para operaciones de clientes
+     * @param historialRepository - Puerto para registro de eventos en historial
+     * @param analistaRepository - Puerto para operaciones de analistas
+     * @param verazAutomatico - Booleano para activar modo automático de Veraz
+     */
+    constructor(solicitudInicialRepository, contratoRepository, solicitudFormalRepository, verazService, notificationService, clienteRepository, historialRepository, analistaRepository, verazAutomatico) {
         this.solicitudInicialRepository = solicitudInicialRepository;
         this.contratoRepository = contratoRepository;
         this.solicitudFormalRepository = solicitudFormalRepository;
@@ -22,7 +42,26 @@ class CrearSolicitudInicialUseCase {
         this.notificationService = notificationService;
         this.clienteRepository = clienteRepository;
         this.historialRepository = historialRepository;
+        this.analistaRepository = analistaRepository;
+        this.verazAutomatico = verazAutomatico;
     }
+    /**
+     * Ejecuta la creación de una solicitud inicial de crédito.
+     *
+     * Este método implementa el flujo completo de creación de solicitud inicial:
+     * 1. Busca o crea el cliente según el DNI proporcionado
+     * 2. Verifica que el cliente no tenga créditos activos
+     * 3. Crea la solicitud inicial con estado pendiente
+     * 4. Registra el evento en el historial
+     * 5. Envía notificaciones al comerciante
+     *
+     * @param dniCliente - DNI del cliente para la solicitud
+     * @param cuilCliente - CUIL del cliente para la solicitud
+     * @param comercianteId - ID del comerciante que crea la solicitud
+     * @param reciboSueldo - Buffer opcional con el recibo de sueldo del cliente
+     * @returns Promise<SolicitudInicial> - La solicitud inicial creada
+     * @throws Error - Si el cliente ya tiene un crédito activo o si ocurre un error en el proceso
+     */
     execute(dniCliente, cuilCliente, comercianteId, reciboSueldo) {
         return __awaiter(this, void 0, void 0, function* () {
             try {
@@ -120,6 +159,54 @@ class CrearSolicitudInicialUseCase {
                 }
     */
                 // 6. Notificar al cliente (simulado)
+                if (this.verazAutomatico) {
+                    // ===== BLOQUE VERAZ DESCOMENTADO =====
+                    const estadoVeraz = yield this.verazService.checkClienteStatus(dniCliente);
+                    if (estadoVeraz.status === "aprobado") {
+                        solicitudCreada.setEstado("aprobada");
+                        yield this.solicitudInicialRepository.updateSolicitudInicial(solicitudCreada);
+                        // Registrar evento de aprobación automática
+                        yield this.historialRepository.registrarEvento({
+                            usuarioId: null, // Sistema automático
+                            accion: historialActions_1.HISTORIAL_ACTIONS.APPROVE_SOLICITUD_INICIAL,
+                            entidadAfectada: 'solicitudes_iniciales',
+                            entidadId: solicitudCreada.getId(),
+                            detalles: {
+                                sistema: "Veraz",
+                                score: estadoVeraz.score,
+                                motivo: estadoVeraz.motivo || "Aprobación automática"
+                            },
+                            solicitudInicialId: solicitudInicialId
+                        });
+                    }
+                    else if (estadoVeraz.status === "rechazado") {
+                        solicitudCreada.setEstado("rechazada");
+                        yield this.solicitudInicialRepository.updateSolicitudInicial(solicitudCreada);
+                        // Registrar evento de rechazo automático
+                        yield this.historialRepository.registrarEvento({
+                            usuarioId: null, // Sistema automático
+                            accion: historialActions_1.HISTORIAL_ACTIONS.REJECT_SOLICITUD_INICIAL,
+                            entidadAfectada: 'solicitudes_iniciales',
+                            entidadId: solicitudCreada.getId(),
+                            detalles: {
+                                sistema: "Veraz",
+                                score: estadoVeraz.score,
+                                motivo: estadoVeraz.motivo || "Rechazo automático"
+                            },
+                            solicitudInicialId: solicitudInicialId
+                        });
+                    }
+                    else {
+                        solicitudCreada.setEstado("pendiente");
+                        yield this.solicitudInicialRepository.updateSolicitudInicial(solicitudCreada);
+                    }
+                    // ===== FIN BLOQUE VERAZ =====
+                }
+                else {
+                    // MODO MANUAL: Notificar a analistas
+                    yield this.notificarAnalistas(solicitudCreada);
+                }
+                // Notificación al comerciante (existente)
                 yield this.notificationService.emitNotification({
                     userId: Number(comercianteId),
                     type: "solicitud_inicial",
@@ -155,6 +242,15 @@ class CrearSolicitudInicialUseCase {
             }
         });
     }
+    /**
+     * Verifica si un cliente tiene un crédito activo basado en sus solicitudes formales y contratos.
+     *
+     * Este método privado consulta todas las solicitudes formales del cliente por DNI
+     * y verifica si alguna tiene contratos asociados con estado "generado" (activo).
+     *
+     * @param dniCliente - DNI del cliente a verificar
+     * @returns Promise<boolean> - true si el cliente tiene un crédito activo, false en caso contrario
+     */
     tieneCreditoActivo(dniCliente) {
         return __awaiter(this, void 0, void 0, function* () {
             // Obtener todas las solicitudes formales del cliente por DNI
@@ -172,6 +268,37 @@ class CrearSolicitudInicialUseCase {
                 }
             }
             return false;
+        });
+    }
+    /**
+     * Notifica a todos los analistas activos sobre una nueva solicitud inicial.
+     *
+     * Este método envía una notificación a todos los analistas registrados en el sistema
+     * para que revisen la nueva solicitud inicial creada.
+     *
+     * @param solicitud - La solicitud inicial que se ha creado
+     */
+    notificarAnalistas(solicitud) {
+        return __awaiter(this, void 0, void 0, function* () {
+            try {
+                const analistaIds = yield this.analistaRepository.obtenerIdsAnalistasActivos();
+                const notificaciones = analistaIds.map(analistaId => this.notificationService.emitNotification({
+                    userId: analistaId,
+                    type: "solicitud_inicial",
+                    message: "Nueva solicitud inicial requiere revisión",
+                    metadata: {
+                        solicitudId: solicitud.getId(),
+                        dniCliente: solicitud.getDniCliente(),
+                        comercianteId: solicitud.getComercianteId(),
+                        prioridad: "media"
+                    }
+                }));
+                yield Promise.all(notificaciones);
+            }
+            catch (error) {
+                console.error("Error notificando a analistas:", error);
+                // Registrar error opcional
+            }
         });
     }
 }

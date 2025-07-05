@@ -1,6 +1,13 @@
 "use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
 // src/infrastructure/routes/administradores.routes.ts
+Object.defineProperty(exports, "__esModule", { value: true });
+/**
+ * RUTAS: Administradores
+ *
+ * Este archivo define las rutas para la gestión de administradores en el sistema.
+ * Permite crear, actualizar, eliminar, obtener y listar administradores.
+ * Todas las rutas están protegidas por el middleware de rol de administrador.
+ */
 const express_1 = require("express");
 const rolesMiddleware_1 = require("./middlewares/rolesMiddleware");
 const Administradores_controller_1 = require("./controllers/Administradores.controller");

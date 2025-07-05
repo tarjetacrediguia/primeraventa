@@ -1,6 +1,13 @@
 "use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
 // src/infrastructure/routes/permisos.routes.ts
+Object.defineProperty(exports, "__esModule", { value: true });
+/**
+ * RUTAS: Permisos
+ *
+ * Este archivo define las rutas para la gestión de permisos en el sistema.
+ * Permite crear permisos, asignarlos a roles y usuarios, y verificar permisos.
+ * Todas las rutas están protegidas por los middlewares de autenticación y rol de administrador.
+ */
 const express_1 = require("express");
 const auth_middleware_1 = require("./middlewares/auth.middleware");
 const rolesMiddleware_1 = require("./middlewares/rolesMiddleware");

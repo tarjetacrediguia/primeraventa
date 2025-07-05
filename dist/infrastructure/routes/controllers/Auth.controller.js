@@ -1,4 +1,5 @@
 "use strict";
+// src/infrastructure/routes/controllers/Auth.controller.ts
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
     return new (P || (P = Promise))(function (resolve, reject) {
@@ -14,6 +15,12 @@ const LoginUseCase_1 = require("../../../application/use-cases/autenticacion/Log
 const LogOutUseCase_1 = require("../../../application/use-cases/autenticacion/LogOutUseCase");
 const ResetPwdUseCase_1 = require("../../../application/use-cases/autenticacion/ResetPwdUseCase");
 const AuthAdapter_1 = require("../../adapters/authorization/AuthAdapter");
+/**
+ * Realiza el login de un usuario.
+ * @param req - Request de Express con las credenciales en el body.
+ * @param res - Response de Express para enviar la respuesta.
+ * @returns Devuelve el token de autenticación o un error en caso de fallo.
+ */
 const login = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const { email, password } = req.body;
@@ -63,6 +70,12 @@ const logout = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     }
 });
 exports.logout = logout;
+/**
+ * Restablece la contraseña de un usuario.
+ * @param req - Request de Express con el token y la nueva contraseña en el body.
+ * @param res - Response de Express para enviar la respuesta.
+ * @returns Devuelve un mensaje de éxito o un error en caso de fallo.
+ */
 const resetPassword = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const { token, newPassword } = req.body;

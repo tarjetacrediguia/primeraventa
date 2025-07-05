@@ -1,7 +1,14 @@
 "use strict";
+//src/infrastructure/config/Database/DatabaseConfig.ts
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.pool = void 0;
-//src/infrastructure/config/Database/DatabaseConfig.ts
+/**
+ * CONFIGURACIÓN: Base de Datos PostgreSQL
+ *
+ * Este archivo define la configuración de conexión a la base de datos PostgreSQL.
+ * Crea un pool de conexiones con los parámetros de entorno configurados.
+ * Incluye configuración SSL para entornos de producción.
+ */
 const pg_1 = require("pg");
 // Configuración de la conexión a la base de datos
 exports.pool = new pg_1.Pool({

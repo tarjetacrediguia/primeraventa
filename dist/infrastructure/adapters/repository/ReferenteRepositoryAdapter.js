@@ -1,4 +1,5 @@
 "use strict";
+// src/infrastructure/adapters/repository/ReferenteRepositoryAdapter.ts
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
     return new (P || (P = Promise))(function (resolve, reject) {
@@ -13,6 +14,11 @@ exports.ReferenteRepositoryAdapter = void 0;
 const Referente_1 = require("../../../domain/entities/Referente");
 const DatabaseDonfig_1 = require("../../config/Database/DatabaseDonfig");
 class ReferenteRepositoryAdapter {
+    /**
+     * Guarda un nuevo referente en la base de datos.
+     * @param referente - Objeto Referente a guardar.
+     * @returns Promise<Referente> - El referente guardado con su ID asignado.
+     */
     saveReferente(referente) {
         return __awaiter(this, void 0, void 0, function* () {
             const client = yield DatabaseDonfig_1.pool.connect();
@@ -33,6 +39,11 @@ class ReferenteRepositoryAdapter {
             }
         });
     }
+    /**
+     * Obtiene un referente por su ID.
+     * @param id - ID del referente a buscar.
+     * @returns Promise<Referente | null> - El referente encontrado o null si no existe.
+     */
     getReferenteById(id) {
         return __awaiter(this, void 0, void 0, function* () {
             const client = yield DatabaseDonfig_1.pool.connect();
@@ -50,6 +61,11 @@ class ReferenteRepositoryAdapter {
             }
         });
     }
+    /**
+     * Actualiza los datos de un referente existente.
+     * @param referente - Objeto Referente con los datos actualizados.
+     * @returns Promise<Referente> - El referente actualizado.
+     */
     updateReferente(referente) {
         return __awaiter(this, void 0, void 0, function* () {
             const id = referente.getId();
@@ -75,6 +91,11 @@ class ReferenteRepositoryAdapter {
             }
         });
     }
+    /**
+     * Elimina un referente por su ID.
+     * @param id - ID del referente a eliminar.
+     * @returns Promise<void> - No retorna valor.
+     */
     deleteReferente(id) {
         return __awaiter(this, void 0, void 0, function* () {
             const client = yield DatabaseDonfig_1.pool.connect();
@@ -86,6 +107,10 @@ class ReferenteRepositoryAdapter {
             }
         });
     }
+    /**
+     * Obtiene todos los referentes del sistema.
+     * @returns Promise<Referente[]> - Array de todos los referentes.
+     */
     getAllReferentes() {
         return __awaiter(this, void 0, void 0, function* () {
             const client = yield DatabaseDonfig_1.pool.connect();
@@ -98,6 +123,11 @@ class ReferenteRepositoryAdapter {
             }
         });
     }
+    /**
+     * Obtiene los referentes asociados a una solicitud formal.
+     * @param solicitudFormalId - ID de la solicitud formal.
+     * @returns Promise<Referente[]> - Array de referentes asociados a la solicitud.
+     */
     getReferentesBySolicitudFormalId(solicitudFormalId) {
         return __awaiter(this, void 0, void 0, function* () {
             const client = yield DatabaseDonfig_1.pool.connect();
@@ -114,6 +144,11 @@ class ReferenteRepositoryAdapter {
             }
         });
     }
+    /**
+     * Obtiene los referentes por número de teléfono.
+     * @param telefono - Teléfono del referente a buscar.
+     * @returns Promise<Referente[]> - Array de referentes con ese teléfono.
+     */
     getReferentesByTelefono(telefono) {
         return __awaiter(this, void 0, void 0, function* () {
             const client = yield DatabaseDonfig_1.pool.connect();

@@ -1,4 +1,5 @@
 "use strict";
+// src/application/use-cases/tareas/ExpirarSolicitudesInicialesUseCase.ts
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
     return new (P || (P = Promise))(function (resolve, reject) {
@@ -11,7 +12,24 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.ExpirarSolicitudesInicialesUseCase = void 0;
 const historialActions_1 = require("../../constants/historialActions");
+/**
+ * Caso de uso que maneja la expiración automática de solicitudes iniciales.
+ * Procesa solicitudes que han superado el tiempo límite configurado y
+ * notifica a todas las partes interesadas sobre la expiración.
+ */
 class ExpirarSolicitudesInicialesUseCase {
+    /**
+     * Constructor del caso de uso.
+     * Inicializa todas las dependencias necesarias para el proceso de expiración.
+     *
+     * @param solicitudInicialRepository - Repositorio para gestionar solicitudes iniciales.
+     * @param configuracionRepository - Repositorio para obtener configuraciones del sistema.
+     * @param clienteRepository - Repositorio para gestionar clientes.
+     * @param analistaRepository - Repositorio para gestionar analistas.
+     * @param comercianteRepository - Repositorio para gestionar comerciantes.
+     * @param notificationService - Servicio de notificaciones.
+     * @param historialRepository - Repositorio para registrar eventos del historial.
+     */
     constructor(solicitudInicialRepository, configuracionRepository, clienteRepository, analistaRepository, comercianteRepository, notificationService, historialRepository) {
         this.solicitudInicialRepository = solicitudInicialRepository;
         this.configuracionRepository = configuracionRepository;
@@ -21,6 +39,14 @@ class ExpirarSolicitudesInicialesUseCase {
         this.notificationService = notificationService;
         this.historialRepository = historialRepository;
     }
+    /**
+     * Ejecuta el proceso de expiración de solicitudes iniciales.
+     * Identifica solicitudes vencidas, las marca como expiradas y notifica
+     * a todas las partes interesadas.
+     *
+     * @returns Promise<void> - Promesa que se resuelve cuando el proceso termina.
+     * @throws Error - Si ocurre algún error durante el proceso.
+     */
     execute() {
         return __awaiter(this, void 0, void 0, function* () {
             const sistemaUserId = 0; // ID para acciones del sistema
@@ -133,6 +159,14 @@ class ExpirarSolicitudesInicialesUseCase {
             }
         });
     }
+    /**
+     * Coordina la notificación a todas las partes interesadas sobre la expiración.
+     * Envía notificaciones al cliente, comerciante y analistas.
+     *
+     * @param cliente - Cliente asociado a la solicitud expirada.
+     * @param solicitud - Solicitud inicial que ha expirado.
+     * @returns Promise<void> - Promesa que se resuelve cuando todas las notificaciones se envían.
+     */
     notificarPartesInteresadas(cliente, solicitud) {
         return __awaiter(this, void 0, void 0, function* () {
             const mensaje = `La solicitud inicial #${solicitud.getId()} del cliente ${cliente.getNombreCompleto()} ha expirado.`;
@@ -150,6 +184,16 @@ class ExpirarSolicitudesInicialesUseCase {
             yield this.notificarAnalistas(mensaje, metadata);
         });
     }
+    /**
+     * Notifica al cliente sobre la expiración de su solicitud inicial.
+     * Envía una notificación al sistema para el cliente.
+     *
+     * @param cliente - Cliente a notificar.
+     * @param solicitud - Solicitud inicial expirada.
+     * @param mensaje - Mensaje de notificación.
+     * @param metadata - Metadatos adicionales de la notificación.
+     * @returns Promise<void> - Promesa que se resuelve cuando se envía la notificación.
+     */
     notificarCliente(cliente, solicitud, mensaje, metadata) {
         return __awaiter(this, void 0, void 0, function* () {
             // Notificación en el sistema
@@ -161,6 +205,15 @@ class ExpirarSolicitudesInicialesUseCase {
             });
         });
     }
+    /**
+     * Notifica al comerciante asociado sobre la expiración de la solicitud.
+     * Busca el comerciante asociado y le envía una notificación.
+     *
+     * @param solicitud - Solicitud inicial expirada.
+     * @param mensaje - Mensaje de notificación.
+     * @param metadata - Metadatos adicionales de la notificación.
+     * @returns Promise<void> - Promesa que se resuelve cuando se envía la notificación.
+     */
     notificarComerciante(solicitud, mensaje, metadata) {
         return __awaiter(this, void 0, void 0, function* () {
             try {
@@ -183,6 +236,14 @@ class ExpirarSolicitudesInicialesUseCase {
             }
         });
     }
+    /**
+     * Notifica a todos los analistas activos sobre la expiración de la solicitud.
+     * Obtiene todos los IDs de analistas activos y les envía notificaciones.
+     *
+     * @param mensaje - Mensaje de notificación.
+     * @param metadata - Metadatos adicionales de la notificación.
+     * @returns Promise<void> - Promesa que se resuelve cuando se envían todas las notificaciones.
+     */
     notificarAnalistas(mensaje, metadata) {
         return __awaiter(this, void 0, void 0, function* () {
             try {

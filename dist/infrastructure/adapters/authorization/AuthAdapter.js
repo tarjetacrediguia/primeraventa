@@ -1,4 +1,5 @@
 "use strict";
+// src/infrastructure/adapters/authorization/AuthAdapter.ts
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
     return new (P || (P = Promise))(function (resolve, reject) {
@@ -21,7 +22,19 @@ const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
 const DatabaseDonfig_1 = require("../../config/Database/DatabaseDonfig");
 const JWT_SECRET = process.env.JWT_SECRET || 'kjhskdf65454sdfkhvxtu_clave_secreta_muy_segura';
 const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '1h';
+/**
+ * Adaptador que implementa la autenticación y autorización del sistema.
+ * Proporciona métodos para login, logout, gestión de tokens JWT y manejo
+ * seguro de contraseñas con diferentes roles de usuario.
+ */
 class AuthAdapter {
+    /**
+     * Genera un token JWT para un usuario autenticado.
+     * El token incluye información del usuario (ID, email y rol) y expira en 1 hora.
+     *
+     * @param usuario - Objeto Usuario para el cual generar el token.
+     * @returns Promise<string> - Token JWT generado.
+     */
     generarToken(usuario) {
         return __awaiter(this, void 0, void 0, function* () {
             const payload = {
@@ -35,6 +48,13 @@ class AuthAdapter {
             return jsonwebtoken_1.default.sign(payload, JWT_SECRET, options);
         });
     }
+    /**
+     * Valida un token JWT y extrae la información del usuario.
+     * Verifica la firma del token y su expiración.
+     *
+     * @param token - Token JWT a validar.
+     * @returns { id: string; rol: string } | null - Información del usuario o null si el token es inválido.
+     */
     validarToken(token) {
         try {
             const decoded = jsonwebtoken_1.default.verify(token, JWT_SECRET);
@@ -47,6 +67,16 @@ class AuthAdapter {
             return null;
         }
     }
+    /**
+     * Autentica un usuario con email y contraseña.
+     * Valida las credenciales, crea la instancia de usuario según su rol,
+     * genera un token JWT y registra la sesión en la base de datos.
+     *
+     * @param email - Email del usuario.
+     * @param password - Contraseña del usuario.
+     * @returns Promise<{ usuario: Usuario; token: string }> - Usuario autenticado y token JWT.
+     * @throws Error si las credenciales son inválidas o el rol no es reconocido.
+     */
     login(email, password) {
         return __awaiter(this, void 0, void 0, function* () {
             // Buscar usuario por email
@@ -99,22 +129,50 @@ class AuthAdapter {
             return { usuario, token };
         });
     }
+    /**
+     * Cierra la sesión de un usuario invalidando su token.
+     * Marca la sesión como inactiva en la base de datos.
+     *
+     * @param token - Token JWT de la sesión a cerrar.
+     * @returns Promise<void> - No retorna valor.
+     */
     logout(token) {
         return __awaiter(this, void 0, void 0, function* () {
             // Inactivar la sesión en la base de datos
             yield DatabaseDonfig_1.pool.query('UPDATE sesiones SET activa = FALSE WHERE token = $1', [token]);
         });
     }
+    /**
+     * Registra un nuevo usuario en el sistema.
+     *
+     * @param usuario - Datos del usuario a registrar.
+     * @returns Promise<Usuario> - El usuario registrado.
+     */
     register(usuario) {
         return __awaiter(this, void 0, void 0, function* () {
             throw new Error("Method not implemented.");
         });
     }
+    /**
+     * Inicia el proceso de recuperación de contraseña para un usuario.
+     *
+     * @param email - Email del usuario que solicita recuperar su contraseña.
+     * @returns Promise<void> - No retorna valor.
+     */
     forgotPassword(email) {
         return __awaiter(this, void 0, void 0, function* () {
             throw new Error("Method not implemented.");
         });
     }
+    /**
+     * Restablece la contraseña de un usuario usando un token de recuperación.
+     * Valida el token y actualiza la contraseña en la base de datos.
+     *
+     * @param token - Token de recuperación de contraseña.
+     * @param newPassword - Nueva contraseña del usuario.
+     * @returns Promise<void> - No retorna valor.
+     * @throws Error si el token es inválido o ha expirado.
+     */
     resetPassword(token, newPassword) {
         return __awaiter(this, void 0, void 0, function* () {
             // Validar token
@@ -129,6 +187,16 @@ class AuthAdapter {
             yield DatabaseDonfig_1.pool.query('UPDATE usuarios SET password_hash = $1 WHERE id = $2', [hashedPassword, payload.id]);
         });
     }
+    /**
+     * Cambia la contraseña de un usuario verificando la contraseña actual.
+     * Valida la contraseña actual antes de permitir el cambio.
+     *
+     * @param usuarioId - ID del usuario que cambia su contraseña.
+     * @param oldPassword - Contraseña actual del usuario.
+     * @param newPassword - Nueva contraseña del usuario.
+     * @returns Promise<void> - No retorna valor.
+     * @throws Error si el usuario no existe o la contraseña actual es incorrecta.
+     */
     changePassword(usuarioId, oldPassword, newPassword) {
         return __awaiter(this, void 0, void 0, function* () {
             // Obtener usuario

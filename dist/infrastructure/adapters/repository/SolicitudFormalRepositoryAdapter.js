@@ -23,6 +23,11 @@ const Referente_1 = require("../../../domain/entities/Referente");
 const DatabaseDonfig_1 = require("../../config/Database/DatabaseDonfig");
 class SolicitudFormalRepositoryAdapter {
     // src/infrastructure/adapters/repository/SolicitudFormalRepositoryAdapter.ts
+    /**
+     * Crea una nueva solicitud formal en la base de datos.
+     * @param solicitudFormal - Objeto SolicitudFormal a crear.
+     * @returns Promise<SolicitudFormal> - La solicitud formal creada con su ID asignado.
+     */
     createSolicitudFormal(solicitudFormal) {
         return __awaiter(this, void 0, void 0, function* () {
             var _a, e_1, _b, _c;
@@ -41,17 +46,17 @@ class SolicitudFormalRepositoryAdapter {
                 }
                 // 2. Actualizar cliente con los nuevos datos
                 const updateClienteQuery = `
-            UPDATE clientes SET
-                nombre_completo = $1,
-                apellido = $2,
-                telefono = $3,
-                email = $4,
-                fecha_nacimiento = $5,
-                domicilio = $6,
-                datos_empleador = $7,
-                acepta_tarjeta = $8
-            WHERE id = $9
-        `;
+                UPDATE clientes SET
+                    nombre_completo = $1,
+                    apellido = $2,
+                    telefono = $3,
+                    email = $4,
+                    fecha_nacimiento = $5,
+                    domicilio = $6,
+                    datos_empleador = $7,
+                    acepta_tarjeta = $8
+                WHERE id = $9
+            `;
                 yield client.query(updateClienteQuery, [
                     solicitudFormal.getNombreCompleto(),
                     solicitudFormal.getApellido(),
@@ -84,19 +89,19 @@ class SolicitudFormalRepositoryAdapter {
                 const reciboBuffer = Buffer.concat(chunks);
                 // Insertar en la base de datos
                 const solicitudQuery = `
-      INSERT INTO solicitudes_formales (
-        cliente_id, 
-        solicitud_inicial_id, 
-        comerciante_id,
-        fecha_solicitud, 
-        recibo, 
-        estado, 
-        acepta_tarjeta, 
-        comentarios
-      )
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-      RETURNING id
-    `;
+          INSERT INTO solicitudes_formales (
+            cliente_id, 
+            solicitud_inicial_id, 
+            comerciante_id,
+            fecha_solicitud, 
+            recibo, 
+            estado, 
+            acepta_tarjeta, 
+            comentarios
+          )
+          VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+          RETURNING id
+        `;
                 const solicitudValues = [
                     clienteId,
                     solicitudFormal.getSolicitudInicialId(),
@@ -113,10 +118,10 @@ class SolicitudFormalRepositoryAdapter {
                 for (let i = 0; i < solicitudFormal.getReferentes().length; i++) {
                     const referente = solicitudFormal.getReferentes()[i];
                     const referenteQuery = `
-                INSERT INTO referentes (nombre_completo, apellido, vinculo, telefono)
-                VALUES ($1, $2, $3, $4)
-                RETURNING id
-            `;
+                    INSERT INTO referentes (nombre_completo, apellido, vinculo, telefono)
+                    VALUES ($1, $2, $3, $4)
+                    RETURNING id
+                `;
                     const referenteValues = [
                         referente.getNombreCompleto(),
                         referente.getApellido(),
@@ -126,9 +131,9 @@ class SolicitudFormalRepositoryAdapter {
                     const referenteResult = yield client.query(referenteQuery, referenteValues);
                     const referenteId = referenteResult.rows[0].id;
                     const relacionQuery = `
-                INSERT INTO solicitud_referente (solicitud_formal_id, referente_id, orden)
-                VALUES ($1, $2, $3)
-            `;
+                    INSERT INTO solicitud_referente (solicitud_formal_id, referente_id, orden)
+                    VALUES ($1, $2, $3)
+                `;
                     yield client.query(relacionQuery, [solicitudId, referenteId, i + 1]);
                 }
                 yield client.query('COMMIT');
@@ -144,6 +149,11 @@ class SolicitudFormalRepositoryAdapter {
             }
         });
     }
+    /**
+     * Obtiene una solicitud formal por su ID.
+     * @param id - ID de la solicitud formal a buscar.
+     * @returns Promise<SolicitudFormal | null> - La solicitud formal encontrada o null si no existe.
+     */
     getSolicitudFormalById(id) {
         return __awaiter(this, void 0, void 0, function* () {
             const query = `
@@ -192,6 +202,11 @@ class SolicitudFormalRepositoryAdapter {
             row.solicitud_inicial_id, row.comerciante_id, row.nombre_completo, row.apellido, row.dni, row.telefono, row.email, new Date(row.fecha_solicitud), row.recibo, row.estado, row.acepta_tarjeta, new Date(row.fecha_nacimiento), row.domicilio, row.datos_empleador, referentes, row.comentarios || [], row.cliente_id || 0, row.numero_tarjeta, row.numero_cuenta, row.fecha_aprobacion ? new Date(row.fecha_aprobacion) : undefined, row.analista_aprobador_id, row.administrador_aprobador_id);
         });
     }
+    /**
+     * Actualiza los datos de una solicitud formal existente.
+     * @param solicitudFormal - Objeto SolicitudFormal con los datos actualizados.
+     * @returns Promise<SolicitudFormal> - La solicitud formal actualizada.
+     */
     updateSolicitudFormal(solicitudFormal) {
         return __awaiter(this, void 0, void 0, function* () {
             const client = yield DatabaseDonfig_1.pool.connect();
@@ -279,6 +294,11 @@ class SolicitudFormalRepositoryAdapter {
             }
         });
     }
+    /**
+     * Actualiza el estado de aprobación de una solicitud formal.
+     * @param solicitudFormal - Objeto SolicitudFormal con el nuevo estado de aprobación.
+     * @returns Promise<SolicitudFormal> - La solicitud formal actualizada.
+     */
     updateSolicitudFormalAprobacion(solicitudFormal) {
         return __awaiter(this, void 0, void 0, function* () {
             const client = yield DatabaseDonfig_1.pool.connect();
@@ -374,6 +394,11 @@ class SolicitudFormalRepositoryAdapter {
             }
         });
     }
+    /**
+     * Actualiza el estado de rechazo de una solicitud formal.
+     * @param solicitudFormal - Objeto SolicitudFormal con el nuevo estado de rechazo.
+     * @returns Promise<SolicitudFormal> - La solicitud formal actualizada.
+     */
     updateSolicitudFormalRechazo(solicitudFormal) {
         return __awaiter(this, void 0, void 0, function* () {
             const client = yield DatabaseDonfig_1.pool.connect();
@@ -423,6 +448,11 @@ class SolicitudFormalRepositoryAdapter {
             }
         });
     }
+    /**
+     * Elimina una solicitud formal por su ID.
+     * @param id - ID de la solicitud formal a eliminar.
+     * @returns Promise<void> - No retorna valor.
+     */
     deleteSolicitudFormal(id) {
         return __awaiter(this, void 0, void 0, function* () {
             const client = yield DatabaseDonfig_1.pool.connect();
@@ -458,6 +488,10 @@ class SolicitudFormalRepositoryAdapter {
             }
         });
     }
+    /**
+     * Obtiene todas las solicitudes formales del sistema.
+     * @returns Promise<SolicitudFormal[]> - Array de todas las solicitudes formales.
+     */
     getAllSolicitudesFormales() {
         return __awaiter(this, void 0, void 0, function* () {
             const query = `
@@ -499,6 +533,11 @@ class SolicitudFormalRepositoryAdapter {
             return solicitudes;
         });
     }
+    /**
+     * Obtiene las solicitudes formales por DNI del cliente.
+     * @param dni - DNI del cliente.
+     * @returns Promise<SolicitudFormal[]> - Array de solicitudes formales del cliente.
+     */
     getSolicitudesFormalesByDni(dni) {
         return __awaiter(this, void 0, void 0, function* () {
             const query = `
@@ -526,6 +565,11 @@ class SolicitudFormalRepositoryAdapter {
             return yield this.executeSolicitudesQuery(query, [dni]);
         });
     }
+    /**
+     * Obtiene las solicitudes formales por estado.
+     * @param estado - Estado de las solicitudes a buscar.
+     * @returns Promise<SolicitudFormal[]> - Array de solicitudes formales con el estado especificado.
+     */
     getSolicitudesFormalesByEstado(estado) {
         return __awaiter(this, void 0, void 0, function* () {
             const query = `
@@ -553,6 +597,11 @@ class SolicitudFormalRepositoryAdapter {
             return yield this.executeSolicitudesQuery(query, [estado]);
         });
     }
+    /**
+     * Obtiene las solicitudes formales por fecha de solicitud.
+     * @param fecha - Fecha de solicitud.
+     * @returns Promise<SolicitudFormal[]> - Array de solicitudes formales creadas en esa fecha.
+     */
     getSolicitudesFormalesByFecha(fecha) {
         return __awaiter(this, void 0, void 0, function* () {
             const query = `
@@ -580,6 +629,11 @@ class SolicitudFormalRepositoryAdapter {
             return yield this.executeSolicitudesQuery(query, [fecha]);
         });
     }
+    /**
+     * Obtiene las solicitudes formales por ID del comerciante.
+     * @param comercianteId - ID del comerciante.
+     * @returns Promise<SolicitudFormal[]> - Array de solicitudes formales del comerciante.
+     */
     getSolicitudesFormalesByComercianteId(comercianteId) {
         return __awaiter(this, void 0, void 0, function* () {
             const query = `
@@ -606,6 +660,11 @@ class SolicitudFormalRepositoryAdapter {
             return yield this.executeSolicitudesQuery(query, [comercianteId]);
         });
     }
+    /**
+     * Obtiene las solicitudes formales por ID del analista.
+     * @param analistaId - ID del analista.
+     * @returns Promise<SolicitudFormal[]> - Array de solicitudes formales aprobadas por el analista.
+     */
     getSolicitudesFormalesByAnalistaId(analistaId) {
         return __awaiter(this, void 0, void 0, function* () {
             const query = `
@@ -633,6 +692,11 @@ class SolicitudFormalRepositoryAdapter {
             return yield this.executeSolicitudesQuery(query, [analistaId]);
         });
     }
+    /**
+     * Obtiene las solicitudes formales por ID de la solicitud inicial.
+     * @param solicitudInicialId - ID de la solicitud inicial.
+     * @returns Promise<SolicitudFormal[]> - Array de solicitudes formales asociadas a la solicitud inicial.
+     */
     getSolicitudesFormalesBySolicitudInicialId(solicitudInicialId) {
         return __awaiter(this, void 0, void 0, function* () {
             const query = `
@@ -660,6 +724,12 @@ class SolicitudFormalRepositoryAdapter {
             return yield this.executeSolicitudesQuery(query, [solicitudInicialId]);
         });
     }
+    /**
+     * Vincula un contrato a una solicitud formal.
+     * @param solicitudId - ID de la solicitud formal.
+     * @param contratoId - ID del contrato a vincular.
+     * @returns Promise<void> - No retorna valor.
+     */
     vincularContrato(solicitudId, contratoId) {
         return __awaiter(this, void 0, void 0, function* () {
             const client = yield DatabaseDonfig_1.pool.connect();
@@ -714,6 +784,12 @@ class SolicitudFormalRepositoryAdapter {
             return solicitudes;
         });
     }
+    /**
+     * Obtiene las solicitudes formales por comerciante y estado.
+     * @param comercianteId - ID del comerciante.
+     * @param estado - Estado de las solicitudes.
+     * @returns Promise<SolicitudFormal[]> - Array de solicitudes formales del comerciante con el estado especificado.
+     */
     getSolicitudesFormalesByComercianteYEstado(comercianteId, estado) {
         return __awaiter(this, void 0, void 0, function* () {
             const query = `

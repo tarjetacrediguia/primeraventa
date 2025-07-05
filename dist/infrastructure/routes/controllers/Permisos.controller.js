@@ -1,4 +1,5 @@
 "use strict";
+// src/infrastructure/routes/controllers/Permisos.controller.ts
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
     return new (P || (P = Promise))(function (resolve, reject) {
@@ -18,6 +19,12 @@ const AsignarPermisoUseCase_1 = require("../../../application/use-cases/Permisos
 const VerificarPermisoUseCase_1 = require("../../../application/use-cases/Permisos/VerificarPermisoUseCase");
 const ObtenerPermisosUsuarioUseCase_1 = require("../../../application/use-cases/Permisos/ObtenerPermisosUsuarioUseCase");
 const permisoRepository = new PermisoRepositoryAdapter_1.PermisoRepositoryAdapter();
+/**
+ * Crea un nuevo permiso en el sistema.
+ * @param req - Request de Express con los datos del permiso en el body.
+ * @param res - Response de Express para enviar la respuesta.
+ * @returns Devuelve el permiso creado o un error en caso de fallo.
+ */
 const crearPermiso = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const { nombre, descripcion } = req.body;
@@ -34,6 +41,12 @@ const crearPermiso = (req, res) => __awaiter(void 0, void 0, void 0, function* (
     }
 });
 exports.crearPermiso = crearPermiso;
+/**
+ * Lista todos los permisos registrados en el sistema.
+ * @param req - Request de Express.
+ * @param res - Response de Express para enviar la respuesta.
+ * @returns Devuelve un array de permisos o un error en caso de fallo.
+ */
 const listarPermisos = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const useCase = new ListPermisosUseCase_1.ListPermisosUseCase(permisoRepository);
@@ -46,6 +59,12 @@ const listarPermisos = (req, res) => __awaiter(void 0, void 0, void 0, function*
     }
 });
 exports.listarPermisos = listarPermisos;
+/**
+ * Asigna permisos a un rol específico.
+ * @param req - Request de Express con el nombre del rol en params y los permisos en el body.
+ * @param res - Response de Express para enviar la respuesta.
+ * @returns Devuelve un mensaje de éxito o un error en caso de fallo.
+ */
 const asignarPermisosARol = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const rol = req.params.rol;
@@ -72,6 +91,12 @@ const asignarPermisosARol = (req, res) => __awaiter(void 0, void 0, void 0, func
     }
 });
 exports.asignarPermisosARol = asignarPermisosARol;
+/**
+ * Asigna permisos a un usuario específico.
+ * @param req - Request de Express con el ID del usuario en params y los permisos en el body.
+ * @param res - Response de Express para enviar la respuesta.
+ * @returns Devuelve un mensaje de éxito o un error en caso de fallo.
+ */
 const asignarPermisosAUsuario = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const usuarioId = parseInt(req.params.id, 10);
@@ -102,6 +127,12 @@ const asignarPermisosAUsuario = (req, res) => __awaiter(void 0, void 0, void 0, 
     }
 });
 exports.asignarPermisosAUsuario = asignarPermisosAUsuario;
+/**
+ * Obtiene los permisos de un usuario específico.
+ * @param req - Request de Express con el ID del usuario en params.
+ * @param res - Response de Express para enviar la respuesta.
+ * @returns Devuelve un array de permisos o un error en caso de fallo.
+ */
 const obtenerPermisosUsuario = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const usuarioId = parseInt(req.params.id, 10);
@@ -123,7 +154,12 @@ const obtenerPermisosUsuario = (req, res) => __awaiter(void 0, void 0, void 0, f
     }
 });
 exports.obtenerPermisosUsuario = obtenerPermisosUsuario;
-// Nueva función: Verificar si usuario tiene un permiso
+/**
+ * Verifica si un usuario tiene un permiso específico.
+ * @param req - Request de Express con el ID del usuario en params y el nombre del permiso en query params.
+ * @param res - Response de Express para enviar la respuesta.
+ * @returns Devuelve un booleano indicando si el usuario tiene el permiso o un error en caso de fallo.
+ */
 const verificarPermisoUsuario = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const usuarioId = parseInt(req.params.id, 10);

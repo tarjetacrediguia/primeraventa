@@ -11,10 +11,31 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.GetSolicitudesFormalesByDniUseCase = void 0;
+/**
+ * Caso de uso para obtener solicitudes formales de un cliente específico por DNI.
+ *
+ * Esta clase implementa la lógica para recuperar todas las solicitudes formales
+ * asociadas a un cliente específico mediante su DNI, útil para consultar el
+ * historial de solicitudes de un cliente.
+ */
 class GetSolicitudesFormalesByDniUseCase {
+    /**
+     * Constructor del caso de uso.
+     *
+     * @param repository - Puerto para operaciones de solicitudes formales
+     */
     constructor(repository) {
         this.repository = repository;
     }
+    /**
+     * Ejecuta la obtención de solicitudes formales por DNI del cliente.
+     *
+     * Este método busca y retorna todas las solicitudes formales que están
+     * asociadas al cliente con el DNI especificado.
+     *
+     * @param dni - DNI del cliente cuyas solicitudes se quieren obtener
+     * @returns Promise<SolicitudFormal[]> - Array con las solicitudes formales del cliente
+     */
     execute(dni) {
         return __awaiter(this, void 0, void 0, function* () {
             return this.repository.getSolicitudesFormalesByDni(dni);

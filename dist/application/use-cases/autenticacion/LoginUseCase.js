@@ -1,4 +1,5 @@
 "use strict";
+// src/application/use-cases/autenticacion/LoginUseCase.ts
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
     return new (P || (P = Promise))(function (resolve, reject) {
@@ -13,10 +14,29 @@ exports.LoginUseCase = void 0;
 const Administrador_1 = require("../../../domain/entities/Administrador");
 const Analista_1 = require("../../../domain/entities/Analista");
 const Comerciante_1 = require("../../../domain/entities/Comerciante");
+/**
+ * Caso de uso para el inicio de sesión de usuarios.
+ *
+ * Esta clase permite autenticar usuarios, validando sus credenciales y
+ * determinando su rol en el sistema.
+ */
 class LoginUseCase {
+    /**
+     * Constructor del caso de uso.
+     *
+     * @param authPort - Puerto de autenticación
+     */
     constructor(authPort) {
         this.authPort = authPort;
     }
+    /**
+     * Ejecuta el proceso de login de usuario.
+     *
+     * @param email - Correo electrónico del usuario
+     * @param password - Contraseña en texto plano
+     * @returns Promise<{ usuario: Usuario, token: string, rol: string }> - Usuario autenticado, token de sesión y rol
+     * @throws Error si faltan credenciales o la autenticación falla
+     */
     execute(email, password) {
         return __awaiter(this, void 0, void 0, function* () {
             // Validaciones básicas

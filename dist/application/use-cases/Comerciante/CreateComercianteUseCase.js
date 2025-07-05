@@ -1,4 +1,5 @@
 "use strict";
+// src/application/use-cases/Comerciante/CreateComercianteUseCase.ts
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
     return new (P || (P = Promise))(function (resolve, reject) {
@@ -13,13 +14,49 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.CreateComercianteUseCase = void 0;
-// src/application/use-cases/Comerciante/CreateComercianteUseCase.ts
+/**
+ * MÓDULO: Caso de Uso - Crear Comerciante
+ *
+ * Este módulo implementa la lógica de negocio para el registro de un nuevo comerciante
+ * en el sistema, incluyendo validaciones, encriptación de contraseña y persistencia.
+ *
+ * RESPONSABILIDADES:
+ * - Validar los datos de entrada del comerciante
+ * - Encriptar la contraseña antes de guardar
+ * - Verificar unicidad del CUIL
+ * - Registrar el comerciante en el repositorio
+ */
 const Comerciante_1 = require("../../../domain/entities/Comerciante");
 const bcrypt_1 = __importDefault(require("bcrypt"));
+/**
+ * Caso de uso para crear un nuevo comerciante.
+ *
+ * Esta clase encapsula la lógica de validación, encriptación y registro
+ * de comerciantes en el sistema.
+ */
 class CreateComercianteUseCase {
+    /**
+     * Constructor del caso de uso.
+     *
+     * @param repository - Puerto de acceso al repositorio de comerciantes
+     */
     constructor(repository) {
         this.repository = repository;
     }
+    /**
+     * Ejecuta el registro de un nuevo comerciante.
+     *
+     * @param nombre - Nombre del comerciante
+     * @param apellido - Apellido del comerciante
+     * @param email - Correo electrónico
+     * @param password - Contraseña en texto plano
+     * @param telefono - Teléfono de contacto
+     * @param nombreComercio - Nombre del comercio
+     * @param cuil - CUIL del comerciante
+     * @param direccionComercio - Dirección del comercio
+     * @returns Promise<Comerciante> - Comerciante registrado
+     * @throws Error si falta algún campo obligatorio, si el CUIL ya existe o si la validación falla
+     */
     execute(nombre, apellido, email, password, telefono, nombreComercio, cuil, direccionComercio) {
         return __awaiter(this, void 0, void 0, function* () {
             // Validaciones básicas
@@ -47,6 +84,13 @@ class CreateComercianteUseCase {
             return this.repository.saveComerciante(comerciante);
         });
     }
+    /**
+     * Valida el formato del CUIL.
+     *
+     * @param cuil - CUIL a validar
+     * @returns boolean - true si el formato es válido, false en caso contrario
+     * @remarks La validación es básica y debe ajustarse a la normativa argentina
+     */
     validarCUIL(cuil) {
         // Implementación básica de validación de CUIL
         // Debería implementarse una validación real según normas argentinas

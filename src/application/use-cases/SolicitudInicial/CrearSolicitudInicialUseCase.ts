@@ -26,6 +26,7 @@ import { Cliente } from "../../../domain/entities/Cliente";
 import { ClienteRepositoryPort } from "../../ports/ClienteRepositoryPort";
 import { HistorialRepositoryPort } from "../../ports/HistorialRepositoryPort";
 import { HISTORIAL_ACTIONS } from "../../constants/historialActions";
+import { AnalistaRepositoryPort } from "../../ports/AnalistaRepositoryPort";
 
 /**
  * Caso de uso para crear una nueva solicitud inicial de crédito.
@@ -44,6 +45,8 @@ export class CrearSolicitudInicialUseCase {
      * @param notificationService - Puerto para servicios de notificación
      * @param clienteRepository - Puerto para operaciones de clientes
      * @param historialRepository - Puerto para registro de eventos en historial
+     * @param analistaRepository - Puerto para operaciones de analistas
+     * @param verazAutomatico - Booleano para activar modo automático de Veraz
      */
     constructor(
         private readonly solicitudInicialRepository: SolicitudInicialRepositoryPort,
@@ -52,7 +55,9 @@ export class CrearSolicitudInicialUseCase {
         private readonly verazService: VerazPort,
         private readonly notificationService: NotificationPort,
         private readonly clienteRepository: ClienteRepositoryPort,
-        private readonly historialRepository: HistorialRepositoryPort
+        private readonly historialRepository: HistorialRepositoryPort,
+        private readonly analistaRepository: AnalistaRepositoryPort, 
+        private readonly verazAutomatico: boolean
     ) {}
 
     /**
@@ -195,11 +200,58 @@ export class CrearSolicitudInicialUseCase {
 */
             // 6. Notificar al cliente (simulado)
 
+            if (this.verazAutomatico) {
+                // ===== BLOQUE VERAZ DESCOMENTADO =====
+                const estadoVeraz = await this.verazService.checkClienteStatus(dniCliente);
+                if (estadoVeraz.status === "aprobado") {
+                    solicitudCreada.setEstado("aprobada");
+                    await this.solicitudInicialRepository.updateSolicitudInicial(solicitudCreada);
+                    // Registrar evento de aprobación automática
+                await this.historialRepository.registrarEvento({
+                    usuarioId: null, // Sistema automático
+                    accion: HISTORIAL_ACTIONS.APPROVE_SOLICITUD_INICIAL,
+                    entidadAfectada: 'solicitudes_iniciales',
+                    entidadId: solicitudCreada.getId(),
+                    detalles: {
+                        sistema: "Veraz",
+                        score: estadoVeraz.score,
+                        motivo: estadoVeraz.motivo || "Aprobación automática"
+                    },
+                    solicitudInicialId: solicitudInicialId
+                });
+                } else if(estadoVeraz.status === "rechazado"){
+                    solicitudCreada.setEstado("rechazada");
+                    await this.solicitudInicialRepository.updateSolicitudInicial(solicitudCreada);
+                    // Registrar evento de rechazo automático
+                await this.historialRepository.registrarEvento({
+                    usuarioId: null, // Sistema automático
+                    accion: HISTORIAL_ACTIONS.REJECT_SOLICITUD_INICIAL,
+                    entidadAfectada: 'solicitudes_iniciales',
+                    entidadId: solicitudCreada.getId(),
+                    detalles: {
+                        sistema: "Veraz",
+                        score: estadoVeraz.score,
+                        motivo: estadoVeraz.motivo || "Rechazo automático"
+                    },
+                    solicitudInicialId: solicitudInicialId
+                });
+                } else {
+                    solicitudCreada.setEstado("pendiente");
+                    await this.solicitudInicialRepository.updateSolicitudInicial(solicitudCreada);
+                }
+                // ===== FIN BLOQUE VERAZ =====
+            } else {
+                // MODO MANUAL: Notificar a analistas
+                await this.notificarAnalistas(solicitudCreada);
+            }
+
+            // Notificación al comerciante (existente)
             await this.notificationService.emitNotification({
                 userId: Number(comercianteId),
                 type: "solicitud_inicial",
                 message: "Solicitud inicial creada exitosamente"
             });
+
 
             return solicitudCreada;
         } catch (error) {
@@ -260,4 +312,36 @@ export class CrearSolicitudInicialUseCase {
         
         return false;
     }
+
+    /**
+     * Notifica a todos los analistas activos sobre una nueva solicitud inicial.
+     * 
+     * Este método envía una notificación a todos los analistas registrados en el sistema
+     * para que revisen la nueva solicitud inicial creada.
+     * 
+     * @param solicitud - La solicitud inicial que se ha creado
+     */
+    private async notificarAnalistas(solicitud: SolicitudInicial): Promise<void> {
+        try {
+            const analistaIds = await this.analistaRepository.obtenerIdsAnalistasActivos();
+            const notificaciones = analistaIds.map(analistaId => 
+                this.notificationService.emitNotification({
+                    userId: analistaId,
+                    type: "solicitud_inicial",
+                    message: "Nueva solicitud inicial requiere revisión",
+                    metadata: {
+                        solicitudId: solicitud.getId(),
+                        dniCliente: solicitud.getDniCliente(),
+                        comercianteId: solicitud.getComercianteId(),
+                        prioridad: "media"
+                    }
+                })
+            );
+            await Promise.all(notificaciones);
+        } catch (error) {
+            console.error("Error notificando a analistas:", error);
+            // Registrar error opcional
+        }
+    }
+
 }

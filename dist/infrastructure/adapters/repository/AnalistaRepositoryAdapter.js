@@ -14,6 +14,10 @@ exports.AnalistaRepositoryAdapter = void 0;
 const Analista_1 = require("../../../domain/entities/Analista");
 const DatabaseDonfig_1 = require("../../config/Database/DatabaseDonfig");
 class AnalistaRepositoryAdapter {
+    /**
+     * Obtiene los IDs de todos los analistas activos.
+     * @returns Promise<number[]> - Array de IDs de analistas activos.
+     */
     obtenerIdsAnalistasActivos() {
         return __awaiter(this, void 0, void 0, function* () {
             const query = `
@@ -26,6 +30,11 @@ class AnalistaRepositoryAdapter {
             return result.rows.map(row => row.id);
         });
     }
+    /**
+     * Busca un analista por su email.
+     * @param email - Email del analista a buscar.
+     * @returns Promise<Analista | null> - El analista encontrado o null si no existe.
+     */
     findByEmail(email) {
         return __awaiter(this, void 0, void 0, function* () {
             const query = `
@@ -45,6 +54,11 @@ class AnalistaRepositoryAdapter {
             return this.mapRowToAnalista(result.rows[0]);
         });
     }
+    /**
+     * Guarda un nuevo analista en la base de datos.
+     * @param analista - Objeto Analista a guardar.
+     * @returns Promise<Analista> - El analista guardado con su ID asignado.
+     */
     saveAnalista(analista) {
         return __awaiter(this, void 0, void 0, function* () {
             const client = yield DatabaseDonfig_1.pool.connect();
@@ -90,6 +104,11 @@ class AnalistaRepositoryAdapter {
             }
         });
     }
+    /**
+     * Obtiene un analista por su ID.
+     * @param id - ID del analista a buscar.
+     * @returns Promise<Analista | null> - El analista encontrado o null si no existe.
+     */
     getAnalistaById(id) {
         return __awaiter(this, void 0, void 0, function* () {
             const query = `
@@ -109,6 +128,11 @@ class AnalistaRepositoryAdapter {
             return this.mapRowToAnalista(result.rows[0]);
         });
     }
+    /**
+     * Actualiza los datos de un analista existente.
+     * @param analista - Objeto Analista con los datos actualizados.
+     * @returns Promise<Analista> - El analista actualizado.
+     */
     updateAnalista(analista) {
         return __awaiter(this, void 0, void 0, function* () {
             const client = yield DatabaseDonfig_1.pool.connect();
@@ -139,6 +163,11 @@ class AnalistaRepositoryAdapter {
             }
         });
     }
+    /**
+     * Elimina un analista por su ID.
+     * @param id - ID del analista a eliminar.
+     * @returns Promise<void> - No retorna valor.
+     */
     deleteAnalista(id) {
         return __awaiter(this, void 0, void 0, function* () {
             const client = yield DatabaseDonfig_1.pool.connect();
@@ -161,6 +190,10 @@ class AnalistaRepositoryAdapter {
             }
         });
     }
+    /**
+     * Obtiene todos los analistas del sistema.
+     * @returns Promise<Analista[]> - Array de analistas con sus permisos.
+     */
     getAllAnalistas() {
         return __awaiter(this, void 0, void 0, function* () {
             const query = `

@@ -1,4 +1,5 @@
 "use strict";
+// src/infrastructure/config/app.config.ts
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.appConfig = void 0;
 // Validar que JWT_SECRET esté configurado en producción

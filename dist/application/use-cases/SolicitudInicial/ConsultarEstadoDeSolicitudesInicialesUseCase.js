@@ -1,4 +1,5 @@
 "use strict";
+// src/application/use-cases/SolicitudInicial/ConsultarEstadoDeSolicitudesInicialesUseCase.ts
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
     return new (P || (P = Promise))(function (resolve, reject) {
@@ -10,11 +11,35 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.ConsultarEstadoDeSolicitudesInicialesUseCase = void 0;
+/**
+ * Caso de uso para consultar el estado de solicitudes iniciales de un comerciante.
+ *
+ * Esta clase implementa la lógica para que un comerciante pueda consultar
+ * todas sus solicitudes iniciales y recibir notificaciones sobre el resultado
+ * de la consulta.
+ */
 class ConsultarEstadoDeSolicitudesInicialesUseCase {
+    /**
+     * Constructor del caso de uso.
+     *
+     * @param repository - Puerto para operaciones de solicitudes iniciales
+     * @param notificationService - Puerto para servicios de notificación
+     */
     constructor(repository, notificationService) {
         this.repository = repository;
         this.notificationService = notificationService;
     }
+    /**
+     * Ejecuta la consulta de solicitudes iniciales de un comerciante.
+     *
+     * Este método obtiene todas las solicitudes iniciales asociadas al comerciante
+     * y maneja los casos especiales como la ausencia de solicitudes o errores
+     * en la consulta, enviando notificaciones apropiadas en cada caso.
+     *
+     * @param comercianteId - ID del comerciante cuyas solicitudes se quieren consultar
+     * @returns Promise<SolicitudInicial[]> - Array con las solicitudes iniciales del comerciante
+     * @throws Error - Si ocurre un error durante la consulta de solicitudes
+     */
     execute(comercianteId) {
         return __awaiter(this, void 0, void 0, function* () {
             try {

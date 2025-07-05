@@ -1,4 +1,5 @@
 "use strict";
+// src/application/use-cases/Administrador/GetAdminByIdUseCase.ts
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
     return new (P || (P = Promise))(function (resolve, reject) {
@@ -10,10 +11,28 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.GetAdminByIdUseCase = void 0;
+/**
+ * Caso de uso para obtener un administrador por su identificador.
+ *
+ * Esta clase permite consultar los datos de un administrador específico,
+ * validando su existencia en el sistema.
+ */
 class GetAdminByIdUseCase {
+    /**
+     * Constructor del caso de uso.
+     *
+     * @param repository - Puerto de acceso al repositorio de administradores
+     */
     constructor(repository) {
         this.repository = repository;
     }
+    /**
+     * Ejecuta la consulta de un administrador por ID.
+     *
+     * @param id - Identificador único del administrador
+     * @returns Promise<Administrador> - Administrador encontrado
+     * @throws Error si el administrador no existe
+     */
     execute(id) {
         return __awaiter(this, void 0, void 0, function* () {
             const administrador = yield this.repository.getAdministradorById(id);

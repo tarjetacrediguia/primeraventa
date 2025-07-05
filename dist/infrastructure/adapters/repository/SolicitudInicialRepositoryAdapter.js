@@ -14,6 +14,11 @@ exports.SolicitudInicialRepositoryAdapter = void 0;
 const SolicitudInicial_1 = require("../../../domain/entities/SolicitudInicial");
 const DatabaseDonfig_1 = require("../../config/Database/DatabaseDonfig");
 class SolicitudInicialRepositoryAdapter {
+    /**
+     * Obtiene las solicitudes iniciales que están próximas a expirar.
+     * @param diasExpiracion - Número de días después de los cuales una solicitud se considera expirada.
+     * @returns Promise<SolicitudInicial[]> - Array de solicitudes iniciales que están próximas a expirar.
+     */
     obtenerSolicitudesAExpirar(diasExpiracion) {
         return __awaiter(this, void 0, void 0, function* () {
             const query = `
@@ -40,6 +45,11 @@ class SolicitudInicialRepositoryAdapter {
             ));
         });
     }
+    /**
+     * Marca una solicitud inicial como expirada.
+     * @param solicitudId - ID de la solicitud inicial a expirar.
+     * @returns Promise<void> - No retorna valor.
+     */
     expirarSolicitud(solicitudId) {
         return __awaiter(this, void 0, void 0, function* () {
             const client = yield DatabaseDonfig_1.pool.connect();
@@ -71,6 +81,11 @@ class SolicitudInicialRepositoryAdapter {
             }
         });
     }
+    /**
+     * Crea una nueva solicitud inicial en la base de datos.
+     * @param solicitudInicial - Objeto SolicitudInicial a crear.
+     * @returns Promise<SolicitudInicial> - La solicitud inicial creada con su ID asignado.
+     */
     createSolicitudInicial(solicitudInicial) {
         return __awaiter(this, void 0, void 0, function* () {
             const client = yield DatabaseDonfig_1.pool.connect();
@@ -143,6 +158,11 @@ class SolicitudInicialRepositoryAdapter {
             }
         });
     }
+    /**
+     * Obtiene una solicitud inicial por su ID.
+     * @param id - ID de la solicitud inicial a buscar.
+     * @returns Promise<SolicitudInicial | null> - La solicitud inicial encontrada o null si no existe.
+     */
     getSolicitudInicialById(id) {
         return __awaiter(this, void 0, void 0, function* () {
             const query = `
@@ -169,6 +189,11 @@ class SolicitudInicialRepositoryAdapter {
             return this.mapRowToSolicitudInicial(result.rows[0]);
         });
     }
+    /**
+     * Actualiza los datos de una solicitud inicial existente.
+     * @param solicitudInicial - Objeto SolicitudInicial con los datos actualizados.
+     * @returns Promise<SolicitudInicial> - La solicitud inicial actualizada.
+     */
     updateSolicitudInicial(solicitudInicial) {
         return __awaiter(this, void 0, void 0, function* () {
             const client = yield DatabaseDonfig_1.pool.connect();
@@ -225,6 +250,11 @@ class SolicitudInicialRepositoryAdapter {
             }
         });
     }
+    /**
+     * Actualiza el estado de aprobación o rechazo de una solicitud inicial.
+     * @param solicitudInicial - Objeto SolicitudInicial con el nuevo estado.
+     * @returns Promise<SolicitudInicial> - La solicitud inicial actualizada.
+     */
     updateSolicitudInicialAprobaciónRechazo(solicitudInicial) {
         return __awaiter(this, void 0, void 0, function* () {
             const client = yield DatabaseDonfig_1.pool.connect();
@@ -281,6 +311,10 @@ class SolicitudInicialRepositoryAdapter {
             }
         });
     }
+    /**
+     * Obtiene todas las solicitudes iniciales del sistema.
+     * @returns Promise<SolicitudInicial[]> - Array de todas las solicitudes iniciales.
+     */
     getAllSolicitudesIniciales() {
         return __awaiter(this, void 0, void 0, function* () {
             const query = `
@@ -296,6 +330,11 @@ class SolicitudInicialRepositoryAdapter {
             return result.rows.map(row => this.mapRowToSolicitudInicial(row));
         });
     }
+    /**
+     * Obtiene las solicitudes iniciales por DNI del cliente.
+     * @param dni - DNI del cliente.
+     * @returns Promise<SolicitudInicial[]> - Array de solicitudes iniciales del cliente.
+     */
     getSolicitudesInicialesByDni(dni) {
         return __awaiter(this, void 0, void 0, function* () {
             const query = `
@@ -312,6 +351,11 @@ class SolicitudInicialRepositoryAdapter {
             return result.rows.map(row => this.mapRowToSolicitudInicial(row));
         });
     }
+    /**
+     * Obtiene las solicitudes iniciales por estado.
+     * @param estado - Estado de las solicitudes a buscar.
+     * @returns Promise<SolicitudInicial[]> - Array de solicitudes iniciales con el estado especificado.
+     */
     getSolicitudesInicialesByEstado(estado) {
         return __awaiter(this, void 0, void 0, function* () {
             const query = `
@@ -328,6 +372,11 @@ class SolicitudInicialRepositoryAdapter {
             return result.rows.map(row => this.mapRowToSolicitudInicial(row));
         });
     }
+    /**
+     * Obtiene las solicitudes iniciales por fecha de creación.
+     * @param fecha - Fecha de creación de las solicitudes.
+     * @returns Promise<SolicitudInicial[]> - Array de solicitudes iniciales creadas en esa fecha.
+     */
     getSolicitudesInicialesByFecha(fecha) {
         return __awaiter(this, void 0, void 0, function* () {
             const query = `
@@ -344,6 +393,11 @@ class SolicitudInicialRepositoryAdapter {
             return result.rows.map(row => this.mapRowToSolicitudInicial(row));
         });
     }
+    /**
+     * Obtiene las solicitudes iniciales por ID del comerciante.
+     * @param comercianteId - ID del comerciante.
+     * @returns Promise<SolicitudInicial[]> - Array de solicitudes iniciales del comerciante.
+     */
     getSolicitudesInicialesByComercianteId(comercianteId) {
         return __awaiter(this, void 0, void 0, function* () {
             const query = `
@@ -360,6 +414,11 @@ class SolicitudInicialRepositoryAdapter {
             return result.rows.map(row => this.mapRowToSolicitudInicial(row));
         });
     }
+    /**
+     * Obtiene las solicitudes iniciales por ID del cliente.
+     * @param clienteId - ID del cliente.
+     * @returns Promise<SolicitudInicial[]> - Array de solicitudes iniciales del cliente.
+     */
     getSolicitudesInicialesByClienteId(clienteId) {
         return __awaiter(this, void 0, void 0, function* () {
             const query = `
@@ -379,6 +438,12 @@ class SolicitudInicialRepositoryAdapter {
     mapRowToSolicitudInicial(row) {
         return new SolicitudInicial_1.SolicitudInicial(Number(row.id), new Date(row.fecha_creacion), row.estado, row.dni_cliente, Number(row.cliente_id), row.cuil_cliente, row.recibosueldo || undefined, row.comerciante_id ? Number(row.comerciante_id) : undefined, row.comentarios || [], row.analista_aprobador_id ? Number(row.analista_aprobador_id) : undefined, row.administrador_aprobador_id ? Number(row.administrador_aprobador_id) : undefined);
     }
+    /**
+     * Obtiene las solicitudes iniciales por comerciante y estado.
+     * @param comercianteId - ID del comerciante.
+     * @param estado - Estado de las solicitudes.
+     * @returns Promise<SolicitudInicial[]> - Array de solicitudes iniciales del comerciante con el estado especificado.
+     */
     getSolicitudesInicialesByComercianteYEstado(comercianteId, estado) {
         return __awaiter(this, void 0, void 0, function* () {
             const query = `
