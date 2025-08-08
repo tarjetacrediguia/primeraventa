@@ -14,7 +14,6 @@ import { GetAdminByIdUseCase } from '../../../application/use-cases/Administrado
 import { GetAllAdminUseCase } from '../../../application/use-cases/Administrador/GetAllAdminUseCase';
 import { UpdateAdminUseCase } from '../../../application/use-cases/Administrador/UpdateAdminUseCase';
 import { AdministradorRepositoryAdapter } from '../../adapters/repository/AdministradorRepositoryAdapter';
-import { Permiso } from '../../../domain/entities/Permiso';
 
 const administradorRepository = new AdministradorRepositoryAdapter();
 

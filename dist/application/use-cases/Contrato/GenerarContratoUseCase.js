@@ -31,7 +31,7 @@ class GenerarContratoUseCase {
      * @param historialRepository - Puerto para registro de eventos en historial
      * @param solicitudInicialRepository - Puerto para operaciones de solicitudes iniciales
      */
-    constructor(solicitudRepository, contratoRepository, pdfService, notificationService, clienteRepository, historialRepository, solicitudInicialRepository) {
+    constructor(solicitudRepository, contratoRepository, pdfService, notificationService, clienteRepository, historialRepository, solicitudInicialRepository, compraRepository) {
         this.solicitudRepository = solicitudRepository;
         this.contratoRepository = contratoRepository;
         this.pdfService = pdfService;
@@ -39,6 +39,7 @@ class GenerarContratoUseCase {
         this.clienteRepository = clienteRepository;
         this.historialRepository = historialRepository;
         this.solicitudInicialRepository = solicitudInicialRepository;
+        this.compraRepository = compraRepository;
     }
     /**
      * Ejecuta la generación de un contrato a partir de una solicitud formal aprobada.
@@ -113,12 +114,21 @@ class GenerarContratoUseCase {
                 if (!clientePorDNI) {
                     throw new Error(`No se encontró el cliente con DNI ${clienteDNI}`);
                 }
-                // Calcular el monto del contrato
-                const monto = 10000; // Monto fijo por ahora
+                // Obtener la compra asociada a la solicitud formal
+                const compra = yield this.compraRepository.getComprasBySolicitudFormalId(Number(solicitud.getId()));
+                if (!compra) {
+                    throw new Error(`No se encontró compra para la solicitud formal ${solicitud.getId()}`);
+                }
+                const numeroTarjeta = compra.getNumeroTarjeta();
+                const numeroCuenta = compra.getNumeroCuenta();
+                if (!numeroTarjeta || !numeroCuenta) {
+                    throw new Error(`La compra asociada no tiene número de tarjeta o cuenta`);
+                }
                 // Crear el contrato con los valores correctos
-                const contrato = new Contrato_1.Contrato(0, new Date(), monto, "generado", solicitud.getId(), clientePorDNI.getId(), solicitud.getNumeroTarjeta(), // Usar el número de tarjeta de la solicitud
-                solicitud.getNumeroCuenta() // Usar el número de cuenta de la solicitud
+                const contrato = new Contrato_1.Contrato(0, new Date(), "generado", solicitud.getId(), clientePorDNI.getId(), numeroTarjeta, // Usar el número de tarjeta de la solicitud
+                numeroCuenta // Usar el número de cuenta de la solicitud
                 );
+                //TODO: Obtener el monto total ponderado de la compra asociada
                 // 4. Guardar contrato
                 const contratoGuardado = yield this.contratoRepository.saveContrato(contrato);
                 yield this.historialRepository.registrarEvento({
@@ -127,7 +137,7 @@ class GenerarContratoUseCase {
                     entidadAfectada: 'contratos',
                     entidadId: contratoGuardado.getId(),
                     detalles: {
-                        monto: monto,
+                        monto: compra.getMontoTotalPonderado(),
                         numero_tarjeta: contratoGuardado.getNumeroTarjeta(),
                         numero_cuenta: contratoGuardado.getNumeroCuenta(),
                         solicitud_formal_id: solicitud.getId()
@@ -171,7 +181,7 @@ class GenerarContratoUseCase {
      */
     notificarContratoGenerado(solicitud, contrato, pdfBuffer) {
         return __awaiter(this, void 0, void 0, function* () {
-            const mensaje = `Su contrato ${contrato.getNumeroTarjeta()} ha sido generado con éxito. Monto: $${contrato.getMonto()}`;
+            const mensaje = `Su contrato ${contrato.getNumeroTarjeta()} ha sido generado con éxito.}`;
             yield this.enviarNotificacion(solicitud, mensaje, pdfBuffer);
         });
     }

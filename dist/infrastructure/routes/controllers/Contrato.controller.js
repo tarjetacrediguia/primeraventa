@@ -10,8 +10,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.descargarContratoPDF = exports.generarContratoPDF = void 0;
-const GenerarContratoUseCase_1 = require("../../../application/use-cases/Contrato/GenerarContratoUseCase");
+exports.descargarContratoPDF = exports.generarYDescargarContratoPDF = void 0;
 const DescargarContratoUseCase_1 = require("../../../application/use-cases/Contrato/DescargarContratoUseCase");
 const ContratoRepositoryAdapter_1 = require("../../adapters/repository/ContratoRepositoryAdapter");
 const SolicitudFormalRepositoryAdapter_1 = require("../../adapters/repository/SolicitudFormalRepositoryAdapter");
@@ -20,52 +19,40 @@ const pdfAdapter_1 = require("../../adapters/pdf/pdfAdapter");
 const ClienteRepositoryAdapter_1 = require("../../adapters/repository/ClienteRepositoryAdapter");
 const HistorialRepositoryAdapter_1 = require("../../adapters/repository/HistorialRepositoryAdapter");
 const SolicitudInicialRepositoryAdapter_1 = require("../../adapters/repository/SolicitudInicialRepositoryAdapter");
+const ComercianteRepositoryAdapter_1 = require("../../adapters/repository/ComercianteRepositoryAdapter");
+const GenerarYDescargarContratoUseCase_1 = require("../../../application/use-cases/Contrato/GenerarYDescargarContratoUseCase");
+const CompraRepositoryAdapter_1 = require("../../adapters/repository/CompraRepositoryAdapter");
 // Inicializar adapters
 const contratoRepository = new ContratoRepositoryAdapter_1.ContratoRepositoryAdapter();
 const solicitudRepository = new SolicitudFormalRepositoryAdapter_1.SolicitudFormalRepositoryAdapter();
 const pdfService = new pdfAdapter_1.PdfAdapter();
 const notificationService = new NotificationAdapter_1.NotificationAdapter();
 const clienteRepository = new ClienteRepositoryAdapter_1.ClienteRepositoryAdapter();
-const historialRepository = new HistorialRepositoryAdapter_1.HistorialRepositoryAdapter();
 const solicitudInicialRepository = new SolicitudInicialRepositoryAdapter_1.SolicitudInicialRepositoryAdapter();
-/**
- * Genera un nuevo contrato a partir de una solicitud.
- * @param req - Request de Express con el ID de la solicitud en body.
- * @param res - Response de Express para enviar la respuesta.
- * @returns Devuelve el contrato generado o un error en caso de fallo.
- */
-const generarContratoPDF = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    var _a, _b;
+const comercianteRepository = new ComercianteRepositoryAdapter_1.ComercianteRepositoryAdapter();
+const historialRepository = new HistorialRepositoryAdapter_1.HistorialRepositoryAdapter();
+const compraRepository = new CompraRepositoryAdapter_1.CompraRepositoryAdapter();
+// Inicializar el nuevo caso de uso unificado
+const generacionYDescargaUC = new GenerarYDescargarContratoUseCase_1.GeneracionYDescargaContratoUseCase(solicitudRepository, contratoRepository, pdfService, notificationService, clienteRepository, historialRepository, solicitudInicialRepository, comercianteRepository, compraRepository);
+const generarYDescargarContratoPDF = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    var _a;
     try {
         const solicitudId = parseInt(req.params.id, 10);
         const userId = Number((_a = req.user) === null || _a === void 0 ? void 0 : _a.id);
-        // Obtener solicitud
-        const solicitud = yield solicitudRepository.getSolicitudFormalById(solicitudId);
-        if (!solicitud) {
-            return res.status(404).json({ error: 'Solicitud no encontrada' });
-        }
-        // Verificar permisos
-        if (((_b = req.user) === null || _b === void 0 ? void 0 : _b.rol) === 'comerciante') {
-            //const cliente = await clienteRepository.findById(solicitud.getClienteId());
-            if (solicitud.getComercianteId() !== userId) {
-                return res.status(403).json({ error: 'No tiene permiso para esta operación' });
-            }
-        }
-        // Generar contrato
-        const useCase = new GenerarContratoUseCase_1.GenerarContratoUseCase(solicitudRepository, contratoRepository, pdfService, notificationService, clienteRepository, historialRepository, solicitudInicialRepository);
-        const contrato = yield useCase.execute(solicitudId, userId);
-        // Devolver URL con ID de contrato, no de solicitud
-        res.status(200).json({
-            url: `/API/v1/contratos/${contrato.getId()}`
-        });
+        // Ejecutar generación y descarga en un solo paso
+        const { pdf } = yield generacionYDescargaUC.execute(solicitudId, userId);
+        // Enviar el PDF directamente como respuesta
+        res.setHeader('Content-Type', 'application/pdf');
+        res.setHeader('Content-Disposition', `attachment; filename=contrato.pdf`);
+        res.send(pdf);
     }
     catch (error) {
-        const message = error.message || 'Error generando contrato';
+        const message = error.message || 'Error generando y descargando contrato';
         const status = message.includes('no encontrada') ? 404 : 500;
         res.status(status).json({ error: message });
     }
 });
-exports.generarContratoPDF = generarContratoPDF;
+exports.generarYDescargarContratoPDF = generarYDescargarContratoPDF;
 /**
  * Obtiene un contrato por su ID.
  * @param req - Request de Express con el ID del contrato en params.
@@ -91,7 +78,7 @@ const descargarContratoPDF = (req, res) => __awaiter(void 0, void 0, void 0, fun
             return res.status(403).json({ error: 'No tiene permiso para este contrato' });
           }
         }
-    */
+        */
         // Generar PDF
         const useCase = new DescargarContratoUseCase_1.DescargarContratoUseCase(contratoRepository, pdfService, solicitudRepository);
         const pdfBuffer = yield useCase.execute(contratoId, cliente.getDni());

@@ -46,6 +46,11 @@ import { GetSolicitudesFormalesByComercianteYEstadoUseCase } from '../../../appl
 import { HistorialRepositoryAdapter } from '../../adapters/repository/HistorialRepositoryAdapter';
 import { GetSolicitudesFormalesByComercianteIdUseCase } from '../../../application/use-cases/SolicitudFormal/GetSolicitudesFormalesByComercianteIdUseCase';
 import { AprobarRechazarSolicitudInicialUseCase } from '../../../application/use-cases/SolicitudInicial/AprobarRechazarSolicitudInicialUseCase';
+import { SolicitudInicial } from '../../../domain/entities/SolicitudInicial';
+import { ListSolicitudesInicialesUseCase } from '../../../application/use-cases/SolicitudInicial/ListSolicitudesInicialesUseCase';
+import { ConfiguracionRepositoryAdapter } from '../../adapters/repository/ConfiguracionRepositoryAdapter';
+import { CompraRepositoryAdapter } from '../../adapters/repository/CompraRepositoryAdapter';
+import { CrearYAprobarSolicitudFormalUseCase } from '../../../application/use-cases/SolicitudFormal/CrearYAprobarSolicitudFormalUseCase';
 
 // Inyección de dependencias (deberían venir de un contenedor DI)
 const verazService: VerazPort = new VerazAdapter();
@@ -58,8 +63,8 @@ const clienteRepository = new ClienteRepositoryAdapter();
 const historialRepository = new HistorialRepositoryAdapter();
 const analistaRepository = new AnalistaRepositoryAdapter();
 const getSolicitudesInicialesByComercianteYEstado = new GetSolicitudesInicialesByComercianteYEstadoUseCase(solicitudInicialRepo)
-
-
+const configuracionRepo = new ConfiguracionRepositoryAdapter();
+const compraRepository = new CompraRepositoryAdapter();
 
 // Casos de uso inicializados
 const crearSolicitudInicialUC = new CrearSolicitudInicialUseCase(
@@ -95,19 +100,28 @@ const crearSolicitudFormalUC = new CrearSolicitudFormalUseCase(
   new AnalistaRepositoryAdapter(),
   contratoRepo,
   clienteRepository,
-  historialRepository
+  historialRepository,
+  configuracionRepo
 );
 
 const aprobarSolicitudesUC = new AprobarSolicitudesFormalesUseCase(
   solicitudFormalRepo,
   notificationService,
-  historialRepository
+  historialRepository,
+  compraRepository
+);
+
+const crearYAprobarSolicitudFormalUC = new CrearYAprobarSolicitudFormalUseCase(
+  crearSolicitudFormalUC,
+  aprobarSolicitudesUC,
+  permisoRepo
 );
 
 const getSolicitudesFormalesByEstadoUC = new GetSolicitudesFormalesByEstadoUseCase(solicitudFormalRepo);
 const getSolicitudesFormalesByFechaUC = new GetSolicitudesFormalesByFechaUseCase(solicitudFormalRepo);
 const updateSolicitudFormalUC = new UpdateSolicitudFormalUseCase(solicitudFormalRepo,historialRepository);
 const getSolicitudFormalByIdUC = new GetSolicitudesFormalesByIdUseCase(solicitudFormalRepo);
+const listSolicitudesInicialesUC = new ListSolicitudesInicialesUseCase(solicitudInicialRepo);
 
 /**
  * Crea una nueva solicitud inicial.
@@ -153,13 +167,22 @@ export const crearSolicitudInicial = async (req: Request, res: Response) => {
  * @returns Devuelve un array de solicitudes o un error en caso de fallo.
  */
 export const listarSolicitudesIniciales = async (req: Request, res: Response) => {
-  try {
-    const estado = req.query.estado as string;
-    const solicitudes = await getSolicitudesInicialesByEstadoUC.execute(estado);
-    res.status(200).json(solicitudes);
-  } catch (error) {
-    res.status(400).json({ error: (error as Error).message });
-  }
+    try {
+        const estado = req.query.estado as string;
+        let solicitudes: SolicitudInicial[];
+        
+        if (estado) {
+            // Filtrar por estado si se proporciona
+            solicitudes = await getSolicitudesInicialesByEstadoUC.execute(estado);
+        } else {
+            // Obtener todas las solicitudes si no hay filtro
+            solicitudes = await listSolicitudesInicialesUC.execute();
+        }
+        
+        res.status(200).json(solicitudes);
+    } catch (error) {
+        res.status(400).json({ error: (error as Error).message });
+    }
 };
 
 /**
@@ -186,7 +209,7 @@ export const verificarEstadoCrediticio = async (req: Request, res: Response) => 
  */
 export const crearSolicitudFormal = async (req: Request, res: Response) => {
   try {
-    const { idSolicitudInicial, cliente, referentes } = req.body;
+    const { idSolicitudInicial, cliente, referentes,importeNeto,solicitaAmpliacionDeCredito,comentarioInicial } = req.body;
     // Validar que el recibo sea proporcionado
     if (!cliente.recibo) {
       return res.status(400).json({ error: 'El recibo es obligatorio' });
@@ -247,8 +270,12 @@ export const crearSolicitudFormal = async (req: Request, res: Response) => {
         fechaNacimiento: new Date(cliente.fechaNacimiento),
         domicilio: cliente.domicilio,
         datosEmpleador: cliente.datosEmpleador,
-        referentes: referentesInstances
-      }
+        referentes: referentesInstances,
+        importeNeto: importeNeto
+      },
+      comentarioInicial,
+      solicitaAmpliacionDeCredito
+
     );
 
     res.status(201).json(solicitudFormal);
@@ -350,21 +377,18 @@ export const obtenerReciboSolicitudFormal = async (req: Request, res: Response) 
 export const aprobarSolicitudFormal = async (req: Request, res: Response) => {
   try {
     const id = req.params.id;
-    const { numeroTarjeta, numeroCuenta, generarTarjeta, comentario } = req.body;
+    const { generarTarjeta, comentario } = req.body;
     
     if (!req.user || !req.user.id || !req.user.rol) {
       return res.status(401).json({ error: 'Usuario no autenticado' });
     }
     
-    const esAdministrador = req.user.rol === 'administrador';
     const aprobadorId = Number(req.user.id);
 
     const solicitudActualizada = await aprobarSolicitudesUC.aprobarSolicitud(
       Number(id),
-      numeroTarjeta,
-      numeroCuenta,
       aprobadorId,
-      esAdministrador,
+      req.user.rol,
       comentario
     );
 
@@ -574,7 +598,8 @@ export const obtenerDetalleSolicitudFormal = async (req: Request, res: Response)
  */
 export const listarSolicitudesInicialesByComercianteYEstado = async (req: Request, res: Response) => {
     try {
-        const comercianteId = req.query.id ? parseInt(req.query.id as string) : undefined;
+        const comercianteId = req.user?.id;
+        console.log('Comerciante ID:', comercianteId);
         const estado = req.query.estado as string;
 
         // Validar parámetros
@@ -583,7 +608,7 @@ export const listarSolicitudesInicialesByComercianteYEstado = async (req: Reques
         }
         // Filtro combinado
         const useCase = getSolicitudesInicialesByComercianteYEstado;
-        const solicitudes = await useCase.execute(comercianteId, estado);
+        const solicitudes = await useCase.execute(Number(comercianteId), estado);
         res.json(solicitudes);
     } catch (error) {
         const errorMessage = error instanceof Error ? error.message : String(error);
@@ -708,3 +733,97 @@ function handleErrorResponse(res: Response, error: any) {
         res.status(500).json({ error: message });
     }
 }
+
+export const crearYAprobarSolicitudFormal = async (req: Request, res: Response) => {
+  try {
+    const { idSolicitudInicial, cliente, referentes, importeNeto, solicitaAmpliacionDeCredito, comentarioInicial } = req.body;
+    // Validar que el recibo sea proporcionado
+    if (!cliente.recibo) {
+      return res.status(400).json({ error: 'El recibo es obligatorio' });
+    }
+    // Convertir base64 a Buffer
+    const reciboBuffer = Buffer.from(cliente.recibo, 'base64');
+    
+    // Validar que sea una imagen JPG
+    const mimeType = await getImageMimeType(reciboBuffer);
+    if (mimeType !== 'image/jpeg') {
+      return res.status(400).json({ error: 'El recibo debe ser una imagen JPG' });
+    }
+    
+    // Validar tamaño máximo (5MB)
+    if (reciboBuffer.length > 5 * 1024 * 1024) {
+      return res.status(400).json({ error: 'El recibo no puede exceder los 5MB' });
+    }
+    
+    // Reemplazar el string base64 con el Buffer
+    cliente.recibo = reciboBuffer;
+
+    // Validar referentes (código existente)
+    if (!referentes || !Array.isArray(referentes)) {
+      return res.status(400).json({ error: 'Se requiere un array de referentes' });
+    }
+    if (referentes.length !== 2) {
+      return res.status(400).json({ error: 'Se requieren exactamente dos referentes' });
+    }
+
+    const referentesInstances = referentes.map(ref => {
+      if (!ref.nombreCompleto || !ref.apellido || !ref.vinculo || !ref.telefono) {
+        throw new Error('Cada referente debe tener: nombreCompleto, apellido, vinculo y telefono');
+      }
+      return new Referente(
+        ref.nombreCompleto,
+        ref.apellido,
+        ref.vinculo,
+        ref.telefono
+      );
+    });
+
+
+    if (!req.user || !req.user.id) {
+      return res.status(401).json({ error: 'Usuario no autenticado' });
+    }
+    const comercianteId = Number(req.user.id);
+
+    const solicitudFormal = await crearYAprobarSolicitudFormalUC.execute(
+      idSolicitudInicial,
+      comercianteId,
+      req.user.rol,
+      {
+        nombreCompleto: cliente.nombreCompleto,
+        apellido: cliente.apellido,
+        dni: cliente.dni,
+        telefono: cliente.telefono,
+        email: cliente.email,
+        recibo: cliente.recibo,
+        aceptaTarjeta: cliente.aceptaTarjeta,
+        fechaNacimiento: new Date(cliente.fechaNacimiento),
+        domicilio: cliente.domicilio,
+        datosEmpleador: cliente.datosEmpleador,
+        referentes: referentesInstances,
+        importeNeto: importeNeto
+      },
+      comentarioInicial,
+      solicitaAmpliacionDeCredito
+    );
+
+    res.status(201).json(solicitudFormal);
+  } catch (error) {
+    if (error instanceof Error) {
+      if (error.message === 'Solicitud inicial no encontrada') {
+        res.status(404).json({ error: error.message });
+      } else if (
+        error.message === 'La solicitud inicial no está aprobada' ||
+        error.message === 'Ya existe una solicitud formal para esta solicitud inicial'
+      ) {
+        res.status(409).json({ error: error.message });
+      } else if (error.message.includes('Cada referente debe tener')) {
+        res.status(400).json({ error: error.message });
+      } else {
+        res.status(400).json({ error: error.message });
+      }
+    } else {
+      res.status(500).json({ error: 'Error interno del servidor' });
+    }
+  }
+};
+

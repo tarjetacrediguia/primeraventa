@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Página 7 de 8</title>
+  <style>
+    @page {
+            size: A4 portrait;
+            margin: 0;          /* Sin márgenes en la impresora */
+        }
+        body {
+            margin: 0;
+            padding: 20px;
+            background-color: white;
+            width: 210mm;       /* Ancho real de A4 */
+            height: 297mm;      /* Alto real de A4 */
+            box-sizing: border-box;
+            font-size: 8.5pt;   /* Un punto más pequeño */
+            line-height: 1.05;  /* Reduce interlineado */
+        }
+
+        .flex-cell,
+        .gray-header,
+        .white-header,
+        .red-header,
+        .section-title {
+            padding-top: 3px !important;
+            padding-bottom: 3px !important;
+        }
+
+    .page-number {
+      text-align: right;
+      font-size: 11px;
+      color: rgb(93, 123, 192);
+      margin-bottom: 20px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 10px;
+    }
+
+    th, td {
+      border: 1px solid #ccc;
+      padding: 5px;
+      text-align: left;
+    }
+
+    th {
+      background-color: #f2f2f2;
+    }
+
+    .tarifas th {
+      background-color: #0067b1;
+      color: white;
+    }
+
+    .negrita {
+      font-weight: bold;
+    }
+
+    .firma-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 40px;
+      margin-top: 20px;
+    }
+
+    .firma-block {
+      text-align: center;
+      margin-top: 40px;
+    }
+
+    .linea-firma {
+      border-top: 1px dashed rgb(93, 123, 192);
+      width: 80%;
+      margin: 10px auto;
+      margin-top: 40px;
+      margin-bottom: 40px;
+    }
+
+    .footer-verificacion {
+      margin-top: 40px;
+      border-top: 4px solid #0067b1;
+      padding-top: 10px;
+      font-weight: bold;
+      background-color: #d9eaf7;
+      padding: 8px;
+      color: #000;
+    }
+
+    .footer-verificacion-table {
+      width: 100%;
+      border: none;
+      margin-top: 10px;
+    }
+
+    .footer-verificacion-table td {
+      border: none;
+      padding: 10px;
+      border-bottom: 2px solid black;
+    }
+
+    .nota {
+      font-size: 10px;
+      margin-top: 10px;
+      font-size: 6pt;
+    }
+
+    u {
+      color: red;
+    }
+
+    .flex-table {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            margin-top: 5px;
+        }
+        
+        .flex-row {
+            display: flex;
+            width: 100%;
+        }
+        
+        .flex-cell {
+            padding: 8px;
+            box-sizing: border-box;
+            flex: 1 1 0;
+            margin: 1px;
+        }
+        
+        .flex-table .flex-row:first-child .flex-cell {
+            border-top: none;
+        }
+        
+        .flex-table .flex-row .flex-cell:first-child {
+            border-left: none;
+        }
+
+        .white-header{
+            background-color: white;
+            color: white;
+            font-weight: bold;
+            font-family: Arial, Helvetica, sans-serif;
+            font-size: 11px;
+            padding: 6px;
+        }
+
+        .gray-header-small{
+            background-color: #d3d3d3;
+            font-weight: lighter;
+            text-align: left;
+            text-align: start;
+            font-size: 7.5pt;
+        }
+
+        .white-header-small{
+            background-color: #FBFAF8;
+            font-weight: lighter;
+            text-align: left;
+            text-align: start;
+            font-size: 7.5pt;
+        }
+        
+        .blue-header {
+            background-color: #0080c7;
+            color: white;
+            font-weight: bold;
+            font-size: 11px;
+            padding: 6px;
+        }
+
+        .blue-header-white {
+            background-color: #FBFAF8;
+            color: #0080c7;
+            font-weight: bold;
+            font-size: 11px;
+            padding: 6px;
+            text-align: center;
+        }
+        .section-title {
+            background-color: #0080c7;
+            color: white;
+            padding: 6px;
+            font-weight: bold;
+            font-size: 11px;
+            margin-top: 10px;
+        }
+        .white-header{
+            background-color: white;
+            color: white;
+            font-weight: bold;
+            font-family: Arial, Helvetica, sans-serif;
+            font-size: 11px;
+            padding: 6px;
+        }
+        .white-header-large{
+            background-color: white;
+            color: black;
+            font-family: Arial, Helvetica, sans-serif;
+            font-size: 11px;
+            padding: 6px;
+        }
+        .gray-header {
+            background-color: #d3d3d3;
+            font-weight: lighter;
+            font-size: 7.5pt;
+        }
+  </style>
+</head>
+<body>
+
+  <div class="page-number">7 de 8</div>
+  <div class="flex-cell gray-header" style="flex-grow: 12; text-align: center; font-size: 12pt;">CONTRATO DE TARJETA DE CREDITO CREDI GUIA</div>
+        <div class="flex-table data-table">
+            <div class="flex-row">
+                <div class="flex-cell white-header-small" style="flex-grow: 6;">FECHA:</div>
+                <div class="flex-cell white-header-small" style="flex-grow: 6;">PRODUCTO:</div>
+            </div>
+            <div class="flex-row">
+                <div class="flex-cell gray-header-small" style="flex-grow: 6;">SUCURSAL:</div>
+            </div>
+        </div>
+      </div>
+      <div class="section-title">REFERENCIAS PERSONALES</div>
+  
+      <div class="flex-table data-table">
+        <div class="flex-row">
+                <div class="flex-cell white-header" style="flex-grow: 6;">   TEXTO QUE NO SE VE </div>
+            </div>
+            <div class="flex-row">
+                <div class="flex-cell gray-header-small" style="flex-grow: 6;">TIPO DOC: DNI</div>
+                <div class="flex-cell gray-header-small" style="flex-grow: 6;">NUMERO:</div>
+                <div class="flex-cell gray-header-small" style="flex-grow: 6;">Nº DE CUIT O CUIL</div>
+            </div>
+            <div class="flex-row">
+                <div class="flex-cell white-header-small" style="flex-grow: 6;">CALLE / Nº:</div>
+            </div>
+        </div>
+      </div>
+
+<div class="section-title">NOMINA DE TASA DE INTERÉS (Punto N°6) COMISIONES Y OTROS CARGOS(PUNTO N°2-05)</div>
+
+      <div class="flex-table data-table">
+            <div class="flex-row">
+                <div class="flex-cell blue-header-white" style="flex-grow: 6;">CONCEPTO</div>
+                <div class="flex-cell blue-header-white" style="flex-grow: 6;">NACIONAL / GOLD BALCK</div>
+                <div class="flex-cell blue-header-white" style="flex-grow: 6;">SOCIO (PLATINIUM)</div>
+            </div>
+            <div style="height:1px; background:#0080c7; margin:5px 0;"></div>
+            <div class="flex-row">
+                <div class="flex-cell gray-header-small" style="flex-grow: 6;">TASA EFECTIVA ANUAL INTERESES / C.F.T. FINANCIACIÓN*	</div>
+                <div class="flex-cell gray-header-small" style="flex-grow: 6;">TEA 84,40%</div>
+                <div class="flex-cell gray-header-small" style="flex-grow: 6;">TEA 73,79%</div>
+            </div>
+            <div class="flex-row">
+                <div class="flex-cell white-header-small" style="flex-grow: 6;">TASA NOMINAL ANUAL INTERESES COMPENSATORIOS / FINANCIACIÓN</div>
+                <div class="flex-cell white-header-small" style="flex-grow: 6;">TNA 62,78%</div>
+                <div class="flex-cell white-header-small" style="flex-grow: 6;">TNA 56,56%</div>
+            </div>
+            <div class="flex-row">
+                <div class="flex-cell gray-header-small" style="flex-grow: 6;">TASA NOMINAL ANUAL INTERESES PUNITORIOS</div>
+                <div class="flex-cell gray-header-small" style="flex-grow: 6;">TNA 31,39%</div>
+                <div class="flex-cell gray-header-small" style="flex-grow: 6;">TNA 28,28%</div>
+            </div>
+            <div class="flex-row">
+                <div class="flex-cell white-header-small" style="flex-grow: 6;">C.F.T. FINANCIACIÓN</div>
+                <div class="flex-cell white-header-small" style="flex-grow: 6;">84,40%</div>
+                <div class="flex-cell white-header-small" style="flex-grow: 6;">73,79%</div>
+            </div>
+            <div class="flex-row">
+                <div class="flex-cell gray-header-small" style="flex-grow: 6;">COMISIÓN POR RENOVACIÓN ANUAL **</div>
+                <div class="flex-cell gray-header-small" style="flex-grow: 6;">$3300</div>
+                <div class="flex-cell gray-header-small" style="flex-grow: 6;">$3300</div>
+            </div>
+            <div class="flex-row">
+                <div class="flex-cell white-header-small" style="flex-grow: 6;">COMISIÓN POR MANTENIMIENTO DE CUENTA</div>
+                <div class="flex-cell white-header-small" style="flex-grow: 6;">$650,00</div>
+                <div class="flex-cell white-header-small" style="flex-grow: 6;">$650,00</div>
+            </div>
+            <div class="flex-row">
+                <div class="flex-cell gray-header-small" style="flex-grow: 6;">COMISIÓN REPOSICIÓN PLÁSTICO</div>
+                <div class="flex-cell gray-header-small" style="flex-grow: 6;">$1026</div>
+                <div class="flex-cell gray-header-small" style="flex-grow: 6;">$1026</div>
+            </div>
+            <div class="flex-row">
+                <div class="flex-cell blue-header-white" style="flex-grow: 6;">CARGOS POR GESTION DE COBRANZA</div>
+            </div>
+            <div style="height:1px; background:#0080c7; margin:5px 0;"></div>
+            <div class="flex-row">
+                <div class="flex-cell white-header-small" style="flex-grow: 6;">DE 05 A 31 DIAS DE ATRASO DESDE EL VENCIMIENTO</div>
+                <div class="flex-cell white-header-small" style="flex-grow: 6;">$380</div>
+                <div class="flex-cell white-header-small" style="flex-grow: 6;">$380</div>
+            </div>
+            <div class="flex-row">
+                <div class="flex-cell gray-header-small" style="flex-grow: 6;">DE 32 A 60 DIAS DE ATRASO DESDE EL VENCIMIENTO</div>
+                <div class="flex-cell gray-header-small" style="flex-grow: 6;">$649</div>
+                <div class="flex-cell gray-header-small" style="flex-grow: 6;">$649</div>
+            </div>
+            <div class="flex-row">
+                <div class="flex-cell white-header-small" style="flex-grow: 6;">DE 61 A 90 DIAS DE ATRASO DESDE EL VENCIMIENTO</div>
+                <div class="flex-cell white-header-small" style="flex-grow: 6;">$742</div>
+                <div class="flex-cell white-header-small" style="flex-grow: 6;">$742</div>
+            </div>
+            <div class="flex-row">
+                <div class="flex-cell blue-header-white" style="flex-grow: 6;">CARGOS POR COBRANZA MEDIOS ELECTRONICOS</div>
+            </div>
+            <div style="height:1px; background:#0080c7; margin:5px 0;"></div>
+            <div class="flex-row">
+                <div class="flex-cell white-header-small" style="flex-grow: 6;">PAGO FACIL - RAPIPAGO.</div>
+                <div class="flex-cell white-header-small" style="flex-grow: 6;">$99</div>
+                <div class="flex-cell white-header-small" style="flex-grow: 6;">$99</div>
+            </div>
+        </div>
+      </div>
+
+  <div class="nota">
+    * Costo financiero total (C.F.T.), incluye intereses. <br>
+    ** Valor vigente a la firma de contrato. Si por evolución de los costos o valores de mercado la comisión fuera reajustada, regirá el nuevo valor previa comunicación al usuario conforme la normativa en vigencia. <br>
+    Solamente los comisiones y cargos informados incluyen IVA. Las modificaciones serán informadas al usuario en las formas y plazos que determine la legislación vigente. <br>
+    <strong>C.F.T.</strong>: COSTO FINANCIERO TOTAL <br>
+    <strong>T.E.A.</strong>: TASA EFECTIVA ANUAL <br>
+    <strong>T.N.A.</strong>: TASA NOMINAL ANUAL <br>
+    <strong>T.E.M.</strong>: TASA EFECTIVA MENSUAL
+  </div>
+
+  <div class="firma-grid">
+    <div class="firma-block">
+      <div class="linea-firma"></div>
+      Firma Titular
+      <div class="linea-firma"></div>
+      Aclaración
+    </div>
+    <div class="firma-block">
+      <div class="linea-firma"></div>
+      Firma Garante
+      <div class="linea-firma"></div>
+      <span style="color: red;">Aclaración</span>
+    </div>
+  </div>
+
+  <div class="section-title">
+    PARA USO EXCLUSIVO DE COOPERATIVA GUÍA LTDA.
+  </div>
+
+  <div class="flex-table data-table">
+        <div class="flex-row">
+                <div class="flex-cell white-header" style="flex-grow: 6;">   TEXTO QUE NO SE VE </div>
+            </div>
+            <div class="flex-row">
+                <div class="flex-cell white-header-large" style="flex-grow: 6;">VERIFICÓ FIRMAS</div>
+            </div>
+            <div class="flex-row">
+                <div class="flex-cell gray-header" style="flex-grow: 6;">FIRMA</div>
+                <div class="flex-cell gray-header" style="flex-grow: 6;">ACLARACIÓN</div>
+            </div>
+        </div>
+      </div>
+
+  <div class="page-number" style="bottom: 0; top: auto;">7 de 8</div>
+
+</body>
+</html>

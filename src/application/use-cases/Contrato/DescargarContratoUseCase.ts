@@ -68,14 +68,14 @@ export class DescargarContratoUseCase {
         try {
             // 4. Generar PDF
             return await this.pdfService.generateContractPdf({
-        contrato: contrato.toPlainObject(),
-        solicitud: {
-            ...solicitud.toPlainObject(),
-            nombreCompleto: solicitud.getNombreCompleto(),
-            apellido: solicitud.getApellido(),
-            dni: solicitud.getDni()
-        }
-    });
+                contrato: contrato.toPlainObject(),
+                solicitud: {
+                    ...solicitud.toPlainObject(),
+                    nombreCompleto: solicitud.getNombreCompleto(),
+                    apellido: solicitud.getApellido(),
+                    dni: solicitud.getDni()
+                }
+            });
         } catch (error) {
             if (error instanceof Error) {
                 throw new Error("Error generando PDF: " + error.message);
@@ -85,3 +85,6 @@ export class DescargarContratoUseCase {
         }
     }
 }
+
+
+ 

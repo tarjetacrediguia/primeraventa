@@ -27,10 +27,11 @@ class AprobarSolicitudesFormalesUseCase {
      * @param notificationService - Puerto para servicios de notificación
      * @param historialRepository - Puerto para registro de eventos en historial
      */
-    constructor(repository, notificationService, historialRepository) {
+    constructor(repository, notificationService, historialRepository, compraRepository) {
         this.repository = repository;
         this.notificationService = notificationService;
         this.historialRepository = historialRepository;
+        this.compraRepository = compraRepository;
     }
     /**
      * Aprueba una solicitud formal de crédito.
@@ -48,7 +49,7 @@ class AprobarSolicitudesFormalesUseCase {
      * @returns Promise<SolicitudFormal> - La solicitud formal actualizada
      * @throws Error - Si la solicitud no existe, no está pendiente o ocurre un error en el proceso
      */
-    aprobarSolicitud(solicitudId, numeroTarjeta, numeroCuenta, aprobadorId, esAdministrador, comentario) {
+    aprobarSolicitud(solicitudId, aprobadorId, rol, comentario) {
         return __awaiter(this, void 0, void 0, function* () {
             // 1. Obtener solicitud formal
             const solicitud = yield this.repository.getSolicitudFormalById(solicitudId);
@@ -68,11 +69,16 @@ class AprobarSolicitudesFormalesUseCase {
                 });
                 throw new Error("Solicitud formal no encontrada");
             }
-            if (esAdministrador) {
+            //Asignar aprobador según su rol
+            if (rol === 'administrador') {
                 solicitud.setAdministradorAprobadorId(aprobadorId);
             }
-            else {
+            else if (rol === 'analista') {
                 solicitud.setAnalistaAprobadorId(aprobadorId);
+            }
+            else if (rol === 'comerciante') {
+                // Nuevo: asignar comerciante como aprobador
+                solicitud.setComercianteAprobadorId(aprobadorId);
             }
             // 2. Verificar que esté en estado pendiente
             if (solicitud.getEstado() !== "pendiente") {
@@ -91,14 +97,20 @@ class AprobarSolicitudesFormalesUseCase {
                 });
                 throw new Error("Solo se pueden aprobar solicitudes pendientes");
             }
+            //Validar completitud de datos
+            try {
+                solicitud.validarCompletitud();
+            }
+            catch (error) {
+                yield this.registrarErrorHistorial(aprobadorId, solicitudInicialId, solicitudId, "Datos incompletos en solicitud formal", { error: typeof error === "object" && error !== null && "message" in error ? error.message : String(error) });
+                const errorMsg = typeof error === "object" && error !== null && "message" in error ? error.message : String(error);
+                throw new Error(`No se puede aprobar: ${errorMsg}`);
+            }
             // 3. Agregar comentario si existe
             if (comentario) {
                 solicitud.agregarComentario(`Aprobación: ${comentario}`);
             }
-            // 4. Actualizar estado
             solicitud.setEstado("aprobada");
-            solicitud.setNumeroTarjeta(numeroTarjeta);
-            solicitud.setNumeroCuenta(numeroCuenta);
             // 5. Guardar cambios
             const solicitudActualizada = yield this.repository.updateSolicitudFormalAprobacion(solicitud);
             // Registrar aprobación exitosa
@@ -109,15 +121,25 @@ class AprobarSolicitudesFormalesUseCase {
                 entidadId: solicitudId,
                 detalles: {
                     nuevo_estado: "aprobada",
-                    numero_tarjeta: numeroTarjeta,
-                    numero_cuenta: numeroCuenta,
                     comentario: comentario || ""
                 },
                 solicitudInicialId: solicitudInicialId
             });
             // 6. Notificar al cliente
-            yield this.notificarCliente(solicitudActualizada, `Su solicitud formal de crédito ha sido aprobada. N° NumeroTarjeta: ${numeroTarjeta}, N° Cuenta: ${numeroCuenta}`);
+            yield this.notificarCliente(solicitudActualizada, `Su solicitud formal de crédito ha sido aprobada.`);
             return solicitudActualizada;
+        });
+    }
+    registrarErrorHistorial(usuarioId, solicitudInicialId, entidadId, error, detalles) {
+        return __awaiter(this, void 0, void 0, function* () {
+            yield this.historialRepository.registrarEvento({
+                usuarioId: usuarioId,
+                accion: historialActions_1.HISTORIAL_ACTIONS.ERROR_PROCESO,
+                entidadAfectada: 'solicitudes_formales',
+                entidadId: entidadId,
+                detalles: Object.assign({ error: error }, detalles),
+                solicitudInicialId: solicitudInicialId || 0 // Usar 0 si no está definido
+            });
         });
     }
     /**

@@ -52,21 +52,49 @@ export class HistorialRepositoryAdapter implements HistorialRepositoryPort {
      * @returns Promise<Historial[]> - Array de eventos del historial ordenados por fecha.
      */
     async obtenerPorSolicitudInicial(solicitudInicialId: number): Promise<Historial[]> {
-        const query = `
-            SELECT * FROM historial 
-        WHERE solicitud_inicial_id = $1
-        ORDER BY fecha_hora ASC
-        `;
-        const result = await pool.query(query, [solicitudInicialId]);
-        return result.rows.map(row => new Historial(
-            row.id,
-            row.usuario_id,
-            row.accion,
-            row.entidad_afectada,
-            row.entidad_id,
-            row.detalles,
-            row.fecha_hora,
-            row.solicitud_inicial_id !== undefined ? row.solicitud_inicial_id : undefined
-        ));
-    }
+    const query = `
+        SELECT 
+            h.id,
+            h.accion,
+            h.entidad_afectada,
+            h.entidad_id,
+            h.detalles,
+            h.fecha_hora,
+            h.solicitud_inicial_id,
+            u.nombre AS usuario_nombre,
+            u.apellido AS usuario_apellido,
+            u.rol AS usuario_rol,
+            CASE 
+                WHEN h.entidad_afectada = 'SolicitudInicial' THEN si.estado
+                WHEN h.entidad_afectada = 'Cliente' THEN c.nombre_completo
+                ELSE h.entidad_afectada || ' #' || h.entidad_id::TEXT
+            END AS entidad_nombre
+        FROM historial h
+        LEFT JOIN usuarios u ON h.usuario_id = u.id
+        LEFT JOIN solicitudes_iniciales si 
+            ON h.entidad_afectada = 'SolicitudInicial' AND h.entidad_id = si.id
+        LEFT JOIN clientes c 
+            ON h.entidad_afectada = 'Cliente' AND h.entidad_id = c.id
+        WHERE h.solicitud_inicial_id = $1
+        ORDER BY h.fecha_hora ASC
+    `;
+    
+    const result = await pool.query(query, [solicitudInicialId]);
+    return result.rows.map(row => new Historial(
+        row.id,
+        row.usuario_id,
+        row.accion,
+        row.entidad_afectada,
+        row.entidad_id,
+        row.detalles,
+        row.fecha_hora,
+        row.solicitud_inicial_id,
+        {
+            usuarioNombre: row.usuario_nombre,
+            usuarioApellido: row.usuario_apellido,
+            usuarioRol: row.usuario_rol,
+            entidadNombre: row.entidad_nombre
+        }
+    ));
+}
 }

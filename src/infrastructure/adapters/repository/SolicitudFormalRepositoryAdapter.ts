@@ -76,17 +76,22 @@ export class SolicitudFormalRepositoryAdapter implements SolicitudFormalReposito
             // Insertar en la base de datos
             const solicitudQuery = `
           INSERT INTO solicitudes_formales (
-            cliente_id, 
-            solicitud_inicial_id, 
-            comerciante_id,
-            fecha_solicitud, 
-            recibo, 
-            estado, 
-            acepta_tarjeta, 
-            comentarios
-          )
-          VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-          RETURNING id
+                    cliente_id, 
+                    solicitud_inicial_id, 
+                    comerciante_id,
+                    fecha_solicitud, 
+                    recibo, 
+                    estado, 
+                    acepta_tarjeta, 
+                    comentarios,
+                    importe_neto,
+                    limite_base,
+                    limite_completo,
+                    solicita_ampliacion_credito,
+                    nuevo_limite_completo_solicitado
+                )
+                VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
+                RETURNING id
         `;
         
         const solicitudValues = [
@@ -97,7 +102,12 @@ export class SolicitudFormalRepositoryAdapter implements SolicitudFormalReposito
           solicitudFormal.getRecibo(),
           solicitudFormal.getEstado(),
           solicitudFormal.getAceptaTarjeta(),
-          solicitudFormal.getComentarios()
+          solicitudFormal.getComentarios(),
+          solicitudFormal.getImporteNeto(),      
+            solicitudFormal.getLimiteBase(),         
+            solicitudFormal.getLimiteCompleto(),
+            solicitudFormal.getSolicitaAmpliacionDeCredito(),
+            solicitudFormal.getNuevoLimiteCompletoSolicitado()
         ];
             
             const solicitudResult = await client.query(solicitudQuery, solicitudValues);
@@ -166,11 +176,17 @@ export class SolicitudFormalRepositoryAdapter implements SolicitudFormalReposito
                 sf.comentarios,
                 sf.solicitud_inicial_id,
                 sf.comerciante_id,
-                sf.numero_cuenta,
-                sf.numero_tarjeta,
                 sf.fecha_aprobacion,
                 sf.analista_aprobador_id,
-                sf.administrador_aprobador_id
+                sf.administrador_aprobador_id,
+                sf.comerciante_aprobador_id,
+                sf.importe_neto,
+                sf.limite_base,
+                sf.limite_completo,
+                sf.cliente_id,
+                sf.solicita_ampliacion_credito,
+                sf.nuevo_limite_completo_solicitado,
+                sf.ponderador
             FROM solicitudes_formales sf
             INNER JOIN clientes c ON sf.cliente_id = c.id
             WHERE sf.id = $1
@@ -218,13 +234,18 @@ export class SolicitudFormalRepositoryAdapter implements SolicitudFormalReposito
             row.domicilio,
             row.datos_empleador,
             referentes,
+            row.importe_neto,
             row.comentarios || [],
+            Number(row.ponderador) || 0,
+            row.solicita_ampliacion_credito || false,
             row.cliente_id || 0,
-            row.numero_tarjeta,
-            row.numero_cuenta,
             row.fecha_aprobacion ? new Date(row.fecha_aprobacion) : undefined,
             row.analista_aprobador_id,
-            row.administrador_aprobador_id
+            row.administrador_aprobador_id,
+            row.comerciante_aprobador_id,
+            row.nuevo_limite_completo_solicitado !== null 
+            ? Number(row.nuevo_limite_completo_solicitado) 
+            : null
         );
     }
 
@@ -275,8 +296,15 @@ export class SolicitudFormalRepositoryAdapter implements SolicitudFormalReposito
             // Actualizar solicitud formal
             const actualizarSolicitudQuery = `
                 UPDATE solicitudes_formales
-                SET fecha_solicitud = $1, recibo = $2, estado = $3, acepta_tarjeta = $4, 
-                    comentarios = $5, fecha_actualizacion = CURRENT_TIMESTAMP, numero_tarjeta = $7, numero_cuenta = $8
+                SET fecha_solicitud = $1, 
+                    recibo = $2, 
+                    estado = $3, 
+                    acepta_tarjeta = $4, 
+                    comentarios = $5, 
+                    fecha_actualizacion = CURRENT_TIMESTAMP,
+                    importe_neto = $7,
+                    limite_base = $8,
+                    limite_completo = $9
                 WHERE id = $6
             `;
             await client.query(actualizarSolicitudQuery, [
@@ -286,8 +314,9 @@ export class SolicitudFormalRepositoryAdapter implements SolicitudFormalReposito
                 solicitudFormal.getAceptaTarjeta(),
                 solicitudFormal.getComentarios(),
                 solicitudId,
-                solicitudFormal.getNumeroTarjeta(),
-                solicitudFormal.getNumeroCuenta()
+                solicitudFormal.getImporteNeto(),
+                solicitudFormal.getLimiteBase(),
+                solicitudFormal.getLimiteCompleto()
             ]);
 
             // Eliminar referentes existentes
@@ -389,12 +418,11 @@ export class SolicitudFormalRepositoryAdapter implements SolicitudFormalReposito
                 estado = $3, 
                 acepta_tarjeta = $4, 
                 comentarios = $5,
-                numero_tarjeta = $6,
-                numero_cuenta = $7,
                 fecha_aprobacion = CURRENT_TIMESTAMP,
-                analista_aprobador_id = $9,
-                administrador_aprobador_id = $10
-            WHERE id = $8
+                analista_aprobador_id = $7,
+                administrador_aprobador_id = $8,
+                comerciante_aprobador_id = $9
+            WHERE id = $6
         `;
         
         await client.query(actualizarSolicitudQuery, [
@@ -403,11 +431,10 @@ export class SolicitudFormalRepositoryAdapter implements SolicitudFormalReposito
             solicitudFormal.getEstado(),
             solicitudFormal.getAceptaTarjeta(),
             solicitudFormal.getComentarios(),
-            solicitudFormal.getNumeroTarjeta(),
-            solicitudFormal.getNumeroCuenta(),
             solicitudFormal.getId(),
             solicitudFormal.getAnalistaAprobadorId(),
-            solicitudFormal.getAdministradorAprobadorId()
+            solicitudFormal.getAdministradorAprobadorId(),
+            solicitudFormal.getComercianteAprobadorId() || null
         ]);
 
             // Eliminar referentes existentes
@@ -587,7 +614,14 @@ export class SolicitudFormalRepositoryAdapter implements SolicitudFormalReposito
                 c.domicilio,
                 c.datos_empleador,
                 sf.comentarios,
-                sf.solicitud_inicial_id
+                sf.solicitud_inicial_id,
+                sf.importe_neto,          
+                sf.limite_base,            
+                sf.limite_completo,        
+                sf.cuotas_solicitadas,     
+                sf.valor_cuota,            
+                sf.monto_total,
+                sf.ponderador             
             FROM solicitudes_formales sf
             INNER JOIN clientes c ON sf.cliente_id = c.id
             ORDER BY sf.fecha_solicitud DESC
@@ -633,7 +667,10 @@ export class SolicitudFormalRepositoryAdapter implements SolicitudFormalReposito
                 row.domicilio,
                 row.datos_empleador,
                 referentes,
-                row.comentarios || []
+                row.importe_neto,
+                row.cuotas_solicitadas,
+                row.comentarios || [],
+                row.ponderador
             ));
         }
         
@@ -662,7 +699,11 @@ export class SolicitudFormalRepositoryAdapter implements SolicitudFormalReposito
                 c.domicilio,
                 c.datos_empleador,
                 sf.comentarios,
-                sf.solicitud_inicial_id
+                sf.solicitud_inicial_id,
+                sf.importe_neto,
+                sf.limite_base,
+                sf.limite_completo,
+                sf.ponderador 
             FROM solicitudes_formales sf
             INNER JOIN clientes c ON sf.cliente_id = c.id
             WHERE c.dni = $1
@@ -694,7 +735,11 @@ export class SolicitudFormalRepositoryAdapter implements SolicitudFormalReposito
                 c.domicilio,
                 c.datos_empleador,
                 sf.comentarios,
-                sf.solicitud_inicial_id
+                sf.solicitud_inicial_id,
+                sf.importe_neto,
+                sf.limite_base,
+                sf.limite_completo,
+                sf.ponderador 
             FROM solicitudes_formales sf
             INNER JOIN clientes c ON sf.cliente_id = c.id
             WHERE sf.estado = $1
@@ -726,7 +771,11 @@ export class SolicitudFormalRepositoryAdapter implements SolicitudFormalReposito
                 c.domicilio,
                 c.datos_empleador,
                 sf.comentarios,
-                sf.solicitud_inicial_id
+                sf.solicitud_inicial_id,
+                sf.importe_neto,
+                sf.limite_base,
+                sf.limite_completo,
+                sf.ponderador 
             FROM solicitudes_formales sf
             INNER JOIN clientes c ON sf.cliente_id = c.id
             WHERE DATE(sf.fecha_solicitud) = DATE($1)
@@ -757,7 +806,11 @@ export class SolicitudFormalRepositoryAdapter implements SolicitudFormalReposito
                 c.domicilio,
                 c.datos_empleador,
                 sf.comentarios,
-                sf.solicitud_inicial_id
+                sf.solicitud_inicial_id,
+                sf.importe_neto,
+                sf.limite_base,
+                sf.limite_completo,
+                sf.ponderador 
             FROM solicitudes_formales sf
             INNER JOIN clientes c ON sf.cliente_id = c.id
             WHERE sf.comerciante_id = $1
@@ -789,7 +842,11 @@ export class SolicitudFormalRepositoryAdapter implements SolicitudFormalReposito
                 c.domicilio,
                 c.datos_empleador,
                 sf.comentarios,
-                sf.solicitud_inicial_id
+                sf.solicitud_inicial_id,
+                sf.importe_neto,
+                sf.limite_base,
+                sf.limite_completo,
+                sf.ponderador 
             FROM solicitudes_formales sf
             INNER JOIN clientes c ON sf.cliente_id = c.id
             WHERE sf.analista_aprobador_id = $1
@@ -821,7 +878,11 @@ export class SolicitudFormalRepositoryAdapter implements SolicitudFormalReposito
                 c.domicilio,
                 c.datos_empleador,
                 sf.comentarios,
-                sf.solicitud_inicial_id
+                sf.solicitud_inicial_id,
+                sf.importe_neto,
+                sf.limite_base,
+                sf.limite_completo,
+                sf.ponderador 
             FROM solicitudes_formales sf
             INNER JOIN clientes c ON sf.cliente_id = c.id
             WHERE sf.solicitud_inicial_id = $1
@@ -877,7 +938,6 @@ export class SolicitudFormalRepositoryAdapter implements SolicitudFormalReposito
     private async executeSolicitudesQuery(query: string, params: any[]): Promise<SolicitudFormal[]> {
         const result = await pool.query(query, params);
         const solicitudes: SolicitudFormal[] = [];
-        
         for (const row of result.rows) {
             // Obtener referentes para cada solicitud
             const referentesQuery = `
@@ -915,7 +975,9 @@ export class SolicitudFormalRepositoryAdapter implements SolicitudFormalReposito
                 row.domicilio,
                 row.datos_empleador,
                 referentes,
-                row.comentarios || []
+                row.importe_neto,
+                row.comentarios || [],
+                row.ponderador ?? 0
             ));
         }
         
@@ -949,7 +1011,8 @@ export class SolicitudFormalRepositoryAdapter implements SolicitudFormalReposito
             c.datos_empleador,
             sf.comentarios,
             sf.solicitud_inicial_id,
-            sf.comerciante_id
+            sf.comerciante_id,
+            sf.ponderador 
         FROM solicitudes_formales sf
         INNER JOIN clientes c ON sf.cliente_id = c.id
         WHERE sf.comerciante_id = $1 AND sf.estado = $2
@@ -959,6 +1022,108 @@ export class SolicitudFormalRepositoryAdapter implements SolicitudFormalReposito
     return await this.executeSolicitudesQuery(query, [comercianteId, estado]);
 }
 
+async solicitarAmpliacion(solicitud: SolicitudFormal): Promise<SolicitudFormal> {
+        const client = await pool.connect();
+        try {
+            await client.query('BEGIN');
+            const query = `
+                UPDATE solicitudes_formales
+                SET estado = $1,
+                    nuevo_limite_completo_solicitado = $2,
+                    comentarios = $3,
+                    fecha_actualizacion = CURRENT_TIMESTAMP
+                WHERE id = $4
+                RETURNING id;
+            `;
+            const result = await client.query(query, [
+                solicitud.getEstado(),
+                solicitud.getNuevoLimiteCompletoSolicitado(),
+                solicitud.getComentarios(),
+                solicitud.getId()
+            ]);
+            if (result.rows.length === 0) {
+                throw new Error("Error al actualizar la solicitud");
+            }
+            await client.query('COMMIT');
+            return await this.getSolicitudFormalById(solicitud.getId()) as SolicitudFormal;
+        } catch (error) {
+            await client.query('ROLLBACK');
+            throw new Error(`Error al solicitar ampliación: ${error instanceof Error ? error.message : 'Error desconocido'}`);
+        } finally {
+            client.release();
+        }
+    }
 
+    async aprobarAmpliacion(solicitud: SolicitudFormal): Promise<SolicitudFormal> {
+        const client = await pool.connect();
+        try {
+            await client.query('BEGIN');
+            const query = `
+                UPDATE solicitudes_formales
+                SET estado = $1,
+                    limite_completo = $2,
+                    nuevo_limite_completo_solicitado = NULL,
+                    comentarios = $3,
+                    fecha_actualizacion = CURRENT_TIMESTAMP,
+                    analista_aprobador_id = $4,
+                    administrador_aprobador_id = $5
+                WHERE id = $6
+                RETURNING id;
+            `;
+            const result = await client.query(query, [
+                solicitud.getEstado(),
+                solicitud.getLimiteCompleto(),
+                solicitud.getComentarios(),
+                solicitud.getAnalistaAprobadorId(),
+                solicitud.getAdministradorAprobadorId(),
+                solicitud.getId()
+            ]);
+            if (result.rows.length === 0) {
+                throw new Error("Error al aprobar ampliación");
+            }
+            await client.query('COMMIT');
+            return await this.getSolicitudFormalById(solicitud.getId()) as SolicitudFormal;
+        } catch (error) {
+            await client.query('ROLLBACK');
+            throw new Error(`Error al aprobar ampliación: ${error instanceof Error ? error.message : 'Error desconocido'}`);
+        } finally {
+            client.release();
+        }
+    }
+
+    async rechazarAmpliacion(solicitud: SolicitudFormal): Promise<SolicitudFormal> {
+        const client = await pool.connect();
+        try {
+            await client.query('BEGIN');
+            const query = `
+                UPDATE solicitudes_formales
+                SET estado = $1,
+                    nuevo_limite_completo_solicitado = NULL,
+                    comentarios = $2,
+                    fecha_actualizacion = CURRENT_TIMESTAMP,
+                    analista_aprobador_id = $3,
+                    administrador_aprobador_id = $4
+                WHERE id = $5
+                RETURNING id;
+            `;
+            const result = await client.query(query, [
+                solicitud.getEstado(),
+                solicitud.getComentarios(),
+                solicitud.getAnalistaAprobadorId(),
+                solicitud.getAdministradorAprobadorId(),
+                solicitud.getId()
+            ]);
+            if (result.rows.length === 0) {
+                throw new Error("Error al rechazar ampliación");
+            }
+            await client.query('COMMIT');
+            return await this.getSolicitudFormalById(solicitud.getId()) as SolicitudFormal;
+        } catch (error) {
+            await client.query('ROLLBACK');
+            throw new Error(`Error al rechazar ampliación: ${error instanceof Error ? error.message : 'Error desconocido'}`);
+        } finally {
+            client.release();
+        }
+    }
     
 }

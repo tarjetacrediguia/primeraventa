@@ -66,7 +66,7 @@ class CrearSolicitudFormalUseCase {
      * @param clienteRepository - Puerto para operaciones de clientes
      * @param historialRepository - Puerto para registro de eventos en historial
      */
-    constructor(solicitudInicialRepo, solicitudFormalRepo, permisoRepo, notificationService, analistaRepo, contratoRepository, clienteRepository, historialRepository) {
+    constructor(solicitudInicialRepo, solicitudFormalRepo, permisoRepo, notificationService, analistaRepo, contratoRepository, clienteRepository, historialRepository, configuracionRepo) {
         this.solicitudInicialRepo = solicitudInicialRepo;
         this.solicitudFormalRepo = solicitudFormalRepo;
         this.permisoRepo = permisoRepo;
@@ -75,6 +75,7 @@ class CrearSolicitudFormalUseCase {
         this.contratoRepository = contratoRepository;
         this.clienteRepository = clienteRepository;
         this.historialRepository = historialRepository;
+        this.configuracionRepo = configuracionRepo;
     }
     /**
      * Ejecuta la creación de una solicitud formal de crédito.
@@ -96,7 +97,7 @@ class CrearSolicitudFormalUseCase {
      * @throws Error - Si no se cumplen las validaciones o ocurre un error en el proceso
      */
     execute(solicitudInicialId_1, comercianteId_1, datosSolicitud_1) {
-        return __awaiter(this, arguments, void 0, function* (solicitudInicialId, comercianteId, datosSolicitud, comentarioInicial = "Solicitud creada por comerciante") {
+        return __awaiter(this, arguments, void 0, function* (solicitudInicialId, comercianteId, datosSolicitud, comentarioInicial = "Solicitud creada por comerciante", solicitaAmpliacionDeCredito) {
             try {
                 // Verificar crédito activo
                 const tieneCredito = yield this.tieneCreditoActivo(datosSolicitud.dni);
@@ -149,6 +150,32 @@ class CrearSolicitudFormalUseCase {
                         solicitudInicialId: solicitudInicialId
                     });
                     throw new Error("Solicitud inicial no encontrada");
+                }
+                //Obtener ponderador de la configuración
+                const configs = yield this.configuracionRepo.obtenerConfiguracion();
+                const ponderadorConfig = configs.find(c => c.getClave() === 'ponderador');
+                if (!ponderadorConfig) {
+                    yield this.historialRepository.registrarEvento({
+                        usuarioId: comercianteId,
+                        accion: historialActions_1.HISTORIAL_ACTIONS.ERROR_PROCESO,
+                        entidadAfectada: 'solicitudes_formales',
+                        entidadId: 0,
+                        detalles: { error: "Configuración de ponderador no encontrada" },
+                        solicitudInicialId: solicitudInicialId
+                    });
+                    throw new Error("Configuración de ponderador no encontrada");
+                }
+                const ponderador = parseFloat(ponderadorConfig.getValor());
+                if (isNaN(ponderador)) {
+                    yield this.historialRepository.registrarEvento({
+                        usuarioId: comercianteId,
+                        accion: historialActions_1.HISTORIAL_ACTIONS.ERROR_PROCESO,
+                        entidadAfectada: 'solicitudes_formales',
+                        entidadId: 0,
+                        detalles: { error: "Ponderador no es un número válido" },
+                        solicitudInicialId: solicitudInicialId
+                    });
+                    throw new Error("Ponderador no es un número válido");
                 }
                 // 3. Verificar estado de la solicitud inicial
                 if (solicitudInicial.getEstado() !== "aprobada") {
@@ -238,9 +265,10 @@ class CrearSolicitudFormalUseCase {
                 const solicitudFormal = new SolicitudFormal_1.SolicitudFormal(0, // ID se asignará automáticamente
                 solicitudInicialId, comercianteId, datosSolicitud.nombreCompleto, datosSolicitud.apellido, datosSolicitud.dni, datosSolicitud.telefono, datosSolicitud.email, new Date(), typeof datosSolicitud.recibo === "string"
                     ? Buffer.from(datosSolicitud.recibo, "base64")
-                    : datosSolicitud.recibo, "pendiente", datosSolicitud.aceptaTarjeta, datosSolicitud.fechaNacimiento, datosSolicitud.domicilio, datosSolicitud.datosEmpleador, datosSolicitud.referentes, [comentarioInicial]);
-                solicitudFormal.solicitudInicialId = solicitudInicialId;
-                solicitudFormal.comercianteId = comercianteId;
+                    : datosSolicitud.recibo, "pendiente", datosSolicitud.aceptaTarjeta, datosSolicitud.fechaNacimiento, datosSolicitud.domicilio, datosSolicitud.datosEmpleador, datosSolicitud.referentes, datosSolicitud.importeNeto, [comentarioInicial], ponderador, solicitaAmpliacionDeCredito, 0 // clienteId (temporal)
+                );
+                // Validar completitud de datos
+                solicitudFormal.validarCompletitud();
                 // 6. Vincular con solicitud inicial (propiedad adicional necesaria)
                 solicitudFormal.solicitudInicialId = solicitudInicialId;
                 // 7. Guardar en la base de datos

@@ -21,6 +21,7 @@ import { NotificationPort } from "../../ports/NotificationPort";
 import { SolicitudFormal } from "../../../domain/entities/SolicitudFormal";
 import { HISTORIAL_ACTIONS } from "../../constants/historialActions";
 import { HistorialRepositoryPort } from "../../ports/HistorialRepositoryPort";
+import { CompraRepositoryPort } from "../../ports/CompraRepositoryPort";
 
 /**
  * Caso de uso para aprobar o rechazar solicitudes formales de crédito.
@@ -40,7 +41,8 @@ export class AprobarSolicitudesFormalesUseCase {
     constructor(
         private readonly repository: SolicitudFormalRepositoryPort,
         private readonly notificationService: NotificationPort,
-        private readonly historialRepository: HistorialRepositoryPort
+        private readonly historialRepository: HistorialRepositoryPort,
+        private readonly compraRepository: CompraRepositoryPort
     ) {}
 
     /**
@@ -61,10 +63,8 @@ export class AprobarSolicitudesFormalesUseCase {
      */
     async aprobarSolicitud(
         solicitudId: number,
-        numeroTarjeta: string,
-        numeroCuenta: string,
         aprobadorId: number,
-        esAdministrador: boolean,
+        rol: string,
         comentario?: string
     ): Promise<SolicitudFormal> {
         
@@ -87,10 +87,14 @@ export class AprobarSolicitudesFormalesUseCase {
             throw new Error("Solicitud formal no encontrada");
         }
 
-        if (esAdministrador) {
+        //Asignar aprobador según su rol
+        if (rol === 'administrador') {
             solicitud.setAdministradorAprobadorId(aprobadorId);
-        } else {
+        } else if (rol === 'analista') {
             solicitud.setAnalistaAprobadorId(aprobadorId);
+        } else if (rol === 'comerciante') {
+            // Nuevo: asignar comerciante como aprobador
+            solicitud.setComercianteAprobadorId(aprobadorId);
         }
         // 2. Verificar que esté en estado pendiente
         if (solicitud.getEstado() !== "pendiente") {
@@ -109,16 +113,27 @@ export class AprobarSolicitudesFormalesUseCase {
                 });
             throw new Error("Solo se pueden aprobar solicitudes pendientes");
         }
+
+        //Validar completitud de datos
+    try {
+            solicitud.validarCompletitud();
+        } catch (error) {
+            await this.registrarErrorHistorial(
+                aprobadorId,
+                solicitudInicialId,
+                solicitudId,
+                "Datos incompletos en solicitud formal",
+                { error: typeof error === "object" && error !== null && "message" in error ? (error as { message?: string }).message : String(error) }
+            );
+            const errorMsg = typeof error === "object" && error !== null && "message" in error ? (error as { message?: string }).message : String(error);
+            throw new Error(`No se puede aprobar: ${errorMsg}`);
+        }
         
         // 3. Agregar comentario si existe
         if (comentario) {
             solicitud.agregarComentario(`Aprobación: ${comentario}`);
         }
-        
-        // 4. Actualizar estado
         solicitud.setEstado("aprobada");
-        solicitud.setNumeroTarjeta(numeroTarjeta);
-        solicitud.setNumeroCuenta(numeroCuenta);
         
         // 5. Guardar cambios
         const solicitudActualizada = await this.repository.updateSolicitudFormalAprobacion(solicitud);
@@ -130,8 +145,6 @@ export class AprobarSolicitudesFormalesUseCase {
                 entidadId: solicitudId,
                 detalles: {
                     nuevo_estado: "aprobada",
-                    numero_tarjeta: numeroTarjeta,
-                    numero_cuenta: numeroCuenta,
                     comentario: comentario || ""
                 },
                     solicitudInicialId: solicitudInicialId
@@ -139,10 +152,30 @@ export class AprobarSolicitudesFormalesUseCase {
         // 6. Notificar al cliente
         await this.notificarCliente(
             solicitudActualizada, 
-            `Su solicitud formal de crédito ha sido aprobada. N° NumeroTarjeta: ${numeroTarjeta}, N° Cuenta: ${numeroCuenta}`
+            `Su solicitud formal de crédito ha sido aprobada.`
         );
         
         return solicitudActualizada;
+    }
+
+    private async registrarErrorHistorial(
+        usuarioId: number,
+        solicitudInicialId: number | undefined,
+        entidadId: number,
+        error: string,
+        detalles?: any
+    ): Promise<void> {
+        await this.historialRepository.registrarEvento({
+            usuarioId: usuarioId,
+            accion: HISTORIAL_ACTIONS.ERROR_PROCESO,
+            entidadAfectada: 'solicitudes_formales',
+            entidadId: entidadId,
+            detalles: {
+                error: error,
+                ...detalles
+            },
+            solicitudInicialId: solicitudInicialId || 0 // Usar 0 si no está definido
+        });
     }
 
     /**
@@ -190,6 +223,7 @@ export class AprobarSolicitudesFormalesUseCase {
     } else {
         solicitud.setAnalistaAprobadorId(aprobadorId);
     }
+    
     
     // 3. Verificar estado pendiente
     if (solicitud.getEstado() !== "pendiente") {

@@ -183,7 +183,8 @@ class Notificacion {
      *
      * @returns any - Objeto plano con todos los datos de la notificación.
      */
-    toPlainObject() {
+    /*
+    public toPlainObject(): any {
         return {
             id: this._id,
             userId: this._userId,
@@ -192,6 +193,21 @@ class Notificacion {
             read: this._read,
             createdAt: this._createdAt,
             metadata: this._metadata
+        };
+    }
+        */
+    toPlainObject() {
+        // Crear copia de metadata sin el campo 'pdf'
+        const filteredMetadata = Object.assign({}, this._metadata);
+        delete filteredMetadata.pdf;
+        return {
+            id: this._id,
+            userId: this._userId,
+            type: this._type,
+            message: this._message,
+            read: this._read,
+            createdAt: this._createdAt,
+            metadata: filteredMetadata
         };
     }
     /**

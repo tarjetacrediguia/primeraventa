@@ -90,17 +90,22 @@ class SolicitudFormalRepositoryAdapter {
                 // Insertar en la base de datos
                 const solicitudQuery = `
           INSERT INTO solicitudes_formales (
-            cliente_id, 
-            solicitud_inicial_id, 
-            comerciante_id,
-            fecha_solicitud, 
-            recibo, 
-            estado, 
-            acepta_tarjeta, 
-            comentarios
-          )
-          VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-          RETURNING id
+                    cliente_id, 
+                    solicitud_inicial_id, 
+                    comerciante_id,
+                    fecha_solicitud, 
+                    recibo, 
+                    estado, 
+                    acepta_tarjeta, 
+                    comentarios,
+                    importe_neto,
+                    limite_base,
+                    limite_completo,
+                    solicita_ampliacion_credito,
+                    nuevo_limite_completo_solicitado
+                )
+                VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
+                RETURNING id
         `;
                 const solicitudValues = [
                     clienteId,
@@ -110,7 +115,12 @@ class SolicitudFormalRepositoryAdapter {
                     solicitudFormal.getRecibo(),
                     solicitudFormal.getEstado(),
                     solicitudFormal.getAceptaTarjeta(),
-                    solicitudFormal.getComentarios()
+                    solicitudFormal.getComentarios(),
+                    solicitudFormal.getImporteNeto(),
+                    solicitudFormal.getLimiteBase(),
+                    solicitudFormal.getLimiteCompleto(),
+                    solicitudFormal.getSolicitaAmpliacionDeCredito(),
+                    solicitudFormal.getNuevoLimiteCompletoSolicitado()
                 ];
                 const solicitudResult = yield client.query(solicitudQuery, solicitudValues);
                 const solicitudId = solicitudResult.rows[0].id;
@@ -174,11 +184,17 @@ class SolicitudFormalRepositoryAdapter {
                 sf.comentarios,
                 sf.solicitud_inicial_id,
                 sf.comerciante_id,
-                sf.numero_cuenta,
-                sf.numero_tarjeta,
                 sf.fecha_aprobacion,
                 sf.analista_aprobador_id,
-                sf.administrador_aprobador_id
+                sf.administrador_aprobador_id,
+                sf.comerciante_aprobador_id,
+                sf.importe_neto,
+                sf.limite_base,
+                sf.limite_completo,
+                sf.cliente_id,
+                sf.solicita_ampliacion_credito,
+                sf.nuevo_limite_completo_solicitado,
+                sf.ponderador
             FROM solicitudes_formales sf
             INNER JOIN clientes c ON sf.cliente_id = c.id
             WHERE sf.id = $1
@@ -199,7 +215,9 @@ class SolicitudFormalRepositoryAdapter {
             const referentesResult = yield DatabaseDonfig_1.pool.query(referentesQuery, [id]);
             const referentes = referentesResult.rows.map(refRow => new Referente_1.Referente(refRow.nombre_completo, refRow.apellido, refRow.vinculo, refRow.telefono));
             return new SolicitudFormal_1.SolicitudFormal(Number(row.id), // Convertir a número
-            row.solicitud_inicial_id, row.comerciante_id, row.nombre_completo, row.apellido, row.dni, row.telefono, row.email, new Date(row.fecha_solicitud), row.recibo, row.estado, row.acepta_tarjeta, new Date(row.fecha_nacimiento), row.domicilio, row.datos_empleador, referentes, row.comentarios || [], row.cliente_id || 0, row.numero_tarjeta, row.numero_cuenta, row.fecha_aprobacion ? new Date(row.fecha_aprobacion) : undefined, row.analista_aprobador_id, row.administrador_aprobador_id);
+            row.solicitud_inicial_id, row.comerciante_id, row.nombre_completo, row.apellido, row.dni, row.telefono, row.email, new Date(row.fecha_solicitud), row.recibo, row.estado, row.acepta_tarjeta, new Date(row.fecha_nacimiento), row.domicilio, row.datos_empleador, referentes, row.importe_neto, row.comentarios || [], Number(row.ponderador) || 0, row.solicita_ampliacion_credito || false, row.cliente_id || 0, row.fecha_aprobacion ? new Date(row.fecha_aprobacion) : undefined, row.analista_aprobador_id, row.administrador_aprobador_id, row.comerciante_aprobador_id, row.nuevo_limite_completo_solicitado !== null
+                ? Number(row.nuevo_limite_completo_solicitado)
+                : null);
         });
     }
     /**
@@ -245,8 +263,15 @@ class SolicitudFormalRepositoryAdapter {
                 // Actualizar solicitud formal
                 const actualizarSolicitudQuery = `
                 UPDATE solicitudes_formales
-                SET fecha_solicitud = $1, recibo = $2, estado = $3, acepta_tarjeta = $4, 
-                    comentarios = $5, fecha_actualizacion = CURRENT_TIMESTAMP, numero_tarjeta = $7, numero_cuenta = $8
+                SET fecha_solicitud = $1, 
+                    recibo = $2, 
+                    estado = $3, 
+                    acepta_tarjeta = $4, 
+                    comentarios = $5, 
+                    fecha_actualizacion = CURRENT_TIMESTAMP,
+                    importe_neto = $7,
+                    limite_base = $8,
+                    limite_completo = $9
                 WHERE id = $6
             `;
                 yield client.query(actualizarSolicitudQuery, [
@@ -256,8 +281,9 @@ class SolicitudFormalRepositoryAdapter {
                     solicitudFormal.getAceptaTarjeta(),
                     solicitudFormal.getComentarios(),
                     solicitudId,
-                    solicitudFormal.getNumeroTarjeta(),
-                    solicitudFormal.getNumeroCuenta()
+                    solicitudFormal.getImporteNeto(),
+                    solicitudFormal.getLimiteBase(),
+                    solicitudFormal.getLimiteCompleto()
                 ]);
                 // Eliminar referentes existentes
                 yield client.query('DELETE FROM solicitud_referente WHERE solicitud_formal_id = $1', [solicitudId]);
@@ -340,12 +366,11 @@ class SolicitudFormalRepositoryAdapter {
                 estado = $3, 
                 acepta_tarjeta = $4, 
                 comentarios = $5,
-                numero_tarjeta = $6,
-                numero_cuenta = $7,
                 fecha_aprobacion = CURRENT_TIMESTAMP,
-                analista_aprobador_id = $9,
-                administrador_aprobador_id = $10
-            WHERE id = $8
+                analista_aprobador_id = $7,
+                administrador_aprobador_id = $8,
+                comerciante_aprobador_id = $9
+            WHERE id = $6
         `;
                 yield client.query(actualizarSolicitudQuery, [
                     solicitudFormal.getFechaSolicitud(),
@@ -353,11 +378,10 @@ class SolicitudFormalRepositoryAdapter {
                     solicitudFormal.getEstado(),
                     solicitudFormal.getAceptaTarjeta(),
                     solicitudFormal.getComentarios(),
-                    solicitudFormal.getNumeroTarjeta(),
-                    solicitudFormal.getNumeroCuenta(),
                     solicitudFormal.getId(),
                     solicitudFormal.getAnalistaAprobadorId(),
-                    solicitudFormal.getAdministradorAprobadorId()
+                    solicitudFormal.getAdministradorAprobadorId(),
+                    solicitudFormal.getComercianteAprobadorId() || null
                 ]);
                 // Eliminar referentes existentes
                 yield client.query('DELETE FROM solicitud_referente WHERE solicitud_formal_id = $1', [solicitudId]);
@@ -510,7 +534,14 @@ class SolicitudFormalRepositoryAdapter {
                 c.domicilio,
                 c.datos_empleador,
                 sf.comentarios,
-                sf.solicitud_inicial_id
+                sf.solicitud_inicial_id,
+                sf.importe_neto,          
+                sf.limite_base,            
+                sf.limite_completo,        
+                sf.cuotas_solicitadas,     
+                sf.valor_cuota,            
+                sf.monto_total,
+                sf.ponderador             
             FROM solicitudes_formales sf
             INNER JOIN clientes c ON sf.cliente_id = c.id
             ORDER BY sf.fecha_solicitud DESC
@@ -528,7 +559,7 @@ class SolicitudFormalRepositoryAdapter {
             `;
                 const referentesResult = yield DatabaseDonfig_1.pool.query(referentesQuery, [row.id]);
                 const referentes = referentesResult.rows.map(refRow => new Referente_1.Referente(refRow.nombre_completo, refRow.apellido, refRow.vinculo, refRow.telefono));
-                solicitudes.push(new SolicitudFormal_1.SolicitudFormal(row.id.toString(), row.solicitud_inicial_id, row.comerciante_id, row.nombre_completo, row.apellido, row.dni, row.telefono, row.email, new Date(row.fecha_solicitud), Buffer.alloc(0), row.estado, row.acepta_tarjeta, new Date(row.fecha_nacimiento), row.domicilio, row.datos_empleador, referentes, row.comentarios || []));
+                solicitudes.push(new SolicitudFormal_1.SolicitudFormal(row.id.toString(), row.solicitud_inicial_id, row.comerciante_id, row.nombre_completo, row.apellido, row.dni, row.telefono, row.email, new Date(row.fecha_solicitud), Buffer.alloc(0), row.estado, row.acepta_tarjeta, new Date(row.fecha_nacimiento), row.domicilio, row.datos_empleador, referentes, row.importe_neto, row.cuotas_solicitadas, row.comentarios || [], row.ponderador));
             }
             return solicitudes;
         });
@@ -556,7 +587,11 @@ class SolicitudFormalRepositoryAdapter {
                 c.domicilio,
                 c.datos_empleador,
                 sf.comentarios,
-                sf.solicitud_inicial_id
+                sf.solicitud_inicial_id,
+                sf.importe_neto,
+                sf.limite_base,
+                sf.limite_completo,
+                sf.ponderador 
             FROM solicitudes_formales sf
             INNER JOIN clientes c ON sf.cliente_id = c.id
             WHERE c.dni = $1
@@ -588,7 +623,11 @@ class SolicitudFormalRepositoryAdapter {
                 c.domicilio,
                 c.datos_empleador,
                 sf.comentarios,
-                sf.solicitud_inicial_id
+                sf.solicitud_inicial_id,
+                sf.importe_neto,
+                sf.limite_base,
+                sf.limite_completo,
+                sf.ponderador 
             FROM solicitudes_formales sf
             INNER JOIN clientes c ON sf.cliente_id = c.id
             WHERE sf.estado = $1
@@ -620,7 +659,11 @@ class SolicitudFormalRepositoryAdapter {
                 c.domicilio,
                 c.datos_empleador,
                 sf.comentarios,
-                sf.solicitud_inicial_id
+                sf.solicitud_inicial_id,
+                sf.importe_neto,
+                sf.limite_base,
+                sf.limite_completo,
+                sf.ponderador 
             FROM solicitudes_formales sf
             INNER JOIN clientes c ON sf.cliente_id = c.id
             WHERE DATE(sf.fecha_solicitud) = DATE($1)
@@ -651,7 +694,11 @@ class SolicitudFormalRepositoryAdapter {
                 c.domicilio,
                 c.datos_empleador,
                 sf.comentarios,
-                sf.solicitud_inicial_id
+                sf.solicitud_inicial_id,
+                sf.importe_neto,
+                sf.limite_base,
+                sf.limite_completo,
+                sf.ponderador 
             FROM solicitudes_formales sf
             INNER JOIN clientes c ON sf.cliente_id = c.id
             WHERE sf.comerciante_id = $1
@@ -683,7 +730,11 @@ class SolicitudFormalRepositoryAdapter {
                 c.domicilio,
                 c.datos_empleador,
                 sf.comentarios,
-                sf.solicitud_inicial_id
+                sf.solicitud_inicial_id,
+                sf.importe_neto,
+                sf.limite_base,
+                sf.limite_completo,
+                sf.ponderador 
             FROM solicitudes_formales sf
             INNER JOIN clientes c ON sf.cliente_id = c.id
             WHERE sf.analista_aprobador_id = $1
@@ -715,7 +766,11 @@ class SolicitudFormalRepositoryAdapter {
                 c.domicilio,
                 c.datos_empleador,
                 sf.comentarios,
-                sf.solicitud_inicial_id
+                sf.solicitud_inicial_id,
+                sf.importe_neto,
+                sf.limite_base,
+                sf.limite_completo,
+                sf.ponderador 
             FROM solicitudes_formales sf
             INNER JOIN clientes c ON sf.cliente_id = c.id
             WHERE sf.solicitud_inicial_id = $1
@@ -766,6 +821,7 @@ class SolicitudFormalRepositoryAdapter {
     // Método auxiliar para ejecutar consultas de solicitudes y mapear resultados
     executeSolicitudesQuery(query, params) {
         return __awaiter(this, void 0, void 0, function* () {
+            var _a;
             const result = yield DatabaseDonfig_1.pool.query(query, params);
             const solicitudes = [];
             for (const row of result.rows) {
@@ -779,7 +835,7 @@ class SolicitudFormalRepositoryAdapter {
             `;
                 const referentesResult = yield DatabaseDonfig_1.pool.query(referentesQuery, [row.id]);
                 const referentes = referentesResult.rows.map(refRow => new Referente_1.Referente(refRow.nombre_completo, refRow.apellido, refRow.vinculo, refRow.telefono));
-                solicitudes.push(new SolicitudFormal_1.SolicitudFormal(row.id.toString(), row.solicitud_inicial_id, row.comerciante_id, row.nombre_completo, row.apellido, row.dni, row.telefono, row.email, new Date(row.fecha_solicitud), row.recibo, row.estado, row.acepta_tarjeta, new Date(row.fecha_nacimiento), row.domicilio, row.datos_empleador, referentes, row.comentarios || []));
+                solicitudes.push(new SolicitudFormal_1.SolicitudFormal(row.id.toString(), row.solicitud_inicial_id, row.comerciante_id, row.nombre_completo, row.apellido, row.dni, row.telefono, row.email, new Date(row.fecha_solicitud), row.recibo, row.estado, row.acepta_tarjeta, new Date(row.fecha_nacimiento), row.domicilio, row.datos_empleador, referentes, row.importe_neto, row.comentarios || [], (_a = row.ponderador) !== null && _a !== void 0 ? _a : 0));
             }
             return solicitudes;
         });
@@ -809,13 +865,127 @@ class SolicitudFormalRepositoryAdapter {
             c.datos_empleador,
             sf.comentarios,
             sf.solicitud_inicial_id,
-            sf.comerciante_id
+            sf.comerciante_id,
+            sf.ponderador 
         FROM solicitudes_formales sf
         INNER JOIN clientes c ON sf.cliente_id = c.id
         WHERE sf.comerciante_id = $1 AND sf.estado = $2
         ORDER BY sf.fecha_solicitud DESC
     `;
             return yield this.executeSolicitudesQuery(query, [comercianteId, estado]);
+        });
+    }
+    solicitarAmpliacion(solicitud) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const client = yield DatabaseDonfig_1.pool.connect();
+            try {
+                yield client.query('BEGIN');
+                const query = `
+                UPDATE solicitudes_formales
+                SET estado = $1,
+                    nuevo_limite_completo_solicitado = $2,
+                    comentarios = $3,
+                    fecha_actualizacion = CURRENT_TIMESTAMP
+                WHERE id = $4
+                RETURNING id;
+            `;
+                const result = yield client.query(query, [
+                    solicitud.getEstado(),
+                    solicitud.getNuevoLimiteCompletoSolicitado(),
+                    solicitud.getComentarios(),
+                    solicitud.getId()
+                ]);
+                if (result.rows.length === 0) {
+                    throw new Error("Error al actualizar la solicitud");
+                }
+                yield client.query('COMMIT');
+                return yield this.getSolicitudFormalById(solicitud.getId());
+            }
+            catch (error) {
+                yield client.query('ROLLBACK');
+                throw new Error(`Error al solicitar ampliación: ${error instanceof Error ? error.message : 'Error desconocido'}`);
+            }
+            finally {
+                client.release();
+            }
+        });
+    }
+    aprobarAmpliacion(solicitud) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const client = yield DatabaseDonfig_1.pool.connect();
+            try {
+                yield client.query('BEGIN');
+                const query = `
+                UPDATE solicitudes_formales
+                SET estado = $1,
+                    limite_completo = $2,
+                    nuevo_limite_completo_solicitado = NULL,
+                    comentarios = $3,
+                    fecha_actualizacion = CURRENT_TIMESTAMP,
+                    analista_aprobador_id = $4,
+                    administrador_aprobador_id = $5
+                WHERE id = $6
+                RETURNING id;
+            `;
+                const result = yield client.query(query, [
+                    solicitud.getEstado(),
+                    solicitud.getLimiteCompleto(),
+                    solicitud.getComentarios(),
+                    solicitud.getAnalistaAprobadorId(),
+                    solicitud.getAdministradorAprobadorId(),
+                    solicitud.getId()
+                ]);
+                if (result.rows.length === 0) {
+                    throw new Error("Error al aprobar ampliación");
+                }
+                yield client.query('COMMIT');
+                return yield this.getSolicitudFormalById(solicitud.getId());
+            }
+            catch (error) {
+                yield client.query('ROLLBACK');
+                throw new Error(`Error al aprobar ampliación: ${error instanceof Error ? error.message : 'Error desconocido'}`);
+            }
+            finally {
+                client.release();
+            }
+        });
+    }
+    rechazarAmpliacion(solicitud) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const client = yield DatabaseDonfig_1.pool.connect();
+            try {
+                yield client.query('BEGIN');
+                const query = `
+                UPDATE solicitudes_formales
+                SET estado = $1,
+                    nuevo_limite_completo_solicitado = NULL,
+                    comentarios = $2,
+                    fecha_actualizacion = CURRENT_TIMESTAMP,
+                    analista_aprobador_id = $3,
+                    administrador_aprobador_id = $4
+                WHERE id = $5
+                RETURNING id;
+            `;
+                const result = yield client.query(query, [
+                    solicitud.getEstado(),
+                    solicitud.getComentarios(),
+                    solicitud.getAnalistaAprobadorId(),
+                    solicitud.getAdministradorAprobadorId(),
+                    solicitud.getId()
+                ]);
+                if (result.rows.length === 0) {
+                    throw new Error("Error al rechazar ampliación");
+                }
+                yield client.query('COMMIT');
+                return yield this.getSolicitudFormalById(solicitud.getId());
+            }
+            catch (error) {
+                yield client.query('ROLLBACK');
+                throw new Error(`Error al rechazar ampliación: ${error instanceof Error ? error.message : 'Error desconocido'}`);
+            }
+            finally {
+                client.release();
+            }
         });
     }
 }

@@ -16,10 +16,16 @@
  * @version 1.0.0
  */
 
-import PDFDocument from 'pdfkit';
+//import PDFDocument from 'pdfkit';
 import fs from 'fs';
+import path from 'path';
 import { Buffer } from 'buffer';
+//import puppeteer from 'puppeteer';
 import { PdfPort } from "../../../application/ports/PdfPort";
+import { Browser } from 'puppeteer';
+import * as puppeteer from 'puppeteer';
+import { PDFDocument } from 'pdf-lib';
+import { paginas } from '../../templates/contrato/paginas';
 
 /**
  * Adaptador que implementa la generación y gestión de documentos PDF.
@@ -27,6 +33,51 @@ import { PdfPort } from "../../../application/ports/PdfPort";
  * utilizando plantillas configurables desde variables de entorno.
  */
 export class PdfAdapter implements PdfPort{
+    async generateContractPdf(contractData: any): Promise<Buffer> {
+        const browser = await puppeteer.launch({
+            headless: true,
+            args: ['--no-sandbox', '--disable-setuid-sandbox']
+        });
+        
+        const pagesHtml = this.getPagesWithReplacements(contractData);
+        const pdfBuffers: Uint8Array[] = [];
+
+        for (const html of pagesHtml) {
+            const page = await browser.newPage();
+            await page.setContent(html, {
+                waitUntil: 'networkidle0',
+                timeout: 60000
+            });
+            
+            const pdfBuffer = await page.pdf({
+                format: 'A4',
+                printBackground: true,
+                margin: {
+                    top: '20px',
+                    right: '20px',
+                    bottom: '20px',
+                    left: '20px'
+                },
+                preferCSSPageSize: true,
+                timeout: 60000
+            });
+            
+            pdfBuffers.push(pdfBuffer);
+            await page.close();
+        }
+
+        await browser.close();
+        return this.mergePdfs(pdfBuffers);
+    }
+        /**
+     * Genera un PDF de reporte con los datos proporcionados.
+     * 
+     * @param reportData - Datos del reporte a incluir en el PDF.
+     * @returns Promise<Buffer> - Buffer conteniendo el PDF del reporte generado.
+     */
+    generateReportPdf(reportData: any): Promise<Buffer> {
+        throw new Error('Method not implemented.');
+    }
     
     /**
      * Genera un PDF utilizando una plantilla específica y datos proporcionados.
@@ -69,103 +120,116 @@ export class PdfAdapter implements PdfPort{
     updatePdf(id: string, data: any): Promise<Buffer> {
         throw new Error("Method not implemented.");
     }
-    
-    /*
-    async generateContractPdf(contractData: any): Promise<Buffer> {
-    return new Promise((resolve, reject) => {
-      try {
-        const doc = new PDFDocument();
-        const buffers: any[] = [];
+ private async mergePdfs(pdfs: Uint8Array[]): Promise<Buffer> {
+        const mergedPdf = await PDFDocument.create();
         
-        doc.on('data', buffers.push.bind(buffers));
-        doc.on('end', () => {
-          const pdfBuffer = Buffer.concat(buffers);
-          resolve(pdfBuffer);
-        });
+        for (const pdfBytes of pdfs) {
+            const pdf = await PDFDocument.load(pdfBytes);
+            const pages = await mergedPdf.copyPages(pdf, pdf.getPageIndices());
+            pages.forEach(page => mergedPdf.addPage(page));
+        }
         
-        // Generar contenido del contrato
-        doc.fontSize(20).text('CONTRATO DE PRÉSTAMO', { align: 'center' });
-        doc.moveDown();
-        doc.fontSize(12).text(`Número de contrato: ${contractData.contrato.id}`);
-        doc.text(`Fecha: ${new Date(contractData.contrato.fechaGeneracion).toLocaleDateString()}`);
-        doc.text(`Monto: $${contractData.contrato.monto.toFixed(2)}`);
-        doc.text(`Cliente: ${contractData.solicitud.nombreCompleto} ${contractData.solicitud.apellido}`);
-        doc.text(`DNI: ${contractData.solicitud.dni}`);
-        doc.moveDown();
-        doc.text('Términos y condiciones...');
-        
-        doc.end();
-      } catch (error) {
-        reject(new Error('Error generando PDF: ' + error));
-      }
-    });
-  }
-    */
-
-    /**
-     * Genera un PDF de contrato utilizando plantillas configurables desde variables de entorno.
-     * Reemplaza marcadores en la plantilla con datos reales del contrato y solicitud.
-     * 
-     * @param contractData - Objeto con datos del contrato y solicitud que incluye:
-     *   - contrato: Información del contrato (id, fechaGeneracion, monto, numeroCuenta, numeroTarjeta)
-     *   - solicitud: Información del cliente (nombreCompleto, apellido, dni)
-     * @returns Promise<Buffer> - Buffer conteniendo el PDF del contrato generado.
-     */
-    async generateContractPdf(contractData: any): Promise<Buffer> {
-        return new Promise((resolve, reject) => {
-            try {
-                const doc = new PDFDocument();
-                const buffers: any[] = [];
-                
-                doc.on('data', buffers.push.bind(buffers));
-                doc.on('end', () => {
-                    const pdfBuffer = Buffer.concat(buffers);
-                    resolve(pdfBuffer);
-                });
-                
-                // Obtener plantilla de contrato desde variables de entorno
-                const contractTitle = process.env.CONTRACT_TITLE || '';
-                const contractBody = process.env.CONTRACT_BODY || '';
-                
-                // Preparar datos
-                const fechaGeneracion = new Date(contractData.contrato.fechaGeneracion);
-                const nombreCompleto = `${contractData.solicitud.nombreCompleto} ${contractData.solicitud.apellido}`;
-                
-                // Reemplazar marcadores
-                const formattedBody = contractBody
-                    .replace(/<NOMBRE_COMPLETO>/g, nombreCompleto)
-                    .replace(/<DNI>/g, contractData.solicitud.dni)
-                    .replace(/<MONTO>/g, contractData.contrato.monto.toFixed(2))
-                    .replace(/<NUMERO_CUENTA>/g, contractData.contrato.numeroCuenta || '')
-                    .replace(/<NUMERO_TARJETA>/g, contractData.contrato.numeroTarjeta || '')
-                    .replace(/<DIA>/g, fechaGeneracion.getDate().toString())
-                    .replace(/<MES>/g, (fechaGeneracion.getMonth() + 1).toString())
-                    .replace(/<AÑO>/g, fechaGeneracion.getFullYear().toString());
-
-                // Generar contenido
-                doc.fontSize(16).text(contractTitle, { align: 'center' });
-                doc.moveDown();
-                doc.fontSize(10).text(formattedBody, {
-                    align: 'left',
-                    indent: 30,
-                    lineGap: 5
-                });
-                
-                doc.end();
-            } catch (error) {
-                reject(new Error('Error generando PDF: ' + error));
-            }
-        });
+        const mergedPdfBytes = await mergedPdf.save();
+        return Buffer.from(mergedPdfBytes);
     }
-    
-    /**
-     * Genera un PDF de reporte con los datos proporcionados.
-     * 
-     * @param reportData - Datos del reporte a incluir en el PDF.
-     * @returns Promise<Buffer> - Buffer conteniendo el PDF del reporte generado.
-     */
-    generateReportPdf(reportData: any): Promise<Buffer> {
-        throw new Error("Method not implemented.");
+        private getPagesWithReplacements(contractData: any): string[] {
+        const replacements = this.createReplacements(contractData);
+        return [
+            paginas.pagina1, paginas.pagina2, paginas.pagina3,
+            paginas.pagina4, paginas.pagina5, paginas.pagina6,
+            paginas.pagina7, paginas.pagina8, paginas.pagina9,
+            paginas.pagina10
+        ].map(html => this.applyReplacements(html, replacements));
+    }
+
+    private applyReplacements(html: string, replacements: Record<string, string>): string {
+        return Object.entries(replacements).reduce((acc, [key, value]) => {
+            return acc.replace(new RegExp(this.escapeRegExp(key), 'g'), value.toString());
+        }, html);
+    }
+
+    private escapeRegExp(string: string): string {
+        return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    }
+
+    private createReplacements(contractData: any): Record<string, string> {
+        const { contrato, solicitud } = contractData;
+        const formatDate = (dateString: string) => {
+            if (!dateString) return '';
+            const date = new Date(dateString);
+            return date.toLocaleDateString('es-AR', {
+                day: '2-digit',
+                month: '2-digit',
+                year: 'numeric'
+            });
+        };
+
+        return {
+            '{{FECHA}}': formatDate(contrato.fechaGeneracion),
+        '{{Nº_AUTORIZACIÓN}}': contrato.comercioNAutorizacion || '',
+        '{{NOMBRE_DEL_COMERCIO}}': contrato.comercioNombre || '',
+        '{{Nº_DE_CUENTA}}': contrato.numeroCuenta || '',
+        '{{PRODUCTO}}': contrato.comercioProducto || '',
+        '{{SUCURSAL_Nº}}': contrato.comercioSucursal || '',
+        '{{SOLICITANTE_NOMBRE}}': `${solicitud.nombreCompleto} ${solicitud.apellido}`,
+        '{{SOLICITANTE_SEXO}}': contrato.clienteSexo || '',
+        '{{CUIL_CUIT}}': contrato.clienteCuitOcuil || '',
+        '{{DNI}}': contrato.clienteDni || '',
+        '{{FECHA_NACIMIENTO}}': formatDate(contrato.clienteFechaNacimiento),
+        '{{ESTADO_CIVIL}}': contrato.clienteEstadoCivil || '',
+        '{{NACIONALIDAD}}': contrato.clienteNacionalidad || '',
+        '{{DOMICILIO_CALLE}}': contrato.clienteDomicilioCalle || '',
+        '{{DOMICILIO_NUMERO}}': contrato.clienteDomicilioNumero || '',
+        '{{DOMICILIO_PISO}}': contrato.clienteDomicilioPiso || '',
+        '{{DOMICILIO_DPTO}}': contrato.clienteDomicilioDepartamento || '',
+        '{{LOCALIDAD}}': contrato.clienteDomicilioLocalidad || '',
+        '{{PROVINCIA}}': contrato.clienteDomicilioProvincia || '',
+        '{{BARRIO}}': contrato.clienteDomicilioBarrio || '',
+        '{{CODIGO_POSTAL}}': contrato.clienteDomicilioCodigoPostal || '',
+        '{{EMAIL}}': contrato.clienteDomicilioCorreoElectronico || '',
+        '{{TELEFONO_FIJO}}': contrato.clienteDomicilioTelefonoFijo || '',
+        '{{TELEFONO_CELULAR}}': contrato.clienteDomicilioTelefonoCelular || '',
+        '{{EMPRESA}}': contrato.clienteDatosLaboralesRazonSocial || '',
+        '{{ACTIVIDAD}}': contrato.clienteDatosLaboralesActividad || '',
+        '{{CUIT_EMPRESA}}': contrato.clienteDatosLaboralesCuit || '',
+        '{{INGRESO}}': formatDate(contrato.clienteDatosLaboralesInicioActividades),
+        '{{CARGO}}': contrato.clienteDatosLaboralesCargo || '',
+        '{{SECTOR}}': contrato.clienteDatosLaboralesSector || '',
+        '{{DOMICILIO_LEGAL}}': contrato.clienteDatosLaboralesDomicilioLegal || '',
+        '{{SUELDO}}': solicitud.importeNeto?.toString() || '',
+        
+        // Página 2 (Contrato)
+        '{{TITULAR_NOMBRE}}': `${solicitud.nombreCompleto} ${solicitud.apellido}`,
+        '{{TITULAR_DNI}}': contrato.clienteDni || '',
+        '{{TITULAR_CUIT}}': contrato.clienteCuitOcuil || '',
+        '{{TITULAR_DOMICILIO}}': [
+            contrato.clienteDomicilioCalle,
+            contrato.clienteDomicilioNumero,
+            contrato.clienteDomicilioLocalidad
+        ].filter(Boolean).join(', '),
+        // Páginas 3-10 (Usar mismos datos en múltiples páginas)
+        '{{TEA_FINANCIACION}}': contrato.tasasTeaCtfFinanciacion?.toString() || '84.40%',
+        '{{TNA_COMPENSATORIOS}}': contrato.tasasTnaCompensatoriosFinanciacion?.toString() || '62.78%',
+        '{{TNA_PUNITORIOS}}': contrato.tasasTnaPunitorios?.toString() || '31.39%',
+        '{{COMISION_RENOVACION}}': contrato.tasasComisionRenovacionAnual?.toString() || '3300',
+        '{{COMISION_MANTENIMIENTO}}': contrato.tasasComisionMantenimiento?.toString() || '650',
+        '{{COMISION_REPOSICION}}': contrato.tasasComisionReposicionPlastico?.toString() || '1026',
+        '{{ATRASO_05_31}}': contrato.tasasAtraso05_31Dias?.toString() || '380',
+        '{{ATRASO_32_60}}': contrato.tasasAtraso32_60Dias?.toString() || '649',
+        '{{ATRASO_61_90}}': contrato.tasasAtraso61_90Dias?.toString() || '742',
+        '{{PAGO_FACIL}}': contrato.tasasPagoFacil?.toString() || '99',
+        '{{PLATINIUM_TEA}}': contrato.tasasPlatiniumTeaCtfFinanciacion?.toString() || '84.40',
+        '{{PLATINIUM_TNA_COMPENSATORIOS}}': contrato.tasasPlatiniumTnaCompensatoriosFinanciacion?.toString() || '62.78',
+        '{{PLATINIUM_TNA_PUNITORIOS}}': contrato.tasasPlatiniumTnaPunitorios?.toString() || '31.39',
+        '{{PLATINIUM_COMISION_RENOVACION}}': contrato.tasasPlatiniumComisionRenovacionAnual?.toString() || '3300',
+        '{{PLATINIUM_COMISION_MANTENIMIENTO}}': contrato.tasasPlatiniumComisionMantenimiento?.toString() || '650',
+        '{{PLATINIUM_COMISION_REPOSICION}}': contrato.tasasPlatiniumComisionReposicionPlastico?.toString() || '1026',
+        '{{PLATINIUM_ATRASO_05_31}}': contrato.tasasPlatiniumAtraso05_31Dias?.toString() || '380',
+        '{{PLATINIUM_ATRASO_32_60}}': contrato.tasasPlatiniumAtraso32_60Dias?.toString() || '649',
+        '{{PLATINIUM_ATRASO_61_90}}': contrato.tasasPlatiniumAtraso61_90Dias?.toString() || '742',
+        '{{PLATINIUM_PAGO_FACIL}}': contrato.tasasPlatiniumPagoFacil?.toString() || '99',
+
+        };
     }
 }
     

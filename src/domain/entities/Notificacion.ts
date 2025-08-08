@@ -215,6 +215,7 @@ export class Notificacion {
      * 
      * @returns any - Objeto plano con todos los datos de la notificación.
      */
+    /*
     public toPlainObject(): any {
         return {
             id: this._id,
@@ -226,6 +227,22 @@ export class Notificacion {
             metadata: this._metadata
         };
     }
+        */
+       public toPlainObject(): any {
+    // Crear copia de metadata sin el campo 'pdf'
+    const filteredMetadata = {...this._metadata};
+    delete filteredMetadata.pdf;
+
+    return {
+        id: this._id,
+        userId: this._userId,
+        type: this._type,
+        message: this._message,
+        read: this._read,
+        createdAt: this._createdAt,
+        metadata: filteredMetadata 
+    };
+}
 
     /**
      * Crea una instancia de Notificacion desde un mapa de datos.

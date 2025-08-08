@@ -8,7 +8,6 @@
  * Cada función está diseñada para ser utilizada como handler de rutas Express.
  */
 import { Request, Response } from 'express';
-import { GenerarContratoUseCase } from '../../../application/use-cases/Contrato/GenerarContratoUseCase';
 import { DescargarContratoUseCase } from '../../../application/use-cases/Contrato/DescargarContratoUseCase';
 import { ContratoRepositoryAdapter } from '../../adapters/repository/ContratoRepositoryAdapter';
 import { SolicitudFormalRepositoryAdapter } from '../../adapters/repository/SolicitudFormalRepositoryAdapter';
@@ -17,6 +16,9 @@ import { PdfAdapter } from '../../adapters/pdf/pdfAdapter';
 import { ClienteRepositoryAdapter } from '../../adapters/repository/ClienteRepositoryAdapter';
 import { HistorialRepositoryAdapter } from '../../adapters/repository/HistorialRepositoryAdapter';
 import { SolicitudInicialRepositoryAdapter } from '../../adapters/repository/SolicitudInicialRepositoryAdapter';
+import { ComercianteRepositoryAdapter } from '../../adapters/repository/ComercianteRepositoryAdapter';
+import { GeneracionYDescargaContratoUseCase } from '../../../application/use-cases/Contrato/GenerarYDescargarContratoUseCase';
+import { CompraRepositoryAdapter } from '../../adapters/repository/CompraRepositoryAdapter';
 
 // Inicializar adapters
 const contratoRepository = new ContratoRepositoryAdapter();
@@ -24,53 +26,41 @@ const solicitudRepository = new SolicitudFormalRepositoryAdapter();
 const pdfService = new PdfAdapter();
 const notificationService = new NotificationAdapter();
 const clienteRepository = new ClienteRepositoryAdapter();
-const historialRepository = new HistorialRepositoryAdapter();
 const solicitudInicialRepository = new SolicitudInicialRepositoryAdapter();
+const comercianteRepository = new ComercianteRepositoryAdapter();
+const historialRepository = new HistorialRepositoryAdapter();
+const compraRepository = new CompraRepositoryAdapter();
 
-/**
- * Genera un nuevo contrato a partir de una solicitud.
- * @param req - Request de Express con el ID de la solicitud en body.
- * @param res - Response de Express para enviar la respuesta.
- * @returns Devuelve el contrato generado o un error en caso de fallo.
- */
-export const generarContratoPDF = async (req: Request, res: Response) => {
-  try {
-    const solicitudId = parseInt(req.params.id, 10);
-    const userId = Number(req.user?.id);
-    // Obtener solicitud
-    const solicitud = await solicitudRepository.getSolicitudFormalById(solicitudId);
-    if (!solicitud) {
-      return res.status(404).json({ error: 'Solicitud no encontrada' });
-    }
-    
-    // Verificar permisos
-    if (req.user?.rol === 'comerciante') {
-      //const cliente = await clienteRepository.findById(solicitud.getClienteId());
-      if (solicitud.getComercianteId() !== userId) {
-        return res.status(403).json({ error: 'No tiene permiso para esta operación' });
-      }
-    }
+// Inicializar el nuevo caso de uso unificado
+const generacionYDescargaUC = new GeneracionYDescargaContratoUseCase(
+    solicitudRepository,
+    contratoRepository,
+    pdfService,
+    notificationService,
+    clienteRepository,
+    historialRepository,
+    solicitudInicialRepository,
+    comercianteRepository,
+    compraRepository
+);
 
-    // Generar contrato
-    const useCase = new GenerarContratoUseCase(
-      solicitudRepository,
-      contratoRepository,
-      pdfService,
-      notificationService,
-      clienteRepository,
-      historialRepository,
-      solicitudInicialRepository
-    );
-    const contrato = await useCase.execute(solicitudId,userId);
-    // Devolver URL con ID de contrato, no de solicitud
-    res.status(200).json({ 
-      url: `/API/v1/contratos/${contrato.getId()}` 
-    });
-  } catch (error: any) {
-    const message = error.message || 'Error generando contrato';
-    const status = message.includes('no encontrada') ? 404 : 500;
-    res.status(status).json({ error: message });
-  }
+export const generarYDescargarContratoPDF = async (req: Request, res: Response) => {
+    try {
+        const solicitudId = parseInt(req.params.id, 10);
+        const userId = Number(req.user?.id);
+        
+        // Ejecutar generación y descarga en un solo paso
+        const { pdf } = await generacionYDescargaUC.execute(solicitudId, userId);
+        
+        // Enviar el PDF directamente como respuesta
+        res.setHeader('Content-Type', 'application/pdf');
+        res.setHeader('Content-Disposition', `attachment; filename=contrato.pdf`);
+        res.send(pdf);
+    } catch (error: any) {
+        const message = error.message || 'Error generando y descargando contrato';
+        const status = message.includes('no encontrada') ? 404 : 500;
+        res.status(status).json({ error: message });
+    }
 };
 
 /**
@@ -100,7 +90,8 @@ export const descargarContratoPDF = async (req: Request, res: Response) => {
         return res.status(403).json({ error: 'No tiene permiso para este contrato' });
       }
     }
-*/
+    */
+
     // Generar PDF
     const useCase = new DescargarContratoUseCase(
       contratoRepository,

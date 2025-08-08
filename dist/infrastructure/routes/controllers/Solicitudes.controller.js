@@ -10,7 +10,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.rechazarSolicitudInicial = exports.aprobarSolicitudInicial = exports.listarSolicitudesFormalesByComerciante = exports.listarSolicitudesFormalesByComercianteYEstado = exports.listarSolicitudesInicialesByComercianteYEstado = exports.obtenerDetalleSolicitudFormal = exports.actualizarSolicitudFormal = exports.listarSolicitudesFormales = exports.rechazarSolicitudFormal = exports.aprobarSolicitudFormal = exports.obtenerReciboSolicitudFormal = exports.crearSolicitudFormal = exports.verificarEstadoCrediticio = exports.listarSolicitudesIniciales = exports.crearSolicitudInicial = void 0;
+exports.crearYAprobarSolicitudFormal = exports.rechazarSolicitudInicial = exports.aprobarSolicitudInicial = exports.listarSolicitudesFormalesByComerciante = exports.listarSolicitudesFormalesByComercianteYEstado = exports.listarSolicitudesInicialesByComercianteYEstado = exports.obtenerDetalleSolicitudFormal = exports.actualizarSolicitudFormal = exports.listarSolicitudesFormales = exports.rechazarSolicitudFormal = exports.aprobarSolicitudFormal = exports.obtenerReciboSolicitudFormal = exports.crearSolicitudFormal = exports.verificarEstadoCrediticio = exports.listarSolicitudesIniciales = exports.crearSolicitudInicial = void 0;
 const CrearSolicitudInicialUseCase_1 = require("../../../application/use-cases/SolicitudInicial/CrearSolicitudInicialUseCase");
 const GetSolicitudesInicialesByEstadoUseCase_1 = require("../../../application/use-cases/SolicitudInicial/GetSolicitudesInicialesByEstadoUseCase");
 const VerificarAprobacionSolicitudInicialUseCase_1 = require("../../../application/use-cases/SolicitudInicial/VerificarAprobacionSolicitudInicialUseCase");
@@ -34,6 +34,10 @@ const GetSolicitudesFormalesByComercianteYEstadoUseCase_1 = require("../../../ap
 const HistorialRepositoryAdapter_1 = require("../../adapters/repository/HistorialRepositoryAdapter");
 const GetSolicitudesFormalesByComercianteIdUseCase_1 = require("../../../application/use-cases/SolicitudFormal/GetSolicitudesFormalesByComercianteIdUseCase");
 const AprobarRechazarSolicitudInicialUseCase_1 = require("../../../application/use-cases/SolicitudInicial/AprobarRechazarSolicitudInicialUseCase");
+const ListSolicitudesInicialesUseCase_1 = require("../../../application/use-cases/SolicitudInicial/ListSolicitudesInicialesUseCase");
+const ConfiguracionRepositoryAdapter_1 = require("../../adapters/repository/ConfiguracionRepositoryAdapter");
+const CompraRepositoryAdapter_1 = require("../../adapters/repository/CompraRepositoryAdapter");
+const CrearYAprobarSolicitudFormalUseCase_1 = require("../../../application/use-cases/SolicitudFormal/CrearYAprobarSolicitudFormalUseCase");
 // Inyección de dependencias (deberían venir de un contenedor DI)
 const verazService = new VerazAdapter_1.VerazAdapter();
 const notificationService = new NotificationAdapter_1.NotificationAdapter();
@@ -45,18 +49,22 @@ const clienteRepository = new ClienteRepositoryAdapter_1.ClienteRepositoryAdapte
 const historialRepository = new HistorialRepositoryAdapter_1.HistorialRepositoryAdapter();
 const analistaRepository = new AnalistaRepositoryAdapter_1.AnalistaRepositoryAdapter();
 const getSolicitudesInicialesByComercianteYEstado = new GetSolicitudesInicialesByComercianteYEstadoUseCase_1.GetSolicitudesInicialesByComercianteYEstadoUseCase(solicitudInicialRepo);
+const configuracionRepo = new ConfiguracionRepositoryAdapter_1.ConfiguracionRepositoryAdapter();
+const compraRepository = new CompraRepositoryAdapter_1.CompraRepositoryAdapter();
 // Casos de uso inicializados
 const crearSolicitudInicialUC = new CrearSolicitudInicialUseCase_1.CrearSolicitudInicialUseCase(solicitudInicialRepo, contratoRepo, solicitudFormalRepo, verazService, notificationService, clienteRepository, historialRepository, analistaRepository, process.env.VERAZ_AUTO === 'true' // Modo automático de Veraz
 );
 const aprobarRechazarSolicitudInicialUC = new AprobarRechazarSolicitudInicialUseCase_1.AprobarRechazarSolicitudInicialUseCase(solicitudInicialRepo, notificationService, historialRepository);
 const getSolicitudesInicialesByEstadoUC = new GetSolicitudesInicialesByEstadoUseCase_1.GetSolicitudesInicialesByEstadoUseCase(solicitudInicialRepo);
 const verificarAprobacionUC = new VerificarAprobacionSolicitudInicialUseCase_1.VerificarAprobacionSolicitudInicialUseCase(solicitudInicialRepo, verazService, notificationService);
-const crearSolicitudFormalUC = new CrearSolicitudFormalUseCase_1.CrearSolicitudFormalUseCase(solicitudInicialRepo, solicitudFormalRepo, permisoRepo, notificationService, new AnalistaRepositoryAdapter_1.AnalistaRepositoryAdapter(), contratoRepo, clienteRepository, historialRepository);
-const aprobarSolicitudesUC = new AprobarSolicitudesFormalesUseCase_1.AprobarSolicitudesFormalesUseCase(solicitudFormalRepo, notificationService, historialRepository);
+const crearSolicitudFormalUC = new CrearSolicitudFormalUseCase_1.CrearSolicitudFormalUseCase(solicitudInicialRepo, solicitudFormalRepo, permisoRepo, notificationService, new AnalistaRepositoryAdapter_1.AnalistaRepositoryAdapter(), contratoRepo, clienteRepository, historialRepository, configuracionRepo);
+const aprobarSolicitudesUC = new AprobarSolicitudesFormalesUseCase_1.AprobarSolicitudesFormalesUseCase(solicitudFormalRepo, notificationService, historialRepository, compraRepository);
+const crearYAprobarSolicitudFormalUC = new CrearYAprobarSolicitudFormalUseCase_1.CrearYAprobarSolicitudFormalUseCase(crearSolicitudFormalUC, aprobarSolicitudesUC, permisoRepo);
 const getSolicitudesFormalesByEstadoUC = new GetSolicitudesFormalesByEstadoUseCase_1.GetSolicitudesFormalesByEstadoUseCase(solicitudFormalRepo);
 const getSolicitudesFormalesByFechaUC = new GetSolicitudesFormalesByFechaUseCase_1.GetSolicitudesFormalesByFechaUseCase(solicitudFormalRepo);
 const updateSolicitudFormalUC = new UpdateSolicitudFormalUseCase_1.UpdateSolicitudFormalUseCase(solicitudFormalRepo, historialRepository);
 const getSolicitudFormalByIdUC = new GetSolicitudFormalByIdUseCase_1.GetSolicitudesFormalesByIdUseCase(solicitudFormalRepo);
+const listSolicitudesInicialesUC = new ListSolicitudesInicialesUseCase_1.ListSolicitudesInicialesUseCase(solicitudInicialRepo);
 /**
  * Crea una nueva solicitud inicial.
  * @param req - Request de Express con los datos del cliente y recibo en el body.
@@ -100,7 +108,15 @@ exports.crearSolicitudInicial = crearSolicitudInicial;
 const listarSolicitudesIniciales = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const estado = req.query.estado;
-        const solicitudes = yield getSolicitudesInicialesByEstadoUC.execute(estado);
+        let solicitudes;
+        if (estado) {
+            // Filtrar por estado si se proporciona
+            solicitudes = yield getSolicitudesInicialesByEstadoUC.execute(estado);
+        }
+        else {
+            // Obtener todas las solicitudes si no hay filtro
+            solicitudes = yield listSolicitudesInicialesUC.execute();
+        }
         res.status(200).json(solicitudes);
     }
     catch (error) {
@@ -133,7 +149,7 @@ exports.verificarEstadoCrediticio = verificarEstadoCrediticio;
  */
 const crearSolicitudFormal = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        const { idSolicitudInicial, cliente, referentes } = req.body;
+        const { idSolicitudInicial, cliente, referentes, importeNeto, solicitaAmpliacionDeCredito, comentarioInicial } = req.body;
         // Validar que el recibo sea proporcionado
         if (!cliente.recibo) {
             return res.status(400).json({ error: 'El recibo es obligatorio' });
@@ -179,8 +195,9 @@ const crearSolicitudFormal = (req, res) => __awaiter(void 0, void 0, void 0, fun
             fechaNacimiento: new Date(cliente.fechaNacimiento),
             domicilio: cliente.domicilio,
             datosEmpleador: cliente.datosEmpleador,
-            referentes: referentesInstances
-        });
+            referentes: referentesInstances,
+            importeNeto: importeNeto
+        }, comentarioInicial, solicitaAmpliacionDeCredito);
         res.status(201).json(solicitudFormal);
     }
     catch (error) {
@@ -205,6 +222,11 @@ const crearSolicitudFormal = (req, res) => __awaiter(void 0, void 0, void 0, fun
     }
 });
 exports.crearSolicitudFormal = crearSolicitudFormal;
+/**
+ * Obtiene el tipo MIME de una imagen a partir de su buffer.
+ * @param buffer - Buffer de la imagen.
+ * @returns Devuelve el tipo MIME como string o null si no se puede determinar.
+ */
 function getImageMimeType(buffer) {
     return __awaiter(this, void 0, void 0, function* () {
         try {
@@ -235,6 +257,12 @@ function getImageMimeType(buffer) {
         }
     });
 }
+/**
+ * Obtiene el recibo de una solicitud formal por su ID.
+ * @param req - Request de Express con el ID de la solicitud en los parámetros.
+ * @param res - Response de Express para enviar la imagen del recibo.
+ * @returns Devuelve la imagen del recibo o un error en caso de fallo.
+ */
 const obtenerReciboSolicitudFormal = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const { id } = req.params;
@@ -260,16 +288,21 @@ const obtenerReciboSolicitudFormal = (req, res) => __awaiter(void 0, void 0, voi
     }
 });
 exports.obtenerReciboSolicitudFormal = obtenerReciboSolicitudFormal;
+/**
+ * Aprueba una solicitud formal.
+ * @param req - Request de Express con el ID de la solicitud en los parámetros y datos de aprobación en el body.
+ * @param res - Response de Express para enviar la respuesta.
+ * @returns Devuelve la solicitud aprobada o un error en caso de fallo.
+ */
 const aprobarSolicitudFormal = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const id = req.params.id;
-        const { numeroTarjeta, numeroCuenta, generarTarjeta, comentario } = req.body;
+        const { generarTarjeta, comentario } = req.body;
         if (!req.user || !req.user.id || !req.user.rol) {
             return res.status(401).json({ error: 'Usuario no autenticado' });
         }
-        const esAdministrador = req.user.rol === 'administrador';
         const aprobadorId = Number(req.user.id);
-        const solicitudActualizada = yield aprobarSolicitudesUC.aprobarSolicitud(Number(id), numeroTarjeta, numeroCuenta, aprobadorId, esAdministrador, comentario);
+        const solicitudActualizada = yield aprobarSolicitudesUC.aprobarSolicitud(Number(id), aprobadorId, req.user.rol, comentario);
         res.status(200).json(solicitudActualizada);
     }
     catch (error) {
@@ -285,6 +318,12 @@ const aprobarSolicitudFormal = (req, res) => __awaiter(void 0, void 0, void 0, f
     }
 });
 exports.aprobarSolicitudFormal = aprobarSolicitudFormal;
+/**
+ * Rechaza una solicitud formal.
+ * @param req - Request de Express con el ID de la solicitud en los parámetros y comentario en el body.
+ * @param res - Response de Express para enviar la respuesta.
+ * @returns Devuelve la solicitud rechazada o un error en caso de fallo.
+ */
 const rechazarSolicitudFormal = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const id = req.params.id;
@@ -316,6 +355,12 @@ const rechazarSolicitudFormal = (req, res) => __awaiter(void 0, void 0, void 0, 
     }
 });
 exports.rechazarSolicitudFormal = rechazarSolicitudFormal;
+/**
+ * Lista las solicitudes formales filtradas por estado y/o fecha.
+ * @param req - Request de Express con los filtros en query params.
+ * @param res - Response de Express para enviar la respuesta.
+ * @returns Devuelve un array de solicitudes formales o un error en caso de fallo.
+ */
 const listarSolicitudesFormales = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const estado = req.query.estado;
@@ -347,6 +392,12 @@ const listarSolicitudesFormales = (req, res) => __awaiter(void 0, void 0, void 0
     }
 });
 exports.listarSolicitudesFormales = listarSolicitudesFormales;
+/**
+ * Obtiene las solicitudes formales de un comerciante por su ID y estado.
+ * @param req - Request de Express con el ID del comerciante y estado en query params.
+ * @param res - Response de Express para enviar la respuesta.
+ * @returns Devuelve un array de solicitudes formales o un error en caso de fallo.
+ */
 const actualizarSolicitudFormal = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     var _a, _b, _c;
     try {
@@ -420,6 +471,13 @@ const actualizarSolicitudFormal = (req, res) => __awaiter(void 0, void 0, void 0
     }
 });
 exports.actualizarSolicitudFormal = actualizarSolicitudFormal;
+/**
+ * Obtiene el detalle de una solicitud formal por su ID.
+ * @param req - Request de Express con el ID de la solicitud en los parámetros.
+ * @param res - Response de Express para enviar la respuesta.
+ * @returns Devuelve el detalle de la solicitud formal o un error en caso de fallo.
+ * @throws 404 si la solicitud no existe.
+ */
 const obtenerDetalleSolicitudFormal = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const id = Number(req.params.id);
@@ -434,9 +492,18 @@ const obtenerDetalleSolicitudFormal = (req, res) => __awaiter(void 0, void 0, vo
     }
 });
 exports.obtenerDetalleSolicitudFormal = obtenerDetalleSolicitudFormal;
+/**
+ * Lista las solicitudes iniciales de un comerciante filtradas por estado.
+ * @param req - Request de Express con el id del comerciante y el estado en query params.
+ * @param res - Response de Express para enviar la respuesta.
+ * @returns Devuelve un array de solicitudes iniciales o un error en caso de fallo.
+ * @throws 400 si faltan parámetros obligatorios.
+ */
 const listarSolicitudesInicialesByComercianteYEstado = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    var _a;
     try {
-        const comercianteId = req.query.id ? parseInt(req.query.id) : undefined;
+        const comercianteId = (_a = req.user) === null || _a === void 0 ? void 0 : _a.id;
+        console.log('Comerciante ID:', comercianteId);
         const estado = req.query.estado;
         // Validar parámetros
         if (!comercianteId || !estado) {
@@ -444,7 +511,7 @@ const listarSolicitudesInicialesByComercianteYEstado = (req, res) => __awaiter(v
         }
         // Filtro combinado
         const useCase = getSolicitudesInicialesByComercianteYEstado;
-        const solicitudes = yield useCase.execute(comercianteId, estado);
+        const solicitudes = yield useCase.execute(Number(comercianteId), estado);
         res.json(solicitudes);
     }
     catch (error) {
@@ -453,6 +520,13 @@ const listarSolicitudesInicialesByComercianteYEstado = (req, res) => __awaiter(v
     }
 });
 exports.listarSolicitudesInicialesByComercianteYEstado = listarSolicitudesInicialesByComercianteYEstado;
+/**
+ * Lista las solicitudes formales de un comerciante filtradas por estado.
+ * @param req - Request de Express con el id del comerciante y el estado en query params.
+ * @param res - Response de Express para enviar la respuesta.
+ * @returns Devuelve un array de solicitudes formales o un error en caso de fallo.
+ * @throws 400 si faltan parámetros obligatorios.
+ */
 const listarSolicitudesFormalesByComercianteYEstado = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const comercianteId = req.query.id ? parseInt(req.query.id) : undefined;
@@ -472,6 +546,13 @@ const listarSolicitudesFormalesByComercianteYEstado = (req, res) => __awaiter(vo
     }
 });
 exports.listarSolicitudesFormalesByComercianteYEstado = listarSolicitudesFormalesByComercianteYEstado;
+/**
+ * Lista todas las solicitudes formales de un comerciante por su ID.
+ * @param req - Request de Express con el id del comerciante en los parámetros.
+ * @param res - Response de Express para enviar la respuesta.
+ * @returns Devuelve un array de solicitudes formales o un error en caso de fallo.
+ * @throws 400 si falta el parámetro id.
+ */
 const listarSolicitudesFormalesByComerciante = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const comercianteId = req.params.id;
@@ -490,6 +571,13 @@ const listarSolicitudesFormalesByComerciante = (req, res) => __awaiter(void 0, v
     }
 });
 exports.listarSolicitudesFormalesByComerciante = listarSolicitudesFormalesByComerciante;
+/**
+ * Aprueba una solicitud inicial por su ID.
+ * @param req - Request de Express con el id de la solicitud en los parámetros y comentario en el body.
+ * @param res - Response de Express para enviar la respuesta.
+ * @returns Devuelve la solicitud aprobada o un error en caso de fallo.
+ * @throws 401 si el usuario no está autenticado.
+ */
 const aprobarSolicitudInicial = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     var _a, _b;
     try {
@@ -508,6 +596,13 @@ const aprobarSolicitudInicial = (req, res) => __awaiter(void 0, void 0, void 0, 
     }
 });
 exports.aprobarSolicitudInicial = aprobarSolicitudInicial;
+/**
+ * Rechaza una solicitud inicial por su ID.
+ * @param req - Request de Express con el id de la solicitud en los parámetros y comentario en el body.
+ * @param res - Response de Express para enviar la respuesta.
+ * @returns Devuelve la solicitud rechazada o un error en caso de fallo.
+ * @throws 401 si el usuario no está autenticado.
+ */
 const rechazarSolicitudInicial = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     var _a, _b;
     try {
@@ -526,7 +621,7 @@ const rechazarSolicitudInicial = (req, res) => __awaiter(void 0, void 0, void 0,
     }
 });
 exports.rechazarSolicitudInicial = rechazarSolicitudInicial;
-// Función auxiliar para manejar errores
+// Función auxiliar para manejar respuestas de error de forma uniforme.
 function handleErrorResponse(res, error) {
     const message = error.message || 'Error desconocido';
     if (message.includes('no encontrada')) {
@@ -539,3 +634,78 @@ function handleErrorResponse(res, error) {
         res.status(500).json({ error: message });
     }
 }
+const crearYAprobarSolicitudFormal = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const { idSolicitudInicial, cliente, referentes, importeNeto, solicitaAmpliacionDeCredito, comentarioInicial } = req.body;
+        // Validar que el recibo sea proporcionado
+        if (!cliente.recibo) {
+            return res.status(400).json({ error: 'El recibo es obligatorio' });
+        }
+        // Convertir base64 a Buffer
+        const reciboBuffer = Buffer.from(cliente.recibo, 'base64');
+        // Validar que sea una imagen JPG
+        const mimeType = yield getImageMimeType(reciboBuffer);
+        if (mimeType !== 'image/jpeg') {
+            return res.status(400).json({ error: 'El recibo debe ser una imagen JPG' });
+        }
+        // Validar tamaño máximo (5MB)
+        if (reciboBuffer.length > 5 * 1024 * 1024) {
+            return res.status(400).json({ error: 'El recibo no puede exceder los 5MB' });
+        }
+        // Reemplazar el string base64 con el Buffer
+        cliente.recibo = reciboBuffer;
+        // Validar referentes (código existente)
+        if (!referentes || !Array.isArray(referentes)) {
+            return res.status(400).json({ error: 'Se requiere un array de referentes' });
+        }
+        if (referentes.length !== 2) {
+            return res.status(400).json({ error: 'Se requieren exactamente dos referentes' });
+        }
+        const referentesInstances = referentes.map(ref => {
+            if (!ref.nombreCompleto || !ref.apellido || !ref.vinculo || !ref.telefono) {
+                throw new Error('Cada referente debe tener: nombreCompleto, apellido, vinculo y telefono');
+            }
+            return new Referente_1.Referente(ref.nombreCompleto, ref.apellido, ref.vinculo, ref.telefono);
+        });
+        if (!req.user || !req.user.id) {
+            return res.status(401).json({ error: 'Usuario no autenticado' });
+        }
+        const comercianteId = Number(req.user.id);
+        const solicitudFormal = yield crearYAprobarSolicitudFormalUC.execute(idSolicitudInicial, comercianteId, req.user.rol, {
+            nombreCompleto: cliente.nombreCompleto,
+            apellido: cliente.apellido,
+            dni: cliente.dni,
+            telefono: cliente.telefono,
+            email: cliente.email,
+            recibo: cliente.recibo,
+            aceptaTarjeta: cliente.aceptaTarjeta,
+            fechaNacimiento: new Date(cliente.fechaNacimiento),
+            domicilio: cliente.domicilio,
+            datosEmpleador: cliente.datosEmpleador,
+            referentes: referentesInstances,
+            importeNeto: importeNeto
+        }, comentarioInicial, solicitaAmpliacionDeCredito);
+        res.status(201).json(solicitudFormal);
+    }
+    catch (error) {
+        if (error instanceof Error) {
+            if (error.message === 'Solicitud inicial no encontrada') {
+                res.status(404).json({ error: error.message });
+            }
+            else if (error.message === 'La solicitud inicial no está aprobada' ||
+                error.message === 'Ya existe una solicitud formal para esta solicitud inicial') {
+                res.status(409).json({ error: error.message });
+            }
+            else if (error.message.includes('Cada referente debe tener')) {
+                res.status(400).json({ error: error.message });
+            }
+            else {
+                res.status(400).json({ error: error.message });
+            }
+        }
+        else {
+            res.status(500).json({ error: 'Error interno del servidor' });
+        }
+    }
+});
+exports.crearYAprobarSolicitudFormal = crearYAprobarSolicitudFormal;

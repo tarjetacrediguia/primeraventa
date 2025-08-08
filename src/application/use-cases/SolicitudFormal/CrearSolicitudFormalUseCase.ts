@@ -28,6 +28,7 @@ import { ContratoRepositoryPort } from "../../ports/ContratoRepositoryPort";
 import { ClienteRepositoryPort } from "../../ports/ClienteRepositoryPort";
 import { HistorialRepositoryPort } from "../../ports/HistorialRepositoryPort";
 import { HISTORIAL_ACTIONS } from "../../constants/historialActions";
+import { ConfiguracionRepositoryPort } from "../../ports/ConfiguracionRepositoryPort";
 
 /**
  * Caso de uso para crear una nueva solicitud formal de crédito.
@@ -57,7 +58,8 @@ export class CrearSolicitudFormalUseCase {
         private readonly analistaRepo: AnalistaRepositoryPort,
         private readonly contratoRepository: ContratoRepositoryPort,
         private readonly clienteRepository: ClienteRepositoryPort,
-        private readonly historialRepository: HistorialRepositoryPort
+        private readonly historialRepository: HistorialRepositoryPort,
+        private readonly configuracionRepo: ConfiguracionRepositoryPort
     ) {}
 
     /**
@@ -94,8 +96,10 @@ export class CrearSolicitudFormalUseCase {
             domicilio: string;
             datosEmpleador: string;
             referentes: any[];
+            importeNeto: number;
         },
-        comentarioInicial: string = "Solicitud creada por comerciante"
+        comentarioInicial: string = "Solicitud creada por comerciante",
+        solicitaAmpliacionDeCredito:boolean
     ): Promise<SolicitudFormal> {
         try {
             // Verificar crédito activo
@@ -156,6 +160,35 @@ export class CrearSolicitudFormalUseCase {
                 });
                 throw new Error("Solicitud inicial no encontrada");
             }
+            
+            //Obtener ponderador de la configuración
+            const configs = await this.configuracionRepo.obtenerConfiguracion();
+            const ponderadorConfig = configs.find(c => c.getClave() === 'ponderador');
+            
+            if (!ponderadorConfig) {
+                await this.historialRepository.registrarEvento({
+                    usuarioId: comercianteId,
+                    accion: HISTORIAL_ACTIONS.ERROR_PROCESO,
+                    entidadAfectada: 'solicitudes_formales',
+                    entidadId: 0,
+                    detalles: { error: "Configuración de ponderador no encontrada" },
+                    solicitudInicialId: solicitudInicialId
+                });
+                throw new Error("Configuración de ponderador no encontrada");
+            }
+
+            const ponderador = parseFloat(ponderadorConfig.getValor());
+            if (isNaN(ponderador)) {
+                await this.historialRepository.registrarEvento({
+                    usuarioId: comercianteId,
+                    accion: HISTORIAL_ACTIONS.ERROR_PROCESO,
+                    entidadAfectada: 'solicitudes_formales',
+                    entidadId: 0,
+                    detalles: { error: "Ponderador no es un número válido" },
+                    solicitudInicialId: solicitudInicialId
+                });
+                throw new Error("Ponderador no es un número válido");
+            }
 
             // 3. Verificar estado de la solicitud inicial
             if (solicitudInicial.getEstado() !== "aprobada") {
@@ -174,9 +207,9 @@ export class CrearSolicitudFormalUseCase {
                 });
                 throw new Error("La solicitud inicial no está aprobada");
             }
-
             // 4. Verificar que no exista ya una solicitud formal para esta inicial
             const existentes = await this.solicitudFormalRepo.getSolicitudesFormalesBySolicitudInicialId(solicitudInicialId);
+            
             if (existentes.length > 0) {
                 // Registrar evento de solicitud duplicada
                 await this.historialRepository.registrarEvento({
@@ -247,7 +280,7 @@ export class CrearSolicitudFormalUseCase {
             
             datosSolicitud.recibo = buffer;
             }
-
+            
             // 5. Crear la solicitud formal con comentario inicial
             const solicitudFormal = new SolicitudFormal(
                 0, // ID se asignará automáticamente
@@ -268,11 +301,17 @@ export class CrearSolicitudFormalUseCase {
                 datosSolicitud.domicilio,
                 datosSolicitud.datosEmpleador,
                 datosSolicitud.referentes,
-                [comentarioInicial]
+                datosSolicitud.importeNeto,
+                [comentarioInicial],
+                ponderador,
+                solicitaAmpliacionDeCredito,
+                0 // clienteId (temporal)
+                
+
+                
             );
-            (solicitudFormal as any).solicitudInicialId = solicitudInicialId;
-            (solicitudFormal as any).comercianteId = comercianteId;
-            
+            // Validar completitud de datos
+            solicitudFormal.validarCompletitud();
             // 6. Vincular con solicitud inicial (propiedad adicional necesaria)
             (solicitudFormal as any).solicitudInicialId = solicitudInicialId;
             // 7. Guardar en la base de datos

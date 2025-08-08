@@ -17,7 +17,6 @@ import express from "express";
 import { applyMiddlewares } from "./middlewares";
 import { errorHandler } from "./error-handler";
 import { Router } from "express";
-import { appConfig } from "../config/server/AppConfig";
 
 /**
  * Crea e inicializa el servidor HTTP Express.

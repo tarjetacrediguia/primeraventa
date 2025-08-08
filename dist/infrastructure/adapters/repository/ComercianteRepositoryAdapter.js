@@ -14,6 +14,9 @@ exports.ComercianteRepositoryAdapter = void 0;
 const Comerciante_1 = require("../../../domain/entities/Comerciante");
 const DatabaseDonfig_1 = require("../../config/Database/DatabaseDonfig");
 class ComercianteRepositoryAdapter {
+    findById(id) {
+        throw new Error("Method not implemented.");
+    }
     /**
      * Busca un comerciante por su email.
      * @param email - Email del comerciante a buscar.

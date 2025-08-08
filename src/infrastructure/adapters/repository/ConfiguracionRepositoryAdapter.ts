@@ -93,9 +93,9 @@ export class ConfiguracionRepositoryAdapter implements ConfiguracionRepositoryPo
                 RETURNING clave, valor, descripcion, fecha_actualizacion
             `;
             const result = await client.query(insertQuery, [
-                configuracion.clave,
-                configuracion.valor,
-                configuracion.descripcion
+                configuracion.getClave(),
+                configuracion.getValor(),
+                configuracion.getDescripcion()
             ]);
             const row = result.rows[0];
             await client.query('COMMIT');

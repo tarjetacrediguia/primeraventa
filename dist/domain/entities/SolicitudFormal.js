@@ -96,8 +96,10 @@ class SolicitudFormal {
      * @param fechaAprobacion - Fecha de aprobación (opcional).
      * @param analistaAprobadorId - ID del analista que aprobó (opcional).
      * @param administradorAprobadorId - ID del administrador que aprobó (opcional).
+     * @param importeNeto - Importe neto del solicitante.
+     * @param cuotasSolicitadas - Cantidad de cuotas solicitadas (entre 3 y 14).
      */
-    constructor(id, solicitudInicialId, comercianteId, nombreCompleto, apellido, dni, telefono, email, fechaSolicitud, recibo, estado, aceptaTarjeta, fechaNacimiento, domicilio, datosEmpleador, referentes, comentarios = [], clienteId = 0, numeroTarjeta, numeroCuenta, fechaAprobacion, analistaAprobadorId, administradorAprobadorId) {
+    constructor(id, solicitudInicialId, comercianteId, nombreCompleto, apellido, dni, telefono, email, fechaSolicitud, recibo, estado, aceptaTarjeta, fechaNacimiento, domicilio, datosEmpleador, referentes, importeNeto, comentarios = [], ponderador, solicitaAmpliacionDeCredito = false, clienteId, fechaAprobacion, analistaAprobadorId, administradorAprobadorId, comercianteAprobadorId, nuevoLimiteCompletoSolicitado) {
         this.id = id;
         this.solicitudInicialId = solicitudInicialId;
         this.comercianteId = comercianteId;
@@ -116,11 +118,37 @@ class SolicitudFormal {
         this.referentes = referentes || [];
         this.comentarios = comentarios;
         this.clienteId = clienteId;
-        this.numeroTarjeta = numeroTarjeta;
-        this.numeroCuenta = numeroCuenta;
         this.fechaAprobacion = fechaAprobacion;
         this.analistaAprobadorId = analistaAprobadorId;
         this.administradorAprobadorId = administradorAprobadorId;
+        this.importeNeto = importeNeto;
+        this.calcularLimites();
+        this.ponderador = ponderador;
+        this.nuevoLimiteCompletoSolicitado = nuevoLimiteCompletoSolicitado !== null && nuevoLimiteCompletoSolicitado !== void 0 ? nuevoLimiteCompletoSolicitado : null;
+        this.solicitaAmpliacionDeCredito = solicitaAmpliacionDeCredito;
+    }
+    setComercianteAprobadorId(id) {
+        this.comercianteAprobadorId = id;
+    }
+    getComercianteAprobadorId() {
+        return this.comercianteAprobadorId;
+    }
+    /**
+     * Obtiene el ponderador de la solicitud.
+     *
+     * @returns number - Ponderador de la solicitud.
+     */
+    getPonderador() {
+        return this.ponderador;
+    }
+    /**
+     * Establece el ponderador de la solicitud.
+     *
+     * @param ponderador - Nuevo valor del ponderador.
+     */
+    setPonderador(ponderador) {
+        this.ponderador = ponderador;
+        this.calcularLimites(); // Recalcula los límites al cambiar el ponderador
     }
     /**
      * Obtiene el ID del analista que aprobó la solicitud.
@@ -145,6 +173,35 @@ class SolicitudFormal {
      */
     getAdministradorAprobadorId() {
         return this.administradorAprobadorId;
+    }
+    getImporteNeto() {
+        return this.importeNeto;
+    }
+    setImporteNeto(importeNeto) {
+        this.importeNeto = importeNeto;
+        this.calcularLimites();
+    }
+    getLimiteBase() {
+        return this.limiteBase;
+    }
+    getLimiteCompleto() {
+        return this.limiteCompleto;
+    }
+    getNuevoLimiteCompletoSolicitado() {
+        var _a;
+        return (_a = this.nuevoLimiteCompletoSolicitado) !== null && _a !== void 0 ? _a : null;
+    }
+    setNuevoLimiteCompletoSolicitado(nuevoLimite) {
+        this.nuevoLimiteCompletoSolicitado = nuevoLimite;
+    }
+    isSolicitaAmpliacionDeCredito() {
+        return this.solicitaAmpliacionDeCredito;
+    }
+    setSolicitaAmpliacionDeCredito(solicita) {
+        this.solicitaAmpliacionDeCredito = solicita;
+    }
+    getSolicitaAmpliacionDeCredito() {
+        return this.solicitaAmpliacionDeCredito;
     }
     /**
      * Establece el ID del administrador que aprobó la solicitud.
@@ -171,44 +228,19 @@ class SolicitudFormal {
         this.fechaAprobacion = fechaAprobacion;
     }
     /**
-     * Obtiene el número de cuenta asignado.
-     *
-     * @returns string | undefined - Número de cuenta o undefined.
-     */
-    getNumeroCuenta() {
-        return this.numeroCuenta;
-    }
-    /**
-     * Establece el número de cuenta asignado.
-     *
-     * @param numeroCuenta - Nuevo número de cuenta.
-     */
-    setNumeroCuenta(numeroCuenta) {
-        this.numeroCuenta = numeroCuenta;
-    }
-    /**
-     * Obtiene el número de tarjeta asignado.
-     *
-     * @returns string | undefined - Número de tarjeta o undefined.
-     */
-    getNumeroTarjeta() {
-        return this.numeroTarjeta;
-    }
-    /**
-     * Establece el número de tarjeta asignado.
-     *
-     * @param numeroTarjeta - Nuevo número de tarjeta.
-     */
-    setNumeroTarjeta(numeroTarjeta) {
-        this.numeroTarjeta = numeroTarjeta;
-    }
-    /**
      * Obtiene el ID del cliente asociado.
      *
      * @returns number - ID del cliente.
      */
     getClienteId() {
-        return this.clienteId;
+        return this.clienteId || 0; // Retorna 0 si clienteId no está definido
+    }
+    /**
+    * Establece el ID del cliente asociado.
+    *
+    */
+    setClienteId(clienteId) {
+        this.clienteId = clienteId;
     }
     /**
      * Obtiene el ID de la solicitud inicial asociada.
@@ -466,6 +498,9 @@ class SolicitudFormal {
     agregarComentario(comentario) {
         this.comentarios.push(comentario);
     }
+    setLimiteCompleto(limiteCompleto) {
+        this.limiteCompleto = limiteCompleto;
+    }
     /**
      * Convierte la solicitud formal a una representación de string.
      * Útil para logging y debugging.
@@ -520,10 +555,13 @@ class SolicitudFormal {
             datosEmpleador: this.datosEmpleador,
             referentes: this.referentes.map(r => r.toPlainObject()),
             comentarios: this.comentarios,
-            numeroTarjeta: this.numeroTarjeta,
-            numeroCuenta: this.numeroCuenta,
             analistaAprobadorId: this.analistaAprobadorId,
-            administradorAprobadorId: this.administradorAprobadorId
+            administradorAprobadorId: this.administradorAprobadorId,
+            importeNeto: this.importeNeto,
+            limiteBase: this.limiteBase,
+            limiteCompleto: this.limiteCompleto,
+            solicitaAmpliacionDeCredito: this.solicitaAmpliacionDeCredito,
+            nuevoLimiteCompletoSolicitado: this.nuevoLimiteCompletoSolicitado
         };
     }
     /**
@@ -534,7 +572,39 @@ class SolicitudFormal {
      * @returns SolicitudFormal - Nueva instancia de SolicitudFormal.
      */
     static fromMap(map) {
-        return new SolicitudFormal(map.id, map.solicitudInicialId, map.comercianteId, map.nombreCompleto, map.apellido, map.dni, map.telefono, map.email, map.fechaSolicitud, map.recibo, map.estado, map.aceptaTarjeta, map.fechaNacimiento, map.domicilio, map.datosEmpleador, map.referentes.map((r) => Referente_1.Referente.fromMap(r)), map.comentarios || [], map.clienteId || 0, map.numeroTarjeta, map.numeroCuenta, map.fechaAprobacion, map.analistaAprobadorId, map.administradorAprobadorId);
+        return new SolicitudFormal(map.id, map.solicitudInicialId, map.comercianteId, map.nombreCompleto, map.apellido, map.dni, map.telefono, map.email, map.fechaSolicitud, map.recibo, map.estado, map.aceptaTarjeta, map.fechaNacimiento, map.domicilio, map.datosEmpleador, map.referentes.map((r) => Referente_1.Referente.fromMap(r)), map.importeNeto, map.comentarios || [], map.ponderador || 0, map.solicitaAmpliacionDeCredito || false, map.clienteId || 0, map.fechaAprobacion, map.analistaAprobadorId, map.nuevoLimiteCompletoSolicitado);
+    }
+    // Métodos para cálculos financieros
+    calcularLimites() {
+        this.limiteBase = this.importeNeto / 2;
+        this.limiteCompleto = this.limiteBase * this.ponderador;
+    }
+    validarCompletitud() {
+        const camposRequeridos = [
+            this.nombreCompleto,
+            this.apellido,
+            this.dni,
+            this.telefono,
+            this.email,
+            this.recibo,
+            this.fechaNacimiento,
+            this.domicilio,
+            this.datosEmpleador,
+            this.importeNeto
+        ];
+        if (camposRequeridos.some(campo => {
+            if (Buffer.isBuffer(campo))
+                return campo.length === 0;
+            return !campo || (typeof campo === 'string' && campo.trim() === '');
+        })) {
+            throw new Error("Faltan datos obligatorios en la solicitud formal");
+        }
+        if (this.referentes.length === 0) {
+            throw new Error("Se requiere al menos un referente");
+        }
+        if (this.importeNeto <= 0) {
+            throw new Error("El importe neto debe ser mayor a cero");
+        }
     }
 }
 exports.SolicitudFormal = SolicitudFormal;

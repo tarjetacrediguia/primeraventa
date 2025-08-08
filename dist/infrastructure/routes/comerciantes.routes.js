@@ -12,9 +12,9 @@ const router = (0, express_1.Router)();
  * Todas las rutas están protegidas por el middleware de rol de comerciante o analista.
  */
 // Rutas protegidas que requieren autenticación
-router.post('/', rolesMiddleware_1.esComercianteOAnalista, Comerciantes_controller_1.createComerciante);
-router.put('/:id', rolesMiddleware_1.esComercianteOAnalista, Comerciantes_controller_1.updateComerciante);
-router.delete('/:id', rolesMiddleware_1.esComercianteOAnalista, Comerciantes_controller_1.deleteComerciante);
-router.get('/:id', rolesMiddleware_1.esComercianteOAnalista, Comerciantes_controller_1.getComerciante);
-router.get('/', rolesMiddleware_1.esComercianteOAnalista, Comerciantes_controller_1.listComerciantes);
+router.post('/', rolesMiddleware_1.esAdministrador, Comerciantes_controller_1.createComerciante);
+router.put('/:id', rolesMiddleware_1.esAdministrador, Comerciantes_controller_1.updateComerciante);
+router.delete('/:id', rolesMiddleware_1.esAdministrador, Comerciantes_controller_1.deleteComerciante);
+router.get('/:id', rolesMiddleware_1.esAdministrador, Comerciantes_controller_1.getComerciante);
+router.get('/', rolesMiddleware_1.esAdministrador, Comerciantes_controller_1.listComerciantes);
 exports.default = router;

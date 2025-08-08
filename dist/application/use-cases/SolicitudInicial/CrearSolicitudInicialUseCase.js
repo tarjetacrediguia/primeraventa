@@ -115,48 +115,61 @@ class CrearSolicitudInicialUseCase {
                     },
                     solicitudInicialId: solicitudInicialId
                 });
-                // VERIFICACION AUTOMÁTICA DE SOLICITUDES INICIALES POR VERAZ
+                // VERIFICACION AUTOMÁTICA DE SOLICITUDES INICIALES POR VERAZ O NOSIS
+                // Descomentar el bloque de Veraz si se desea activar la verificación automática
                 /*
-                // 4. Consultar Veraz
-                const estadoVeraz = await this.verazService.checkClienteStatus(dniCliente);
-                // 5. Actualizar estado según Veraz
-                if (estadoVeraz.status === "aprobado") {
-                    solicitudCreada.setEstado("aprobada");
-                    await this.solicitudInicialRepository.updateSolicitudInicial(solicitudCreada);
-                    // Registrar evento de aprobación automática
-                    await this.historialRepository.registrarEvento({
-                        usuarioId: null, // Sistema automático
-                        accion: HISTORIAL_ACTIONS.APPROVE_SOLICITUD_INICIAL,
-                        entidadAfectada: 'solicitudes_iniciales',
-                        entidadId: solicitudCreada.getId(),
-                        detalles: {
-                            sistema: "Veraz",
-                            score: estadoVeraz.score,
-                            motivo: estadoVeraz.motivo || "Aprobación automática"
-                        },
-                        solicitudInicialId: solicitudInicialId
-                    });
-                } else if(estadoVeraz.status === "rechazado"){
-                    solicitudCreada.setEstado("rechazada");
-                    await this.solicitudInicialRepository.updateSolicitudInicial(solicitudCreada);
-                    // Registrar evento de rechazo automático
-                    await this.historialRepository.registrarEvento({
-                        usuarioId: null, // Sistema automático
-                        accion: HISTORIAL_ACTIONS.REJECT_SOLICITUD_INICIAL,
-                        entidadAfectada: 'solicitudes_iniciales',
-                        entidadId: solicitudCreada.getId(),
-                        detalles: {
-                            sistema: "Veraz",
-                            score: estadoVeraz.score,
-                            motivo: estadoVeraz.motivo || "Rechazo automático"
-                        },
-                        solicitudInicialId: solicitudInicialId
-                    });
-                    //throw new Error("Cliente no apto para crédito según Veraz");
-                } else {
-                    solicitudCreada.setEstado("pendiente");
-                    await this.solicitudInicialRepository.updateSolicitudInicial(solicitudCreada);
-                }
+                // VERIFICACIÓN AUTOMÁTICA CON NOSIS
+                    if (this.nosisAutomatico) {
+                        const getNosisData = new GetDataNosisUseCase(this.nosisPort);
+                        const nosisData = await getNosisData.execute(dniCliente);
+                        
+                        const verifyNosis = new VerifyDataNosisUseCase();
+                        const resultadoNosis = await verifyNosis.execute(nosisData);
+    
+                        if (resultadoNosis.status === "aprobado") {
+                        solicitudCreada.setEstado("aprobada");
+                        await this.solicitudInicialRepository.updateSolicitudInicial(solicitudCreada);
+                        
+                        await this.historialRepository.registrarEvento({
+                            usuarioId: null,
+                            accion: HISTORIAL_ACTIONS.APPROVE_SOLICITUD_INICIAL,
+                            entidadAfectada: 'solicitudes_iniciales',
+                            entidadId: solicitudCreada.getId(),
+                            detalles: {
+                            sistema: "Nosis",
+                            score: resultadoNosis.score,
+                            motivo: resultadoNosis.motivo
+                            },
+                            solicitudInicialId
+                        });
+                        }
+                        else if (resultadoNosis.status === "rechazado") {
+                        solicitudCreada.setEstado("rechazada");
+                        await this.solicitudInicialRepository.updateSolicitudInicial(solicitudCreada);
+                        
+                        await this.historialRepository.registrarEvento({
+                            usuarioId: null,
+                            accion: HISTORIAL_ACTIONS.REJECT_SOLICITUD_INICIAL,
+                            entidadAfectada: 'solicitudes_iniciales',
+                            entidadId: solicitudCreada.getId(),
+                            detalles: {
+                            sistema: "Nosis",
+                            score: resultadoNosis.score,
+                            motivo: resultadoNosis.motivo
+                            },
+                            solicitudInicialId
+                        });
+                        }
+                        else {
+                        solicitudCreada.setEstado("pendiente");
+                        await this.solicitudInicialRepository.updateSolicitudInicial(solicitudCreada);
+                        await this.notificarAnalistas(solicitudCreada);
+                        }
+                    }
+                    else {
+                        // Modo manual
+                        await this.notificarAnalistas(solicitudCreada);
+                    }
     */
                 // 6. Notificar al cliente (simulado)
                 if (this.verazAutomatico) {

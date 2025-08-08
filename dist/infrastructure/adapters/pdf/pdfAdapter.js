@@ -1,5 +1,38 @@
 "use strict";
 //src/infrastructure/adapters/pdf/pdfAdapter.ts	
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || (function () {
+    var ownKeys = function(o) {
+        ownKeys = Object.getOwnPropertyNames || function (o) {
+            var ar = [];
+            for (var k in o) if (Object.prototype.hasOwnProperty.call(o, k)) ar[ar.length] = k;
+            return ar;
+        };
+        return ownKeys(o);
+    };
+    return function (mod) {
+        if (mod && mod.__esModule) return mod;
+        var result = {};
+        if (mod != null) for (var k = ownKeys(mod), i = 0; i < k.length; i++) if (k[i] !== "default") __createBinding(result, mod, k[i]);
+        __setModuleDefault(result, mod);
+        return result;
+    };
+})();
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
     return new (P || (P = Promise))(function (resolve, reject) {
@@ -9,34 +42,60 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.PdfAdapter = void 0;
-/**
- * MÓDULO: Adaptador de Generación de PDFs
- *
- * Este archivo implementa el adaptador para la generación y gestión de documentos PDF
- * en el sistema, utilizando la librería PDFKit para crear documentos profesionales.
- *
- * Responsabilidades:
- * - Generar PDFs de contratos con plantillas personalizables
- * - Crear reportes en formato PDF
- * - Gestionar el almacenamiento y recuperación de PDFs
- * - Proporcionar funcionalidades CRUD para documentos PDF
- *
- * @author Sistema de Gestión
- * @version 1.0.0
- */
-const pdfkit_1 = __importDefault(require("pdfkit"));
 const buffer_1 = require("buffer");
+const puppeteer = __importStar(require("puppeteer"));
+const pdf_lib_1 = require("pdf-lib");
+const paginas_1 = require("../../templates/contrato/paginas");
 /**
  * Adaptador que implementa la generación y gestión de documentos PDF.
  * Proporciona métodos para crear contratos, reportes y gestionar documentos PDF
  * utilizando plantillas configurables desde variables de entorno.
  */
 class PdfAdapter {
+    generateContractPdf(contractData) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const browser = yield puppeteer.launch({
+                headless: true,
+                args: ['--no-sandbox', '--disable-setuid-sandbox']
+            });
+            const pagesHtml = this.getPagesWithReplacements(contractData);
+            const pdfBuffers = [];
+            for (const html of pagesHtml) {
+                const page = yield browser.newPage();
+                yield page.setContent(html, {
+                    waitUntil: 'networkidle0',
+                    timeout: 60000
+                });
+                const pdfBuffer = yield page.pdf({
+                    format: 'A4',
+                    printBackground: true,
+                    margin: {
+                        top: '20px',
+                        right: '20px',
+                        bottom: '20px',
+                        left: '20px'
+                    },
+                    preferCSSPageSize: true,
+                    timeout: 60000
+                });
+                pdfBuffers.push(pdfBuffer);
+                yield page.close();
+            }
+            yield browser.close();
+            return this.mergePdfs(pdfBuffers);
+        });
+    }
+    /**
+ * Genera un PDF de reporte con los datos proporcionados.
+ *
+ * @param reportData - Datos del reporte a incluir en el PDF.
+ * @returns Promise<Buffer> - Buffer conteniendo el PDF del reporte generado.
+ */
+    generateReportPdf(reportData) {
+        throw new Error('Method not implemented.');
+    }
     /**
      * Genera un PDF utilizando una plantilla específica y datos proporcionados.
      *
@@ -75,97 +134,112 @@ class PdfAdapter {
     updatePdf(id, data) {
         throw new Error("Method not implemented.");
     }
-    /*
-    async generateContractPdf(contractData: any): Promise<Buffer> {
-    return new Promise((resolve, reject) => {
-      try {
-        const doc = new PDFDocument();
-        const buffers: any[] = [];
-        
-        doc.on('data', buffers.push.bind(buffers));
-        doc.on('end', () => {
-          const pdfBuffer = Buffer.concat(buffers);
-          resolve(pdfBuffer);
-        });
-        
-        // Generar contenido del contrato
-        doc.fontSize(20).text('CONTRATO DE PRÉSTAMO', { align: 'center' });
-        doc.moveDown();
-        doc.fontSize(12).text(`Número de contrato: ${contractData.contrato.id}`);
-        doc.text(`Fecha: ${new Date(contractData.contrato.fechaGeneracion).toLocaleDateString()}`);
-        doc.text(`Monto: $${contractData.contrato.monto.toFixed(2)}`);
-        doc.text(`Cliente: ${contractData.solicitud.nombreCompleto} ${contractData.solicitud.apellido}`);
-        doc.text(`DNI: ${contractData.solicitud.dni}`);
-        doc.moveDown();
-        doc.text('Términos y condiciones...');
-        
-        doc.end();
-      } catch (error) {
-        reject(new Error('Error generando PDF: ' + error));
-      }
-    });
-  }
-    */
-    /**
-     * Genera un PDF de contrato utilizando plantillas configurables desde variables de entorno.
-     * Reemplaza marcadores en la plantilla con datos reales del contrato y solicitud.
-     *
-     * @param contractData - Objeto con datos del contrato y solicitud que incluye:
-     *   - contrato: Información del contrato (id, fechaGeneracion, monto, numeroCuenta, numeroTarjeta)
-     *   - solicitud: Información del cliente (nombreCompleto, apellido, dni)
-     * @returns Promise<Buffer> - Buffer conteniendo el PDF del contrato generado.
-     */
-    generateContractPdf(contractData) {
+    mergePdfs(pdfs) {
         return __awaiter(this, void 0, void 0, function* () {
-            return new Promise((resolve, reject) => {
-                try {
-                    const doc = new pdfkit_1.default();
-                    const buffers = [];
-                    doc.on('data', buffers.push.bind(buffers));
-                    doc.on('end', () => {
-                        const pdfBuffer = buffer_1.Buffer.concat(buffers);
-                        resolve(pdfBuffer);
-                    });
-                    // Obtener plantilla de contrato desde variables de entorno
-                    const contractTitle = process.env.CONTRACT_TITLE || '';
-                    const contractBody = process.env.CONTRACT_BODY || '';
-                    // Preparar datos
-                    const fechaGeneracion = new Date(contractData.contrato.fechaGeneracion);
-                    const nombreCompleto = `${contractData.solicitud.nombreCompleto} ${contractData.solicitud.apellido}`;
-                    // Reemplazar marcadores
-                    const formattedBody = contractBody
-                        .replace(/<NOMBRE_COMPLETO>/g, nombreCompleto)
-                        .replace(/<DNI>/g, contractData.solicitud.dni)
-                        .replace(/<MONTO>/g, contractData.contrato.monto.toFixed(2))
-                        .replace(/<NUMERO_CUENTA>/g, contractData.contrato.numeroCuenta || '')
-                        .replace(/<NUMERO_TARJETA>/g, contractData.contrato.numeroTarjeta || '')
-                        .replace(/<DIA>/g, fechaGeneracion.getDate().toString())
-                        .replace(/<MES>/g, (fechaGeneracion.getMonth() + 1).toString())
-                        .replace(/<AÑO>/g, fechaGeneracion.getFullYear().toString());
-                    // Generar contenido
-                    doc.fontSize(16).text(contractTitle, { align: 'center' });
-                    doc.moveDown();
-                    doc.fontSize(10).text(formattedBody, {
-                        align: 'left',
-                        indent: 30,
-                        lineGap: 5
-                    });
-                    doc.end();
-                }
-                catch (error) {
-                    reject(new Error('Error generando PDF: ' + error));
-                }
-            });
+            const mergedPdf = yield pdf_lib_1.PDFDocument.create();
+            for (const pdfBytes of pdfs) {
+                const pdf = yield pdf_lib_1.PDFDocument.load(pdfBytes);
+                const pages = yield mergedPdf.copyPages(pdf, pdf.getPageIndices());
+                pages.forEach(page => mergedPdf.addPage(page));
+            }
+            const mergedPdfBytes = yield mergedPdf.save();
+            return buffer_1.Buffer.from(mergedPdfBytes);
         });
     }
-    /**
-     * Genera un PDF de reporte con los datos proporcionados.
-     *
-     * @param reportData - Datos del reporte a incluir en el PDF.
-     * @returns Promise<Buffer> - Buffer conteniendo el PDF del reporte generado.
-     */
-    generateReportPdf(reportData) {
-        throw new Error("Method not implemented.");
+    getPagesWithReplacements(contractData) {
+        const replacements = this.createReplacements(contractData);
+        return [
+            paginas_1.paginas.pagina1, paginas_1.paginas.pagina2, paginas_1.paginas.pagina3,
+            paginas_1.paginas.pagina4, paginas_1.paginas.pagina5, paginas_1.paginas.pagina6,
+            paginas_1.paginas.pagina7, paginas_1.paginas.pagina8, paginas_1.paginas.pagina9,
+            paginas_1.paginas.pagina10
+        ].map(html => this.applyReplacements(html, replacements));
+    }
+    applyReplacements(html, replacements) {
+        return Object.entries(replacements).reduce((acc, [key, value]) => {
+            return acc.replace(new RegExp(this.escapeRegExp(key), 'g'), value.toString());
+        }, html);
+    }
+    escapeRegExp(string) {
+        return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    }
+    createReplacements(contractData) {
+        var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k, _l, _m, _o, _p, _q, _r, _s, _t, _u, _v, _w;
+        const { contrato, solicitud } = contractData;
+        const formatDate = (dateString) => {
+            if (!dateString)
+                return '';
+            const date = new Date(dateString);
+            return date.toLocaleDateString('es-AR', {
+                day: '2-digit',
+                month: '2-digit',
+                year: 'numeric'
+            });
+        };
+        return {
+            '{{FECHA}}': formatDate(contrato.fechaGeneracion),
+            '{{Nº_AUTORIZACIÓN}}': contrato.comercioNAutorizacion || '',
+            '{{NOMBRE_DEL_COMERCIO}}': contrato.comercioNombre || '',
+            '{{Nº_DE_CUENTA}}': contrato.numeroCuenta || '',
+            '{{PRODUCTO}}': contrato.comercioProducto || '',
+            '{{SUCURSAL_Nº}}': contrato.comercioSucursal || '',
+            '{{SOLICITANTE_NOMBRE}}': `${solicitud.nombreCompleto} ${solicitud.apellido}`,
+            '{{SOLICITANTE_SEXO}}': contrato.clienteSexo || '',
+            '{{CUIL_CUIT}}': contrato.clienteCuitOcuil || '',
+            '{{DNI}}': contrato.clienteDni || '',
+            '{{FECHA_NACIMIENTO}}': formatDate(contrato.clienteFechaNacimiento),
+            '{{ESTADO_CIVIL}}': contrato.clienteEstadoCivil || '',
+            '{{NACIONALIDAD}}': contrato.clienteNacionalidad || '',
+            '{{DOMICILIO_CALLE}}': contrato.clienteDomicilioCalle || '',
+            '{{DOMICILIO_NUMERO}}': contrato.clienteDomicilioNumero || '',
+            '{{DOMICILIO_PISO}}': contrato.clienteDomicilioPiso || '',
+            '{{DOMICILIO_DPTO}}': contrato.clienteDomicilioDepartamento || '',
+            '{{LOCALIDAD}}': contrato.clienteDomicilioLocalidad || '',
+            '{{PROVINCIA}}': contrato.clienteDomicilioProvincia || '',
+            '{{BARRIO}}': contrato.clienteDomicilioBarrio || '',
+            '{{CODIGO_POSTAL}}': contrato.clienteDomicilioCodigoPostal || '',
+            '{{EMAIL}}': contrato.clienteDomicilioCorreoElectronico || '',
+            '{{TELEFONO_FIJO}}': contrato.clienteDomicilioTelefonoFijo || '',
+            '{{TELEFONO_CELULAR}}': contrato.clienteDomicilioTelefonoCelular || '',
+            '{{EMPRESA}}': contrato.clienteDatosLaboralesRazonSocial || '',
+            '{{ACTIVIDAD}}': contrato.clienteDatosLaboralesActividad || '',
+            '{{CUIT_EMPRESA}}': contrato.clienteDatosLaboralesCuit || '',
+            '{{INGRESO}}': formatDate(contrato.clienteDatosLaboralesInicioActividades),
+            '{{CARGO}}': contrato.clienteDatosLaboralesCargo || '',
+            '{{SECTOR}}': contrato.clienteDatosLaboralesSector || '',
+            '{{DOMICILIO_LEGAL}}': contrato.clienteDatosLaboralesDomicilioLegal || '',
+            '{{SUELDO}}': ((_a = solicitud.importeNeto) === null || _a === void 0 ? void 0 : _a.toString()) || '',
+            // Página 2 (Contrato)
+            '{{TITULAR_NOMBRE}}': `${solicitud.nombreCompleto} ${solicitud.apellido}`,
+            '{{TITULAR_DNI}}': contrato.clienteDni || '',
+            '{{TITULAR_CUIT}}': contrato.clienteCuitOcuil || '',
+            '{{TITULAR_DOMICILIO}}': [
+                contrato.clienteDomicilioCalle,
+                contrato.clienteDomicilioNumero,
+                contrato.clienteDomicilioLocalidad
+            ].filter(Boolean).join(', '),
+            // Páginas 3-10 (Usar mismos datos en múltiples páginas)
+            '{{TEA_FINANCIACION}}': ((_b = contrato.tasasTeaCtfFinanciacion) === null || _b === void 0 ? void 0 : _b.toString()) || '84.40%',
+            '{{TNA_COMPENSATORIOS}}': ((_c = contrato.tasasTnaCompensatoriosFinanciacion) === null || _c === void 0 ? void 0 : _c.toString()) || '62.78%',
+            '{{TNA_PUNITORIOS}}': ((_d = contrato.tasasTnaPunitorios) === null || _d === void 0 ? void 0 : _d.toString()) || '31.39%',
+            '{{COMISION_RENOVACION}}': ((_e = contrato.tasasComisionRenovacionAnual) === null || _e === void 0 ? void 0 : _e.toString()) || '3300',
+            '{{COMISION_MANTENIMIENTO}}': ((_f = contrato.tasasComisionMantenimiento) === null || _f === void 0 ? void 0 : _f.toString()) || '650',
+            '{{COMISION_REPOSICION}}': ((_g = contrato.tasasComisionReposicionPlastico) === null || _g === void 0 ? void 0 : _g.toString()) || '1026',
+            '{{ATRASO_05_31}}': ((_h = contrato.tasasAtraso05_31Dias) === null || _h === void 0 ? void 0 : _h.toString()) || '380',
+            '{{ATRASO_32_60}}': ((_j = contrato.tasasAtraso32_60Dias) === null || _j === void 0 ? void 0 : _j.toString()) || '649',
+            '{{ATRASO_61_90}}': ((_k = contrato.tasasAtraso61_90Dias) === null || _k === void 0 ? void 0 : _k.toString()) || '742',
+            '{{PAGO_FACIL}}': ((_l = contrato.tasasPagoFacil) === null || _l === void 0 ? void 0 : _l.toString()) || '99',
+            '{{PLATINIUM_TEA}}': ((_m = contrato.tasasPlatiniumTeaCtfFinanciacion) === null || _m === void 0 ? void 0 : _m.toString()) || '84.40',
+            '{{PLATINIUM_TNA_COMPENSATORIOS}}': ((_o = contrato.tasasPlatiniumTnaCompensatoriosFinanciacion) === null || _o === void 0 ? void 0 : _o.toString()) || '62.78',
+            '{{PLATINIUM_TNA_PUNITORIOS}}': ((_p = contrato.tasasPlatiniumTnaPunitorios) === null || _p === void 0 ? void 0 : _p.toString()) || '31.39',
+            '{{PLATINIUM_COMISION_RENOVACION}}': ((_q = contrato.tasasPlatiniumComisionRenovacionAnual) === null || _q === void 0 ? void 0 : _q.toString()) || '3300',
+            '{{PLATINIUM_COMISION_MANTENIMIENTO}}': ((_r = contrato.tasasPlatiniumComisionMantenimiento) === null || _r === void 0 ? void 0 : _r.toString()) || '650',
+            '{{PLATINIUM_COMISION_REPOSICION}}': ((_s = contrato.tasasPlatiniumComisionReposicionPlastico) === null || _s === void 0 ? void 0 : _s.toString()) || '1026',
+            '{{PLATINIUM_ATRASO_05_31}}': ((_t = contrato.tasasPlatiniumAtraso05_31Dias) === null || _t === void 0 ? void 0 : _t.toString()) || '380',
+            '{{PLATINIUM_ATRASO_32_60}}': ((_u = contrato.tasasPlatiniumAtraso32_60Dias) === null || _u === void 0 ? void 0 : _u.toString()) || '649',
+            '{{PLATINIUM_ATRASO_61_90}}': ((_v = contrato.tasasPlatiniumAtraso61_90Dias) === null || _v === void 0 ? void 0 : _v.toString()) || '742',
+            '{{PLATINIUM_PAGO_FACIL}}': ((_w = contrato.tasasPlatiniumPagoFacil) === null || _w === void 0 ? void 0 : _w.toString()) || '99',
+        };
     }
 }
 exports.PdfAdapter = PdfAdapter;

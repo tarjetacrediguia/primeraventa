@@ -45,7 +45,12 @@ export class Historial {
         private _entidadId: number,
         private _detalles: any, // JSONB
         private _fechaHora?: Date,
-        private _solicitudInicialId?: number
+        private _solicitudInicialId?: number,
+        private datosExtendidos?: {
+        usuarioNombre?: string;
+        usuarioApellido?: string;
+        usuarioRol?: string;
+        entidadNombre?: string;}
     ) {}
 
     /**
@@ -227,7 +232,11 @@ export class Historial {
             entidadId: this.entidadId,
             detalles: this.detalles,
             fechaHora: this.fechaHora,
-            solicitudInicialId: this.solicitudInicialId
+            solicitudInicialId: this.solicitudInicialId,
+            usuarioNombre: this.datosExtendidos?.usuarioNombre,
+            usuarioApellido: this.datosExtendidos?.usuarioApellido,
+            usuarioRol: this.datosExtendidos?.usuarioRol,
+            entidadNombre: this.datosExtendidos?.entidadNombre
         };
     }
 }

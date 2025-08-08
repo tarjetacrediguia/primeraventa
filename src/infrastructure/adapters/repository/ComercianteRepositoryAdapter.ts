@@ -13,6 +13,9 @@ import { Comerciante } from "../../../domain/entities/Comerciante";
 import { pool } from "../../config/Database/DatabaseDonfig";
 
 export class ComercianteRepositoryAdapter implements ComercianteRepositoryPort {
+    findById(id: number): Promise<Comerciante | null> {
+        throw new Error("Method not implemented.");
+    }
     /**
      * Busca un comerciante por su email.
      * @param email - Email del comerciante a buscar.

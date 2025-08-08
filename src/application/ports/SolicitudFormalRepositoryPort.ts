@@ -151,4 +151,9 @@ export interface SolicitudFormalRepositoryPort {
         comercianteId: number, 
         estado: string
     ): Promise<SolicitudFormal[]>;
+
+    solicitarAmpliacion(solicitud: SolicitudFormal): Promise<SolicitudFormal>;
+    aprobarAmpliacion(solicitud: SolicitudFormal): Promise<SolicitudFormal>;
+    rechazarAmpliacion(solicitud: SolicitudFormal): Promise<SolicitudFormal>;
+
 }
