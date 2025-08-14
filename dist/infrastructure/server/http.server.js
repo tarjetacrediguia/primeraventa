@@ -32,6 +32,12 @@ const error_handler_1 = require("./error-handler");
 const createHTTPServer = (router) => {
     const app = (0, express_1.default)();
     (0, middlewares_1.applyMiddlewares)(app);
+    app.use((req, res, next) => {
+        if (!req.secure && process.env.NODE_ENV === 'production') {
+            return res.redirect(`https://${req.headers.host}${req.url}`);
+        }
+        next();
+    });
     app.use("/API/v1", router);
     app.use(error_handler_1.errorHandler);
     return app;

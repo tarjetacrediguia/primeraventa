@@ -505,6 +505,9 @@ const listarSolicitudesInicialesByComercianteYEstado = (req, res) => __awaiter(v
         const comercianteId = (_a = req.user) === null || _a === void 0 ? void 0 : _a.id;
         console.log('Comerciante ID:', comercianteId);
         const estado = req.query.estado;
+        // Headers cruciales
+        res.setHeader('Access-Control-Allow-Origin', '*');
+        res.setHeader('Access-Control-Expose-Headers', 'Authorization, X-Total-Count');
         // Validar parámetros
         if (!comercianteId || !estado) {
             return res.status(400).json({ error: 'Se requieren id y estado' });

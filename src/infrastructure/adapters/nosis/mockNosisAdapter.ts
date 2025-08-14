@@ -8,8 +8,6 @@ export class MockNosisAdapter implements NosisPort {
   constructor(testData?: NosisResponse) {
     // Usar datos de prueba por defecto si no se proporcionan
     this.testData = testData || {
-      xmlnsi: "http://www.w3.org/2001/XMLSchema-instance",
-      xmlns: "http://schemas.nosis.com/sac/ws01/types",
       Contenido: {
         Pedido: {
           Usuario: "60965",

@@ -31,6 +31,13 @@ export const createHTTPServer = (router: Router) => {
   const app = express();
 
   applyMiddlewares(app);
+
+  app.use((req, res, next) => {
+    if (!req.secure && process.env.NODE_ENV === 'production') {
+      return res.redirect(`https://${req.headers.host}${req.url}`);
+    }
+    next();
+  });
   app.use("/API/v1", router);
   app.use(errorHandler);
 

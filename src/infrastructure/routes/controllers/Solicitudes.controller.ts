@@ -602,6 +602,10 @@ export const listarSolicitudesInicialesByComercianteYEstado = async (req: Reques
         console.log('Comerciante ID:', comercianteId);
         const estado = req.query.estado as string;
 
+        // Headers cruciales
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Access-Control-Expose-Headers', 'Authorization, X-Total-Count');
+
         // Validar parámetros
         if (!comercianteId || !estado) {
             return res.status(400).json({ error: 'Se requieren id y estado' });

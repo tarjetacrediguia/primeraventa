@@ -1,0 +1,194 @@
+Seleccionadas por el cliente	Es de detalle	Variable	Nombre XML
+si	NO	CUIT / CUIL / CDI	VI_Identificacion
+si	NO	Nombre	VI_Nombre
+si	NO	Apellido	VI_Apellido
+si	NO	DNI	VI_DNI
+si	NO	Fecha de Nacimiento	VI_FecNacimiento
+si	NO	Género	VI_Sexo
+si	NO	Calle	VI_DomAF_Calle
+si	NO	Número	VI_DomAF_Nro
+si	NO	Localidad	VI_DomAF_Loc
+si	NO	Código Postal	VI_DomAF_CP
+si	NO	Provincia	VI_DomAF_Prov
+si	NO	Código de Área, del Teléfono Nº1	VI_Tel1_CodArea
+si	NO	Número, del Teléfono Nº1	VI_Tel1_Nro
+si	NO	Email	VI_Mail
+si	NO	Es Jubilado	VI_Jubilado_Es
+si	NO	Es Empleado	VI_Empleado_Es
+si	NO	Es Empleador	VI_Empleador_Es
+si	NO	Es Monotributista	VI_Inscrip_Monotributo_Es
+si	NO	Categoría Monotributo	VI_Inscrip_Monotributo
+si	NO	Tipo Monotributo	VI_Inscrip_Monotributo_Tipo
+si	NO	Actividad Monotributo	VI_Inscrip_Monotributo_Act
+si	NO	Es Autónomo	VI_Inscrip_Autonomo_Es
+si	SI	Historia Laboral - Empleadores	VI_HistoriaLaboral_Empleadores
+si	NO	Es Empleado - Últimos 12 Meses	VI_Empleado_12m_Es
+si	NO	Antigüedad Laboral	VI_AntiguedadLaboral
+si	NO	Es Empleado Doméstico	VI_EmpleadoDomestico_Es
+si	NO	Antigüedad Laboral - Empleador Actual	VI_AntiguedadLaboral_EmpleadorActual
+si	NO	Última fecha registrada	VI_Empleado_Es_UltFecha
+si	NO	Es Pensionado	VI_Pensionado_Es
+si	NO	Periodo más antiguo como empleador en los últimos 12 meses	VI_12m_Empleador_FecAntigua
+si	NO	Empresa Activa	VI_Empresa_Activa_Es
+si	NO	CUIT	VI_Empleador_CUIT
+si	NO	Razón Social / Nombre	VI_Empleador_RZ
+si	NO	Domicilio Completo	VI_Empleador_Domicilio
+si	NO	Código Área del Teléfono	VI_Empleador_TelCodArea
+si	NO	Número de Teléfono	VI_Empleador_TelNro
+si	NO	Código Actividad Principal del Empleador	VI_Empleador_Act01_Cod
+si	NO	Descripción Actividad Principal del Empleador	VI_Empleador_Act01_Descrip
+si	NO	Sector Actividad Principal del Empleador (Nº1)	VI_Empleador_Act01_Sector
+si	NO	Calle	VI_Empleador_Dom_Calle
+si	NO	Número	VI_Empleador_Dom_Nro
+si	NO	Localidad	VI_Empleador_Dom_Loc
+si	NO	Código postal	VI_Empleador_Dom_CP
+si	NO	Provincia	VI_Empleador_Dom_Prov
+si	NO	Fecha más antigua  - Últ. 12 meses	AP_12m_Empleado_FecAntigua
+si	NO	Cantidad empleadores - Últimos 3 meses	AP_3m_Empleadores_Cant
+si	NO	Cantidad pagos - Últimos 12 meses	AP_12m_Empleado_Pagos_Cant
+si	NO	Cantidad pago parcial - Últimos 12 meses	AP_12m_Empleado_PagoParcial_Cant
+si	NO	Cantidad impagos - Últimos 12 meses	AP_12m_Empleado_Impagos_Cant
+si	NO	Cantidad Empleadores - Últimos 12 meses	AP_12m_Empleadores_Cant
+si	NO	Estado de la Declaración Jurada	AP_Vig_Empleado_DeclaracionJurada
+si	NO	Estado de los Aportes Patronales	AP_Vig_Empleado_Estado_Cod
+si	NO	Cantidad pagos - Últimos 12 meses	AP_12m_Empleador_Pagos_Cant
+si	NO	Cantidad pago parcial - Últimos 12 meses	AP_12m_Empleador_PagoParcial_Cant
+si	NO	Cantidad impagos - Últimos 12 meses	AP_12m_Empleador_Impagos_Cant
+si	NO	Estado de los Aportes Patronales - Como Empleador	AP_Vig_Empleador_Estado_Cod
+si	SI	Detalle de Aportes últimos 12 meses - Empleador	AP_12m_Empleador_Detalle
+si	NO	Aseguradora	SRT_Aseguradora
+si	NO	Obra Social	SSS_OS_Nombre
+si	NO	Fecha alta	SSS_OS_FecDesde
+si	NO	Condición titular	SSS_OS_Titular_Condicion
+si	NO	Parentesco con titular	SSS_OS_Titular_Parentesco
+si	NO	Monto total vencido	CI_Vig_Total_MontoVencido
+si	NO	Peor situación en el BCRA	CI_Vig_PeorSit_BCRA
+si	SI	Detalle últimos 24 meses	CI_24m_Detalle
+si	SI	Detalle últimos 24 meses - Por Periodo	CI_24m_Detalle_PorPeriodo
+si	NO	Bancarizado - Últ. 24 Meses	CI_24m_Bancarizado
+si	NO	Cantidad tarjetas de crédito	CI_Vig_TC_Cant
+si	NO	Saldo actual	CI_Vig_TC_Monto
+si	SI	Detalle de todas las tarjetas de crédito del convenio, vigentes.	CI_Vig_TC_Detalle
+si	NO	Posee tarjeta de crédito	CI_Vig_TC_Es
+si	NO	Cantidad Líneas	CI_Vig_Li_CC_Cant
+si	NO	Monto Total	CI_Vig_Li_CC_Monto
+si	NO	Posee descubiertos en cuenta corriente	CI_Vig_Li_CC_Es
+si	NO	Cantidad préstamos hipotecarios	CI_Vig_Li_HI_Cant
+si	NO	Saldo actual	CI_Vig_Li_HI_Monto
+si	NO	Saldo total actual	CI_Vig_Li_HI_Monto_Total
+si	NO	Saldo total actual sin banco Propio	CI_Vig_Li_HI_Monto_Total_SinBancoPropio
+si	NO	Cantidad total de préstamos hipotecarios	CI_Vig_Li_Hi_CantTotal
+si	NO	Posee préstamos hipotecarios	CI_Vig_Li_HI_Es
+si	NO	Cantidad préstamos prendarios automotor	CI_Vig_Li_PR_Cant
+si	NO	Saldo actual	CI_Vig_Li_PR_Monto
+si	NO	Saldo total actual	CI_Vig_Li_PR_Monto_Total
+si	NO	Saldo total actual sin banco Propio	CI_Vig_Li_PR_Monto_Total_SinBancoPropio
+si	NO	Saldo total actual prendarios, más otras líneas.	CI_Vig_Li_PR_Monto_Total_v2
+si	NO	Cantidad otros préstamos prendarios	CI_Vig_Li_OPR_Cant
+si	NO	Saldo actual	CI_Vig_Li_OPR_Monto
+si	NO	Situación negativa	CI_Vig_Li_OPR_SitMay2_Tiene
+si	NO	Cantidad préstamos personales	CI_Vig_Li_PP_Cant
+si	NO	Saldo actual	CI_Vig_Li_PP_Monto
+si	NO	Saldo total actual	CI_Vig_Li_PP_Monto_Total
+si	NO	Saldo total actual sin banco Propio	CI_Vig_Li_PP_Monto_Total_SinBancoPropio
+si	NO	Saldo total actual personales, más otras líneas.	CI_Vig_Li_PP_Monto_Total_v2
+si	NO	Saldo total actual personales, más otras líneas, sin banco Propio.	CI_Vig_Li_PP_Monto_Total_SinBancoPropio_v2
+si	NO	Cantidad total préstamos personales	CI_Vig_Li_PP_CantTotal_v2
+si	NO	Cantidad líneas	CI_Vig_Li_OT_Cant
+si	NO	Monto total	CI_Vig_Li_OT_Monto
+si	NO	Posee productos de otras líneas	CI_Vig_Li_OT_Es_v2
+si	NO	Compromiso mensual	CI_Vig_CompMensual
+si	NO	Compromiso mensual / NSE	CI_Vig_Ratio_CompMensual
+si	NO	Deuda total / NSE	CI_Vig_Ratio_DeudaTotal
+si	NO	Endeudamiento actual / endeudamiento promedio - Últ. 6 meses	CI_Vig_Ratio_DeudaTotal_a6m
+si	NO	Disponibilidad mensual, para nuevo endeudamiento	VR_Vig_CapacidadEndeu_Deuda
+si	NO	Capacidad endeudamiento T. Crédito	VR_Vig_CapacidadEndeu_TC
+si	NO	Perfil Cumplimiento del Deudor	VR_12m_Cumplimiento
+si	NO	Compromiso mensual - Banco Propio	CI_Vig_CompMensual_BcoPropio
+si	NO	Compromiso mensual - Banco Sin  Propio	CI_Vig_CompMensual_SinBcoPropio
+si	NO	Pago de tarjetas de crédito	CI_Vig_Pago_TC
+si	NO	Perfil Cumplimiento del Deudor	VR_24m_Atraso_Cumplimiento
+si	NO	Cantidad productos con atrasos	CI_Vig_LineasActivas_Cant_Atraso
+si	NO	Perfil Cumplimiento del Deudor - Últimos 24 meses	VR_24m_Atraso_Cumplimiento_v2
+si	NO	Es moroso	DX_Es
+si	NO	Cantidad entidades en Mora	DX_Cant
+si	NO	Entidades en Mora	DX_Entidades
+si	NO	Cantidad - Últ. 24 meses	HC_24m_Cant
+si	NO	No Pago Multa	IN_Vig_PagoMulta_Tiene
+si	NO	Inhabilitación - Últ. 24 Meses	IN_24m_PagoMulta_Tiene
+si	NO	Cantidad embargos	OJ_Vig_Emb_Cant
+si	NO	Juicios cantidad - Últ. 12 meses	JU_12m_Cant
+si	NO	Concursos y quiebras cantidad - Últ. 12 meses	CQ_12m_Cant
+si	NO	Pedido Quiebras Cantidad - Últ. 12 Meses	PQ_12m_Cant
+si	NO	Cantidad - Vigente	RC_Vig_Cant
+si	NO	Fuente - Vigente	RC_Vig_Fuente
+si	NO	Tiene Referencias - Últ. 12 Meses	RC_12m_Tiene
+si	NO	Cantidad - Últ. 12 meses	RC_12m_Cant
+si	NO	Fuente - Últ. 12 meses	RC_12m_Fuente
+si	NO	Referencias Vigentes - Cantidad de Fuentes	RC_Vig_FuentesCant
+si	SI	Detalle de Referencia Comerciales vigentes por rubro	RC_Vig_Detalle
+si	NO	Cantidad Referencias Financieras con últimas actualizaciones - Últ. 12 meses	RC_12m_Cant_Fin_Fact
+si	NO	Score	SCO_Vig
+si	NO	Nivel Socioeconómico	NSE
+si	NO	Nivel Socioeconómico - Ingreso Promedio	NSE_IngresoProm
+si	NO	Facturación Estimada	FE
+si	NO	Criterio de aceptación definido por el usuario	CDA
+si	NO	Descripción de versión del documento cuestionado informado.	DC_Version
+si	NO	BCRA - Fecha Últ. Actualización	FEX_BCRA_FecAct
+si	NO	BCRA - Fecha Próxima Actualización	FEX_BCRA_FecVenc
+si	NO	Anses [RD] - Fecha Últ. Actualización	FEX_RD_FecAct
+si	NO	Anses [RD] - Fecha Próxima Actualización	FEX_RD_FecVenc
+si	NO	SRT - Fecha Últ. Actualización	FEX_SRT_FecAct
+si	NO	SRT - Fecha Próxima Actualización	FEX_SRT_FecVenc
+si	NO	AFIP Inscripciones - Fecha Últ. Actualización	FEX_AFInscrip_FecAct
+si	NO	AFIP Inscripciones - Fecha Próxima Actualización	FEX_AFInscrip_FecVenc
+si	NO	SSSalud - Fecha Últ. Actualización	FEX_SSS_FecAct
+si	NO	SSSalud - Fecha Próxima Actualización	FEX_SSS_FecVenc
+si	NO	AFIP Aportes Patronales - Fecha Últ. Actualización	FEX_AFAP_FecAct
+si	NO	AFIP Aportes Patronales - Fecha Próxima Actualización	FEX_AFAP_FecVenc
+si	NO	Anses Beneficios - Fecha Últ. Actualización	FEX_SIPA_FecAct
+si	NO	Anses Beneficios - Fecha Próxima Actualización	FEX_SIPA_FecVenc
+si	NO	AFIP Padrón - Fecha Últ. Actualización	FEX_AFOC_FecAct
+si	NO	AFIP Padrón - Fecha Próxima Actualización	FEX_AFOC_FecVenc
+si	NO	SSS - Monotributo Pagos - Fecha Últ. Actualización	FEX_MNP_FecAct
+si	NO	SSS - Monotributo Pagos - Fecha Próxima Actualización	FEX_MNP_FecVenc
+si	NO	SSS - Monotributo Padrón - Fecha Últ. Actualización	FEX_MN_FecAct
+si	NO	SSS - Monotributo Padrón - Fecha Próxima Actualización	FEX_MN_FecVenc
+si	NO	Certificación Negativa [CN] - Fecha Últ. Actualización	FEX_CN_FecAct
+si	NO	Certificación Negativa [CN] - Fecha Próxima Actualización	FEX_CN_FecVenc
+si	NO	(CNE) Cumplimiento Censal - Fecha Últ. Actualización	FEX_CNE_FecAct
+si	NO	(CNE) Cumplimiento Censal - Fecha Próxima Actualización	FEX_CNE_FecVenc
+si	NO	AFIP – WS - Fecha Últ. Actualización	FEX_AFWS_FecAct
+si	NO	AFIP – WS - Fecha Próxima Actualización	FEX_AFWS_FecVenc
+si	SI	Detalle Beneficios ANSES	AS_Beneficios_Detalle
+si	SI	Detalle histórico Beneficios ANSES	AS_Hist_Beneficios_Detalle
+si	NO	Cantidad Periodos Pagos - Últ. 24 meses	MN_24m_Cant
+si	NO	Obra Social - Descripción	MN_ObraSocial_Descrip
+si	NO	Obra Social - Periodo Inicio	MN_ObraSocial_PeriodoMin
+si	NO	Obra Social - Periodo Fin	MN_ObraSocial_PeriodoMax
+si	NO	Saldo actual	CI_Vig_Li_HI_UVA_Monto
+si	NO	Saldo actual	CI_Vig_Li_PR_UVA_Monto
+si	NO	Saldo actual	CI_Vig_Li_OPR_UVA_Monto
+si	NO	Saldo actual	CI_Vig_Li_PP_UVA_Monto
+si	NO	Monto total	CI_Vig_Li_OT_UVA_Monto
+si	NO	BAF - Coincidencias	BAF_Estado
+si	SI	Detalle de Aportes últimos 12 meses - Empleado Doméstico	AP_12m_EmpleadoDomestico_Detalle
+si	NO	CUIL/CUIT consultado es Sujeto Obligado	COM_SO_Es
+si	NO	CUIL/CUIT consultado es  Persona expuesta políticamente	COM_PEP_Es
+si	NO	Cantidad de homónimos en base LA/FT encontrados según Razón Social o Nombre y apellido	COM_Homonimos_LAFT_Cant
+si	NO	Enlace de homónimos en base LA/FT encontrados según Razón Social o Nombre y apellido	COM_Homonimos_LAFT_Link
+si	NO	CUIL consultado PEP Directo	COM_PEP_Directo
+si	NO	Cargo de CUIL con marca de PEP	COM_PEP_Cargo
+si	NO	Organismo al que pertenece el CUIL con marca de PEP	COM_PEP_Organismo
+si	NO	Tipo de Estado al que pertenece el CUIL con marca de PEP	COM_PEP_Estado
+si	SI	Detalle del vínculo familiar o por domicilio por el cual el CUIL recibe marca de PEP Indirecto	COM_PEP_Indirecto_Vinculo_Detalle
+si	SI	Detalle del PEP directo con el que está relacionado el documento consultado	COM_PEP_Indirecto_Relacionado_Detalle
+si	SI	Detalle del cargo del PEP directo con el que está relacionado el documento consultado	COM_PEP_Indirecto_Cargo_Detalle
+si	NO	Detalle del organismo al que pertenece el PEP directo relacionado al documento consultado	COM_PEP_Indirecto_Organismo
+si	NO	CUIL/CUIT consultado fue P.E.P. Directo.	COM_ExPEP_Directo
+si	NO	CUIL/CUIT consultado fue P.E.P. Indirecto	COM_ExPEP_Indirecto
+si	NO	Código Obra Social	SSS_RD_OS_Cod
+si	NO	Obra Social	SSS_RD_OS_Nombre
+si	NO	Fecha Alta	SSS_RD_OS_FecDesde
+si	NO	Condición Titular	SSS_RD_OS_Titular_Condicion
+si	NO	Parentesco con Titular	SSS_RD_OS_Titular_Parentesco

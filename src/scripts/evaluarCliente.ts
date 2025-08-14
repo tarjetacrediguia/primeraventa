@@ -4,7 +4,7 @@ import { MockNosisAdapter } from "../infrastructure/adapters/nosis/mockNosisAdap
 import { NosisAdapter } from "../infrastructure/adapters/nosis/nosisAdapter";
 
 // Configuración
-const MODO_TEST = false;
+const MODO_TEST = true;
 const API_KEY = '603e18d9-ac7e-404d-9677-ddaed8641ed0';
 
 // Seleccionar adaptador
@@ -26,6 +26,9 @@ async function evaluarCliente(cuil: string) {
     console.log(`- Estado: ${resultado.status}`);
     console.log(`- Score: ${resultado.score}`);
     console.log(`- Motivo: ${resultado.motivo}`);
+    if (resultado.personalData) {
+      console.log('- Datos personales:', resultado.personalData);
+    }
     
     if (resultado.reglasFallidas) {
       console.log('- Reglas fallidas:', resultado.reglasFallidas);

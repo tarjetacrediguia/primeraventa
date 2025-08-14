@@ -8,7 +8,8 @@ if (process.env.NODE_ENV === 'production' && !process.env.JWT_SECRET) {
 }
 exports.appConfig = {
     environment: process.env.NODE_ENV || 'development',
-    port: process.env.PORT ? parseInt(process.env.PORT, 10) : 3000,
-    jwtSecret: process.env.JWT_SECRET || 'dev_secret_key',
+    port: parseInt(process.env.PORT || '3001'),
+    httpsPort: parseInt(process.env.HTTPS_PORT || '443'), // Nuevo puerto seguro
+    jwtSecret: process.env.JWT_SECRET || '',
     systemToken: process.env.SYSTEM_TOKEN || 'dev_system_token',
 };
