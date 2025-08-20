@@ -218,9 +218,9 @@ export class CrearCompraUseCase {
                 (total, item) => total + (item.precio * item.cantidad), 
                 0
             );
-
+            console.log(`Monto total real: ${montoTotalReal}`);
             const montoTotalPonderado = montoTotalReal * ponderador; 
-
+            console.log(`Monto total ponderado: ${montoTotalPonderado}`);
 
             if (montoTotalPonderado > solicitudFormal.getLimiteCompleto()) {
                 // Caso 1: Si no tiene solicitud de ampliación -> ERROR
@@ -262,17 +262,23 @@ export class CrearCompraUseCase {
                 }
             }
 
-            const compra = new Compra(
-                0, // ID temporal
-                solicitudFormalId,
-                descripcion,
-                cantidadCuotas,
-                items.map(item => new ItemCompra(0, 0, item.nombre, item.precio, item.cantidad)),
-                EstadoCompra.PENDIENTE,
-                montoTotalReal, // Monto real calculado
-                ponderador,
-                montoTotalPonderado, // Monto ponderado calculado
-                solicitudFormal.getClienteId() // Cliente ID de la solicitud formal
+            const compra = new Compra({
+                id: 0, // ID temporal, se asignará al guardar
+                solicitudFormalId: solicitudFormalId,
+                descripcion: descripcion,
+                cantidadCuotas: cantidadCuotas,
+                items: items.map(item => new ItemCompra(0, 0, item.nombre, item.precio, item.cantidad)),
+                estado: EstadoCompra.PENDIENTE,
+                montoTotal: montoTotalReal, // Monto real calculado
+                fechaCreacion: new Date(),
+                fechaActualizacion: new Date(),
+                valorCuota: cantidadCuotas > 0 ? montoTotalPonderado / cantidadCuotas : 0,
+                ponderador: ponderador,
+                montoTotalPonderado: montoTotalPonderado, // Monto ponderado calculado
+                clienteId: solicitudFormal.getClienteId(),
+                comercianteId: usuarioId, // Asignar comerciante actual
+            }
+                
             );
 
             // 5. Guardar en repositorio

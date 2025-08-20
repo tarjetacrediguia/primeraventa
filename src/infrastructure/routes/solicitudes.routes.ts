@@ -18,12 +18,14 @@ import {
   listarSolicitudesFormales,
   actualizarSolicitudFormal,
   obtenerDetalleSolicitudFormal,
-  listarSolicitudesInicialesByComercianteYEstado,
+  listarSolicitudesInicialesByComerciante,
   listarSolicitudesFormalesByComercianteYEstado,
   listarSolicitudesFormalesByComerciante,
   aprobarSolicitudInicial,
   rechazarSolicitudInicial,
   crearYAprobarSolicitudFormal,
+  obtenerSolicitudFormalPoridSolicitudInicial,
+  obtenerSolicitudFormalAnalista,
 } from './controllers/Solicitudes.controller';
 import { esComerciante, esAnalista, esComercianteOAnalista, esAdministrador, esAnalistaOAdministrador } from './middlewares/rolesMiddleware';
 
@@ -35,7 +37,7 @@ router.get('/solicitudes-iniciales', esAnalista, listarSolicitudesIniciales);
 router.get(
     '/solicitudes-iniciales-comerciante', 
     esComerciante, 
-    listarSolicitudesInicialesByComercianteYEstado
+    listarSolicitudesInicialesByComerciante
 );
 router.put(
     '/solicitudes-iniciales/:id/aprobar', 
@@ -57,7 +59,7 @@ router.post('/solicitudes-formales', esComerciante, crearSolicitudFormal);
 router.put('/solicitudes-formales/:id/aprobar', esComercianteOAnalista, aprobarSolicitudFormal);
 router.put('/solicitudes-formales/:id/rechazar', esComercianteOAnalista, rechazarSolicitudFormal);
 router.get('/solicitudes-formales', esComercianteOAnalista, listarSolicitudesFormales);
-router.put('/solicitudes-formales/:id', esAnalista, actualizarSolicitudFormal);
+router.put('/solicitudes-formales/:id', esComercianteOAnalista, actualizarSolicitudFormal);
 router.get('/solicitudes-formales/:id/detalle', esComercianteOAnalista, obtenerDetalleSolicitudFormal);
 router.get(
     '/solicitudes-formales-comerciante-estado', 
@@ -72,9 +74,21 @@ router.post(
 );
 
 router.get(
-    '/solicitudes-formales-comerciante/:id', 
+    '/solicitudes-formales-comerciante', 
     esComercianteOAnalista, 
     listarSolicitudesFormalesByComerciante
+);
+
+router.get(
+    '/solicitud-formal-comerciante/:idSolicitudInicial',
+    esComercianteOAnalista,
+    obtenerSolicitudFormalPoridSolicitudInicial
+);
+
+router.get(
+    '/solicitud-formal-analista/:idSolicitudInicial',
+    esAnalistaOAdministrador,
+    obtenerSolicitudFormalAnalista
 );
 
 export default router;

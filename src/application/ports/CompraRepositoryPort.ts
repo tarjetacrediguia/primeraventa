@@ -12,4 +12,6 @@ export interface CompraRepositoryPort {
     getComprasBySolicitudFormalId(solicitudFormalId: number): Promise<Compra>;
     getComprasByEstado(estado: EstadoCompra): Promise<Compra[]>;
     getSolicitudFormalIdByCompraId(compraId: number): Promise<number | null>;
+    getComprasByComerciante(comercianteId: number): Promise<Compra[]>;
+    getAllCompras(): Promise<Compra[]>;
 }

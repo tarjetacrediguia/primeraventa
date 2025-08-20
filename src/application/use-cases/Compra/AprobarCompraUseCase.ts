@@ -200,6 +200,8 @@ export class AprobarCompraUseCase {
       // 5. Actualizar estado
       compra.setEstado(EstadoCompra.APROBADA);
 
+      compra.setAnalistaAprobadorId(usuarioId);
+
       // 6. Guardar cambios
       await this.solicitudFormalRepository.updateSolicitudFormal(solicitudFormal);
       const compraActualizada = await this.compraRepository.updateCompra(

@@ -13,6 +13,40 @@ import { Referente } from "../../../domain/entities/Referente";
 import { pool } from "../../config/Database/DatabaseDonfig";
 
 export class SolicitudFormalRepositoryAdapter implements SolicitudFormalRepositoryPort {
+    async getSolicitudFormalBySolicitudInicialId(solicitudInicialId: number): Promise<SolicitudFormal | null> {
+    const solicitudes = await this.getSolicitudesFormalesBySolicitudInicialId(solicitudInicialId);
+    return solicitudes.length > 0 ? solicitudes[0] : null;
+}
+    async getSolicitudesFormalesByCuil(cuil: string): Promise<SolicitudFormal[]> {
+    const query = `
+        SELECT 
+            sf.id,
+            c.nombre_completo,
+            c.apellido,
+            c.cuil,
+            c.telefono,
+            c.email,
+            sf.fecha_solicitud,
+            sf.recibo,
+            sf.estado,
+            sf.acepta_tarjeta,
+            c.fecha_nacimiento,
+            c.domicilio,
+            c.datos_empleador,
+            sf.comentarios,
+            sf.solicitud_inicial_id,
+            sf.importe_neto,
+            sf.limite_base,
+            sf.limite_completo,
+            sf.ponderador 
+        FROM solicitudes_formales sf
+        INNER JOIN clientes c ON sf.cliente_id = c.id
+        WHERE c.cuil = $1
+        ORDER BY sf.fecha_solicitud DESC
+    `;
+    
+    return await this.executeSolicitudesQuery(query, [cuil]);
+}
     
     // src/infrastructure/adapters/repository/SolicitudFormalRepositoryAdapter.ts
     /**
@@ -163,7 +197,6 @@ export class SolicitudFormalRepositoryAdapter implements SolicitudFormalReposito
                 sf.id,
                 c.nombre_completo,
                 c.apellido,
-                c.dni,
                 c.telefono,
                 c.email,
                 sf.fecha_solicitud,
@@ -223,7 +256,7 @@ export class SolicitudFormalRepositoryAdapter implements SolicitudFormalReposito
             row.comerciante_id, 
             row.nombre_completo,
             row.apellido,
-            row.dni,
+            //row.dni,
             row.telefono,
             row.email,
             new Date(row.fecha_solicitud),
@@ -603,7 +636,6 @@ export class SolicitudFormalRepositoryAdapter implements SolicitudFormalReposito
                 sf.id,
                 c.nombre_completo,
                 c.apellido,
-                c.dni,
                 c.telefono,
                 c.email,
                 sf.fecha_solicitud,
@@ -617,10 +649,7 @@ export class SolicitudFormalRepositoryAdapter implements SolicitudFormalReposito
                 sf.solicitud_inicial_id,
                 sf.importe_neto,          
                 sf.limite_base,            
-                sf.limite_completo,        
-                sf.cuotas_solicitadas,     
-                sf.valor_cuota,            
-                sf.monto_total,
+                sf.limite_completo,
                 sf.ponderador             
             FROM solicitudes_formales sf
             INNER JOIN clientes c ON sf.cliente_id = c.id
@@ -656,7 +685,7 @@ export class SolicitudFormalRepositoryAdapter implements SolicitudFormalReposito
                 row.comerciante_id, 
                 row.nombre_completo,
                 row.apellido,
-                row.dni,
+                //row.dni,
                 row.telefono,
                 row.email,
                 new Date(row.fecha_solicitud),
@@ -688,7 +717,6 @@ export class SolicitudFormalRepositoryAdapter implements SolicitudFormalReposito
                 sf.id,
                 c.nombre_completo,
                 c.apellido,
-                c.dni,
                 c.telefono,
                 c.email,
                 sf.fecha_solicitud,
@@ -724,7 +752,6 @@ export class SolicitudFormalRepositoryAdapter implements SolicitudFormalReposito
                 sf.id,
                 c.nombre_completo,
                 c.apellido,
-                c.dni,
                 c.telefono,
                 c.email,
                 sf.fecha_solicitud,
@@ -760,7 +787,6 @@ export class SolicitudFormalRepositoryAdapter implements SolicitudFormalReposito
                 sf.id,
                 c.nombre_completo,
                 c.apellido,
-                c.dni,
                 c.telefono,
                 c.email,
                 sf.fecha_solicitud,
@@ -796,7 +822,6 @@ export class SolicitudFormalRepositoryAdapter implements SolicitudFormalReposito
                 sf.id,
                 c.nombre_completo,
                 c.apellido,
-                c.dni,
                 c.telefono,
                 c.email,
                 sf.fecha_solicitud,
@@ -831,7 +856,6 @@ export class SolicitudFormalRepositoryAdapter implements SolicitudFormalReposito
                 sf.id,
                 c.nombre_completo,
                 c.apellido,
-                c.dni,
                 c.telefono,
                 c.email,
                 sf.fecha_solicitud,
@@ -862,12 +886,12 @@ export class SolicitudFormalRepositoryAdapter implements SolicitudFormalReposito
      * @returns Promise<SolicitudFormal[]> - Array de solicitudes formales asociadas a la solicitud inicial.
      */
     async getSolicitudesFormalesBySolicitudInicialId(solicitudInicialId: number): Promise<SolicitudFormal[]> {
+
         const query = `
             SELECT 
                 sf.id,
                 c.nombre_completo,
                 c.apellido,
-                c.dni,
                 c.telefono,
                 c.email,
                 sf.fecha_solicitud,
@@ -882,7 +906,8 @@ export class SolicitudFormalRepositoryAdapter implements SolicitudFormalReposito
                 sf.importe_neto,
                 sf.limite_base,
                 sf.limite_completo,
-                sf.ponderador 
+                sf.ponderador,
+                sf.comerciante_id 
             FROM solicitudes_formales sf
             INNER JOIN clientes c ON sf.cliente_id = c.id
             WHERE sf.solicitud_inicial_id = $1
@@ -964,7 +989,6 @@ export class SolicitudFormalRepositoryAdapter implements SolicitudFormalReposito
                 row.comerciante_id, 
                 row.nombre_completo,
                 row.apellido,
-                row.dni,
                 row.telefono,
                 row.email,
                 new Date(row.fecha_solicitud),
@@ -999,7 +1023,6 @@ export class SolicitudFormalRepositoryAdapter implements SolicitudFormalReposito
             sf.id,
             c.nombre_completo,
             c.apellido,
-            c.dni,
             c.telefono,
             c.email,
             sf.fecha_solicitud,

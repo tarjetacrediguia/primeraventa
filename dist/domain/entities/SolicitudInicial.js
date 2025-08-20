@@ -40,13 +40,12 @@ class SolicitudInicial {
      * @param analistaAprobadorId - ID del analista que aprobó (opcional).
      * @param administradorAprobadorId - ID del administrador que aprobó (opcional).
      */
-    constructor(id, fechaCreacion, estado, dniCliente, clienteId, cuilCliente, reciboSueldo, comercianteId, comentarios = [], analistaAprobadorId, administradorAprobadorId) {
+    constructor(id, fechaCreacion, estado, clienteId, comercianteId, comentarios = [], analistaAprobadorId, administradorAprobadorId, dniCliente, cuilCliente) {
         this.id = id;
         this.fechaCreacion = fechaCreacion;
         this.estado = estado;
         this.dniCliente = dniCliente;
         this.cuilCliente = cuilCliente;
-        this.reciboSueldo = reciboSueldo;
         this.comercianteId = comercianteId;
         this.comentarios = comentarios;
         this.clienteId = clienteId;
@@ -147,7 +146,7 @@ class SolicitudInicial {
      * @returns string - DNI del cliente.
      */
     getDniCliente() {
-        return this.dniCliente;
+        return this.dniCliente || '';
     }
     /**
      * Establece el DNI del cliente solicitante.
@@ -236,7 +235,7 @@ class SolicitudInicial {
      * @returns string - Representación en string de la solicitud.
      */
     toString() {
-        return `SolicitudInicial[id=${this.id}, estado=${this.estado}, dni=${this.dniCliente}, cuil=${this.cuilCliente}]`;
+        return `SolicitudInicial[id=${this.id}, estado=${this.estado}, fechaCreacion=${this.fechaCreacion.toISOString()}, clienteId=${this.clienteId}, comercianteId=${this.comercianteId}, analistaAprobadorId=${this.analistaAprobadorId}, administradorAprobadorId=${this.administradorAprobadorId}]`;
     }
     /**
      * Convierte la solicitud inicial a un objeto plano.
@@ -249,13 +248,15 @@ class SolicitudInicial {
             id: this.id,
             fechaCreacion: this.fechaCreacion,
             estado: this.estado,
-            dniCliente: this.dniCliente,
-            cuilCliente: this.cuilCliente,
+            //dniCliente: this.dniCliente,
+            //cuilCliente: this.cuilCliente,
             reciboSueldo: this.reciboSueldo,
             comercianteId: this.comercianteId,
             comentarios: this.comentarios,
             analistaAprobadorId: this.analistaAprobadorId,
             administradorAprobadorId: this.administradorAprobadorId,
+            clienteId: this.clienteId,
+            dniCliente: this.dniCliente,
         };
     }
     /**
@@ -266,15 +267,11 @@ class SolicitudInicial {
      * @returns SolicitudInicial - Nueva instancia de SolicitudInicial.
      */
     static fromMap(map) {
-        return new SolicitudInicial(map.id, map.fechaCreacion, map.estado, map.dniCliente, map.clienteId || 0, map.cuilCliente, map.reciboSueldo, map.comercianteId, map.comentarios || [], map.analista_aprobador_id ? Number(map.analista_aprobador_id) : undefined, map.administrador_aprobador_id ? Number(map.administrador_aprobador_id) : undefined);
-    }
-    /**
-     * Valida que la solicitud inicial tenga los datos obligatorios.
-     *
-     * @returns boolean - true si la solicitud es válida, false en caso contrario.
-     */
-    validar() {
-        return !!this.dniCliente && !!this.cuilCliente;
+        return new SolicitudInicial(map.id, map.fechaCreacion, map.estado, 
+        //map.dniCliente,
+        map.clienteId || 0, 
+        //map.cuilCliente,
+        map.comercianteId, map.comentarios || [], map.analista_aprobador_id ? Number(map.analista_aprobador_id) : undefined, map.administrador_aprobador_id ? Number(map.administrador_aprobador_id) : undefined, map.dniCliente, map.cuilCliente);
     }
 }
 exports.SolicitudInicial = SolicitudInicial;

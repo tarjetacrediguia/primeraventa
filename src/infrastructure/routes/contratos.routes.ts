@@ -9,24 +9,16 @@
  */
 import { Router } from 'express';
 import { 
-  descargarContratoPDF, 
   generarYDescargarContratoPDF
 } from './controllers/Contrato.controller';
 import { esComerciante, esComercianteOAnalista } from './middlewares/rolesMiddleware';
 
 const router = Router();
 
-// Descargar contrato PDF
-router.get(
-  '/solicitudes-formales/:id/contrato',
-  esComercianteOAnalista, // Ambos pueden descargar
-  descargarContratoPDF
-);
-
 // Generar contrato PDF y descargarlo directamente
 router.post(
-  '/solicitudes-formales/:id/contrato-descarga',
-  esComerciante, // Solo comerciante puede generar
+  '/compra/:id/contrato-descarga',
+  esComercianteOAnalista, // Solo comerciante puede generar
   generarYDescargarContratoPDF
 );
 

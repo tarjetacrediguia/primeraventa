@@ -159,6 +159,7 @@ export class UpdateCompraUseCase {
                 }
             }
 
+            //TODO: registrar quien actualiza la compra como usuarioId modificador
             // Guardar cambios
             const compraActualizada = await this.repository.updateCompra(compraExistente, compraExistente.getClienteId());
 

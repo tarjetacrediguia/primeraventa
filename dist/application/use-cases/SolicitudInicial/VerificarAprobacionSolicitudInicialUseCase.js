@@ -26,10 +26,11 @@ class VerificarAprobacionSolicitudInicialUseCase {
      * @param verazService - Puerto para servicios de Veraz
      * @param notificationService - Puerto para servicios de notificación
      */
-    constructor(repository, verazService, notificationService) {
+    constructor(repository, verazService, notificationService, clienteRepository) {
         this.repository = repository;
         this.verazService = verazService;
         this.notificationService = notificationService;
+        this.clienteRepository = clienteRepository;
     }
     /**
      * Ejecuta la verificación automática de aprobación de una solicitud inicial.
@@ -56,9 +57,10 @@ class VerificarAprobacionSolicitudInicialUseCase {
             if (solicitud.getEstado() !== "pendiente") {
                 return solicitud;
             }
+            const cliente = yield this.clienteRepository.findById(solicitud.getClienteId());
             try {
                 // 3. Consultar Veraz
-                const estadoVeraz = yield this.verazService.checkClienteStatus(solicitud.getDniCliente());
+                const estadoVeraz = yield this.verazService.checkClienteStatus(cliente.getCuil()); //consultar por CUIL
                 // 4. Actualizar estado según Veraz
                 if (estadoVeraz.status === "aprobado") {
                     solicitud.setEstado("aprobada");
@@ -67,7 +69,7 @@ class VerificarAprobacionSolicitudInicialUseCase {
                     solicitud.setEstado("rechazada");
                 }
                 // 5. Guardar cambios
-                const updated = yield this.repository.updateSolicitudInicial(solicitud);
+                const updated = yield this.repository.updateSolicitudInicial(solicitud, cliente);
                 // 6. Notificar al comerciante
                 yield this.notificationService.emitNotification({
                     userId: solicitud.getComercianteId() || 0,

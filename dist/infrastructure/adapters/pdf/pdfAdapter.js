@@ -165,7 +165,7 @@ class PdfAdapter {
     }
     createReplacements(contractData) {
         var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k, _l, _m, _o, _p, _q, _r, _s, _t, _u, _v, _w;
-        const { contrato, solicitud } = contractData;
+        const { contrato, solicitudFormal } = contractData;
         const formatDate = (dateString) => {
             if (!dateString)
                 return '';
@@ -183,7 +183,7 @@ class PdfAdapter {
             '{{Nº_DE_CUENTA}}': contrato.numeroCuenta || '',
             '{{PRODUCTO}}': contrato.comercioProducto || '',
             '{{SUCURSAL_Nº}}': contrato.comercioSucursal || '',
-            '{{SOLICITANTE_NOMBRE}}': `${solicitud.nombreCompleto} ${solicitud.apellido}`,
+            '{{SOLICITANTE_NOMBRE}}': `${solicitudFormal.nombreCompleto} ${solicitudFormal.apellido}`,
             '{{SOLICITANTE_SEXO}}': contrato.clienteSexo || '',
             '{{CUIL_CUIT}}': contrato.clienteCuitOcuil || '',
             '{{DNI}}': contrato.clienteDni || '',
@@ -208,9 +208,9 @@ class PdfAdapter {
             '{{CARGO}}': contrato.clienteDatosLaboralesCargo || '',
             '{{SECTOR}}': contrato.clienteDatosLaboralesSector || '',
             '{{DOMICILIO_LEGAL}}': contrato.clienteDatosLaboralesDomicilioLegal || '',
-            '{{SUELDO}}': ((_a = solicitud.importeNeto) === null || _a === void 0 ? void 0 : _a.toString()) || '',
+            '{{SUELDO}}': ((_a = solicitudFormal.importeNeto) === null || _a === void 0 ? void 0 : _a.toString()) || '',
             // Página 2 (Contrato)
-            '{{TITULAR_NOMBRE}}': `${solicitud.nombreCompleto} ${solicitud.apellido}`,
+            '{{TITULAR_NOMBRE}}': `${solicitudFormal.nombreCompleto} ${solicitudFormal.apellido}`,
             '{{TITULAR_DNI}}': contrato.clienteDni || '',
             '{{TITULAR_CUIT}}': contrato.clienteCuitOcuil || '',
             '{{TITULAR_DOMICILIO}}': [

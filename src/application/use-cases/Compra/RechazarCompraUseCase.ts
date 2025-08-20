@@ -111,7 +111,7 @@ export class RechazarCompraUseCase {
 
             // 4. Actualizar estado
             compra.setEstado(EstadoCompra.RECHAZADA);
-
+            compra.setAnalistaAprobadorId(usuarioId); // Registrar quien rechaza
             // 5. Guardar cambios
             const compraActualizada = await this.compraRepository.updateCompra(compra, compra.getClienteId());
 

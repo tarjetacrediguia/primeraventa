@@ -5,6 +5,51 @@ import { ItemCompra } from "../../../domain/entities/ItemCompra";
 import { pool } from "../../config/Database/DatabaseDonfig";
 
 export class CompraRepositoryAdapter implements CompraRepositoryPort {
+    async getAllCompras(): Promise<Compra[]> {
+        const client = await pool.connect();
+        try {
+            const query = `
+                SELECT * FROM compras
+            `;
+            const res = await client.query(query);
+            
+            const compras: Compra[] = [];
+            for (const row of res.rows) {
+                const itemsRes = await client.query(
+                    'SELECT * FROM items_compra WHERE compra_id = $1',
+                    [row.id]
+                );
+                
+                const items = itemsRes.rows.map(item => 
+                    new ItemCompra(item.id, item.compra_id, item.nombre, item.precio, item.cantidad)
+                );
+                
+                compras.push(new Compra({
+                    id: row.id,
+                    solicitudFormalId: row.solicitud_formal_id,
+                    descripcion: row.descripcion,
+                    cantidadCuotas: row.cantidad_cuotas,
+                    items: items,
+                    estado: row.estado,
+                    montoTotal: row.monto_total,
+                    ponderador: row.ponderador,
+                    montoTotalPonderado: row.monto_total_ponderado,
+                    clienteId: row.cliente_id,
+                    fechaCreacion: row.fecha_creacion,
+                    fechaActualizacion: row.fecha_actualizacion,
+                    valorCuota: row.valor_cuota,
+                    numeroTarjeta: row.numero_tarjeta,
+                    numeroCuenta: row.numero_cuenta,
+                    comercianteId: row.comerciante_id,
+                    analistaAprobadorId: row.analista_aprobador_id
+                }));
+            }
+            
+            return compras;
+        } finally {
+            client.release();
+        }
+    }
     async getSolicitudFormalIdByCompraId(compraId: number): Promise<number | null> {
         const client = await pool.connect();
         try {
@@ -40,9 +85,11 @@ export class CompraRepositoryAdapter implements CompraRepositoryPort {
                 cuotas_solicitadas, 
                 valor_cuota,
                 numero_tarjeta,
-                numero_cuenta
+                numero_cuenta,
+                comerciante_id,
+                analista_aprobador_id
                 )
-                VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+                VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
                 RETURNING id, fecha_creacion, fecha_actualizacion
             `;
             const compraValues = [
@@ -53,11 +100,13 @@ export class CompraRepositoryAdapter implements CompraRepositoryPort {
                 compra.getCantidadCuotas(),
                 compra.getEstado(),
                 compra.getPonderador(),
-                compra.getValorCuota(),
-                compra.getCantidadCuotas(),
                 compra.getMontoTotalPonderado(),
+                compra.getCantidadCuotas(),
+                compra.getValorCuota(),
                 compra.getNumeroTarjeta(),
-                compra.getNumeroCuenta()
+                compra.getNumeroCuenta(),
+                compra.getComercianteId(),
+                compra.getAnalistaAprobadorId()
             ];
             const compraRes = await client.query(compraQuery, compraValues);
             const compraId = compraRes.rows[0].id;
@@ -85,23 +134,25 @@ export class CompraRepositoryAdapter implements CompraRepositoryPort {
             await client.query('COMMIT');
 
             // Devolver la compra con los IDs asignados
-            return new Compra(
-                compraId,
-                compra.getSolicitudFormalId(),
-                compra.getDescripcion(),
-                compra.getCantidadCuotas(),
-                compra.getItems(),
-                compra.getEstado(),
-                compra.getMontoTotal(),
-                compra.getPonderador(),
-                compra.getMontoTotalPonderado(),
-                clienteId,
-                fechaCreacion,
-                fechaActualizacion,
-                compra.getValorCuota(),
-                compra.getNumeroTarjeta(),
-                compra.getNumeroCuenta()
-            );
+            return new Compra({
+                id: compraId,
+                solicitudFormalId: compra.getSolicitudFormalId(),
+                descripcion: compra.getDescripcion(),
+                cantidadCuotas: compra.getCantidadCuotas(),
+                items: compra.getItems(),
+                estado: compra.getEstado(),
+                montoTotal: compra.getMontoTotal(),
+                ponderador: compra.getPonderador(),
+                montoTotalPonderado: compra.getMontoTotalPonderado(),
+                clienteId: clienteId,
+                fechaCreacion: fechaCreacion,
+                fechaActualizacion: fechaActualizacion,
+                valorCuota: compra.getValorCuota(),
+                numeroTarjeta: compra.getNumeroTarjeta(),
+                numeroCuenta: compra.getNumeroCuenta(),
+                comercianteId: compra.getComercianteId(),
+                analistaAprobadorId: compra.getAnalistaAprobadorId()
+            });
         } catch (error) {
             await client.query('ROLLBACK');
             throw error;
@@ -136,23 +187,25 @@ export class CompraRepositoryAdapter implements CompraRepositoryPort {
                 row.cantidad
             ));
 
-            return new Compra(
-                compraData.id,
-                compraData.solicitud_formal_id,
-                compraData.descripcion,
-                compraData.cantidad_cuotas,
-                items,
-                compraData.estado,
-                compraData.monto_total,
-                compraData.ponderador,
-                compraData.monto_total_ponderado,
-                compraData.cliente_id,
-                compraData.fecha_creacion,
-                compraData.fecha_actualizacion,
-                compraData.valor_cuota,
-                compraData.numero_tarjeta,
-                compraData.numero_cuenta
-            );
+            return new Compra({
+                id: compraData.id,
+                solicitudFormalId: compraData.solicitud_formal_id,
+                descripcion: compraData.descripcion,
+                cantidadCuotas: compraData.cantidad_cuotas,
+                items: items,
+                estado: compraData.estado,
+                montoTotal: compraData.monto_total,
+                ponderador: compraData.ponderador,
+                montoTotalPonderado: compraData.monto_total_ponderado,
+                clienteId: compraData.cliente_id,
+                fechaCreacion: compraData.fecha_creacion,
+                fechaActualizacion: compraData.fecha_actualizacion,
+                valorCuota: compraData.valor_cuota,
+                numeroTarjeta: compraData.numero_tarjeta,
+                numeroCuenta: compraData.numero_cuenta,
+                comercianteId: compraData.comerciante_id,
+                analistaAprobadorId: compraData.analista_aprobador_id
+            });
         } finally {
             client.release();
         }
@@ -176,7 +229,9 @@ export class CompraRepositoryAdapter implements CompraRepositoryPort {
                 numero_tarjeta = $9,
                 numero_cuenta = $10,
                 cliente_id = $11,
-                fecha_actualizacion = CURRENT_TIMESTAMP
+                fecha_actualizacion = CURRENT_TIMESTAMP,
+                comerciante_id = $13,
+                analista_aprobador_id = $14
                 WHERE id = $12
                 RETURNING fecha_actualizacion
             `;
@@ -192,7 +247,9 @@ export class CompraRepositoryAdapter implements CompraRepositoryPort {
                 compra.getNumeroTarjeta(),
                 compra.getNumeroCuenta(),
                 clienteId,
-                compra.getId()
+                compra.getId(),
+                compra.getComercianteId(),
+                compra.getAnalistaAprobadorId()
             ];
             const compraRes = await client.query(compraQuery, compraValues);
             const fechaActualizacion = compraRes.rows[0].fecha_actualizacion;
@@ -312,22 +369,25 @@ export class CompraRepositoryAdapter implements CompraRepositoryPort {
         ));
 
         // Crear y retornar la instancia de Compra
-        return new Compra(
-            compraData.id,
-            compraData.solicitud_formal_id,
-            compraData.descripcion,
-            compraData.cantidad_cuotas,
-            items,
-            compraData.estado,
-            compraData.monto_total,
-            compraData.ponderador,
-            compraData.monto_total_ponderado,
-            compraData.fecha_creacion,
-            compraData.fecha_actualizacion,
-            compraData.valor_cuota,
-            compraData.numero_tarjeta,
-            compraData.numero_cuenta
-        );
+        return new Compra({
+            id: compraData.id,
+            solicitudFormalId: compraData.solicitud_formal_id,
+            descripcion: compraData.descripcion,
+            cantidadCuotas: compraData.cantidad_cuotas,
+            items: items,
+            estado: compraData.estado,
+            montoTotal: compraData.monto_total,
+            ponderador: compraData.ponderador,
+            montoTotalPonderado: compraData.monto_total_ponderado,
+            clienteId: compraData.cliente_id,
+            fechaCreacion: compraData.fecha_creacion,
+            fechaActualizacion: compraData.fecha_actualizacion,
+            valorCuota: compraData.valor_cuota,
+            numeroTarjeta: compraData.numero_tarjeta,
+            numeroCuenta: compraData.numero_cuenta,
+            comercianteId: compraData.comerciante_id,
+            analistaAprobadorId: compraData.analista_aprobador_id
+        });
     } finally {
         client.release();
     }
@@ -354,22 +414,25 @@ export class CompraRepositoryAdapter implements CompraRepositoryPort {
                 new ItemCompra(item.id, item.compra_id, item.nombre, item.precio, item.cantidad)
             );
             
-            compras.push(new Compra(
-                row.id,
-                row.solicitud_formal_id,
-                row.descripcion,
-                row.cantidad_cuotas,
-                items,
-                row.estado,
-                row.monto_total,
-                row.fecha_creacion,
-                row.fecha_actualizacion,
-                row.valor_cuota,
-                row.ponderador,
-                row.monto_total_ponderado,
-                row.numero_tarjeta,
-                row.numero_cuenta
-            ));
+            compras.push(new Compra({
+                    id: row.id,
+                    solicitudFormalId: row.solicitud_formal_id,
+                    descripcion: row.descripcion,
+                    cantidadCuotas: row.cantidad_cuotas,
+                    items: items,
+                    estado: row.estado,
+                    montoTotal: row.monto_total,
+                    ponderador: row.ponderador,
+                    montoTotalPonderado: row.monto_total_ponderado,
+                    clienteId: row.cliente_id,
+                    fechaCreacion: row.fecha_creacion,
+                    fechaActualizacion: row.fecha_actualizacion,
+                    valorCuota: row.valor_cuota,
+                    numeroTarjeta: row.numero_tarjeta,
+                    numeroCuenta: row.numero_cuenta,
+                    comercianteId: row.comerciante_id,
+                    analistaAprobadorId: row.analista_aprobador_id
+                }));
         }
         
         return compras;
@@ -377,4 +440,51 @@ export class CompraRepositoryAdapter implements CompraRepositoryPort {
         client.release();
     }
 }
+
+
+
+    async getComprasByComerciante(comercianteId: number): Promise<Compra[]> {
+        const client = await pool.connect();
+        try {
+            const query = `
+                SELECT * FROM compras 
+                WHERE comerciante_id = $1
+            `;
+            const res = await client.query(query, [comercianteId]);
+            
+            const compras: Compra[] = [];
+            for (const row of res.rows) {
+                const itemsRes = await client.query(
+                    'SELECT * FROM items_compra WHERE compra_id = $1',
+                    [row.id]
+                );
+                
+                const items = itemsRes.rows.map(item => 
+                    new ItemCompra(item.id, item.compra_id, item.nombre, item.precio, item.cantidad)
+                );
+                compras.push(new Compra({
+                    id: row.id,
+                    solicitudFormalId: row.solicitud_formal_id,
+                    descripcion: row.descripcion,
+                    cantidadCuotas: row.cantidad_cuotas,
+                    items: items,
+                    estado: row.estado,
+                    montoTotal: row.monto_total,
+                    ponderador: row.ponderador,
+                    montoTotalPonderado: row.monto_total_ponderado,
+                    clienteId: row.cliente_id,
+                    fechaCreacion: row.fecha_creacion,
+                    fechaActualizacion: row.fecha_actualizacion,
+                    valorCuota: row.valor_cuota,
+                    numeroTarjeta: row.numero_tarjeta,
+                    numeroCuenta: row.numero_cuenta,
+                    comercianteId: row.comerciante_id,
+                    analistaAprobadorId: row.analista_aprobador_id
+                }));
+            }
+            return compras;
+        } finally {
+            client.release();
+        }
+    }
 }

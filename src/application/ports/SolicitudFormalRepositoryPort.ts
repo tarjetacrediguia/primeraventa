@@ -156,4 +156,20 @@ export interface SolicitudFormalRepositoryPort {
     aprobarAmpliacion(solicitud: SolicitudFormal): Promise<SolicitudFormal>;
     rechazarAmpliacion(solicitud: SolicitudFormal): Promise<SolicitudFormal>;
 
+    getSolicitudFormalBySolicitudInicialId(solicitudInicialId: number): Promise<SolicitudFormal | null>;
+
+
+    /**
+     * Obtiene solicitudes formales por CUIL del comerciante.
+     *
+     * @param cuil - CUIL del comerciante
+     * @returns Promise<SolicitudFormal[]> - Listado de solicitudes formales de ese comerciante
+     */
+    getSolicitudesFormalesByCuil(cuil: string): Promise<SolicitudFormal[]>;
+
+
+
+
+
+
 }

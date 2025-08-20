@@ -25,14 +25,14 @@ export class SolicitudInicial {
   private readonly id: number;
   private fechaCreacion: Date;
   private estado: "pendiente" | "aprobada" | "rechazada" | "expirada";
-  private dniCliente: string;
-  private cuilCliente?: string;
   private reciboSueldo?: Buffer;
   private comercianteId?: number;
   private comentarios: string[];
   private clienteId: number;
   private analistaAprobadorId?: number;
   private administradorAprobadorId?: number;
+  private cuilCliente?: string;
+  private dniCliente?: string;
 
   /**
    * Constructor de la clase SolicitudInicial.
@@ -54,21 +54,19 @@ export class SolicitudInicial {
     id: number,
     fechaCreacion: Date,
     estado: "pendiente" | "aprobada" | "rechazada" | "expirada",
-    dniCliente: string,
     clienteId: number,
-    cuilCliente?: string,
-    reciboSueldo?: Buffer,
     comercianteId?: number,
     comentarios: string[] = [],
     analistaAprobadorId?: number,
-    administradorAprobadorId?: number
+    administradorAprobadorId?: number,
+    dniCliente?: string,
+    cuilCliente?: string
   ) {
     this.id = id;
     this.fechaCreacion = fechaCreacion;
     this.estado = estado;
     this.dniCliente = dniCliente;
     this.cuilCliente = cuilCliente;
-    this.reciboSueldo = reciboSueldo;
     this.comercianteId = comercianteId;
     this.comentarios = comentarios;
     this.clienteId = clienteId;
@@ -182,8 +180,9 @@ public getAdministradorAprobadorId(): number | undefined {
    * 
    * @returns string - DNI del cliente.
    */
+  
   public getDniCliente(): string {
-    return this.dniCliente;
+    return this.dniCliente || '';
   }
 
   /**
@@ -191,6 +190,7 @@ public getAdministradorAprobadorId(): number | undefined {
    * 
    * @param dniCliente - Nuevo DNI del cliente.
    */
+  
   public setDniCliente(dniCliente: string): void {
     this.dniCliente = dniCliente;
   }
@@ -200,6 +200,7 @@ public getAdministradorAprobadorId(): number | undefined {
    * 
    * @returns string | undefined - CUIL del cliente o undefined.
    */
+  
   public getCuilCliente(): string | undefined {
     return this.cuilCliente;
   }
@@ -209,7 +210,8 @@ public getAdministradorAprobadorId(): number | undefined {
    * 
    * @param cuilCliente - Nuevo CUIL del cliente.
    */
-  public setCuilCliente(cuilCliente: string | undefined): void {
+  
+  public setCuilCliente(cuilCliente: string): void {
     this.cuilCliente = cuilCliente;
   }
 
@@ -283,7 +285,7 @@ public getAdministradorAprobadorId(): number | undefined {
    * @returns string - Representación en string de la solicitud.
    */
   public toString(): string {
-    return `SolicitudInicial[id=${this.id}, estado=${this.estado}, dni=${this.dniCliente}, cuil=${this.cuilCliente}]`;
+    return `SolicitudInicial[id=${this.id}, estado=${this.estado}, fechaCreacion=${this.fechaCreacion.toISOString()}, clienteId=${this.clienteId}, comercianteId=${this.comercianteId}, analistaAprobadorId=${this.analistaAprobadorId}, administradorAprobadorId=${this.administradorAprobadorId}]`;
   }
 
   /**
@@ -297,13 +299,15 @@ public getAdministradorAprobadorId(): number | undefined {
       id: this.id,
       fechaCreacion: this.fechaCreacion,
       estado: this.estado,
-      dniCliente: this.dniCliente,
-      cuilCliente: this.cuilCliente,
+      //dniCliente: this.dniCliente,
+      //cuilCliente: this.cuilCliente,
       reciboSueldo: this.reciboSueldo,
       comercianteId: this.comercianteId,
       comentarios: this.comentarios,
       analistaAprobadorId: this.analistaAprobadorId,
       administradorAprobadorId: this.administradorAprobadorId,
+      clienteId: this.clienteId,
+      dniCliente: this.dniCliente,
     };
   }
 
@@ -319,14 +323,15 @@ public getAdministradorAprobadorId(): number | undefined {
       map.id,
       map.fechaCreacion,
       map.estado,
-      map.dniCliente,
+      //map.dniCliente,
       map.clienteId || 0,
-      map.cuilCliente,
-      map.reciboSueldo,
+      //map.cuilCliente,
       map.comercianteId,
       map.comentarios || [],
       map.analista_aprobador_id ? Number(map.analista_aprobador_id) : undefined,
-      map.administrador_aprobador_id ? Number(map.administrador_aprobador_id) : undefined
+      map.administrador_aprobador_id ? Number(map.administrador_aprobador_id) : undefined,
+      map.dniCliente,
+      map.cuilCliente
     );
   }
 
@@ -335,7 +340,9 @@ public getAdministradorAprobadorId(): number | undefined {
    * 
    * @returns boolean - true si la solicitud es válida, false en caso contrario.
    */
+  /*
   validar(): boolean {
     return !!this.dniCliente && !!this.cuilCliente;
   }
+    */
 }

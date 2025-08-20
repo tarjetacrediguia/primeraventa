@@ -100,22 +100,7 @@ class CrearSolicitudFormalUseCase {
         return __awaiter(this, arguments, void 0, function* (solicitudInicialId, comercianteId, datosSolicitud, comentarioInicial = "Solicitud creada por comerciante", solicitaAmpliacionDeCredito) {
             try {
                 // Verificar crédito activo
-                const tieneCredito = yield this.tieneCreditoActivo(datosSolicitud.dni);
-                if (tieneCredito) {
-                    // Registrar evento de rechazo por crédito activo
-                    yield this.historialRepository.registrarEvento({
-                        usuarioId: comercianteId,
-                        accion: historialActions_1.HISTORIAL_ACTIONS.REJECT_SOLICITUD_FORMAL,
-                        entidadAfectada: 'solicitudes_formales',
-                        entidadId: 0,
-                        detalles: {
-                            motivo: "Cliente con crédito activo",
-                            dni_cliente: datosSolicitud.dni,
-                        },
-                        solicitudInicialId: solicitudInicialId
-                    });
-                    throw new Error("El cliente ya tiene un crédito activo");
-                }
+                const tieneCredito = yield this.tieneCreditoActivo(solicitudInicialId);
                 // 1. Verificar permisos del comerciante
                 const tienePermiso = yield this.permisoRepo.usuarioTienePermiso(comercianteId, "create_solicitudFormal" // Permiso necesario
                 );
@@ -263,7 +248,9 @@ class CrearSolicitudFormalUseCase {
                 }
                 // 5. Crear la solicitud formal con comentario inicial
                 const solicitudFormal = new SolicitudFormal_1.SolicitudFormal(0, // ID se asignará automáticamente
-                solicitudInicialId, comercianteId, datosSolicitud.nombreCompleto, datosSolicitud.apellido, datosSolicitud.dni, datosSolicitud.telefono, datosSolicitud.email, new Date(), typeof datosSolicitud.recibo === "string"
+                solicitudInicialId, comercianteId, datosSolicitud.nombreCompleto, datosSolicitud.apellido, 
+                //datosSolicitud.cuil,
+                datosSolicitud.telefono, datosSolicitud.email, new Date(), typeof datosSolicitud.recibo === "string"
                     ? Buffer.from(datosSolicitud.recibo, "base64")
                     : datosSolicitud.recibo, "pendiente", datosSolicitud.aceptaTarjeta, datosSolicitud.fechaNacimiento, datosSolicitud.domicilio, datosSolicitud.datosEmpleador, datosSolicitud.referentes, datosSolicitud.importeNeto, [comentarioInicial], ponderador, solicitaAmpliacionDeCredito, 0 // clienteId (temporal)
                 );
@@ -376,20 +363,38 @@ class CrearSolicitudFormalUseCase {
      * Este método privado consulta si el cliente tiene un contrato con estado
      * "generado" (activo) asociado a su ID.
      *
-     * @param dniCliente - DNI del cliente a verificar
+     * @param solicitudInicialId - ID de la solicitud inicial para buscar el cliente
      * @returns Promise<boolean> - true si el cliente tiene un crédito activo, false en caso contrario
      */
-    tieneCreditoActivo(dniCliente) {
+    tieneCreditoActivo(solicitudInicialId) {
         return __awaiter(this, void 0, void 0, function* () {
-            // Obtener todas las solicitudes formales del cliente por DNI
-            //const solicitudesFormales = await this.solicitudFormalRepo.getSolicitudesFormalesByDni(dniCliente);
-            const cliente = yield this.clienteRepository.findByDni(dniCliente);
+            // Obtener la solicitud inicial para extraer el CUIL del cliente
+            const solicitudInicial = yield this.solicitudInicialRepo.getSolicitudInicialById(solicitudInicialId);
+            if (!solicitudInicial) {
+                throw new Error("Solicitud inicial no encontrada");
+            }
+            const idCliente = solicitudInicial.getClienteId();
+            const cliente = yield this.clienteRepository.findById(idCliente);
+            console.log("Cliente encontrado:", cliente);
             //verificar si el cliente tiene un contrato generado
             const contrato = yield this.contratoRepository.getContratoById(cliente.getId().toString());
             // Verificar cada solicitud formal para ver si tiene un contrato activo asociado
             if (contrato) {
                 const tieneContratoActivo = contrato.getEstado() === "generado";
                 if (tieneContratoActivo) {
+                    // Registrar evento de rechazo por crédito activo
+                    yield this.historialRepository.registrarEvento({
+                        usuarioId: solicitudInicial.getComercianteId() || null,
+                        accion: historialActions_1.HISTORIAL_ACTIONS.REJECT_SOLICITUD_FORMAL,
+                        entidadAfectada: 'solicitudes_formales',
+                        entidadId: 0,
+                        detalles: {
+                            motivo: "Cliente con crédito activo",
+                            Cuil_cliente: cliente.getCuil(),
+                        },
+                        solicitudInicialId: solicitudInicialId
+                    });
+                    throw new Error("El cliente ya tiene un crédito activo");
                     return true;
                 }
             }

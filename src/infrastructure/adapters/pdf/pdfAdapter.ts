@@ -153,7 +153,7 @@ export class PdfAdapter implements PdfPort{
     }
 
     private createReplacements(contractData: any): Record<string, string> {
-        const { contrato, solicitud } = contractData;
+        const { contrato, solicitudFormal } = contractData;
         const formatDate = (dateString: string) => {
             if (!dateString) return '';
             const date = new Date(dateString);
@@ -171,7 +171,7 @@ export class PdfAdapter implements PdfPort{
         '{{Nº_DE_CUENTA}}': contrato.numeroCuenta || '',
         '{{PRODUCTO}}': contrato.comercioProducto || '',
         '{{SUCURSAL_Nº}}': contrato.comercioSucursal || '',
-        '{{SOLICITANTE_NOMBRE}}': `${solicitud.nombreCompleto} ${solicitud.apellido}`,
+        '{{SOLICITANTE_NOMBRE}}': `${solicitudFormal.nombreCompleto} ${solicitudFormal.apellido}`,
         '{{SOLICITANTE_SEXO}}': contrato.clienteSexo || '',
         '{{CUIL_CUIT}}': contrato.clienteCuitOcuil || '',
         '{{DNI}}': contrato.clienteDni || '',
@@ -196,10 +196,10 @@ export class PdfAdapter implements PdfPort{
         '{{CARGO}}': contrato.clienteDatosLaboralesCargo || '',
         '{{SECTOR}}': contrato.clienteDatosLaboralesSector || '',
         '{{DOMICILIO_LEGAL}}': contrato.clienteDatosLaboralesDomicilioLegal || '',
-        '{{SUELDO}}': solicitud.importeNeto?.toString() || '',
+        '{{SUELDO}}': solicitudFormal.importeNeto?.toString() || '',
         
         // Página 2 (Contrato)
-        '{{TITULAR_NOMBRE}}': `${solicitud.nombreCompleto} ${solicitud.apellido}`,
+        '{{TITULAR_NOMBRE}}': `${solicitudFormal.nombreCompleto} ${solicitudFormal.apellido}`,
         '{{TITULAR_DNI}}': contrato.clienteDni || '',
         '{{TITULAR_CUIT}}': contrato.clienteCuitOcuil || '',
         '{{TITULAR_DOMICILIO}}': [

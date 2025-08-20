@@ -99,13 +99,15 @@ class SolicitudFormal {
      * @param importeNeto - Importe neto del solicitante.
      * @param cuotasSolicitadas - Cantidad de cuotas solicitadas (entre 3 y 14).
      */
-    constructor(id, solicitudInicialId, comercianteId, nombreCompleto, apellido, dni, telefono, email, fechaSolicitud, recibo, estado, aceptaTarjeta, fechaNacimiento, domicilio, datosEmpleador, referentes, importeNeto, comentarios = [], ponderador, solicitaAmpliacionDeCredito = false, clienteId, fechaAprobacion, analistaAprobadorId, administradorAprobadorId, comercianteAprobadorId, nuevoLimiteCompletoSolicitado) {
+    constructor(id, solicitudInicialId, comercianteId, nombreCompleto, apellido, 
+    //cuil: string,
+    telefono, email, fechaSolicitud, recibo, estado, aceptaTarjeta, fechaNacimiento, domicilio, datosEmpleador, referentes, importeNeto, comentarios = [], ponderador, solicitaAmpliacionDeCredito = false, clienteId, fechaAprobacion, analistaAprobadorId, administradorAprobadorId, comercianteAprobadorId, nuevoLimiteCompletoSolicitado) {
         this.id = id;
         this.solicitudInicialId = solicitudInicialId;
         this.comercianteId = comercianteId;
         this.nombreCompleto = nombreCompleto;
         this.apellido = apellido;
-        this.dni = dni;
+        //this.cuil = cuil;
         this.telefono = telefono;
         this.email = email;
         this.fechaSolicitud = fechaSolicitud;
@@ -127,6 +129,15 @@ class SolicitudFormal {
         this.nuevoLimiteCompletoSolicitado = nuevoLimiteCompletoSolicitado !== null && nuevoLimiteCompletoSolicitado !== void 0 ? nuevoLimiteCompletoSolicitado : null;
         this.solicitaAmpliacionDeCredito = solicitaAmpliacionDeCredito;
     }
+    /*
+      setCuil(cuil: string) {
+        this.cuil = cuil;
+      }
+    
+      getCuil(): string {
+        return this.cuil;
+      }
+    */
     setComercianteAprobadorId(id) {
         this.comercianteAprobadorId = id;
     }
@@ -303,17 +314,21 @@ class SolicitudFormal {
      *
      * @returns string - DNI del solicitante.
      */
-    getDni() {
-        return this.dni;
+    /*
+    public getDni(): string | null {
+      return this.dni;
     }
+  */
     /**
      * Establece el DNI del solicitante.
      *
      * @param dni - Nuevo DNI del solicitante.
      */
-    setDni(dni) {
-        this.dni = dni;
+    /*
+    public setDni(dni: string): void {
+      this.dni = dni;
     }
+  */
     /**
      * Obtiene el teléfono del solicitante.
      *
@@ -543,7 +558,7 @@ class SolicitudFormal {
             id: this.id,
             nombreCompleto: this.nombreCompleto,
             apellido: this.apellido,
-            dni: this.dni,
+            //cuil: this.cuil,
             telefono: this.telefono,
             email: this.email,
             fechaSolicitud: this.fechaSolicitud,
@@ -572,7 +587,7 @@ class SolicitudFormal {
      * @returns SolicitudFormal - Nueva instancia de SolicitudFormal.
      */
     static fromMap(map) {
-        return new SolicitudFormal(map.id, map.solicitudInicialId, map.comercianteId, map.nombreCompleto, map.apellido, map.dni, map.telefono, map.email, map.fechaSolicitud, map.recibo, map.estado, map.aceptaTarjeta, map.fechaNacimiento, map.domicilio, map.datosEmpleador, map.referentes.map((r) => Referente_1.Referente.fromMap(r)), map.importeNeto, map.comentarios || [], map.ponderador || 0, map.solicitaAmpliacionDeCredito || false, map.clienteId || 0, map.fechaAprobacion, map.analistaAprobadorId, map.nuevoLimiteCompletoSolicitado);
+        return new SolicitudFormal(map.id, map.solicitudInicialId, map.comercianteId, map.nombreCompleto, map.apellido, map.cuil, map.telefono, map.email, map.fechaSolicitud, map.recibo, map.estado, map.aceptaTarjeta, map.fechaNacimiento, map.domicilio, map.datosEmpleador, map.referentes.map((r) => Referente_1.Referente.fromMap(r)), map.importeNeto, map.comentarios || [], map.ponderador || 0, map.solicitaAmpliacionDeCredito || false, map.clienteId || 0, map.fechaAprobacion, map.analistaAprobadorId, map.nuevoLimiteCompletoSolicitado);
     }
     // Métodos para cálculos financieros
     calcularLimites() {
@@ -583,7 +598,6 @@ class SolicitudFormal {
         const camposRequeridos = [
             this.nombreCompleto,
             this.apellido,
-            this.dni,
             this.telefono,
             this.email,
             this.recibo,

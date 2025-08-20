@@ -41,7 +41,6 @@ import { PermisoRepositoryAdapter } from '../../adapters/repository/PermisoRepos
 import { Referente } from '../../../domain/entities/Referente';
 import { AnalistaRepositoryAdapter } from '../../adapters/repository/AnalistaRepositoryAdapter';
 import { ClienteRepositoryAdapter } from '../../adapters/repository/ClienteRepositoryAdapter';
-import { GetSolicitudesInicialesByComercianteYEstadoUseCase } from '../../../application/use-cases/SolicitudInicial/GetSolicitudesInicialesByComercianteYEstadoUseCase';
 import { GetSolicitudesFormalesByComercianteYEstadoUseCase } from '../../../application/use-cases/SolicitudFormal/GetSolicitudesFormalesByComercianteYEstadoUseCase';
 import { HistorialRepositoryAdapter } from '../../adapters/repository/HistorialRepositoryAdapter';
 import { GetSolicitudesFormalesByComercianteIdUseCase } from '../../../application/use-cases/SolicitudFormal/GetSolicitudesFormalesByComercianteIdUseCase';
@@ -51,6 +50,8 @@ import { ListSolicitudesInicialesUseCase } from '../../../application/use-cases/
 import { ConfiguracionRepositoryAdapter } from '../../adapters/repository/ConfiguracionRepositoryAdapter';
 import { CompraRepositoryAdapter } from '../../adapters/repository/CompraRepositoryAdapter';
 import { CrearYAprobarSolicitudFormalUseCase } from '../../../application/use-cases/SolicitudFormal/CrearYAprobarSolicitudFormalUseCase';
+import { GetSolicitudesInicialesByComercianteUseCase } from '../../../application/use-cases/SolicitudInicial/GetSolicitudesInicialesByComercianteUseCase';
+import { GetSolicitudFormalBySolicitudInicialIdUseCase } from '../../../application/use-cases/SolicitudFormal/GetSolicitudFormalBySolicitudInicialIdUseCase';
 
 // Inyección de dependencias (deberían venir de un contenedor DI)
 const verazService: VerazPort = new VerazAdapter();
@@ -62,7 +63,7 @@ const permisoRepo: PermisoRepositoryPort = new PermisoRepositoryAdapter();
 const clienteRepository = new ClienteRepositoryAdapter();
 const historialRepository = new HistorialRepositoryAdapter();
 const analistaRepository = new AnalistaRepositoryAdapter();
-const getSolicitudesInicialesByComercianteYEstado = new GetSolicitudesInicialesByComercianteYEstadoUseCase(solicitudInicialRepo)
+const getSolicitudesInicialesByComerciante = new GetSolicitudesInicialesByComercianteUseCase(solicitudInicialRepo)
 const configuracionRepo = new ConfiguracionRepositoryAdapter();
 const compraRepository = new CompraRepositoryAdapter();
 
@@ -82,14 +83,16 @@ const crearSolicitudInicialUC = new CrearSolicitudInicialUseCase(
 const aprobarRechazarSolicitudInicialUC = new AprobarRechazarSolicitudInicialUseCase(
     solicitudInicialRepo,
     notificationService,
-    historialRepository
+    historialRepository,
+    clienteRepository
 );
 
 const getSolicitudesInicialesByEstadoUC = new GetSolicitudesInicialesByEstadoUseCase(solicitudInicialRepo);
 const verificarAprobacionUC = new VerificarAprobacionSolicitudInicialUseCase(
   solicitudInicialRepo,
   verazService,
-  notificationService
+  notificationService,
+  clienteRepository
 );
 
 const crearSolicitudFormalUC = new CrearSolicitudFormalUseCase(
@@ -117,6 +120,8 @@ const crearYAprobarSolicitudFormalUC = new CrearYAprobarSolicitudFormalUseCase(
   permisoRepo
 );
 
+const getSolicitudFormalBySolicitudInicialIdUC = new GetSolicitudFormalBySolicitudInicialIdUseCase(solicitudFormalRepo);
+
 const getSolicitudesFormalesByEstadoUC = new GetSolicitudesFormalesByEstadoUseCase(solicitudFormalRepo);
 const getSolicitudesFormalesByFechaUC = new GetSolicitudesFormalesByFechaUseCase(solicitudFormalRepo);
 const updateSolicitudFormalUC = new UpdateSolicitudFormalUseCase(solicitudFormalRepo,historialRepository);
@@ -131,7 +136,7 @@ const listSolicitudesInicialesUC = new ListSolicitudesInicialesUseCase(solicitud
  */
 export const crearSolicitudInicial = async (req: Request, res: Response) => {
   try {
-    const { dniCliente, cuilCliente, reciboSueldo } = req.body;
+    const { dniCliente, cuilCliente } = req.body;
     if (!req.user || !req.user.id) {
       return res.status(401).json({ error: 'Usuario no autenticado' });
     }
@@ -140,8 +145,7 @@ export const crearSolicitudInicial = async (req: Request, res: Response) => {
     const solicitud = await crearSolicitudInicialUC.execute(
       dniCliente,
       cuilCliente,
-      comercianteId,
-      reciboSueldo ? Buffer.from(reciboSueldo, 'base64') : undefined
+      comercianteId
     );
 
     res.status(201).json(solicitud);
@@ -208,9 +212,11 @@ export const verificarEstadoCrediticio = async (req: Request, res: Response) => 
  * @returns Devuelve la solicitud formal creada o un error en caso de fallo.
  */
 export const crearSolicitudFormal = async (req: Request, res: Response) => {
+  //TODO: cambiar nombre de cliente a DatosCliente para no generar confusión con el cliente de la API
   try {
     const { idSolicitudInicial, cliente, referentes,importeNeto,solicitaAmpliacionDeCredito,comentarioInicial } = req.body;
     // Validar que el recibo sea proporcionado
+    
     if (!cliente.recibo) {
       return res.status(400).json({ error: 'El recibo es obligatorio' });
     }
@@ -255,14 +261,13 @@ export const crearSolicitudFormal = async (req: Request, res: Response) => {
       return res.status(401).json({ error: 'Usuario no autenticado' });
     }
     const comercianteId = Number(req.user.id);
-
+    console.log(cliente)
     const solicitudFormal = await crearSolicitudFormalUC.execute(
       idSolicitudInicial,
       comercianteId,
       {
         nombreCompleto: cliente.nombreCompleto,
         apellido: cliente.apellido,
-        dni: cliente.dni,
         telefono: cliente.telefono,
         email: cliente.email,
         recibo: cliente.recibo, // Ahora es un Buffer
@@ -528,7 +533,6 @@ export const actualizarSolicitudFormal = async (req: Request, res: Response) => 
       
       if (cliente.nombreCompleto !== undefined) solicitudExistente.setNombreCompleto(cliente.nombreCompleto);
       if (cliente.apellido !== undefined) solicitudExistente.setApellido(cliente.apellido);
-      if (cliente.dni !== undefined) solicitudExistente.setDni(cliente.dni);
       if (cliente.telefono !== undefined) solicitudExistente.setTelefono(cliente.telefono);
       if (cliente.email !== undefined) solicitudExistente.setEmail(cliente.email);
       if (cliente.aceptaTarjeta !== undefined) solicitudExistente.setAceptaTarjeta(cliente.aceptaTarjeta);
@@ -596,23 +600,21 @@ export const obtenerDetalleSolicitudFormal = async (req: Request, res: Response)
  * @returns Devuelve un array de solicitudes iniciales o un error en caso de fallo.
  * @throws 400 si faltan parámetros obligatorios.
  */
-export const listarSolicitudesInicialesByComercianteYEstado = async (req: Request, res: Response) => {
+export const listarSolicitudesInicialesByComerciante = async (req: Request, res: Response) => {
     try {
         const comercianteId = req.user?.id;
-        console.log('Comerciante ID:', comercianteId);
-        const estado = req.query.estado as string;
 
         // Headers cruciales
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Expose-Headers', 'Authorization, X-Total-Count');
 
         // Validar parámetros
-        if (!comercianteId || !estado) {
+        if (!comercianteId) {
             return res.status(400).json({ error: 'Se requieren id y estado' });
         }
         // Filtro combinado
-        const useCase = getSolicitudesInicialesByComercianteYEstado;
-        const solicitudes = await useCase.execute(Number(comercianteId), estado);
+        const useCase = getSolicitudesInicialesByComerciante;
+        const solicitudes = await useCase.execute(Number(comercianteId));
         res.json(solicitudes);
     } catch (error) {
         const errorMessage = error instanceof Error ? error.message : String(error);
@@ -646,6 +648,82 @@ export const listarSolicitudesFormalesByComercianteYEstado = async (req: Request
     }
 };
 
+export const obtenerSolicitudFormalAnalista = async (req: Request, res: Response) => {
+    try {
+        const idSolicitudInicial = Number(req.params.idSolicitudInicial);
+        
+        const solicitud = await getSolicitudFormalBySolicitudInicialIdUC.execute(idSolicitudInicial);
+        
+        if (!solicitud) {
+            return res.status(404).json({ error: 'Solicitud formal no encontrada' });
+        }
+        
+        // Para analistas, devolvemos todos los datos incluyendo el recibo
+        const obj = solicitud.toPlainObject();
+        res.status(200).json(obj);
+    } catch (error) {
+        res.status(400).json({ error: (error as Error).message });
+    }
+};
+
+export const obtenerSolicitudFormalPoridSolicitudInicial = async (req: Request, res: Response) => {
+    try {
+        const idSolicitudInicial = Number(req.params.idSolicitudInicial); // Ahora es el ID de la solicitud inicial
+        console.log(idSolicitudInicial)
+        const solicitud = await getSolicitudFormalBySolicitudInicialIdUC.execute(idSolicitudInicial);
+        
+        if (!solicitud) {
+            return res.status(404).json({ error: 'Solicitud formal no encontrada' });
+        }
+        
+        // Verificar que el comerciante solo pueda acceder a sus propias solicitudes
+        if (req.user?.rol === 'comerciante') {
+            const comercianteId = Number(req.user.id);
+            if (solicitud.getComercianteId() !== comercianteId) {
+              console.log("comerciante"+comercianteId)
+              console.log("comerciante solicitud:"+solicitud.getComercianteId())
+                return res.status(403).json({ error: 'No tienes permisos para acceder a esta solicitud' });
+            }
+        }
+        
+        const obj = solicitud.toPlainObject();
+        delete obj.recibo; // Elimina el recibo del objeto para no enviarlo al cliente
+        res.status(200).json(obj);
+    } catch (error) {
+        res.status(400).json({ error: (error as Error).message });
+    }
+};
+
+/**
+ * Obtiene una solicitud formal por ID con verificación de pertenencia al comerciante
+ * @param req - Request de Express con el ID de la solicitud en los parámetros
+ * @param res - Response de Express para enviar la respuesta
+ * @returns Devuelve la solicitud formal si existe y pertenece al comerciante
+ */
+export const obtenerSolicitudFormalPorIdComerciante = async (req: Request, res: Response) => {
+    try {
+        const id = Number(req.params.id);
+        const solicitud = await getSolicitudFormalByIdUC.execute(id);
+        
+        if (!solicitud) {
+            return res.status(404).json({ error: 'Solicitud no encontrada' });
+        }
+
+        // Verificar que el comerciante solo pueda acceder a sus propias solicitudes
+        if (req.user?.rol === 'comerciante') {
+            const comercianteId = Number(req.user.id);
+            if (solicitud.getComercianteId() !== comercianteId) {
+                return res.status(403).json({ error: 'No tienes permisos para acceder a esta solicitud' });
+            }
+        }
+        const obj = solicitud.toPlainObject();
+        delete obj.recibo;//elimina el recibo del objeto para no enviarlo al cliente
+        res.status(200).json(obj);
+    } catch (error) {
+        res.status(400).json({ error: (error as Error).message });
+    }
+};
+
 /**
  * Lista todas las solicitudes formales de un comerciante por su ID.
  * @param req - Request de Express con el id del comerciante en los parámetros.
@@ -655,7 +733,8 @@ export const listarSolicitudesFormalesByComercianteYEstado = async (req: Request
  */
 export const listarSolicitudesFormalesByComerciante = async (req: Request, res: Response) => {
     try {
-        const comercianteId = req.params.id;
+        const comercianteId = req.user?.id;
+        console.log('Comerciante ID:', comercianteId);
         // Validar parámetros
         if (!comercianteId) {
             return res.status(400).json({ error: 'Se requieren id' });
@@ -795,7 +874,7 @@ export const crearYAprobarSolicitudFormal = async (req: Request, res: Response) 
       {
         nombreCompleto: cliente.nombreCompleto,
         apellido: cliente.apellido,
-        dni: cliente.dni,
+        cuil: cliente.cuil,
         telefono: cliente.telefono,
         email: cliente.email,
         recibo: cliente.recibo,

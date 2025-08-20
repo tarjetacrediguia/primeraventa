@@ -8,6 +8,7 @@
  */
 
 import { SolicitudInicialRepositoryPort } from "../../../application/ports/SolicitudInicialRepositoryPort";
+import { Cliente } from "../../../domain/entities/Cliente";
 import { SolicitudInicial } from "../../../domain/entities/SolicitudInicial";
 import { pool } from "../../config/Database/DatabaseDonfig";
 
@@ -41,10 +42,7 @@ export class SolicitudInicialRepositoryAdapter implements SolicitudInicialReposi
             row.id,
             new Date(row.fechaCreacion),
             'aprobada',
-            row.dniCliente,
             row.clienteId,
-            row.cuilCliente,
-            undefined, // reciboSueldo (no se necesita para esta operación)
             undefined, // comercianteId (no se necesita para esta operación)
             []        // comentarios (inicializar como array vacío)
         ));
@@ -91,18 +89,16 @@ export class SolicitudInicialRepositoryAdapter implements SolicitudInicialReposi
      * @param solicitudInicial - Objeto SolicitudInicial a crear.
      * @returns Promise<SolicitudInicial> - La solicitud inicial creada con su ID asignado.
      */
-    async createSolicitudInicial(solicitudInicial: SolicitudInicial): Promise<SolicitudInicial> {
+    async createSolicitudInicial(solicitudInicial: SolicitudInicial,cliente:Cliente): Promise<SolicitudInicial> {
         const client = await pool.connect();
         try {
             await client.query('BEGIN');
             
             // Buscar cliente por DNI o crear uno nuevo
             let clienteId: number;
-            const dniCliente = solicitudInicial.getDniCliente();
-            const cuilCliente = solicitudInicial.getCuilCliente();
             
-            const clienteQuery = `SELECT id FROM clientes WHERE dni = $1`;
-            const clienteResult = await client.query(clienteQuery, [dniCliente]);
+            const clienteQuery = `SELECT id FROM clientes WHERE cuil = $1`;
+            const clienteResult = await client.query(clienteQuery, [cliente.getCuil()]);
             
             if (clienteResult.rows.length === 0) {
                 // Crear nuevo cliente con datos mínimos
@@ -118,8 +114,8 @@ export class SolicitudInicialRepositoryAdapter implements SolicitudInicialReposi
                 const insertClienteValues = [
                     'Nombre por definir', // nombre_completo
                     'Apellido por definir', // apellido
-                    dniCliente,
-                    cuilCliente,
+                    cliente.getDni(),
+                    cliente.getCuil(),
                     null, // telefono
                     null, // email
                     null, // fecha_nacimiento
@@ -163,12 +159,13 @@ export class SolicitudInicialRepositoryAdapter implements SolicitudInicialReposi
                 createdRow.id.toString(),
                 createdRow.fecha_creacion,
                 solicitudInicial.getEstado(),
-                dniCliente,
                 clienteId,
-                cuilCliente,
-                solicitudInicial.getReciboSueldo(),
                 solicitudInicial.getComercianteId(),
-                solicitudInicial.getComentarios()
+                solicitudInicial.getComentarios(),
+                undefined, // analistaAprobadorId
+                undefined, // administradorAprobadorId
+                cliente.getDni(),
+                cliente.getCuil(),
             );
         } catch (error) {
             await client.query('ROLLBACK');
@@ -216,16 +213,16 @@ export class SolicitudInicialRepositoryAdapter implements SolicitudInicialReposi
      * @param solicitudInicial - Objeto SolicitudInicial con los datos actualizados.
      * @returns Promise<SolicitudInicial> - La solicitud inicial actualizada.
      */
-    async updateSolicitudInicial(solicitudInicial: SolicitudInicial): Promise<SolicitudInicial> {
+    async updateSolicitudInicial(solicitudInicial: SolicitudInicial,cliente:Cliente): Promise<SolicitudInicial> {
         const client = await pool.connect();
         try {
             await client.query('BEGIN');
             
             // Verificar que el cliente existe y obtener su ID
-            const clienteQuery = `SELECT id FROM clientes WHERE dni = $1`;
-            const clienteResult = await client.query(clienteQuery, [solicitudInicial.getDniCliente()]);
+            const clienteQuery = `SELECT id FROM clientes WHERE cuil = $1`;
+            const clienteResult = await client.query(clienteQuery, [cliente.getCuil()]);
             if (clienteResult.rows.length === 0) {
-                throw new Error(`Cliente con DNI ${solicitudInicial.getDniCliente()} no encontrado`);
+                throw new Error(`Cliente con CUIL ${cliente.getCuil()} no encontrado`);
             }
             
             const clienteId = clienteResult.rows[0].id;
@@ -282,16 +279,16 @@ export class SolicitudInicialRepositoryAdapter implements SolicitudInicialReposi
      * @param solicitudInicial - Objeto SolicitudInicial con el nuevo estado.
      * @returns Promise<SolicitudInicial> - La solicitud inicial actualizada.
      */
-    async updateSolicitudInicialAprobaciónRechazo(solicitudInicial: SolicitudInicial): Promise<SolicitudInicial> {
+    async updateSolicitudInicialAprobaciónRechazo(solicitudInicial: SolicitudInicial,cliente:Cliente): Promise<SolicitudInicial> {
         const client = await pool.connect();
         try {
             await client.query('BEGIN');
             
             // Verificar que el cliente existe y obtener su ID
-            const clienteQuery = `SELECT id FROM clientes WHERE dni = $1`;
-            const clienteResult = await client.query(clienteQuery, [solicitudInicial.getDniCliente()]);
+            const clienteQuery = `SELECT id FROM clientes WHERE cuil = $1`;
+            const clienteResult = await client.query(clienteQuery, [cliente.getCuil()]);
             if (clienteResult.rows.length === 0) {
-                throw new Error(`Cliente con DNI ${solicitudInicial.getDniCliente()} no encontrado`);
+                throw new Error(`Cliente con CUIL ${cliente.getCuil()} no encontrado`);
             }
             
             const clienteId = clienteResult.rows[0].id;
@@ -472,14 +469,13 @@ export class SolicitudInicialRepositoryAdapter implements SolicitudInicialReposi
         Number(row.id), 
         new Date(row.fecha_creacion), 
         row.estado as 'pendiente' | 'aprobada' | 'rechazada' | 'expirada',
-        row.dni_cliente,
         Number(row.cliente_id),
-        row.cuil_cliente,
-        row.recibosueldo || undefined,
         row.comerciante_id ? Number(row.comerciante_id) : undefined,
         row.comentarios || [],
         row.analista_aprobador_id ? Number(row.analista_aprobador_id) : undefined,
-        row.administrador_aprobador_id ? Number(row.administrador_aprobador_id) : undefined
+        row.administrador_aprobador_id ? Number(row.administrador_aprobador_id) : undefined,
+        row.dni_cliente,
+        row.cuil_cliente
     );
 }
     /**
@@ -488,9 +484,8 @@ export class SolicitudInicialRepositoryAdapter implements SolicitudInicialReposi
      * @param estado - Estado de las solicitudes.
      * @returns Promise<SolicitudInicial[]> - Array de solicitudes iniciales del comerciante con el estado especificado.
      */
-    async getSolicitudesInicialesByComercianteYEstado(
-    comercianteId: number, 
-    estado: string
+    async getSolicitudesInicialesByComerciante(
+    comercianteId: number
 ): Promise<SolicitudInicial[]> {
     const query = `
         SELECT 
@@ -499,11 +494,11 @@ export class SolicitudInicialRepositoryAdapter implements SolicitudInicialReposi
             c.dni as dni_cliente, c.cuil as cuil_cliente
         FROM solicitudes_iniciales si
         INNER JOIN clientes c ON si.cliente_id = c.id
-        WHERE si.comerciante_id = $1 AND si.estado = $2
+        WHERE si.comerciante_id = $1
         ORDER BY si.fecha_creacion DESC
     `;
     
-    const result = await pool.query(query, [comercianteId, estado]);
+    const result = await pool.query(query, [comercianteId]);
     return result.rows.map(row => this.mapRowToSolicitudInicial(row));
 }
 

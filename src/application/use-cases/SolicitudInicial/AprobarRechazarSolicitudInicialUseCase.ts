@@ -20,6 +20,7 @@ import { NotificationPort } from "../../ports/NotificationPort";
 import { SolicitudInicial } from "../../../domain/entities/SolicitudInicial";
 import { HISTORIAL_ACTIONS } from "../../constants/historialActions";
 import { HistorialRepositoryPort } from "../../ports/HistorialRepositoryPort";
+import { ClienteRepositoryPort } from "../../ports/ClienteRepositoryPort";
 
 /**
  * Caso de uso para aprobar o rechazar solicitudes iniciales de crédito.
@@ -39,7 +40,8 @@ export class AprobarRechazarSolicitudInicialUseCase {
     constructor(
         private readonly repository: SolicitudInicialRepositoryPort,
         private readonly notificationService: NotificationPort,
-        private readonly historialRepository: HistorialRepositoryPort
+        private readonly historialRepository: HistorialRepositoryPort,
+        private readonly clienteRepository: ClienteRepositoryPort
     ) {}
 
     /**
@@ -96,11 +98,13 @@ export class AprobarRechazarSolicitudInicialUseCase {
     } else {
         solicitud.setAnalistaAprobadorId(aprobadorId);
     }
-
+        //Obtener el cliente asociado a la solicitud
+        const clienteId = solicitud.getClienteId();
+        const cliente = await this.clienteRepository.findById(clienteId);
         if (comentario) solicitud.agregarComentario(`Aprobación: ${comentario}`);
         solicitud.setEstado("aprobada");
         
-        const solicitudActualizada = await this.repository.updateSolicitudInicialAprobaciónRechazo(solicitud);
+        const solicitudActualizada = await this.repository.updateSolicitudInicialAprobaciónRechazo(solicitud,cliente);
         await this.historialRepository.registrarEvento({
             usuarioId: aprobadorId,
             accion: HISTORIAL_ACTIONS.APPROVE_SOLICITUD_INICIAL,
@@ -172,12 +176,14 @@ export class AprobarRechazarSolicitudInicialUseCase {
     } else {
         solicitud.setAnalistaAprobadorId(aprobadorId);
     }
-
+        //Obtener el cliente asociado a la solicitud
+        const clienteId = solicitud.getClienteId();
+        const cliente = await this.clienteRepository.findById(clienteId);
         const rol = esAdministrador ? 'administrador' : 'analista';
         solicitud.agregarComentario(`Rechazo por ${rol}: ${comentario}`);
         solicitud.setEstado("rechazada");
         
-        const solicitudActualizada = await this.repository.updateSolicitudInicialAprobaciónRechazo(solicitud);
+        const solicitudActualizada = await this.repository.updateSolicitudInicialAprobaciónRechazo(solicitud,cliente);
         
         await this.historialRepository.registrarEvento({
             usuarioId: aprobadorId,

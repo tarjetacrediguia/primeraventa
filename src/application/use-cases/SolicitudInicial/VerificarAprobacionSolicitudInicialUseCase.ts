@@ -18,6 +18,8 @@ import { SolicitudInicialRepositoryPort } from "../../ports/SolicitudInicialRepo
 import { VerazPort } from "../../ports/VerazPort";
 import { NotificationPort } from "../../ports/NotificationPort";
 import { SolicitudInicial } from "../../../domain/entities/SolicitudInicial";
+import { Cliente } from "../../../domain/entities/Cliente";
+import { ClienteRepositoryPort } from "../../ports/ClienteRepositoryPort";
 
 /**
  * Caso de uso para verificar automáticamente la aprobación de solicitudes iniciales.
@@ -37,7 +39,8 @@ export class VerificarAprobacionSolicitudInicialUseCase {
     constructor(
         private readonly repository: SolicitudInicialRepositoryPort,
         private readonly verazService: VerazPort,
-        private readonly notificationService: NotificationPort
+        private readonly notificationService: NotificationPort,
+        private readonly clienteRepository: ClienteRepositoryPort
     ) {}
 
     /**
@@ -66,9 +69,11 @@ export class VerificarAprobacionSolicitudInicialUseCase {
             return solicitud;
         }
 
+        const cliente = await this.clienteRepository.findById(solicitud.getClienteId());
+
         try {
             // 3. Consultar Veraz
-            const estadoVeraz = await this.verazService.checkClienteStatus(solicitud.getDniCliente());
+            const estadoVeraz = await this.verazService.checkClienteStatus(cliente.getCuil());//consultar por CUIL
             
             // 4. Actualizar estado según Veraz
             if (estadoVeraz.status === "aprobado") {
@@ -78,7 +83,7 @@ export class VerificarAprobacionSolicitudInicialUseCase {
             }
 
             // 5. Guardar cambios
-            const updated = await this.repository.updateSolicitudInicial(solicitud);
+            const updated = await this.repository.updateSolicitudInicial(solicitud,cliente);
 
             // 6. Notificar al comerciante
             await this.notificationService.emitNotification({

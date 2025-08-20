@@ -2,6 +2,26 @@
 
 import { ItemCompra } from "./ItemCompra";
 
+export interface CompraParams {
+    id: number;
+    solicitudFormalId: number;
+    descripcion: string;
+    cantidadCuotas: number;
+    items?: ItemCompra[];
+    estado?: EstadoCompra;
+    montoTotal: number;
+    ponderador: number;
+    montoTotalPonderado: number;
+    clienteId: number;
+    fechaCreacion?: Date;
+    fechaActualizacion?: Date;
+    valorCuota?: number;
+    numeroTarjeta?: string;
+    numeroCuenta?: string;
+    comercianteId?: number;
+    analistaAprobadorId?: number;
+}
+
 export enum EstadoCompra {
   PENDIENTE = 'pendiente',
   APROBADA = 'aprobada',
@@ -39,6 +59,8 @@ export class Compra {
     private clienteId: number; // ID del cliente asociado a la compra
     private numeroTarjeta?: string;
     private numeroCuenta?: string;
+    private comercianteId?: number;
+    private analistaAprobadorId?: number;
 
  
 
@@ -53,38 +75,24 @@ export class Compra {
      * @param fechaCreacion Fecha de creación
      * @param fechaActualizacion Fecha de última actualización
      */
-    constructor(
-        id: number,
-        solicitudFormalId: number,
-        descripcion: string,
-        cantidadCuotas: number,
-        items: ItemCompra[] = [],
-        estado: EstadoCompra = EstadoCompra.PENDIENTE,
-        montoTotal: number,
-        ponderador: number,
-        montoTotalPonderado: number,
-        clienteId: number,
-        fechaCreacion?: Date,
-        fechaActualizacion?: Date,
-        valorCuota?: number,
-        numeroTarjeta?: string,
-        numeroCuenta?: string
-    ) {
-        this.id = id;
-        this.solicitudFormalId = solicitudFormalId;
-        this.descripcion = descripcion;
-        this.cantidadCuotas = cantidadCuotas;
-        this.items = items;
-        this.montoTotal = montoTotal || this.calcularMontoTotal();
-        this.fechaCreacion = fechaCreacion || new Date();
-        this.fechaActualizacion = fechaActualizacion || new Date();
-        this.estado = estado;
-        this.valorCuota = valorCuota || (this.cantidadCuotas > 0 ? this.montoTotal / this.cantidadCuotas : 0);
-        this.ponderador = ponderador || 1; // Valor por defecto
-        this.montoTotalPonderado = montoTotalPonderado || this.montoTotal * this.ponderador;
-        this.numeroTarjeta = numeroTarjeta;
-        this.numeroCuenta = numeroCuenta;
-        this.clienteId = clienteId;
+    constructor(params: CompraParams) {
+        this.id = params.id;
+        this.solicitudFormalId = params.solicitudFormalId;
+        this.descripcion = params.descripcion;
+        this.cantidadCuotas = params.cantidadCuotas;
+        this.items = params.items || [];
+        this.montoTotal = params.montoTotal || this.calcularMontoTotal();
+        this.fechaCreacion = params.fechaCreacion || new Date();
+        this.fechaActualizacion = params.fechaActualizacion || new Date();
+        this.estado = params.estado || EstadoCompra.PENDIENTE;
+        this.valorCuota = params.valorCuota || (this.cantidadCuotas > 0 ? (this.montoTotal * params.ponderador) / this.cantidadCuotas : 0);
+        this.ponderador = params.ponderador || 1;
+        this.montoTotalPonderado = params.montoTotalPonderado || this.montoTotal * this.ponderador;
+        this.clienteId = params.clienteId;
+        this.numeroTarjeta = params.numeroTarjeta;
+        this.numeroCuenta = params.numeroCuenta;
+        this.comercianteId = params.comercianteId;
+        this.analistaAprobadorId = params.analistaAprobadorId;
     }
 
     // Getters
@@ -156,6 +164,21 @@ export class Compra {
 
     public setNumeroCuenta(numeroCuenta: string | undefined): void {
         this.numeroCuenta = numeroCuenta;
+    }
+    public getComercianteId(): number | undefined {
+        return this.comercianteId;
+    }
+
+    public setComercianteId(comercianteId: number | undefined): void {
+        this.comercianteId = comercianteId;
+    }
+
+    public getAnalistaAprobadorId(): number | undefined {
+        return this.analistaAprobadorId;
+    }
+
+    public setAnalistaAprobadorId(analistaAprobadorId: number | undefined): void {
+        this.analistaAprobadorId = analistaAprobadorId;
     }
     // Setters
     public setClienteId(clienteId: number): void {
@@ -229,24 +252,30 @@ export class Compra {
             numeroTarjeta: this.numeroTarjeta,
             numeroCuenta: this.numeroCuenta,
             clienteId: this.clienteId,
+            comercianteId: this.comercianteId,
+            analistaAprobadorId: this.analistaAprobadorId
         };
     }
 
     public static fromMap(map: any): Compra {
-        return new Compra(
-            map.id,
-            map.solicitudFormalId,
-            map.descripcion,
-            map.cantidadCuotas,
-            map.items ? map.items.map((i: any) => ItemCompra.fromMap(i)) : [],
-            map.estado || EstadoCompra.PENDIENTE,
-            map.montoTotal,
-            map.ponderador,
-            map.montoTotalPonderado,
-            map.clienteId,
-            map.fechaCreacion ? new Date(map.fechaCreacion) : undefined,
-            map.fechaActualizacion ? new Date(map.fechaActualizacion) : undefined,
-            map.valorCuota || (map.cantidadCuotas > 0 ? map.montoTotal / map.cantidadCuotas : 0),
-        );
+        return new Compra({
+            id: map.id,
+            solicitudFormalId: map.solicitudFormalId,
+            descripcion: map.descripcion,
+            cantidadCuotas: map.cantidadCuotas,
+            items: map.items ? map.items.map((i: any) => ItemCompra.fromMap(i)) : [],
+            estado: map.estado || EstadoCompra.PENDIENTE,
+            montoTotal: map.montoTotal,
+            ponderador: map.ponderador,
+            montoTotalPonderado: map.montoTotalPonderado,
+            clienteId: map.clienteId,
+            fechaCreacion: map.fechaCreacion ? new Date(map.fechaCreacion) : undefined,
+            fechaActualizacion: map.fechaActualizacion ? new Date(map.fechaActualizacion) : undefined,
+            valorCuota: map.valorCuota || (map.cantidadCuotas > 0 ? map.montoTotal / map.cantidadCuotas : 0),
+            numeroTarjeta: map.numeroTarjeta,
+            numeroCuenta: map.numeroCuenta,
+            comercianteId: map.comercianteId,
+            analistaAprobadorId: map.analistaAprobadorId
+        });
     }
 }

@@ -13,6 +13,7 @@
  * - Gestionar la expiración de solicitudes
  */
 
+import { Cliente } from "../../domain/entities/Cliente";
 import { SolicitudInicial } from "../../domain/entities/SolicitudInicial";
 
 /**
@@ -29,7 +30,7 @@ export interface SolicitudInicialRepositoryPort {
      * @returns Promise<SolicitudInicial> - Solicitud inicial creada con ID asignado
      * @throws Error si los datos son inválidos
      */
-    createSolicitudInicial(solicitudInicial: SolicitudInicial): Promise<SolicitudInicial>;
+    createSolicitudInicial(solicitudInicial: SolicitudInicial,cliente:Cliente): Promise<SolicitudInicial>;
 
     /**
      * Obtiene una solicitud inicial por su identificador único.
@@ -46,7 +47,7 @@ export interface SolicitudInicialRepositoryPort {
      * @returns Promise<SolicitudInicial> - Solicitud inicial actualizada
      * @throws Error si la solicitud inicial no existe
      */
-    updateSolicitudInicial(solicitudInicial: SolicitudInicial): Promise<SolicitudInicial>;
+    updateSolicitudInicial(solicitudInicial: SolicitudInicial,cliente:Cliente): Promise<SolicitudInicial>;
 
     /**
      * Obtiene todas las solicitudes iniciales registradas.
@@ -119,9 +120,8 @@ export interface SolicitudInicialRepositoryPort {
      * @param estado - Estado de las solicitudes
      * @returns Promise<SolicitudInicial[]> - Listado de solicitudes iniciales filtradas
      */
-    getSolicitudesInicialesByComercianteYEstado(
-        comercianteId: number, 
-        estado: string
+    getSolicitudesInicialesByComerciante(
+        comercianteId: number
     ): Promise<SolicitudInicial[]>;
 
     /**
@@ -131,5 +131,8 @@ export interface SolicitudInicialRepositoryPort {
      * @returns Promise<SolicitudInicial> - Solicitud inicial actualizada
      * @throws Error si la solicitud inicial no existe
      */
-    updateSolicitudInicialAprobaciónRechazo(solicitudInicial: SolicitudInicial): Promise<SolicitudInicial>
+    updateSolicitudInicialAprobaciónRechazo(solicitudInicial: SolicitudInicial,cliente:Cliente): Promise<SolicitudInicial>
+
+
+    
 }

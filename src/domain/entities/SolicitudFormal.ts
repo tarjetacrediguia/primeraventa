@@ -29,7 +29,8 @@ export class SolicitudFormal {
     private readonly id: number;
     private nombreCompleto: string;
     private apellido: string;
-    private dni: string;
+    //private dni: string | null = null; // DNI opcional, puede ser CUIL
+    //private cuil: string;
     private telefono: string;
     private email: string;
     private fechaSolicitud: Date;
@@ -92,7 +93,7 @@ export class SolicitudFormal {
     comercianteId: number, 
     nombreCompleto: string,
     apellido: string,
-    dni: string,
+    //cuil: string,
     telefono: string,
     email: string,
     fechaSolicitud: Date,
@@ -113,6 +114,7 @@ export class SolicitudFormal {
     administradorAprobadorId?: number,
     comercianteAprobadorId?: number,
     nuevoLimiteCompletoSolicitado?: number | null,
+    //dni?: string
     
   ) {
     this.id = id;
@@ -120,7 +122,7 @@ export class SolicitudFormal {
     this.comercianteId = comercianteId;
     this.nombreCompleto = nombreCompleto;
     this.apellido = apellido;
-    this.dni = dni;
+    //this.cuil = cuil;
     this.telefono = telefono;
     this.email = email;
     this.fechaSolicitud = fechaSolicitud;
@@ -143,7 +145,15 @@ export class SolicitudFormal {
     this.solicitaAmpliacionDeCredito = solicitaAmpliacionDeCredito;
     
   }
+/*
+  setCuil(cuil: string) {
+    this.cuil = cuil;
+  }
 
+  getCuil(): string {
+    return this.cuil;
+  } 
+*/
   setComercianteAprobadorId(id: number) {
         this.comercianteAprobadorId = id;
     }
@@ -351,19 +361,21 @@ export class SolicitudFormal {
    * 
    * @returns string - DNI del solicitante.
    */
-  public getDni(): string {
+  /*
+  public getDni(): string | null {
     return this.dni;
   }
-
+*/
   /**
    * Establece el DNI del solicitante.
    * 
    * @param dni - Nuevo DNI del solicitante.
    */
+  /*
   public setDni(dni: string): void {
     this.dni = dni;
   }
-
+*/
   /**
    * Obtiene el teléfono del solicitante.
    * 
@@ -620,7 +632,7 @@ export class SolicitudFormal {
       id: this.id,
       nombreCompleto: this.nombreCompleto,
       apellido: this.apellido,
-      dni: this.dni,
+      //cuil: this.cuil,
       telefono: this.telefono,
       email: this.email,
       fechaSolicitud: this.fechaSolicitud,
@@ -656,7 +668,7 @@ export class SolicitudFormal {
       map.comercianteId,
       map.nombreCompleto,
       map.apellido,
-      map.dni,
+      map.cuil,
       map.telefono,
       map.email,
       map.fechaSolicitud,
@@ -688,7 +700,6 @@ export class SolicitudFormal {
         const camposRequeridos = [
             this.nombreCompleto,
             this.apellido,
-            this.dni,
             this.telefono,
             this.email,
             this.recibo,
@@ -697,6 +708,7 @@ export class SolicitudFormal {
             this.datosEmpleador,
             this.importeNeto
         ];
+
 
         if (camposRequeridos.some(campo => {
             if (Buffer.isBuffer(campo)) return campo.length === 0;
@@ -712,6 +724,7 @@ export class SolicitudFormal {
         if (this.importeNeto <= 0) {
             throw new Error("El importe neto debe ser mayor a cero");
         }
+
 
     }
 

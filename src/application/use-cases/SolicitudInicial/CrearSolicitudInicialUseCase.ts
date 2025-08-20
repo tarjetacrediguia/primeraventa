@@ -80,13 +80,12 @@ export class CrearSolicitudInicialUseCase {
     async execute(
         dniCliente: string,
         cuilCliente: string,
-        comercianteId: number,
-        reciboSueldo?: Buffer
+        comercianteId: number
     ): Promise<SolicitudInicial> {
         try {
             let cliente: Cliente;
             try {
-                cliente = await this.clienteRepository.findByDni(dniCliente);
+                cliente = await this.clienteRepository.findByCuil(cuilCliente); 
             } catch {
                 // Crear con datos mínimos si no existe
                 cliente = new Cliente(
@@ -99,13 +98,13 @@ export class CrearSolicitudInicialUseCase {
                 await this.clienteRepository.save(cliente);
             }
             // 1. Verificar si el cliente tiene crédito activo
-            const tieneCreditoActivo = await this.tieneCreditoActivo(dniCliente);
+            const tieneCreditoActivo = await this.tieneCreditoActivo(cuilCliente); // Usar CUIL en lugar de DNI
             if (tieneCreditoActivo) {
                 // Notificar al comerciante que no puede crear solicitud
                 await this.notificationService.emitNotification({
                     userId: Number(comercianteId),
                     type: "solicitud_inicial",
-                    message: `El cliente con DNI ${dniCliente} ya tiene un crédito activo`
+                    message: `El cliente con CUIL ${cuilCliente} ya tiene un crédito activo`
                 });
 
                 // Registrar evento de rechazo
@@ -116,7 +115,7 @@ export class CrearSolicitudInicialUseCase {
                     entidadId: 0, // No hay entidad aún
                     detalles: {
                         motivo: "Cliente con crédito activo",
-                        dni_cliente: dniCliente
+                        dni_cliente: cuilCliente
                     },
                     solicitudInicialId: undefined // No hay solicitud aún
                 });
@@ -129,15 +128,12 @@ export class CrearSolicitudInicialUseCase {
                 0,
                 new Date(),
                 "pendiente",
-                dniCliente,
                 cliente.getId(),
-                cuilCliente,
-                reciboSueldo,
                 comercianteId
             );
 
             // 3. Guardar solicitud inicial
-            const solicitudCreada = await this.solicitudInicialRepository.createSolicitudInicial(solicitud);
+            const solicitudCreada = await this.solicitudInicialRepository.createSolicitudInicial(solicitud,cliente);
 
             const solicitudInicialId = solicitudCreada.getId();
 
@@ -218,7 +214,7 @@ export class CrearSolicitudInicialUseCase {
                 const estadoVeraz = await this.verazService.checkClienteStatus(dniCliente);
                 if (estadoVeraz.status === "aprobado") {
                     solicitudCreada.setEstado("aprobada");
-                    await this.solicitudInicialRepository.updateSolicitudInicial(solicitudCreada);
+                    await this.solicitudInicialRepository.updateSolicitudInicial(solicitudCreada,cliente);
                     // Registrar evento de aprobación automática
                 await this.historialRepository.registrarEvento({
                     usuarioId: null, // Sistema automático
@@ -234,7 +230,7 @@ export class CrearSolicitudInicialUseCase {
                 });
                 } else if(estadoVeraz.status === "rechazado"){
                     solicitudCreada.setEstado("rechazada");
-                    await this.solicitudInicialRepository.updateSolicitudInicial(solicitudCreada);
+                    await this.solicitudInicialRepository.updateSolicitudInicial(solicitudCreada,cliente);
                     // Registrar evento de rechazo automático
                 await this.historialRepository.registrarEvento({
                     usuarioId: null, // Sistema automático
@@ -250,12 +246,12 @@ export class CrearSolicitudInicialUseCase {
                 });
                 } else {
                     solicitudCreada.setEstado("pendiente");
-                    await this.solicitudInicialRepository.updateSolicitudInicial(solicitudCreada);
+                    await this.solicitudInicialRepository.updateSolicitudInicial(solicitudCreada,cliente);
                 }
                 // ===== FIN BLOQUE VERAZ =====
             } else {
                 // MODO MANUAL: Notificar a analistas
-                await this.notificarAnalistas(solicitudCreada);
+                await this.notificarAnalistas(solicitudCreada,cliente);
             }
 
             // Notificación al comerciante (existente)
@@ -303,28 +299,25 @@ export class CrearSolicitudInicialUseCase {
      * Este método privado consulta todas las solicitudes formales del cliente por DNI
      * y verifica si alguna tiene contratos asociados con estado "generado" (activo).
      * 
-     * @param dniCliente - DNI del cliente a verificar
+     * @param   cuilCliente - CUIL del cliente a verificar
      * @returns Promise<boolean> - true si el cliente tiene un crédito activo, false en caso contrario
      */
-    private async tieneCreditoActivo(dniCliente: string): Promise<boolean> {
-        // Obtener todas las solicitudes formales del cliente por DNI
-        const solicitudesFormales = await this.solicitudFormalRepository.getSolicitudesFormalesByDni(dniCliente);
-        // Verificar cada solicitud formal para ver si tiene un contrato activo asociado
-        for (const solicitud of solicitudesFormales) {
-            const contratos = await this.contratoRepository.getContratosBySolicitudFormalId(solicitud.getId());
-            // Verificar si hay al menos un contrato activo para esta solicitud
-            const tieneContratoActivo = contratos.some(contrato => {
-                const estado = contrato.getEstado().toLowerCase();
-                return estado === "generado";
-            });
-            
-            if (tieneContratoActivo) {
-                return true;
-            }
-        }
+   private async tieneCreditoActivo(cuilCliente: string): Promise<boolean> {
+    // Usar CUIL en lugar de DNI
+    const solicitudesFormales = await this.solicitudFormalRepository.getSolicitudesFormalesByCuil(cuilCliente);
+    
+    for (const solicitud of solicitudesFormales) {
+        const contratos = await this.contratoRepository.getContratosBySolicitudFormalId(solicitud.getId());
+        const tieneContratoActivo = contratos.some(contrato => 
+            contrato.getEstado().toLowerCase() === "generado"
+        );
         
-        return false;
+        if (tieneContratoActivo) {
+            return true;
+        }
     }
+    return false;
+}
 
     /**
      * Notifica a todos los analistas activos sobre una nueva solicitud inicial.
@@ -334,7 +327,7 @@ export class CrearSolicitudInicialUseCase {
      * 
      * @param solicitud - La solicitud inicial que se ha creado
      */
-    private async notificarAnalistas(solicitud: SolicitudInicial): Promise<void> {
+    private async notificarAnalistas(solicitud: SolicitudInicial,cliente:Cliente): Promise<void> {
         try {
             const analistaIds = await this.analistaRepository.obtenerIdsAnalistasActivos();
             const notificaciones = analistaIds.map(analistaId => 
@@ -344,7 +337,7 @@ export class CrearSolicitudInicialUseCase {
                     message: "Nueva solicitud inicial requiere revisión",
                     metadata: {
                         solicitudId: solicitud.getId(),
-                        dniCliente: solicitud.getDniCliente(),
+                        cuilCliente: cliente.getCuil(),
                         comercianteId: solicitud.getComercianteId(),
                         prioridad: "media"
                     }

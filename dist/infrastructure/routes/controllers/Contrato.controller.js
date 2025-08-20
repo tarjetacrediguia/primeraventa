@@ -10,8 +10,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.descargarContratoPDF = exports.generarYDescargarContratoPDF = void 0;
-const DescargarContratoUseCase_1 = require("../../../application/use-cases/Contrato/DescargarContratoUseCase");
+exports.generarYDescargarContratoPDF = void 0;
 const ContratoRepositoryAdapter_1 = require("../../adapters/repository/ContratoRepositoryAdapter");
 const SolicitudFormalRepositoryAdapter_1 = require("../../adapters/repository/SolicitudFormalRepositoryAdapter");
 const NotificationAdapter_1 = require("../../adapters/notification/NotificationAdapter");
@@ -37,10 +36,10 @@ const generacionYDescargaUC = new GenerarYDescargarContratoUseCase_1.GeneracionY
 const generarYDescargarContratoPDF = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     var _a;
     try {
-        const solicitudId = parseInt(req.params.id, 10);
+        const compraId = parseInt(req.params.id, 10);
         const userId = Number((_a = req.user) === null || _a === void 0 ? void 0 : _a.id);
         // Ejecutar generación y descarga en un solo paso
-        const { pdf } = yield generacionYDescargaUC.execute(solicitudId, userId);
+        const { pdf } = yield generacionYDescargaUC.execute(compraId, userId);
         // Enviar el PDF directamente como respuesta
         res.setHeader('Content-Type', 'application/pdf');
         res.setHeader('Content-Disposition', `attachment; filename=contrato.pdf`);
@@ -53,44 +52,3 @@ const generarYDescargarContratoPDF = (req, res) => __awaiter(void 0, void 0, voi
     }
 });
 exports.generarYDescargarContratoPDF = generarYDescargarContratoPDF;
-/**
- * Obtiene un contrato por su ID.
- * @param req - Request de Express con el ID del contrato en params.
- * @param res - Response de Express para enviar la respuesta.
- * @returns Devuelve el contrato encontrado o un error si no existe.
- */
-const descargarContratoPDF = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    var _a;
-    try {
-        const contratoId = req.params.id;
-        const userId = Number((_a = req.user) === null || _a === void 0 ? void 0 : _a.id);
-        // Obtener contrato
-        const contrato = yield contratoRepository.getContratoById(contratoId);
-        if (!contrato) {
-            return res.status(404).json({ error: 'Contrato no encontrado' });
-        }
-        // Obtener cliente
-        const cliente = yield clienteRepository.findById(contrato.getClienteId());
-        // Verificar permisos relacionar el cliente con el comerciante
-        /*
-        if (req.user?.rol === 'comerciante') {
-          if (cliente.getComercianteId() !== userId) {
-            return res.status(403).json({ error: 'No tiene permiso para este contrato' });
-          }
-        }
-        */
-        // Generar PDF
-        const useCase = new DescargarContratoUseCase_1.DescargarContratoUseCase(contratoRepository, pdfService, solicitudRepository);
-        const pdfBuffer = yield useCase.execute(contratoId, cliente.getDni());
-        // Enviar PDF
-        res.setHeader('Content-Type', 'application/pdf');
-        res.setHeader('Content-Disposition', `attachment; filename=contrato-${contratoId}.pdf`);
-        res.send(pdfBuffer);
-    }
-    catch (error) {
-        const message = error.message || 'Error descargando contrato';
-        const status = message.includes('no encontrado') ? 404 : 500;
-        res.status(status).json({ error: message });
-    }
-});
-exports.descargarContratoPDF = descargarContratoPDF;

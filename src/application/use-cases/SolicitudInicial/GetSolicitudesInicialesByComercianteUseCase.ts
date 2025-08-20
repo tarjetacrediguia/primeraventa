@@ -22,7 +22,7 @@ import { SolicitudInicialRepositoryPort } from "../../ports/SolicitudInicialRepo
  * a un comerciante específico y tienen un estado determinado, permitiendo filtros
  * más precisos para la gestión de solicitudes.
  */
-export class GetSolicitudesInicialesByComercianteYEstadoUseCase {
+export class GetSolicitudesInicialesByComercianteUseCase {
     /**
      * Constructor del caso de uso.
      * 
@@ -40,7 +40,7 @@ export class GetSolicitudesInicialesByComercianteYEstadoUseCase {
      * @param estado - Estado de las solicitudes iniciales a filtrar
      * @returns Promise<SolicitudInicial[]> - Array con las solicitudes iniciales del comerciante y estado especificados
      */
-    async execute(comercianteId: number, estado: string): Promise<SolicitudInicial[]> {
-        return this.repository.getSolicitudesInicialesByComercianteYEstado(comercianteId, estado);
+    async execute(comercianteId: number): Promise<SolicitudInicial[]> {
+        return this.repository.getSolicitudesInicialesByComerciante(comercianteId);
     }
 }

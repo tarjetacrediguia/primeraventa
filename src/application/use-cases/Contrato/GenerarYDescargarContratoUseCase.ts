@@ -13,6 +13,8 @@ import { ComercianteRepositoryPort } from "../../ports/ComercianteRepositoryPort
 import { ClienteRepositoryPort } from "../../ports/ClienteRepositoryPort";
 import { Compra } from "../../../domain/entities/Compra";
 import { CompraRepositoryPort } from "../../ports/CompraRepositoryPort";
+import { SolicitudInicial } from "../../../domain/entities/SolicitudInicial";
+import { Cliente } from "../../../domain/entities/Cliente";
 
 export class GeneracionYDescargaContratoUseCase {
     constructor(
@@ -34,41 +36,52 @@ export class GeneracionYDescargaContratoUseCase {
      * @param usuarioId - ID del usuario que genera el contrato
      * @returns Promise<{ contrato: Contrato, pdf: Buffer }> - Contrato generado y PDF del contrato
      */
-    async execute(numeroSolicitud: number, usuarioId: number): Promise<{pdf: Buffer }> {
+    async execute(compraId: number, usuarioId: number): Promise<{pdf: Buffer }> {
+        // Obtener compra asociada
+        const compra = await this.compraRepository.getCompraById(compraId)
+
+        
+
+        const numeroSolicitud = compra?.getSolicitudFormalId();
+
+        if (!compra) {
+            throw new Error(`No se encontró compra: ${compraId}`);
+        }
+        const cliente = await this.clienteRepository.findById(compra?.getClienteId());
+
+        if (!numeroSolicitud) {
+            throw new Error(`La compra ${compraId} no está asociada a una solicitud formal.`);
+        }
+
         try {
             // 1. Obtener y validar solicitud formal
-            const solicitud = await this.obtenerYValidarSolicitud(numeroSolicitud, usuarioId);
-
-            // Obtener compra asociada
-        const compra = await this.compraRepository.getComprasBySolicitudFormalId(solicitud.getId());
-        if (!compra) {
-            throw new Error(`No se encontró compra asociada a la solicitud formal: ${solicitud.getId()}`);
-        }
+            const { solicitudFormal, solicitudInicial } = await this.obtenerYValidarSolicitud(numeroSolicitud, usuarioId);
             
             // 2. Verificar si ya existe un contrato para esta solicitud
-            const contratosExistentes = await this.contratoRepository.getContratosBySolicitudFormalId(Number(solicitud.getId()));
+            const contratosExistentes = await this.contratoRepository.getContratosBySolicitudFormalId(Number(solicitudFormal.getId()));
             if (contratosExistentes && contratosExistentes.length > 0) {
                 const contratoExistente = contratosExistentes[0];
                 const contratoCompleto = await this.contratoRepository.getContratoById(contratoExistente.getId().toString());
                 if (!contratoCompleto) {
-                    throw new Error(`Contrato existente no encontrado por ID: ${contratoExistente.getId()}`);
+                    throw new Error(`Contrato no encontrado por ID: ${contratoExistente.getId()}`);
                 }
                 const pdfBuffer = contratoCompleto.getPdfContrato();
                 if (!pdfBuffer) {
-                    throw new Error(`El contrato existente no tiene PDF adjunto: ${contratoExistente.getId()}`);
+                    throw new Error(`El contrato no tiene PDF adjunto: ${contratoExistente.getId()}`);
                 }
                 return { pdf: pdfBuffer };
             }
 
             // 3. Crear y guardar contrato (solo si no existe)
-            const contrato = await this.crearYGuardarContrato(solicitud, usuarioId,compra);
+            const contrato = await this.crearYGuardarContrato(solicitudFormal,solicitudInicial, usuarioId,compra,cliente);
             //console.log(`Contrato creado: ${JSON.stringify(contrato.toPlainObject())}`);
             //console.log(`solicitud: ${JSON.stringify(solicitud.toPlainObject())}`);
-
+            console.log(contrato)
             // 4. Generar PDF
             const pdfBuffer = await this.pdfService.generateContractPdf({
                 contrato: contrato,
-                solicitud: solicitud
+                solicitudFormal: solicitudFormal,
+                solicitudInicial: solicitudInicial,
             });
             
             // 5. Almacenar PDF en el contrato
@@ -76,10 +89,10 @@ export class GeneracionYDescargaContratoUseCase {
             await this.contratoRepository.saveContrato(contrato);
             
             // 6. Vincular contrato a solicitud
-            await this.solicitudRepository.vincularContrato(solicitud.getSolicitudInicialId(), contrato.getId());
+            await this.solicitudRepository.vincularContrato(solicitudFormal.getSolicitudInicialId(), contrato.getId());
             
             // 7. Notificar al solicitante
-            await this.notificarContratoGenerado(solicitud, contrato, pdfBuffer);
+            await this.notificarContratoGenerado(solicitudFormal, contrato, pdfBuffer);
             
             return { pdf: pdfBuffer };
         } catch (error) {
@@ -88,7 +101,10 @@ export class GeneracionYDescargaContratoUseCase {
         }
     }
 
-    private async obtenerYValidarSolicitud(numeroSolicitud: number, usuarioId: number): Promise<SolicitudFormal> {
+    private async obtenerYValidarSolicitud(numeroSolicitud: number, usuarioId: number): Promise<{ 
+  solicitudFormal: SolicitudFormal, 
+  solicitudInicial: SolicitudInicial 
+}> {
         const solicitud = await this.solicitudRepository.getSolicitudFormalById(numeroSolicitud);
         if (!solicitud) {
             throw new Error(`Solicitud formal no encontrada: ${numeroSolicitud}`);
@@ -116,16 +132,14 @@ export class GeneracionYDescargaContratoUseCase {
             throw new Error("La solicitud no está aprobada, no se puede generar contrato");
         }
 
-        const cliente = await this.clienteRepository.findByDni(solicitud.getDni());
-        if (!cliente) {
-            throw new Error(`Cliente no encontrado para el DNI: ${solicitud.getDni()}`);
-        }
-
-        return solicitud;
+        return { 
+    solicitudFormal: solicitud, 
+    solicitudInicial 
+  };
     }
 
-    private async crearYGuardarContrato(solicitud: SolicitudFormal, usuarioId: number, compra:Compra): Promise<Contrato> {
-        console.log(compra.getNumeroCuenta())
+    private async crearYGuardarContrato(solicitud: SolicitudFormal,solicitudInicial: SolicitudInicial, usuarioId: number, compra:Compra,cliente:Cliente): Promise<Contrato> {
+
 
         const contrato = new Contrato(
             0, 
@@ -136,14 +150,10 @@ export class GeneracionYDescargaContratoUseCase {
         );
         contrato.setNumeroTarjeta(compra.getNumeroTarjeta() || "TARJETA-123456");
         contrato.setNumeroCuenta(compra.getNumeroCuenta() || "CUENTA-123456");
+        contrato.clienteCuitOcuil = cliente.getCuil();
+        contrato.clienteDni = cliente.getDni() || ""; // Usar valor por defecto si no existe
+        contrato.setMonto(compra.getMontoTotalPonderado());
 
-         contrato.setMonto(compra.getMontoTotalPonderado());
-
-            // Obtener datos del cliente
-        const cliente = await this.clienteRepository.findByDni(solicitud.getDni());
-        if (!cliente) {
-            throw new Error(`Cliente no encontrado para el DNI: ${solicitud.getDni()}`);
-        }
 
         // Obtener datos del comerciante
         const comerciante = await this.comercianteRepository.getComercianteById(solicitud.getComercianteId());
@@ -224,12 +234,10 @@ export class GeneracionYDescargaContratoUseCase {
         contrato.tasasPlatiniumAtraso61_90Dias = 742;
         contrato.tasasPlatiniumPagoFacil = 99;
 
+        //guardar el contrato en la base de datos
         const contratoGuardado = await this.contratoRepository.saveContrato(contrato);
-        const solicitudInicial = await this.solicitudInicialRepository.getSolicitudInicialById(solicitud.getSolicitudInicialId());
 
-        if (!solicitudInicial) {
-            throw new Error(`Solicitud inicial no encontrada para ID: ${solicitud.getSolicitudInicialId()}`);
-        }
+        
         
         await this.historialRepository.registrarEvento({
             usuarioId: usuarioId,

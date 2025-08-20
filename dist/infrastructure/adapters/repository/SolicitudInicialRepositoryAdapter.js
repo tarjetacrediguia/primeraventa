@@ -39,8 +39,7 @@ class SolicitudInicialRepositoryAdapter {
             )
         `;
             const result = yield DatabaseDonfig_1.pool.query(query, [diasExpiracion]);
-            return result.rows.map(row => new SolicitudInicial_1.SolicitudInicial(row.id, new Date(row.fechaCreacion), 'aprobada', row.dniCliente, row.clienteId, row.cuilCliente, undefined, // reciboSueldo (no se necesita para esta operación)
-            undefined, // comercianteId (no se necesita para esta operación)
+            return result.rows.map(row => new SolicitudInicial_1.SolicitudInicial(row.id, new Date(row.fechaCreacion), 'aprobada', row.clienteId, undefined, // comercianteId (no se necesita para esta operación)
             [] // comentarios (inicializar como array vacío)
             ));
         });
@@ -86,17 +85,15 @@ class SolicitudInicialRepositoryAdapter {
      * @param solicitudInicial - Objeto SolicitudInicial a crear.
      * @returns Promise<SolicitudInicial> - La solicitud inicial creada con su ID asignado.
      */
-    createSolicitudInicial(solicitudInicial) {
+    createSolicitudInicial(solicitudInicial, cliente) {
         return __awaiter(this, void 0, void 0, function* () {
             const client = yield DatabaseDonfig_1.pool.connect();
             try {
                 yield client.query('BEGIN');
                 // Buscar cliente por DNI o crear uno nuevo
                 let clienteId;
-                const dniCliente = solicitudInicial.getDniCliente();
-                const cuilCliente = solicitudInicial.getCuilCliente();
-                const clienteQuery = `SELECT id FROM clientes WHERE dni = $1`;
-                const clienteResult = yield client.query(clienteQuery, [dniCliente]);
+                const clienteQuery = `SELECT id FROM clientes WHERE cuil = $1`;
+                const clienteResult = yield client.query(clienteQuery, [cliente.getCuil()]);
                 if (clienteResult.rows.length === 0) {
                     // Crear nuevo cliente con datos mínimos
                     const insertClienteQuery = `
@@ -111,8 +108,8 @@ class SolicitudInicialRepositoryAdapter {
                     const insertClienteValues = [
                         'Nombre por definir', // nombre_completo
                         'Apellido por definir', // apellido
-                        dniCliente,
-                        cuilCliente,
+                        cliente.getDni(),
+                        cliente.getCuil(),
                         null, // telefono
                         null, // email
                         null, // fecha_nacimiento
@@ -147,7 +144,9 @@ class SolicitudInicialRepositoryAdapter {
                 const createdRow = result.rows[0];
                 yield client.query('COMMIT');
                 // Retornar la solicitud creada con su ID
-                return new SolicitudInicial_1.SolicitudInicial(createdRow.id.toString(), createdRow.fecha_creacion, solicitudInicial.getEstado(), dniCliente, clienteId, cuilCliente, solicitudInicial.getReciboSueldo(), solicitudInicial.getComercianteId(), solicitudInicial.getComentarios());
+                return new SolicitudInicial_1.SolicitudInicial(createdRow.id.toString(), createdRow.fecha_creacion, solicitudInicial.getEstado(), clienteId, solicitudInicial.getComercianteId(), solicitudInicial.getComentarios(), undefined, // analistaAprobadorId
+                undefined, // administradorAprobadorId
+                cliente.getDni(), cliente.getCuil());
             }
             catch (error) {
                 yield client.query('ROLLBACK');
@@ -194,16 +193,16 @@ class SolicitudInicialRepositoryAdapter {
      * @param solicitudInicial - Objeto SolicitudInicial con los datos actualizados.
      * @returns Promise<SolicitudInicial> - La solicitud inicial actualizada.
      */
-    updateSolicitudInicial(solicitudInicial) {
+    updateSolicitudInicial(solicitudInicial, cliente) {
         return __awaiter(this, void 0, void 0, function* () {
             const client = yield DatabaseDonfig_1.pool.connect();
             try {
                 yield client.query('BEGIN');
                 // Verificar que el cliente existe y obtener su ID
-                const clienteQuery = `SELECT id FROM clientes WHERE dni = $1`;
-                const clienteResult = yield client.query(clienteQuery, [solicitudInicial.getDniCliente()]);
+                const clienteQuery = `SELECT id FROM clientes WHERE cuil = $1`;
+                const clienteResult = yield client.query(clienteQuery, [cliente.getCuil()]);
                 if (clienteResult.rows.length === 0) {
-                    throw new Error(`Cliente con DNI ${solicitudInicial.getDniCliente()} no encontrado`);
+                    throw new Error(`Cliente con CUIL ${cliente.getCuil()} no encontrado`);
                 }
                 const clienteId = clienteResult.rows[0].id;
                 const query = `
@@ -255,16 +254,16 @@ class SolicitudInicialRepositoryAdapter {
      * @param solicitudInicial - Objeto SolicitudInicial con el nuevo estado.
      * @returns Promise<SolicitudInicial> - La solicitud inicial actualizada.
      */
-    updateSolicitudInicialAprobaciónRechazo(solicitudInicial) {
+    updateSolicitudInicialAprobaciónRechazo(solicitudInicial, cliente) {
         return __awaiter(this, void 0, void 0, function* () {
             const client = yield DatabaseDonfig_1.pool.connect();
             try {
                 yield client.query('BEGIN');
                 // Verificar que el cliente existe y obtener su ID
-                const clienteQuery = `SELECT id FROM clientes WHERE dni = $1`;
-                const clienteResult = yield client.query(clienteQuery, [solicitudInicial.getDniCliente()]);
+                const clienteQuery = `SELECT id FROM clientes WHERE cuil = $1`;
+                const clienteResult = yield client.query(clienteQuery, [cliente.getCuil()]);
                 if (clienteResult.rows.length === 0) {
-                    throw new Error(`Cliente con DNI ${solicitudInicial.getDniCliente()} no encontrado`);
+                    throw new Error(`Cliente con CUIL ${cliente.getCuil()} no encontrado`);
                 }
                 const clienteId = clienteResult.rows[0].id;
                 const query = `
@@ -436,7 +435,7 @@ class SolicitudInicialRepositoryAdapter {
         });
     }
     mapRowToSolicitudInicial(row) {
-        return new SolicitudInicial_1.SolicitudInicial(Number(row.id), new Date(row.fecha_creacion), row.estado, row.dni_cliente, Number(row.cliente_id), row.cuil_cliente, row.recibosueldo || undefined, row.comerciante_id ? Number(row.comerciante_id) : undefined, row.comentarios || [], row.analista_aprobador_id ? Number(row.analista_aprobador_id) : undefined, row.administrador_aprobador_id ? Number(row.administrador_aprobador_id) : undefined);
+        return new SolicitudInicial_1.SolicitudInicial(Number(row.id), new Date(row.fecha_creacion), row.estado, Number(row.cliente_id), row.comerciante_id ? Number(row.comerciante_id) : undefined, row.comentarios || [], row.analista_aprobador_id ? Number(row.analista_aprobador_id) : undefined, row.administrador_aprobador_id ? Number(row.administrador_aprobador_id) : undefined, row.dni_cliente, row.cuil_cliente);
     }
     /**
      * Obtiene las solicitudes iniciales por comerciante y estado.
@@ -444,7 +443,7 @@ class SolicitudInicialRepositoryAdapter {
      * @param estado - Estado de las solicitudes.
      * @returns Promise<SolicitudInicial[]> - Array de solicitudes iniciales del comerciante con el estado especificado.
      */
-    getSolicitudesInicialesByComercianteYEstado(comercianteId, estado) {
+    getSolicitudesInicialesByComerciante(comercianteId) {
         return __awaiter(this, void 0, void 0, function* () {
             const query = `
         SELECT 
@@ -453,10 +452,10 @@ class SolicitudInicialRepositoryAdapter {
             c.dni as dni_cliente, c.cuil as cuil_cliente
         FROM solicitudes_iniciales si
         INNER JOIN clientes c ON si.cliente_id = c.id
-        WHERE si.comerciante_id = $1 AND si.estado = $2
+        WHERE si.comerciante_id = $1
         ORDER BY si.fecha_creacion DESC
     `;
-            const result = yield DatabaseDonfig_1.pool.query(query, [comercianteId, estado]);
+            const result = yield DatabaseDonfig_1.pool.query(query, [comercianteId]);
             return result.rows.map(row => this.mapRowToSolicitudInicial(row));
         });
     }

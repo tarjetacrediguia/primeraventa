@@ -87,7 +87,6 @@ export class CrearSolicitudFormalUseCase {
         datosSolicitud: {
             nombreCompleto: string;
             apellido: string;
-            dni: string;
             telefono: string;
             email: string;
             recibo: Buffer;
@@ -103,24 +102,8 @@ export class CrearSolicitudFormalUseCase {
     ): Promise<SolicitudFormal> {
         try {
             // Verificar crédito activo
-            const tieneCredito = await this.tieneCreditoActivo(datosSolicitud.dni);
-            if (tieneCredito) {
-                // Registrar evento de rechazo por crédito activo
-                await this.historialRepository.registrarEvento({
-                    usuarioId: comercianteId,
-                    accion: HISTORIAL_ACTIONS.REJECT_SOLICITUD_FORMAL,
-                    entidadAfectada: 'solicitudes_formales',
-                    entidadId: 0,
-                    detalles: {
-                        motivo: "Cliente con crédito activo",
-                        dni_cliente: datosSolicitud.dni,
-                        
-                    },
-                    solicitudInicialId: solicitudInicialId
-                });
-                
-                throw new Error("El cliente ya tiene un crédito activo");
-            }
+            const tieneCredito = await this.tieneCreditoActivo(solicitudInicialId);
+            
             // 1. Verificar permisos del comerciante
             const tienePermiso = await this.permisoRepo.usuarioTienePermiso(
                 comercianteId, 
@@ -288,7 +271,7 @@ export class CrearSolicitudFormalUseCase {
                 comercianteId,
                 datosSolicitud.nombreCompleto,
                 datosSolicitud.apellido,
-                datosSolicitud.dni,
+                //datosSolicitud.cuil,
                 datosSolicitud.telefono,
                 datosSolicitud.email,
                 new Date(),
@@ -424,13 +407,18 @@ export class CrearSolicitudFormalUseCase {
      * Este método privado consulta si el cliente tiene un contrato con estado
      * "generado" (activo) asociado a su ID.
      * 
-     * @param dniCliente - DNI del cliente a verificar
+     * @param solicitudInicialId - ID de la solicitud inicial para buscar el cliente
      * @returns Promise<boolean> - true si el cliente tiene un crédito activo, false en caso contrario
      */
-    private async tieneCreditoActivo(dniCliente: string): Promise<boolean> {
-        // Obtener todas las solicitudes formales del cliente por DNI
-        //const solicitudesFormales = await this.solicitudFormalRepo.getSolicitudesFormalesByDni(dniCliente);
-        const cliente = await this.clienteRepository.findByDni(dniCliente);
+    private async tieneCreditoActivo(solicitudInicialId: number): Promise<boolean> {
+        // Obtener la solicitud inicial para extraer el CUIL del cliente
+        const solicitudInicial = await this.solicitudInicialRepo.getSolicitudInicialById(solicitudInicialId);
+        if (!solicitudInicial) {
+            throw new Error("Solicitud inicial no encontrada");
+        }
+        const idCliente = solicitudInicial.getClienteId();
+        const cliente = await this.clienteRepository.findById(idCliente);
+        console.log("Cliente encontrado:", cliente);
         //verificar si el cliente tiene un contrato generado
         const contrato = await this.contratoRepository.getContratoById(cliente.getId().toString());
         // Verificar cada solicitud formal para ver si tiene un contrato activo asociado
@@ -438,6 +426,21 @@ export class CrearSolicitudFormalUseCase {
             const tieneContratoActivo = contrato.getEstado() === "generado";
             
             if (tieneContratoActivo) {
+                // Registrar evento de rechazo por crédito activo
+                await this.historialRepository.registrarEvento({
+                    usuarioId: solicitudInicial.getComercianteId() || null,
+                    accion: HISTORIAL_ACTIONS.REJECT_SOLICITUD_FORMAL,
+                    entidadAfectada: 'solicitudes_formales',
+                    entidadId: 0,
+                    detalles: {
+                        motivo: "Cliente con crédito activo",
+                        Cuil_cliente: cliente.getCuil(),
+                        
+                    },
+                    solicitudInicialId: solicitudInicialId
+                });
+                
+                throw new Error("El cliente ya tiene un crédito activo");
                 return true;
             }
         }

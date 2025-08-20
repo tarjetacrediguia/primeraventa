@@ -12,10 +12,7 @@ const express_1 = require("express");
 const Contrato_controller_1 = require("./controllers/Contrato.controller");
 const rolesMiddleware_1 = require("./middlewares/rolesMiddleware");
 const router = (0, express_1.Router)();
-// Descargar contrato PDF
-router.get('/solicitudes-formales/:id/contrato', rolesMiddleware_1.esComercianteOAnalista, // Ambos pueden descargar
-Contrato_controller_1.descargarContratoPDF);
 // Generar contrato PDF y descargarlo directamente
-router.post('/solicitudes-formales/:id/contrato-descarga', rolesMiddleware_1.esComerciante, // Solo comerciante puede generar
+router.post('/compra/:id/contrato-descarga', rolesMiddleware_1.esComercianteOAnalista, // Solo comerciante puede generar
 Contrato_controller_1.generarYDescargarContratoPDF);
 exports.default = router;

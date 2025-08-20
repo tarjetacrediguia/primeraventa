@@ -16,6 +16,9 @@ import { ClienteRepositoryAdapter } from "../../adapters/repository/ClienteRepos
 import { AnalistaRepositoryAdapter } from "../../adapters/repository/AnalistaRepositoryAdapter";
 import { SolicitudInicialRepositoryAdapter } from "../../adapters/repository/SolicitudInicialRepositoryAdapter";
 import { ConfiguracionRepositoryAdapter } from '../../adapters/repository/ConfiguracionRepositoryAdapter';
+import { ObtenerTodasLasComprasUseCase } from "../../../application/use-cases/Compra/ObtenerTodasLasComprasUseCase";
+import { ObtenerComprasPorComercianteUseCase } from "../../../application/use-cases/Compra/ObtenerComprasPorComercianteUseCase";
+import { ObtenerCompraPorSolicitudFormalUseCase } from "../../../application/use-cases/Compra/ObtenerCompraPorSolicitudFormalUseCase";
 
 // Instancias de adapters
 const compraRepository = new CompraRepositoryAdapter();
@@ -81,19 +84,62 @@ export const obtenerComprasPorEstado = async (req: Request, res: Response) => {
     }
 };
 
-// Controlador para obtener detalle de compra
 export const obtenerDetalleCompra = async (req: Request, res: Response) => {
     try {
         const id = parseInt(req.params.id, 10);
+        const usuarioId = req.user?.id ? Number(req.user.id) : undefined;
+        const usuarioRol = req.user?.rol;
+
         const useCase = new ObtenerDetalleCompraUseCase(compraRepository);
-        const compra = await useCase.execute(id);
+        const compra = await useCase.execute(id, usuarioId, usuarioRol);
 
         res.status(200).json(compra.toPlainObject());
     } catch (error: any) {
         if (error.message.includes('No existe una compra con ID')) {
             res.status(404).json({ error: error.message });
+        } else if (error.message.includes('No tienes permiso')) {
+            res.status(403).json({ error: error.message });
         } else {
             res.status(500).json({ error: 'Error al obtener detalle de compra' });
+        }
+    }
+};
+
+export const obtenerCompraPorSolicitudFormal = async (req: Request, res: Response) => {
+    try {
+        const idSolicitudFormal = parseInt(req.params.idSolicitudFormal, 10);
+        const usuarioId = req.user?.id ? Number(req.user.id) : undefined;
+        const usuarioRol = req.user?.rol;
+
+        const useCase = new ObtenerCompraPorSolicitudFormalUseCase(compraRepository);
+        const compra = await useCase.execute(idSolicitudFormal, usuarioId, usuarioRol);
+
+        res.status(200).json(compra.toPlainObject());
+    } catch (error: any) {
+        if (error.message.includes('No se encontraron compras')) {
+            res.status(404).json({ error: error.message });
+        } else if (error.message.includes('No tienes permiso')) {
+            res.status(403).json({ error: error.message });
+        } else {
+            res.status(500).json({ error: 'Error al obtener compra por solicitud formal' });
+        }
+    }
+};
+
+export const obtenerCompraPorSolicitudFormalAnalista = async (req: Request, res: Response) => {
+    try {
+        const idSolicitudFormal = parseInt(req.params.idSolicitudFormal, 10);
+        
+        // Para analistas, no necesitamos verificar permisos de comerciante
+        const useCase = new ObtenerCompraPorSolicitudFormalUseCase(compraRepository);
+        const compra = await useCase.execute(idSolicitudFormal);
+        
+        res.status(200).json(compra.toPlainObject());
+    } catch (error: any) {
+        if (error.message.includes('No se encontraron compras')) {
+            res.status(404).json({ error: error.message });
+        } else {
+            res.status(500).json({ error: 'Error al obtener compra por solicitud formal' });
         }
     }
 };
@@ -217,5 +263,32 @@ export const actualizarCompra = async (req: Request, res: Response) => {
                 code: 'UPDATE_ERROR'
             });
         }
+    }
+};
+
+export const obtenerTodasLasCompras = async (req: Request, res: Response) => {
+    try {
+        const useCase = new ObtenerTodasLasComprasUseCase(compraRepository);
+        const compras = await useCase.execute();
+        res.status(200).json(compras);
+    } catch (error) {
+        res.status(500).json({ error: 'Error al obtener compras' });
+    }
+};
+
+export const obtenerComprasPorComerciante = async (req: Request, res: Response) => {
+    try {
+        // Obtener el ID del comerciante desde el token de autenticación
+        const comercianteId = req.user?.id;
+        if (!comercianteId) {
+            return res.status(401).json({ error: 'Usuario no autenticado' });
+        }
+
+        const useCase = new ObtenerComprasPorComercianteUseCase(compraRepository);
+        const compras = await useCase.execute(Number(comercianteId));
+        res.status(200).json(compras.map(c => c.toPlainObject()));
+    } catch (error: any) {
+        console.error('Error al obtener compras por comerciante:', error);
+        res.status(500).json({ error: 'Error al obtener compras' });
     }
 };

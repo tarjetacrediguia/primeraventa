@@ -22,6 +22,43 @@ const SolicitudFormal_1 = require("../../../domain/entities/SolicitudFormal");
 const Referente_1 = require("../../../domain/entities/Referente");
 const DatabaseDonfig_1 = require("../../config/Database/DatabaseDonfig");
 class SolicitudFormalRepositoryAdapter {
+    getSolicitudFormalBySolicitudInicialId(solicitudInicialId) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const solicitudes = yield this.getSolicitudesFormalesBySolicitudInicialId(solicitudInicialId);
+            return solicitudes.length > 0 ? solicitudes[0] : null;
+        });
+    }
+    getSolicitudesFormalesByCuil(cuil) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const query = `
+        SELECT 
+            sf.id,
+            c.nombre_completo,
+            c.apellido,
+            c.cuil,
+            c.telefono,
+            c.email,
+            sf.fecha_solicitud,
+            sf.recibo,
+            sf.estado,
+            sf.acepta_tarjeta,
+            c.fecha_nacimiento,
+            c.domicilio,
+            c.datos_empleador,
+            sf.comentarios,
+            sf.solicitud_inicial_id,
+            sf.importe_neto,
+            sf.limite_base,
+            sf.limite_completo,
+            sf.ponderador 
+        FROM solicitudes_formales sf
+        INNER JOIN clientes c ON sf.cliente_id = c.id
+        WHERE c.cuil = $1
+        ORDER BY sf.fecha_solicitud DESC
+    `;
+            return yield this.executeSolicitudesQuery(query, [cuil]);
+        });
+    }
     // src/infrastructure/adapters/repository/SolicitudFormalRepositoryAdapter.ts
     /**
      * Crea una nueva solicitud formal en la base de datos.
@@ -171,7 +208,6 @@ class SolicitudFormalRepositoryAdapter {
                 sf.id,
                 c.nombre_completo,
                 c.apellido,
-                c.dni,
                 c.telefono,
                 c.email,
                 sf.fecha_solicitud,
@@ -215,7 +251,9 @@ class SolicitudFormalRepositoryAdapter {
             const referentesResult = yield DatabaseDonfig_1.pool.query(referentesQuery, [id]);
             const referentes = referentesResult.rows.map(refRow => new Referente_1.Referente(refRow.nombre_completo, refRow.apellido, refRow.vinculo, refRow.telefono));
             return new SolicitudFormal_1.SolicitudFormal(Number(row.id), // Convertir a número
-            row.solicitud_inicial_id, row.comerciante_id, row.nombre_completo, row.apellido, row.dni, row.telefono, row.email, new Date(row.fecha_solicitud), row.recibo, row.estado, row.acepta_tarjeta, new Date(row.fecha_nacimiento), row.domicilio, row.datos_empleador, referentes, row.importe_neto, row.comentarios || [], Number(row.ponderador) || 0, row.solicita_ampliacion_credito || false, row.cliente_id || 0, row.fecha_aprobacion ? new Date(row.fecha_aprobacion) : undefined, row.analista_aprobador_id, row.administrador_aprobador_id, row.comerciante_aprobador_id, row.nuevo_limite_completo_solicitado !== null
+            row.solicitud_inicial_id, row.comerciante_id, row.nombre_completo, row.apellido, 
+            //row.dni,
+            row.telefono, row.email, new Date(row.fecha_solicitud), row.recibo, row.estado, row.acepta_tarjeta, new Date(row.fecha_nacimiento), row.domicilio, row.datos_empleador, referentes, row.importe_neto, row.comentarios || [], Number(row.ponderador) || 0, row.solicita_ampliacion_credito || false, row.cliente_id || 0, row.fecha_aprobacion ? new Date(row.fecha_aprobacion) : undefined, row.analista_aprobador_id, row.administrador_aprobador_id, row.comerciante_aprobador_id, row.nuevo_limite_completo_solicitado !== null
                 ? Number(row.nuevo_limite_completo_solicitado)
                 : null);
         });
@@ -523,7 +561,6 @@ class SolicitudFormalRepositoryAdapter {
                 sf.id,
                 c.nombre_completo,
                 c.apellido,
-                c.dni,
                 c.telefono,
                 c.email,
                 sf.fecha_solicitud,
@@ -537,10 +574,7 @@ class SolicitudFormalRepositoryAdapter {
                 sf.solicitud_inicial_id,
                 sf.importe_neto,          
                 sf.limite_base,            
-                sf.limite_completo,        
-                sf.cuotas_solicitadas,     
-                sf.valor_cuota,            
-                sf.monto_total,
+                sf.limite_completo,
                 sf.ponderador             
             FROM solicitudes_formales sf
             INNER JOIN clientes c ON sf.cliente_id = c.id
@@ -559,7 +593,9 @@ class SolicitudFormalRepositoryAdapter {
             `;
                 const referentesResult = yield DatabaseDonfig_1.pool.query(referentesQuery, [row.id]);
                 const referentes = referentesResult.rows.map(refRow => new Referente_1.Referente(refRow.nombre_completo, refRow.apellido, refRow.vinculo, refRow.telefono));
-                solicitudes.push(new SolicitudFormal_1.SolicitudFormal(row.id.toString(), row.solicitud_inicial_id, row.comerciante_id, row.nombre_completo, row.apellido, row.dni, row.telefono, row.email, new Date(row.fecha_solicitud), Buffer.alloc(0), row.estado, row.acepta_tarjeta, new Date(row.fecha_nacimiento), row.domicilio, row.datos_empleador, referentes, row.importe_neto, row.cuotas_solicitadas, row.comentarios || [], row.ponderador));
+                solicitudes.push(new SolicitudFormal_1.SolicitudFormal(row.id.toString(), row.solicitud_inicial_id, row.comerciante_id, row.nombre_completo, row.apellido, 
+                //row.dni,
+                row.telefono, row.email, new Date(row.fecha_solicitud), Buffer.alloc(0), row.estado, row.acepta_tarjeta, new Date(row.fecha_nacimiento), row.domicilio, row.datos_empleador, referentes, row.importe_neto, row.cuotas_solicitadas, row.comentarios || [], row.ponderador));
             }
             return solicitudes;
         });
@@ -576,7 +612,6 @@ class SolicitudFormalRepositoryAdapter {
                 sf.id,
                 c.nombre_completo,
                 c.apellido,
-                c.dni,
                 c.telefono,
                 c.email,
                 sf.fecha_solicitud,
@@ -612,7 +647,6 @@ class SolicitudFormalRepositoryAdapter {
                 sf.id,
                 c.nombre_completo,
                 c.apellido,
-                c.dni,
                 c.telefono,
                 c.email,
                 sf.fecha_solicitud,
@@ -648,7 +682,6 @@ class SolicitudFormalRepositoryAdapter {
                 sf.id,
                 c.nombre_completo,
                 c.apellido,
-                c.dni,
                 c.telefono,
                 c.email,
                 sf.fecha_solicitud,
@@ -684,7 +717,6 @@ class SolicitudFormalRepositoryAdapter {
                 sf.id,
                 c.nombre_completo,
                 c.apellido,
-                c.dni,
                 c.telefono,
                 c.email,
                 sf.fecha_solicitud,
@@ -719,7 +751,6 @@ class SolicitudFormalRepositoryAdapter {
                 sf.id,
                 c.nombre_completo,
                 c.apellido,
-                c.dni,
                 c.telefono,
                 c.email,
                 sf.fecha_solicitud,
@@ -755,7 +786,6 @@ class SolicitudFormalRepositoryAdapter {
                 sf.id,
                 c.nombre_completo,
                 c.apellido,
-                c.dni,
                 c.telefono,
                 c.email,
                 sf.fecha_solicitud,
@@ -770,7 +800,8 @@ class SolicitudFormalRepositoryAdapter {
                 sf.importe_neto,
                 sf.limite_base,
                 sf.limite_completo,
-                sf.ponderador 
+                sf.ponderador,
+                sf.comerciante_id 
             FROM solicitudes_formales sf
             INNER JOIN clientes c ON sf.cliente_id = c.id
             WHERE sf.solicitud_inicial_id = $1
@@ -835,7 +866,7 @@ class SolicitudFormalRepositoryAdapter {
             `;
                 const referentesResult = yield DatabaseDonfig_1.pool.query(referentesQuery, [row.id]);
                 const referentes = referentesResult.rows.map(refRow => new Referente_1.Referente(refRow.nombre_completo, refRow.apellido, refRow.vinculo, refRow.telefono));
-                solicitudes.push(new SolicitudFormal_1.SolicitudFormal(row.id.toString(), row.solicitud_inicial_id, row.comerciante_id, row.nombre_completo, row.apellido, row.dni, row.telefono, row.email, new Date(row.fecha_solicitud), row.recibo, row.estado, row.acepta_tarjeta, new Date(row.fecha_nacimiento), row.domicilio, row.datos_empleador, referentes, row.importe_neto, row.comentarios || [], (_a = row.ponderador) !== null && _a !== void 0 ? _a : 0));
+                solicitudes.push(new SolicitudFormal_1.SolicitudFormal(row.id.toString(), row.solicitud_inicial_id, row.comerciante_id, row.nombre_completo, row.apellido, row.telefono, row.email, new Date(row.fecha_solicitud), row.recibo, row.estado, row.acepta_tarjeta, new Date(row.fecha_nacimiento), row.domicilio, row.datos_empleador, referentes, row.importe_neto, row.comentarios || [], (_a = row.ponderador) !== null && _a !== void 0 ? _a : 0));
             }
             return solicitudes;
         });
@@ -853,7 +884,6 @@ class SolicitudFormalRepositoryAdapter {
             sf.id,
             c.nombre_completo,
             c.apellido,
-            c.dni,
             c.telefono,
             c.email,
             sf.fecha_solicitud,
