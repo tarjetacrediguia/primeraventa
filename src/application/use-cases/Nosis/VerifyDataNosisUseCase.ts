@@ -69,34 +69,10 @@ export class VerifyDataNosisUseCase {
     // Reglas por defecto si no se proporcionan
     this.rules = rules || [
       {
-        variable: 'SCO_Vig',
-        operacion: '>=',
-        valor: 600,
-        mensaje: 'Score insuficiente'
-      },
-      {
-        variable: 'DX_Es',
-        operacion: '==',
-        valor: 'No',
-        mensaje: 'Cliente moroso'
-      },
-      {
-        variable: 'NSE',
-        operacion: 'in',
-        valor: ['C1', 'C2', 'C3'],
-        mensaje: 'Nivel socioeconómico no permitido'
-      },
-      {
         variable: 'VI_Jubilado_Es',
         operacion: '==',
         valor: 'No',
         mensaje: 'Cliente es jubilado'
-      },
-      {
-        variable: 'VI_Inscrip_Monotributo_Es',
-        operacion: '==',
-        valor: 'No',
-        mensaje: 'Cliente es monotributista'
       }
     ];
   }
@@ -129,7 +105,7 @@ export class VerifyDataNosisUseCase {
     const scoreVar = variables.find(v => v.Nombre === 'SCO_Vig');
     const score = scoreVar ? parseInt(scoreVar.Valor) : 0;
 
-    // Evaluar todas las reglas
+    // Evaluar reglas estándar
     for (const regla of this.rules) {
       const variable = variables.find(v => v.Nombre === regla.variable);
       if (!this.evaluarRegla(variable, regla)) {
@@ -137,6 +113,44 @@ export class VerifyDataNosisUseCase {
       }
     }
 
+    // Verificación específica para deudas en entidades (situación 3-4-5)
+    const tieneDeudaEntidades = this.verificarDeudaEntidades(variables);
+    if (tieneDeudaEntidades) {
+      reglasFallidas.push('Tiene deuda en 3 o más entidades con situación 3, 4 o 5');
+    }
+
+    // Verificación específica para monotributistas
+    const esMonotributista = variables.find(v => v.Nombre === 'VI_Inscrip_Monotributo_Es')?.Valor === 'Si';
+    console.log("es monotributista "+esMonotributista)
+    if (esMonotributista) {
+      // Solo rechazamos si es monotributista Y NO tiene empleo registrado
+      const tieneEmpleoRegistrado = this.tieneEmpleoRegistrado(variables);
+      console.log("tieneEmpleoRegistrado "+tieneEmpleoRegistrado)
+      if (!tieneEmpleoRegistrado) {
+        reglasFallidas.push('Cliente es monotributista sin empleo registrado');
+      }
+    }
+
+    // Regla personalizada para situación laboral (solo para no monotributistas)
+    if (!esMonotributista) {
+      const tieneLaboral = this.verificarSituacionLaboral(variables);
+      console.log("tieneLaboral"+tieneLaboral)
+      if (!tieneLaboral) {
+        reglasFallidas.push('Cliente no tiene situación laboral registrada');
+      }
+    }
+    /*
+    // Reglas personalizadas para deudas específicas (requieren análisis XML)
+    const tieneDeudaTarjetaNaranja = this.verificarDeudaEspecifica(variables, 'TARJETA NARANJA');
+    if (tieneDeudaTarjetaNaranja) {
+      reglasFallidas.push('Tiene deuda con Tarjeta Naranja');
+    }
+
+    const tieneDeudaMercadoLibre = this.verificarDeudaEspecifica(variables, 'MERCADO LIBRE');
+    if (tieneDeudaMercadoLibre) {
+      reglasFallidas.push('Tiene deuda con Mercado Libre');
+    }
+*/
     // Extraer datos personales
     const personalData = this.extraerDatosPersonales(variables);
 
@@ -153,8 +167,8 @@ export class VerifyDataNosisUseCase {
         personalData
       };
     }
-    
-    return { 
+    console.log("regrlas fallidas:"+reglasFallidas)
+    return {
       status: 'rechazado',
       approved: false,
       score,
@@ -164,6 +178,71 @@ export class VerifyDataNosisUseCase {
     };
   }
 
+   private verificarDeudaEntidades(variables: NosisVariable[]): boolean {
+    const detalleDeudas = variables.find(v => v.Nombre === 'CI_24m_Detalle')?.Valor;
+    if (!detalleDeudas) return false;
+
+    // Parsear el XML para obtener los registros
+    const registros = this.parsearDetalleDeudas(detalleDeudas);
+    
+    // Contar entidades únicas con situación 3, 4 o 5
+    const entidadesConDeuda = new Set<string>();
+    
+    for (const registro of registros) {
+      if (registro.situacion >= 3 && registro.situacion <= 5) {
+        entidadesConDeuda.add(registro.entidad);
+      }
+    }
+    console.log("entidadesConDeuda.size :"+ entidadesConDeuda.size)
+    return entidadesConDeuda.size >= 3;
+  }
+
+  private parsearDetalleDeudas(detalleDeudas: string): Array<{entidad: string, periodo: number, situacion: number, monto: number}> {
+    const resultados: Array<{entidad: string, periodo: number, situacion: number, monto: number}> = [];
+    
+    // Usar una expresión regular para extraer cada registro <D>
+    const regex = /<D>(.*?)<\/D>/g;
+    let match;
+    
+    while ((match = regex.exec(detalleDeudas)) !== null) {
+      const partes = match[1].split('|');
+      if (partes.length === 4) {
+        resultados.push({
+          entidad: partes[0],
+          periodo: parseInt(partes[1]),
+          situacion: parseInt(partes[2]),
+          monto: parseInt(partes[3])
+        });
+      }
+    }
+    
+    return resultados;
+  }
+
+  private tieneEmpleoRegistrado(variables: NosisVariable[]): boolean {
+    const esEmpleado = variables.find(v => v.Nombre === 'VI_Empleado_Es')?.Valor === 'Si';
+    const tieneAportes = parseInt(variables.find(v => v.Nombre === 'AP_12m_Empleado_Pagos_Cant')?.Valor || '0') > 0;
+    
+    return esEmpleado || tieneAportes;
+  }
+    private verificarSituacionLaboral(variables: NosisVariable[]): boolean {
+    const esEmpleado = variables.find(v => v.Nombre === 'VI_Empleado_Es')?.Valor === 'Si';
+    //const esAutonomo = variables.find(v => v.Nombre === 'VI_Inscrip_Autonomo_Es')?.Valor === 'Si';
+    //const esDomestico = variables.find(v => v.Nombre === 'VI_EmpleadoDomestico_Es')?.Valor === 'Si';
+    const aportes = variables.find(v => v.Nombre === 'AP_12m_Empleado_Pagos_Cant')?.Valor || '0';
+    
+    return esEmpleado || parseInt(aportes) > 0;
+    }
+/*
+    private verificarDeudaEspecifica(variables: NosisVariable[], entidad: string): boolean {
+    const detalleDeudas = variables.find(v => v.Nombre === 'CI_24m_Detalle')?.Valor;
+    if (!detalleDeudas) return false;
+
+    // Analizar el XML de detalle de deudas
+    // Esta es una implementación simplificada
+    return detalleDeudas.includes(entidad);
+  }
+*/
     private extraerDatosPersonales(variables: NosisVariable[]): PersonalData {
     const getValor = (nombre: string): string | undefined => {
       const variable = variables.find(v => v.Nombre === nombre);

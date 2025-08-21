@@ -93,3 +93,25 @@ export const esAnalistaOAdministrador = (req: Request, res: Response, next: Next
   
   next();
 };
+
+
+/**
+ * Middleware que permite el acceso a comerciantes o administradores.
+ * @param req - Request de Express con el usuario autenticado.
+ * @param res - Response de Express para enviar la respuesta en caso de error.
+ * @param next - NextFunction de Express para continuar con la siguiente función middleware.
+ * @returns Llama a next() si el usuario es comerciante o administrador, o responde con error si no lo es.
+ */
+export const esComercianteOAdministrador = (req: Request, res: Response, next: NextFunction) => {
+  if (!req.user) {
+    return res.status(401).json({ error: 'No autenticado' });
+  }
+  
+  if (req.user.rol !== 'comerciante' && req.user.rol !== 'administrador') {
+    return res.status(403).json({ 
+      error: 'Acceso no autorizado. Se requiere rol de comerciante o administrador' 
+    });
+  }
+  
+  next();
+};

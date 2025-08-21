@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { createComerciante, deleteComerciante, getComerciante, listComerciantes, updateComerciante } from './controllers/Comerciantes.controller';
-import { esAdministrador, esComercianteOAnalista } from './middlewares/rolesMiddleware';
+import { esAdministrador, esComerciante, esComercianteOAdministrador, esComercianteOAnalista } from './middlewares/rolesMiddleware';
 
 const router = Router();
 
@@ -16,7 +16,7 @@ const router = Router();
 router.post('/', esAdministrador, createComerciante);
 router.put('/:id', esAdministrador, updateComerciante);
 router.delete('/:id', esAdministrador, deleteComerciante);
-router.get('/:id', esAdministrador, getComerciante);
+router.get('/:id', esComercianteOAdministrador, getComerciante);
 router.get('/', esAdministrador, listComerciantes);
 
 export default router;

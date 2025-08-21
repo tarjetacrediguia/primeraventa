@@ -14,6 +14,8 @@ exports.CrearSolicitudInicialUseCase = void 0;
 const SolicitudInicial_1 = require("../../../domain/entities/SolicitudInicial");
 const Cliente_1 = require("../../../domain/entities/Cliente");
 const historialActions_1 = require("../../constants/historialActions");
+const GetDataNosisUseCase_1 = require("../Nosis/GetDataNosisUseCase");
+const VerifyDataNosisUseCase_1 = require("../Nosis/VerifyDataNosisUseCase");
 /**
  * Caso de uso para crear una nueva solicitud inicial de crédito.
  *
@@ -34,16 +36,16 @@ class CrearSolicitudInicialUseCase {
      * @param analistaRepository - Puerto para operaciones de analistas
      * @param verazAutomatico - Booleano para activar modo automático de Veraz
      */
-    constructor(solicitudInicialRepository, contratoRepository, solicitudFormalRepository, verazService, notificationService, clienteRepository, historialRepository, analistaRepository, verazAutomatico) {
+    constructor(solicitudInicialRepository, contratoRepository, solicitudFormalRepository, notificationService, clienteRepository, historialRepository, analistaRepository, nosisPort, nosisAutomatico) {
         this.solicitudInicialRepository = solicitudInicialRepository;
         this.contratoRepository = contratoRepository;
         this.solicitudFormalRepository = solicitudFormalRepository;
-        this.verazService = verazService;
         this.notificationService = notificationService;
         this.clienteRepository = clienteRepository;
         this.historialRepository = historialRepository;
         this.analistaRepository = analistaRepository;
-        this.verazAutomatico = verazAutomatico;
+        this.nosisPort = nosisPort;
+        this.nosisAutomatico = nosisAutomatico;
     }
     /**
      * Ejecuta la creación de una solicitud inicial de crédito.
@@ -71,7 +73,7 @@ class CrearSolicitudInicialUseCase {
                 }
                 catch (_a) {
                     // Crear con datos mínimos si no existe
-                    cliente = new Cliente_1.Cliente(0, 'Nombre temporal', 'Apellido temporal', dniCliente, cuilCliente);
+                    cliente = new Cliente_1.Cliente(0, "Nombre temporal", "Apellido temporal", dniCliente, cuilCliente);
                     yield this.clienteRepository.save(cliente);
                 }
                 // 1. Verificar si el cliente tiene crédito activo
@@ -81,19 +83,19 @@ class CrearSolicitudInicialUseCase {
                     yield this.notificationService.emitNotification({
                         userId: Number(comercianteId),
                         type: "solicitud_inicial",
-                        message: `El cliente con CUIL ${cuilCliente} ya tiene un crédito activo`
+                        message: `El cliente con CUIL ${cuilCliente} ya tiene un crédito activo`,
                     });
                     // Registrar evento de rechazo
                     yield this.historialRepository.registrarEvento({
                         usuarioId: comercianteId,
                         accion: historialActions_1.HISTORIAL_ACTIONS.REJECT_SOLICITUD_INICIAL,
-                        entidadAfectada: 'solicitudes_iniciales',
+                        entidadAfectada: "solicitudes_iniciales",
                         entidadId: 0, // No hay entidad aún
                         detalles: {
                             motivo: "Cliente con crédito activo",
-                            dni_cliente: cuilCliente
+                            dni_cliente: cuilCliente,
                         },
-                        solicitudInicialId: undefined // No hay solicitud aún
+                        solicitudInicialId: undefined, // No hay solicitud aún
                     });
                     throw new Error("El cliente ya tiene un crédito activo");
                 }
@@ -106,126 +108,83 @@ class CrearSolicitudInicialUseCase {
                 yield this.historialRepository.registrarEvento({
                     usuarioId: comercianteId,
                     accion: historialActions_1.HISTORIAL_ACTIONS.CREATE_SOLICITUD_INICIAL,
-                    entidadAfectada: 'solicitudes_iniciales',
+                    entidadAfectada: "solicitudes_iniciales",
                     entidadId: solicitudCreada.getId(),
                     detalles: {
                         dni_cliente: dniCliente,
                         comerciante_id: comercianteId,
-                        estado: "pendiente"
+                        estado: "pendiente",
                     },
-                    solicitudInicialId: solicitudInicialId
+                    solicitudInicialId: solicitudInicialId,
                 });
-                // VERIFICACION AUTOMÁTICA DE SOLICITUDES INICIALES POR VERAZ O NOSIS
-                // Descomentar el bloque de Veraz si se desea activar la verificación automática
-                /*
-                // VERIFICACIÓN AUTOMÁTICA CON NOSIS
+                let nosisData;
+                try {
+                    const getNosisData = new GetDataNosisUseCase_1.GetDataNosisUseCase(this.nosisPort);
+                    const nosisResponse = yield getNosisData.execute(cuilCliente);
+                    const verifyNosis = new VerifyDataNosisUseCase_1.VerifyDataNosisUseCase();
+                    const resultadoNosis = yield verifyNosis.execute(nosisResponse);
+                    nosisData = resultadoNosis.personalData;
                     if (this.nosisAutomatico) {
-                        const getNosisData = new GetDataNosisUseCase(this.nosisPort);
-                        const nosisData = await getNosisData.execute(dniCliente);
-                        
-                        const verifyNosis = new VerifyDataNosisUseCase();
-                        const resultadoNosis = await verifyNosis.execute(nosisData);
-    
+                        const getNosisData = new GetDataNosisUseCase_1.GetDataNosisUseCase(this.nosisPort);
+                        const nosisData = yield getNosisData.execute(cuilCliente);
+                        const verifyNosis = new VerifyDataNosisUseCase_1.VerifyDataNosisUseCase();
+                        const resultadoNosis = yield verifyNosis.execute(nosisData);
                         if (resultadoNosis.status === "aprobado") {
-                        solicitudCreada.setEstado("aprobada");
-                        await this.solicitudInicialRepository.updateSolicitudInicial(solicitudCreada);
-                        
-                        await this.historialRepository.registrarEvento({
-                            usuarioId: null,
-                            accion: HISTORIAL_ACTIONS.APPROVE_SOLICITUD_INICIAL,
-                            entidadAfectada: 'solicitudes_iniciales',
-                            entidadId: solicitudCreada.getId(),
-                            detalles: {
-                            sistema: "Nosis",
-                            score: resultadoNosis.score,
-                            motivo: resultadoNosis.motivo
-                            },
-                            solicitudInicialId
-                        });
+                            solicitudCreada.setEstado("aprobada");
+                            yield this.solicitudInicialRepository.updateSolicitudInicial(solicitudCreada, cliente);
+                            yield this.historialRepository.registrarEvento({
+                                usuarioId: null,
+                                accion: historialActions_1.HISTORIAL_ACTIONS.APPROVE_SOLICITUD_INICIAL,
+                                entidadAfectada: "solicitudes_iniciales",
+                                entidadId: solicitudCreada.getId(),
+                                detalles: {
+                                    sistema: "Nosis",
+                                    score: resultadoNosis.score,
+                                    motivo: resultadoNosis.motivo,
+                                },
+                                solicitudInicialId,
+                            });
                         }
                         else if (resultadoNosis.status === "rechazado") {
-                        solicitudCreada.setEstado("rechazada");
-                        await this.solicitudInicialRepository.updateSolicitudInicial(solicitudCreada);
-                        
-                        await this.historialRepository.registrarEvento({
-                            usuarioId: null,
-                            accion: HISTORIAL_ACTIONS.REJECT_SOLICITUD_INICIAL,
-                            entidadAfectada: 'solicitudes_iniciales',
-                            entidadId: solicitudCreada.getId(),
-                            detalles: {
-                            sistema: "Nosis",
-                            score: resultadoNosis.score,
-                            motivo: resultadoNosis.motivo
-                            },
-                            solicitudInicialId
-                        });
+                            solicitudCreada.setEstado("rechazada");
+                            yield this.solicitudInicialRepository.updateSolicitudInicial(solicitudCreada, cliente);
+                            yield this.historialRepository.registrarEvento({
+                                usuarioId: null,
+                                accion: historialActions_1.HISTORIAL_ACTIONS.REJECT_SOLICITUD_INICIAL,
+                                entidadAfectada: "solicitudes_iniciales",
+                                entidadId: solicitudCreada.getId(),
+                                detalles: {
+                                    sistema: "Nosis",
+                                    score: resultadoNosis.score,
+                                    motivo: resultadoNosis.motivo,
+                                },
+                                solicitudInicialId,
+                            });
                         }
                         else {
-                        solicitudCreada.setEstado("pendiente");
-                        await this.solicitudInicialRepository.updateSolicitudInicial(solicitudCreada);
-                        await this.notificarAnalistas(solicitudCreada);
+                            solicitudCreada.setEstado("pendiente");
+                            yield this.solicitudInicialRepository.updateSolicitudInicial(solicitudCreada, cliente);
+                            yield this.notificarAnalistas(solicitudCreada, cliente);
                         }
                     }
                     else {
                         // Modo manual
-                        await this.notificarAnalistas(solicitudCreada);
+                        yield this.notificarAnalistas(solicitudCreada, cliente);
                     }
-    */
-                // 6. Notificar al cliente (simulado)
-                if (this.verazAutomatico) {
-                    // ===== BLOQUE VERAZ DESCOMENTADO =====
-                    const estadoVeraz = yield this.verazService.checkClienteStatus(dniCliente);
-                    if (estadoVeraz.status === "aprobado") {
-                        solicitudCreada.setEstado("aprobada");
-                        yield this.solicitudInicialRepository.updateSolicitudInicial(solicitudCreada, cliente);
-                        // Registrar evento de aprobación automática
-                        yield this.historialRepository.registrarEvento({
-                            usuarioId: null, // Sistema automático
-                            accion: historialActions_1.HISTORIAL_ACTIONS.APPROVE_SOLICITUD_INICIAL,
-                            entidadAfectada: 'solicitudes_iniciales',
-                            entidadId: solicitudCreada.getId(),
-                            detalles: {
-                                sistema: "Veraz",
-                                score: estadoVeraz.score,
-                                motivo: estadoVeraz.motivo || "Aprobación automática"
-                            },
-                            solicitudInicialId: solicitudInicialId
-                        });
-                    }
-                    else if (estadoVeraz.status === "rechazado") {
-                        solicitudCreada.setEstado("rechazada");
-                        yield this.solicitudInicialRepository.updateSolicitudInicial(solicitudCreada, cliente);
-                        // Registrar evento de rechazo automático
-                        yield this.historialRepository.registrarEvento({
-                            usuarioId: null, // Sistema automático
-                            accion: historialActions_1.HISTORIAL_ACTIONS.REJECT_SOLICITUD_INICIAL,
-                            entidadAfectada: 'solicitudes_iniciales',
-                            entidadId: solicitudCreada.getId(),
-                            detalles: {
-                                sistema: "Veraz",
-                                score: estadoVeraz.score,
-                                motivo: estadoVeraz.motivo || "Rechazo automático"
-                            },
-                            solicitudInicialId: solicitudInicialId
-                        });
-                    }
-                    else {
-                        solicitudCreada.setEstado("pendiente");
-                        yield this.solicitudInicialRepository.updateSolicitudInicial(solicitudCreada, cliente);
-                    }
-                    // ===== FIN BLOQUE VERAZ =====
                 }
-                else {
-                    // MODO MANUAL: Notificar a analistas
-                    yield this.notificarAnalistas(solicitudCreada, cliente);
+                catch (error) {
+                    console.error("Error obteniendo datos de Nosis:", error);
                 }
                 // Notificación al comerciante (existente)
                 yield this.notificationService.emitNotification({
                     userId: Number(comercianteId),
                     type: "solicitud_inicial",
-                    message: "Solicitud inicial creada exitosamente"
+                    message: "Solicitud inicial creada exitosamente",
                 });
-                return solicitudCreada;
+                return {
+                    solicitud: solicitudCreada,
+                    nosisData,
+                };
             }
             catch (error) {
                 // Notificar error al comerciante
@@ -236,20 +195,20 @@ class CrearSolicitudInicialUseCase {
                 yield this.notificationService.emitNotification({
                     userId: Number(comercianteId),
                     type: "error",
-                    message: `Error al crear solicitud: ${errorMessage}`
+                    message: `Error al crear solicitud: ${errorMessage}`,
                 });
                 // Registrar evento de error
                 yield this.historialRepository.registrarEvento({
                     usuarioId: comercianteId,
                     accion: historialActions_1.HISTORIAL_ACTIONS.ERROR_PROCESO,
-                    entidadAfectada: 'solicitudes_iniciales',
+                    entidadAfectada: "solicitudes_iniciales",
                     entidadId: 0, // No hay entidad aún
                     detalles: {
                         error: error instanceof Error ? error.message : String(error),
                         etapa: "creacion_solicitud_inicial",
-                        dni_cliente: dniCliente
+                        dni_cliente: dniCliente,
                     },
-                    solicitudInicialId: undefined // No hay solicitud por error
+                    solicitudInicialId: undefined, // No hay solicitud por error
                 });
                 throw error;
             }
@@ -270,7 +229,7 @@ class CrearSolicitudInicialUseCase {
             const solicitudesFormales = yield this.solicitudFormalRepository.getSolicitudesFormalesByCuil(cuilCliente);
             for (const solicitud of solicitudesFormales) {
                 const contratos = yield this.contratoRepository.getContratosBySolicitudFormalId(solicitud.getId());
-                const tieneContratoActivo = contratos.some(contrato => contrato.getEstado().toLowerCase() === "generado");
+                const tieneContratoActivo = contratos.some((contrato) => contrato.getEstado().toLowerCase() === "generado");
                 if (tieneContratoActivo) {
                     return true;
                 }
@@ -290,7 +249,7 @@ class CrearSolicitudInicialUseCase {
         return __awaiter(this, void 0, void 0, function* () {
             try {
                 const analistaIds = yield this.analistaRepository.obtenerIdsAnalistasActivos();
-                const notificaciones = analistaIds.map(analistaId => this.notificationService.emitNotification({
+                const notificaciones = analistaIds.map((analistaId) => this.notificationService.emitNotification({
                     userId: analistaId,
                     type: "solicitud_inicial",
                     message: "Nueva solicitud inicial requiere revisión",
@@ -298,8 +257,8 @@ class CrearSolicitudInicialUseCase {
                         solicitudId: solicitud.getId(),
                         cuilCliente: cliente.getCuil(),
                         comercianteId: solicitud.getComercianteId(),
-                        prioridad: "media"
-                    }
+                        prioridad: "media",
+                    },
                 }));
                 yield Promise.all(notificaciones);
             }

@@ -248,15 +248,13 @@ class SolicitudInicial {
             id: this.id,
             fechaCreacion: this.fechaCreacion,
             estado: this.estado,
-            //dniCliente: this.dniCliente,
-            //cuilCliente: this.cuilCliente,
-            reciboSueldo: this.reciboSueldo,
+            dniCliente: this.dniCliente,
+            cuilCliente: this.cuilCliente,
             comercianteId: this.comercianteId,
             comentarios: this.comentarios,
-            analistaAprobadorId: this.analistaAprobadorId,
-            administradorAprobadorId: this.administradorAprobadorId,
             clienteId: this.clienteId,
-            dniCliente: this.dniCliente,
+            analistaAprobadorId: this.analistaAprobadorId,
+            administradorAprobadorId: this.administradorAprobadorId
         };
     }
     /**

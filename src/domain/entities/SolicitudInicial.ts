@@ -299,17 +299,15 @@ public getAdministradorAprobadorId(): number | undefined {
       id: this.id,
       fechaCreacion: this.fechaCreacion,
       estado: this.estado,
-      //dniCliente: this.dniCliente,
-      //cuilCliente: this.cuilCliente,
-      reciboSueldo: this.reciboSueldo,
+      dniCliente: this.dniCliente,
+      cuilCliente: this.cuilCliente,
       comercianteId: this.comercianteId,
       comentarios: this.comentarios,
-      analistaAprobadorId: this.analistaAprobadorId,
-      administradorAprobadorId: this.administradorAprobadorId,
       clienteId: this.clienteId,
-      dniCliente: this.dniCliente,
+      analistaAprobadorId: this.analistaAprobadorId,
+      administradorAprobadorId: this.administradorAprobadorId
     };
-  }
+}
 
   /**
    * Crea una instancia de SolicitudInicial desde un mapa de datos.

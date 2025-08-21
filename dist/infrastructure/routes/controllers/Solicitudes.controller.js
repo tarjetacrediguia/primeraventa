@@ -39,6 +39,7 @@ const CompraRepositoryAdapter_1 = require("../../adapters/repository/CompraRepos
 const CrearYAprobarSolicitudFormalUseCase_1 = require("../../../application/use-cases/SolicitudFormal/CrearYAprobarSolicitudFormalUseCase");
 const GetSolicitudesInicialesByComercianteUseCase_1 = require("../../../application/use-cases/SolicitudInicial/GetSolicitudesInicialesByComercianteUseCase");
 const GetSolicitudFormalBySolicitudInicialIdUseCase_1 = require("../../../application/use-cases/SolicitudFormal/GetSolicitudFormalBySolicitudInicialIdUseCase");
+const nosisAdapter_1 = require("../../adapters/nosis/nosisAdapter");
 // Inyección de dependencias (deberían venir de un contenedor DI)
 const verazService = new VerazAdapter_1.VerazAdapter();
 const notificationService = new NotificationAdapter_1.NotificationAdapter();
@@ -52,8 +53,9 @@ const analistaRepository = new AnalistaRepositoryAdapter_1.AnalistaRepositoryAda
 const getSolicitudesInicialesByComerciante = new GetSolicitudesInicialesByComercianteUseCase_1.GetSolicitudesInicialesByComercianteUseCase(solicitudInicialRepo);
 const configuracionRepo = new ConfiguracionRepositoryAdapter_1.ConfiguracionRepositoryAdapter();
 const compraRepository = new CompraRepositoryAdapter_1.CompraRepositoryAdapter();
+const nosisAdapter = new nosisAdapter_1.NosisAdapter('https://ws01.nosis.com/rest/variables', process.env.API_KEY || '');
 // Casos de uso inicializados
-const crearSolicitudInicialUC = new CrearSolicitudInicialUseCase_1.CrearSolicitudInicialUseCase(solicitudInicialRepo, contratoRepo, solicitudFormalRepo, verazService, notificationService, clienteRepository, historialRepository, analistaRepository, process.env.VERAZ_AUTO === 'true' // Modo automático de Veraz
+const crearSolicitudInicialUC = new CrearSolicitudInicialUseCase_1.CrearSolicitudInicialUseCase(solicitudInicialRepo, contratoRepo, solicitudFormalRepo, notificationService, clienteRepository, historialRepository, analistaRepository, nosisAdapter, process.env.NOSIS_AUTO === 'true' // Modo automático de Veraz
 );
 const aprobarRechazarSolicitudInicialUC = new AprobarRechazarSolicitudInicialUseCase_1.AprobarRechazarSolicitudInicialUseCase(solicitudInicialRepo, notificationService, historialRepository, clienteRepository);
 const getSolicitudesInicialesByEstadoUC = new GetSolicitudesInicialesByEstadoUseCase_1.GetSolicitudesInicialesByEstadoUseCase(solicitudInicialRepo);
@@ -80,8 +82,9 @@ const crearSolicitudInicial = (req, res) => __awaiter(void 0, void 0, void 0, fu
             return res.status(401).json({ error: 'Usuario no autenticado' });
         }
         const comercianteId = Number(req.user.id);
-        const solicitud = yield crearSolicitudInicialUC.execute(dniCliente, cuilCliente, comercianteId);
-        res.status(201).json(solicitud);
+        const result = yield crearSolicitudInicialUC.execute(dniCliente, cuilCliente, comercianteId);
+        const response = Object.assign(Object.assign({}, result.solicitud.toPlainObject()), { nosisData: result.nosisData });
+        res.status(201).json(response);
     }
     catch (error) {
         if (error instanceof Error && error.message === 'El cliente ya tiene un crédito activo') {

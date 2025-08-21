@@ -52,6 +52,8 @@ import { CompraRepositoryAdapter } from '../../adapters/repository/CompraReposit
 import { CrearYAprobarSolicitudFormalUseCase } from '../../../application/use-cases/SolicitudFormal/CrearYAprobarSolicitudFormalUseCase';
 import { GetSolicitudesInicialesByComercianteUseCase } from '../../../application/use-cases/SolicitudInicial/GetSolicitudesInicialesByComercianteUseCase';
 import { GetSolicitudFormalBySolicitudInicialIdUseCase } from '../../../application/use-cases/SolicitudFormal/GetSolicitudFormalBySolicitudInicialIdUseCase';
+import { NosisAdapter } from '../../adapters/nosis/nosisAdapter';
+import { MockNosisAdapter } from '../../adapters/nosis/mockNosisAdapter';
 
 // Inyección de dependencias (deberían venir de un contenedor DI)
 const verazService: VerazPort = new VerazAdapter();
@@ -66,18 +68,19 @@ const analistaRepository = new AnalistaRepositoryAdapter();
 const getSolicitudesInicialesByComerciante = new GetSolicitudesInicialesByComercianteUseCase(solicitudInicialRepo)
 const configuracionRepo = new ConfiguracionRepositoryAdapter();
 const compraRepository = new CompraRepositoryAdapter();
+const nosisAdapter = new NosisAdapter('https://ws01.nosis.com/rest/variables', process.env.API_KEY || '');
 
 // Casos de uso inicializados
 const crearSolicitudInicialUC = new CrearSolicitudInicialUseCase(
   solicitudInicialRepo,
   contratoRepo,
   solicitudFormalRepo,
-  verazService,
   notificationService,
   clienteRepository,
   historialRepository,
   analistaRepository,
-  process.env.VERAZ_AUTO === 'true' // Modo automático de Veraz
+  nosisAdapter,
+  process.env.NOSIS_AUTO === 'true' // Modo automático de Veraz
 );
 
 const aprobarRechazarSolicitudInicialUC = new AprobarRechazarSolicitudInicialUseCase(
@@ -142,13 +145,18 @@ export const crearSolicitudInicial = async (req: Request, res: Response) => {
     }
     const comercianteId = Number(req.user.id);
 
-    const solicitud = await crearSolicitudInicialUC.execute(
+    const result  = await crearSolicitudInicialUC.execute(
       dniCliente,
       cuilCliente,
       comercianteId
     );
 
-    res.status(201).json(solicitud);
+    const response = {
+        ...result.solicitud.toPlainObject(),
+        nosisData: result.nosisData
+    };
+
+    res.status(201).json(response);
   } catch (error) {
     if (error instanceof Error && error.message === 'El cliente ya tiene un crédito activo') {
       res.status(409).json({ error: error.message });
