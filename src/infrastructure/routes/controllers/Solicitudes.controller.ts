@@ -25,7 +25,6 @@ import { SolicitudFormalRepositoryPort } from '../../../application/ports/Solici
 import { PermisoRepositoryPort } from '../../../application/ports/PermisoRepositoryPort';
 import { CrearSolicitudInicialUseCase } from '../../../application/use-cases/SolicitudInicial/CrearSolicitudInicialUseCase';
 import { GetSolicitudesInicialesByEstadoUseCase } from '../../../application/use-cases/SolicitudInicial/GetSolicitudesInicialesByEstadoUseCase';
-import { VerificarAprobacionSolicitudInicialUseCase } from '../../../application/use-cases/SolicitudInicial/VerificarAprobacionSolicitudInicialUseCase';
 import { CrearSolicitudFormalUseCase } from '../../../application/use-cases/SolicitudFormal/CrearSolicitudFormalUseCase';
 import { AprobarSolicitudesFormalesUseCase } from '../../../application/use-cases/SolicitudFormal/AprobarSolicitudesFormalesUseCase';
 import { GetSolicitudesFormalesByEstadoUseCase } from '../../../application/use-cases/SolicitudFormal/GetSolicitudesFormalesByEstadoUseCase';
@@ -54,6 +53,8 @@ import { GetSolicitudesInicialesByComercianteUseCase } from '../../../applicatio
 import { GetSolicitudFormalBySolicitudInicialIdUseCase } from '../../../application/use-cases/SolicitudFormal/GetSolicitudFormalBySolicitudInicialIdUseCase';
 import { NosisAdapter } from '../../adapters/nosis/nosisAdapter';
 import { MockNosisAdapter } from '../../adapters/nosis/mockNosisAdapter';
+import { GetComercianteByIdUseCase } from '../../../application/use-cases/Comerciante/GetComercianteByIdUseCase';
+import { ComercianteRepositoryAdapter } from '../../adapters/repository/ComercianteRepositoryAdapter';
 
 // Inyección de dependencias (deberían venir de un contenedor DI)
 const verazService: VerazPort = new VerazAdapter();
@@ -68,7 +69,9 @@ const analistaRepository = new AnalistaRepositoryAdapter();
 const getSolicitudesInicialesByComerciante = new GetSolicitudesInicialesByComercianteUseCase(solicitudInicialRepo)
 const configuracionRepo = new ConfiguracionRepositoryAdapter();
 const compraRepository = new CompraRepositoryAdapter();
-const nosisAdapter = new NosisAdapter('https://ws01.nosis.com/rest/variables', process.env.API_KEY || '');
+const nosisAdapter = process.env.MODO_TEST === "true" 
+    ? new MockNosisAdapter() 
+    : new NosisAdapter('https://ws01.nosis.com/rest/variables', process.env.API_KEY || '');
 
 // Casos de uso inicializados
 const crearSolicitudInicialUC = new CrearSolicitudInicialUseCase(
@@ -83,6 +86,8 @@ const crearSolicitudInicialUC = new CrearSolicitudInicialUseCase(
   process.env.NOSIS_AUTO === 'true' // Modo automático de Veraz
 );
 
+const getComerciantePorIdUC = new GetComercianteByIdUseCase( new ComercianteRepositoryAdapter());
+
 const aprobarRechazarSolicitudInicialUC = new AprobarRechazarSolicitudInicialUseCase(
     solicitudInicialRepo,
     notificationService,
@@ -91,12 +96,6 @@ const aprobarRechazarSolicitudInicialUC = new AprobarRechazarSolicitudInicialUse
 );
 
 const getSolicitudesInicialesByEstadoUC = new GetSolicitudesInicialesByEstadoUseCase(solicitudInicialRepo);
-const verificarAprobacionUC = new VerificarAprobacionSolicitudInicialUseCase(
-  solicitudInicialRepo,
-  verazService,
-  notificationService,
-  clienteRepository
-);
 
 const crearSolicitudFormalUC = new CrearSolicitudFormalUseCase(
   solicitudInicialRepo,
@@ -151,9 +150,14 @@ export const crearSolicitudInicial = async (req: Request, res: Response) => {
       comercianteId
     );
 
+    const nombreComercio = await getComerciantePorIdUC.execute(comercianteId).then(c => c ? c.getNombreComercio() : 'N/A');
+
     const response = {
         ...result.solicitud.toPlainObject(),
-        nosisData: result.nosisData
+        nosisData: result.nosisData,
+        motivoRechazo: result.motivoRechazo,
+        reglasFallidas: result.reglasFallidas,
+        nombreComercio: nombreComercio
     };
 
     res.status(201).json(response);
@@ -222,7 +226,7 @@ export const verificarEstadoCrediticio = async (req: Request, res: Response) => 
 export const crearSolicitudFormal = async (req: Request, res: Response) => {
   //TODO: cambiar nombre de cliente a DatosCliente para no generar confusión con el cliente de la API
   try {
-    const { idSolicitudInicial, cliente, referentes,importeNeto,solicitaAmpliacionDeCredito,comentarioInicial } = req.body;
+    const { idSolicitudInicial, cliente, referentes,importeNeto,solicitaAmpliacionDeCredito,comentarioInicial,datosEmpleador } = req.body;
     // Validar que el recibo sea proporcionado
     
     if (!cliente.recibo) {
@@ -269,12 +273,11 @@ export const crearSolicitudFormal = async (req: Request, res: Response) => {
       return res.status(401).json({ error: 'Usuario no autenticado' });
     }
     const comercianteId = Number(req.user.id);
-    console.log(cliente)
     const solicitudFormal = await crearSolicitudFormalUC.execute(
       idSolicitudInicial,
       comercianteId,
       {
-        nombreCompleto: cliente.nombreCompleto,
+        nombreCompleto: cliente.nombreCompleto, 
         apellido: cliente.apellido,
         telefono: cliente.telefono,
         email: cliente.email,
@@ -282,12 +285,18 @@ export const crearSolicitudFormal = async (req: Request, res: Response) => {
         aceptaTarjeta: cliente.aceptaTarjeta,
         fechaNacimiento: new Date(cliente.fechaNacimiento),
         domicilio: cliente.domicilio,
-        datosEmpleador: cliente.datosEmpleador,
+        numeroDomicilio: cliente.numeroDomicilio,
         referentes: referentesInstances,
-        importeNeto: importeNeto
+        importeNeto: importeNeto,
+        sexo: cliente.sexo,
+        codigoPostal: cliente.codigoPostal,
+        localidad: cliente.localidad,
+        provincia: cliente.provincia,
+        barrio: cliente.barrio
       },
       comentarioInicial,
-      solicitaAmpliacionDeCredito
+      solicitaAmpliacionDeCredito,
+      datosEmpleador
 
     );
 
@@ -390,7 +399,7 @@ export const obtenerReciboSolicitudFormal = async (req: Request, res: Response) 
 export const aprobarSolicitudFormal = async (req: Request, res: Response) => {
   try {
     const id = req.params.id;
-    const { generarTarjeta, comentario } = req.body;
+    const { comentario } = req.body;
     
     if (!req.user || !req.user.id || !req.user.rol) {
       return res.status(401).json({ error: 'Usuario no autenticado' });
@@ -506,6 +515,8 @@ export const actualizarSolicitudFormal = async (req: Request, res: Response) => 
     const updates = req.body;
     const userId = parseInt(req.user?.id ?? '0', 10);
     const userRole = req.user?.rol;
+
+    console.log('Actualizando solicitud formal ID:', id, 'con datos:', updates, 'por usuario ID:', userId, 'rol:', userRole);
     
     const solicitudExistente = await getSolicitudFormalByIdUC.execute(id);
     if (!solicitudExistente) {
@@ -545,7 +556,12 @@ export const actualizarSolicitudFormal = async (req: Request, res: Response) => 
       if (cliente.email !== undefined) solicitudExistente.setEmail(cliente.email);
       if (cliente.aceptaTarjeta !== undefined) solicitudExistente.setAceptaTarjeta(cliente.aceptaTarjeta);
       if (cliente.domicilio !== undefined) solicitudExistente.setDomicilio(cliente.domicilio);
-      if (cliente.datosEmpleador !== undefined) solicitudExistente.setDatosEmpleador(cliente.datosEmpleador);
+      if (cliente.sexo !== undefined) solicitudExistente.setSexo(cliente.sexo);
+      if (cliente.codigoPostal !== undefined) solicitudExistente.setCodigoPostal(cliente.codigoPostal);
+      if (cliente.localidad !== undefined) solicitudExistente.setLocalidad(cliente.localidad);
+      if (cliente.provincia !== undefined) solicitudExistente.setProvincia(cliente.provincia);
+      if (cliente.numeroDomicilio !== undefined) solicitudExistente.setNumeroDomicilio(cliente.numeroDomicilio);
+      if (cliente.barrio !== undefined) solicitudExistente.setBarrio(cliente.barrio);
       
       // Manejar conversión de fecha
       if (cliente.fechaNacimiento !== undefined) {
@@ -553,19 +569,32 @@ export const actualizarSolicitudFormal = async (req: Request, res: Response) => 
       }
       
       // Manejar recibo (base64 a Buffer)
-    if (cliente.recibo !== undefined) {
-      const reciboBuffer = Buffer.from(cliente.recibo, 'base64');
-      
-      // Validar que sea JPG
-      if (!(reciboBuffer[0] === 0xFF && reciboBuffer[1] === 0xD8 && reciboBuffer[2] === 0xFF)) {
-        return res.status(400).json({ error: 'El recibo debe ser una imagen JPG válida' });
+      if (cliente.recibo !== undefined) {
+        const reciboBuffer = Buffer.from(cliente.recibo, 'base64');
+        
+        // Validar que sea JPG
+        if (!(reciboBuffer[0] === 0xFF && reciboBuffer[1] === 0xD8 && reciboBuffer[2] === 0xFF)) {
+          return res.status(400).json({ error: 'El recibo debe ser una imagen JPG válida' });
+        }
+        
+        solicitudExistente.setRecibo(reciboBuffer);
       }
-      
-      solicitudExistente.setRecibo(reciboBuffer);
-    }
     }
 
-    
+    // Actualizar campos del empleador
+    if (updates.datosEmpleador) {
+      const empleador = updates.datosEmpleador;
+      if (empleador.razonSocialEmpleador !== undefined) solicitudExistente.setRazonSocialEmpleador(empleador.razonSocialEmpleador);
+      if (empleador.cuitEmpleador !== undefined) solicitudExistente.setCuitEmpleador(empleador.cuitEmpleador);
+      if (empleador.cargoEmpleador !== undefined) solicitudExistente.setCargoEmpleador(empleador.cargoEmpleador);
+      if (empleador.sectorEmpleador !== undefined) solicitudExistente.setSectorEmpleador(empleador.sectorEmpleador);
+      if (empleador.codigoPostalEmpleador !== undefined) solicitudExistente.setCodigoPostalEmpleador(empleador.codigoPostalEmpleador);
+      if (empleador.localidadEmpleador !== undefined) solicitudExistente.setLocalidadEmpleador(empleador.localidadEmpleador);
+      if (empleador.provinciaEmpleador !== undefined) solicitudExistente.setProvinciaEmpleador(empleador.provinciaEmpleador);
+      if (empleador.telefonoEmpleador !== undefined) solicitudExistente.setTelefonoEmpleador(empleador.telefonoEmpleador);
+    }
+
+    console.log('Solicitud antes de actualizar:', solicitudExistente.toPlainObject());
     const solicitudActualizada = await updateSolicitudFormalUC.execute(solicitudExistente, userId);
     res.status(200).json(solicitudActualizada);
   } catch (error) {
@@ -661,6 +690,8 @@ export const obtenerSolicitudFormalAnalista = async (req: Request, res: Response
         const idSolicitudInicial = Number(req.params.idSolicitudInicial);
         
         const solicitud = await getSolicitudFormalBySolicitudInicialIdUC.execute(idSolicitudInicial);
+
+        console.log('Solicitud formal obtenida:', solicitud);
         
         if (!solicitud) {
             return res.status(404).json({ error: 'Solicitud formal no encontrada' });
@@ -677,7 +708,6 @@ export const obtenerSolicitudFormalAnalista = async (req: Request, res: Response
 export const obtenerSolicitudFormalPoridSolicitudInicial = async (req: Request, res: Response) => {
     try {
         const idSolicitudInicial = Number(req.params.idSolicitudInicial); // Ahora es el ID de la solicitud inicial
-        console.log(idSolicitudInicial)
         const solicitud = await getSolicitudFormalBySolicitudInicialIdUC.execute(idSolicitudInicial);
         
         if (!solicitud) {
@@ -688,8 +718,6 @@ export const obtenerSolicitudFormalPoridSolicitudInicial = async (req: Request, 
         if (req.user?.rol === 'comerciante') {
             const comercianteId = Number(req.user.id);
             if (solicitud.getComercianteId() !== comercianteId) {
-              console.log("comerciante"+comercianteId)
-              console.log("comerciante solicitud:"+solicitud.getComercianteId())
                 return res.status(403).json({ error: 'No tienes permisos para acceder a esta solicitud' });
             }
         }
@@ -742,7 +770,6 @@ export const obtenerSolicitudFormalPorIdComerciante = async (req: Request, res: 
 export const listarSolicitudesFormalesByComerciante = async (req: Request, res: Response) => {
     try {
         const comercianteId = req.user?.id;
-        console.log('Comerciante ID:', comercianteId);
         // Validar parámetros
         if (!comercianteId) {
             return res.status(400).json({ error: 'Se requieren id' });
@@ -827,7 +854,7 @@ function handleErrorResponse(res: Response, error: any) {
 
 export const crearYAprobarSolicitudFormal = async (req: Request, res: Response) => {
   try {
-    const { idSolicitudInicial, cliente, referentes, importeNeto, solicitaAmpliacionDeCredito, comentarioInicial } = req.body;
+    const { idSolicitudInicial, cliente, referentes, importeNeto, solicitaAmpliacionDeCredito, comentarioInicial,datosEmpleador } = req.body;
     // Validar que el recibo sea proporcionado
     if (!cliente.recibo) {
       return res.status(400).json({ error: 'El recibo es obligatorio' });
@@ -890,11 +917,18 @@ export const crearYAprobarSolicitudFormal = async (req: Request, res: Response) 
         fechaNacimiento: new Date(cliente.fechaNacimiento),
         domicilio: cliente.domicilio,
         datosEmpleador: cliente.datosEmpleador,
+        numeroDomicilio: cliente.numeroDomicilio,
         referentes: referentesInstances,
-        importeNeto: importeNeto
+        importeNeto: importeNeto,
+        sexo: cliente.sexo,
+        codigoPostal: cliente.codigoPostal,
+        localidad: cliente.localidad,
+        provincia: cliente.provincia,
+        barrio: cliente.barrio
       },
       comentarioInicial,
-      solicitaAmpliacionDeCredito
+      solicitaAmpliacionDeCredito,
+      datosEmpleador
     );
 
     res.status(201).json(solicitudFormal);

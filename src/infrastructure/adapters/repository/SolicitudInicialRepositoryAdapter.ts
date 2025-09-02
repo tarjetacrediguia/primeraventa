@@ -134,9 +134,9 @@ export class SolicitudInicialRepositoryAdapter implements SolicitudInicialReposi
             const query = `
                 INSERT INTO solicitudes_iniciales (
                     cliente_id, comerciante_id, fecha_creacion, estado, 
-                    reciboSueldo, comentarios
+                    reciboSueldo, comentarios, motivo_rechazo
                 )
-                VALUES ($1, $2, $3, $4, $5, $6)
+                VALUES ($1, $2, $3, $4, $5, $6, $7)
                 RETURNING id, fecha_creacion
             `;
             
@@ -146,7 +146,8 @@ export class SolicitudInicialRepositoryAdapter implements SolicitudInicialReposi
                 solicitudInicial.getFechaCreacion(),
                 solicitudInicial.getEstado(),
                 solicitudInicial.getReciboSueldo() || null,
-                solicitudInicial.getComentarios()
+                solicitudInicial.getComentarios(),
+                solicitudInicial.getMotivoRechazo() || null
             ];
             
             const result = await client.query(query, values);
@@ -191,6 +192,7 @@ export class SolicitudInicialRepositoryAdapter implements SolicitudInicialReposi
             si.comerciante_id,
             si.analista_aprobador_id,
             si.administrador_aprobador_id,
+            si.motivo_rechazo,
             c.dni as dni_cliente, 
             c.id as cliente_id,
             c.cuil as cuil_cliente
@@ -237,8 +239,9 @@ export class SolicitudInicialRepositoryAdapter implements SolicitudInicialReposi
                 comentarios = $5,
                 analista_aprobador_id = $6,   -- Cambiado a $6
                 administrador_aprobador_id = $7, -- Cambiado a $7
-                fecha_actualizacion = CURRENT_TIMESTAMP
-            WHERE id = $8  -- Cambiado a $8
+                fecha_actualizacion = CURRENT_TIMESTAMP,
+                motivo_rechazo = $9
+            WHERE id = $8
             RETURNING *
         `;
         
@@ -253,7 +256,8 @@ export class SolicitudInicialRepositoryAdapter implements SolicitudInicialReposi
                 null : Number(solicitudInicial.getAnalistaAprobadorId()),
             solicitudInicial.getAdministradorAprobadorId() === undefined ? 
                 null : Number(solicitudInicial.getAdministradorAprobadorId()),
-            solicitudInicial.getId()
+            solicitudInicial.getId(),
+            solicitudInicial.getMotivoRechazo() || null
         ];
             
             const result = await client.query(query, values);
@@ -303,8 +307,9 @@ export class SolicitudInicialRepositoryAdapter implements SolicitudInicialReposi
                 comentarios = $5,
                 analista_aprobador_id = $6,   -- Cambiado a $6
                 administrador_aprobador_id = $7, -- Cambiado a $7
-                fecha_aprobacion = CURRENT_TIMESTAMP
-            WHERE id = $8  -- Cambiado a $8
+                fecha_aprobacion = CURRENT_TIMESTAMP,
+                motivo_rechazo = $9
+            WHERE id = $8 
             RETURNING *
         `;
         
@@ -319,7 +324,8 @@ export class SolicitudInicialRepositoryAdapter implements SolicitudInicialReposi
                 null : Number(solicitudInicial.getAnalistaAprobadorId()),
             solicitudInicial.getAdministradorAprobadorId() === undefined ? 
                 null : Number(solicitudInicial.getAdministradorAprobadorId()),
-            solicitudInicial.getId()
+            solicitudInicial.getId(),
+            solicitudInicial.getMotivoRechazo() || null
         ];
             
             const result = await client.query(query, values);
@@ -347,12 +353,23 @@ export class SolicitudInicialRepositoryAdapter implements SolicitudInicialReposi
     async getAllSolicitudesIniciales(): Promise<SolicitudInicial[]> {
         const query = `
             SELECT 
-                si.id, si.fecha_creacion, si.estado, si.reciboSueldo, 
-                si.comentarios, si.comerciante_id,
-                c.dni as dni_cliente, c.cuil as cuil_cliente
-            FROM solicitudes_iniciales si
-            INNER JOIN clientes c ON si.cliente_id = c.id
-            ORDER BY si.fecha_creacion DESC
+            si.id, 
+            si.fecha_creacion, 
+            si.estado, 
+            si.reciboSueldo, 
+            si.comentarios, 
+            si.comerciante_id,
+            c.dni as dni_cliente, 
+            c.cuil as cuil_cliente,
+            si.motivo_rechazo,
+            u.nombre as comerciante_nombre,
+            u.apellido as comerciante_apellido,
+            com.nombre_comercio
+        FROM solicitudes_iniciales si
+        INNER JOIN clientes c ON si.cliente_id = c.id
+        LEFT JOIN comerciantes com ON si.comerciante_id = com.usuario_id
+        LEFT JOIN usuarios u ON com.usuario_id = u.id
+        ORDER BY si.fecha_creacion DESC
         `;
         
         const result = await pool.query(query);
@@ -369,7 +386,7 @@ export class SolicitudInicialRepositoryAdapter implements SolicitudInicialReposi
             SELECT 
                 si.id, si.fecha_creacion, si.estado, si.reciboSueldo, 
                 si.comentarios, si.comerciante_id,
-                c.dni as dni_cliente, c.cuil as cuil_cliente
+                c.dni as dni_cliente, c.cuil as cuil_cliente, si.motivo_rechazo
             FROM solicitudes_iniciales si
             INNER JOIN clientes c ON si.cliente_id = c.id
             WHERE c.dni = $1
@@ -388,11 +405,22 @@ export class SolicitudInicialRepositoryAdapter implements SolicitudInicialReposi
     async getSolicitudesInicialesByEstado(estado: string): Promise<SolicitudInicial[]> {
         const query = `
             SELECT 
-                si.id, si.fecha_creacion, si.estado, si.reciboSueldo, 
-                si.comentarios, si.comerciante_id,
-                c.dni as dni_cliente, c.cuil as cuil_cliente
+                si.id, 
+                si.fecha_creacion, 
+                si.estado, 
+                si.reciboSueldo, 
+                si.comentarios, 
+                si.comerciante_id,
+                c.dni as dni_cliente, 
+                c.cuil as cuil_cliente,
+                si.motivo_rechazo,
+                u.nombre as comerciante_nombre,
+                u.apellido as comerciante_apellido,
+                com.nombre_comercio
             FROM solicitudes_iniciales si
             INNER JOIN clientes c ON si.cliente_id = c.id
+            LEFT JOIN comerciantes com ON si.comerciante_id = com.usuario_id
+            LEFT JOIN usuarios u ON com.usuario_id = u.id
             WHERE si.estado = $1
             ORDER BY si.fecha_creacion DESC
         `;
@@ -409,11 +437,22 @@ export class SolicitudInicialRepositoryAdapter implements SolicitudInicialReposi
     async getSolicitudesInicialesByFecha(fecha: Date): Promise<SolicitudInicial[]> {
         const query = `
             SELECT 
-                si.id, si.fecha_creacion, si.estado, si.reciboSueldo, 
-                si.comentarios, si.comerciante_id,
-                c.dni as dni_cliente, c.cuil as cuil_cliente
+                si.id, 
+                si.fecha_creacion, 
+                si.estado, 
+                si.reciboSueldo, 
+                si.comentarios, 
+                si.comerciante_id,
+                c.dni as dni_cliente, 
+                c.cuil as cuil_cliente,
+                si.motivo_rechazo,
+                u.nombre as comerciante_nombre,
+                u.apellido as comerciante_apellido,
+                com.nombre_comercio
             FROM solicitudes_iniciales si
             INNER JOIN clientes c ON si.cliente_id = c.id
+            LEFT JOIN comerciantes com ON si.comerciante_id = com.usuario_id
+            LEFT JOIN usuarios u ON com.usuario_id = u.id
             WHERE DATE(si.fecha_creacion) = DATE($1)
             ORDER BY si.fecha_creacion DESC
         `;
@@ -430,11 +469,22 @@ export class SolicitudInicialRepositoryAdapter implements SolicitudInicialReposi
     async getSolicitudesInicialesByComercianteId(comercianteId: number): Promise<SolicitudInicial[]> {
         const query = `
             SELECT 
-                si.id, si.fecha_creacion, si.estado, si.reciboSueldo, 
-                si.comentarios, si.comerciante_id,
-                c.dni as dni_cliente, c.cuil as cuil_cliente
+                si.id, 
+                si.fecha_creacion, 
+                si.estado, 
+                si.reciboSueldo, 
+                si.comentarios, 
+                si.comerciante_id,
+                c.dni as dni_cliente, 
+                c.cuil as cuil_cliente,
+                si.motivo_rechazo,
+                u.nombre as comerciante_nombre,
+                u.apellido as comerciante_apellido,
+                com.nombre_comercio
             FROM solicitudes_iniciales si
             INNER JOIN clientes c ON si.cliente_id = c.id
+            LEFT JOIN comerciantes com ON si.comerciante_id = com.usuario_id
+            LEFT JOIN usuarios u ON com.usuario_id = u.id
             WHERE si.comerciante_id = $1
             ORDER BY si.fecha_creacion DESC
         `;
@@ -453,7 +503,7 @@ export class SolicitudInicialRepositoryAdapter implements SolicitudInicialReposi
             SELECT 
                 si.id, si.fecha_creacion, si.estado, si.reciboSueldo, 
                 si.comentarios, si.comerciante_id,
-                c.dni as dni_cliente, c.cuil as cuil_cliente
+                c.dni as dni_cliente, c.cuil as cuil_cliente, si.motivo_rechazo
             FROM solicitudes_iniciales si
             INNER JOIN clientes c ON si.cliente_id = c.id
             WHERE si.cliente_id = $1
@@ -465,7 +515,7 @@ export class SolicitudInicialRepositoryAdapter implements SolicitudInicialReposi
     }
 
     private mapRowToSolicitudInicial(row: any): SolicitudInicial {
-    return new SolicitudInicial(
+    const solicitud = new SolicitudInicial(
         Number(row.id), 
         new Date(row.fecha_creacion), 
         row.estado as 'pendiente' | 'aprobada' | 'rechazada' | 'expirada',
@@ -475,8 +525,20 @@ export class SolicitudInicialRepositoryAdapter implements SolicitudInicialReposi
         row.analista_aprobador_id ? Number(row.analista_aprobador_id) : undefined,
         row.administrador_aprobador_id ? Number(row.administrador_aprobador_id) : undefined,
         row.dni_cliente,
-        row.cuil_cliente
+        row.cuil_cliente,
+        row.motivo_rechazo
     );
+
+    // Agregar datos del comerciante a la solicitud
+    if (row.comerciante_nombre && row.comerciante_apellido) {
+        solicitud.setComercianteNombre(`${row.comerciante_nombre} ${row.comerciante_apellido}`);
+    }
+    
+    if (row.nombre_comercio) {
+        solicitud.setNombreComercio(row.nombre_comercio);
+    }
+
+    return solicitud;
 }
     /**
      * Obtiene las solicitudes iniciales por comerciante y estado.
@@ -491,7 +553,7 @@ export class SolicitudInicialRepositoryAdapter implements SolicitudInicialReposi
         SELECT 
             si.id, si.fecha_creacion, si.estado, si.reciboSueldo, 
             si.comentarios, si.comerciante_id,
-            c.dni as dni_cliente, c.cuil as cuil_cliente
+            c.dni as dni_cliente, c.cuil as cuil_cliente, si.motivo_rechazo
         FROM solicitudes_iniciales si
         INNER JOIN clientes c ON si.cliente_id = c.id
         WHERE si.comerciante_id = $1

@@ -33,24 +33,44 @@ class SolicitudFormalRepositoryAdapter {
             const query = `
         SELECT 
             sf.id,
-            c.nombre_completo,
-            c.apellido,
-            c.cuil,
-            c.telefono,
-            c.email,
-            sf.fecha_solicitud,
-            sf.recibo,
-            sf.estado,
-            sf.acepta_tarjeta,
-            c.fecha_nacimiento,
-            c.domicilio,
-            c.datos_empleador,
-            sf.comentarios,
-            sf.solicitud_inicial_id,
-            sf.importe_neto,
-            sf.limite_base,
-            sf.limite_completo,
-            sf.ponderador 
+                c.nombre_completo,
+                c.apellido,
+                c.telefono,
+                c.email,
+                sf.fecha_solicitud,
+                sf.recibo,
+                sf.estado,
+                sf.acepta_tarjeta,
+                c.fecha_nacimiento,
+                c.domicilio,
+                sf.comentarios,
+                sf.solicitud_inicial_id,
+                sf.importe_neto,
+                sf.limite_base,
+                sf.limite_completo,
+                sf.ponderador,
+                sf.comerciante_id,
+                sf.razon_social_empleador,
+                sf.cuit_empleador,
+                sf.cargo_funcion_empleador,
+                sf.sector_empleador,
+                sf.codigo_postal_empleador,
+                sf.localidad_empleador,
+                sf.provincia_empleador,
+                sf.telefono_empleador,
+                sf.solicita_ampliacion_credito,
+                sf.cliente_id,
+                sf.nuevo_limite_completo_solicitado,
+                c.sexo,
+                c.codigo_postal,
+                c.localidad,
+                c.provincia,
+                c.numero_domicilio,
+                c.barrio,
+                sf.fecha_aprobacion,
+                sf.analista_aprobador_id,
+                sf.administrador_aprobador_id,
+                sf.comerciante_aprobador_id
         FROM solicitudes_formales sf
         INNER JOIN clientes c ON sf.cliente_id = c.id
         WHERE c.cuil = $1
@@ -70,16 +90,18 @@ class SolicitudFormalRepositoryAdapter {
             var _a, e_1, _b, _c;
             const client = yield DatabaseDonfig_1.pool.connect();
             try {
-                yield client.query('BEGIN');
+                yield client.query("BEGIN");
                 // 1. Obtener cliente_id de la solicitud inicial asociada
                 const initQuery = `SELECT cliente_id FROM solicitudes_iniciales WHERE id = $1`;
-                const initResult = yield client.query(initQuery, [solicitudFormal.getSolicitudInicialId()]);
+                const initResult = yield client.query(initQuery, [
+                    solicitudFormal.getSolicitudInicialId(),
+                ]);
                 if (initResult.rows.length === 0) {
-                    throw new Error('Solicitud inicial no encontrada');
+                    throw new Error("Solicitud inicial no encontrada");
                 }
                 const clienteId = initResult.rows[0].cliente_id;
                 if (!clienteId) {
-                    throw new Error('La solicitud inicial no tiene un cliente asociado');
+                    throw new Error("La solicitud inicial no tiene un cliente asociado");
                 }
                 // 2. Actualizar cliente con los nuevos datos
                 const updateClienteQuery = `
@@ -90,9 +112,14 @@ class SolicitudFormalRepositoryAdapter {
                     email = $4,
                     fecha_nacimiento = $5,
                     domicilio = $6,
-                    datos_empleador = $7,
-                    acepta_tarjeta = $8
-                WHERE id = $9
+                    acepta_tarjeta = $7,
+                    sexo = $9,
+                    codigo_postal = $10,
+                    localidad = $11,
+                    provincia = $12,
+                    numero_domicilio = $13,
+                    barrio = $14
+                WHERE id = $8
             `;
                 yield client.query(updateClienteQuery, [
                     solicitudFormal.getNombreCompleto(),
@@ -101,9 +128,14 @@ class SolicitudFormalRepositoryAdapter {
                     solicitudFormal.getEmail(),
                     solicitudFormal.getFechaNacimiento(),
                     solicitudFormal.getDomicilio(),
-                    solicitudFormal.getDatosEmpleador(),
                     solicitudFormal.getAceptaTarjeta(),
-                    clienteId
+                    clienteId,
+                    solicitudFormal.getSexo(),
+                    solicitudFormal.getCodigoPostal(),
+                    solicitudFormal.getLocalidad(),
+                    solicitudFormal.getProvincia(),
+                    solicitudFormal.getNumeroDomicilio(),
+                    solicitudFormal.getBarrio()
                 ]);
                 // 3. Crear solicitud formal usando el mismo cliente_id
                 const reciboStream = solicitudFormal.getReciboStream();
@@ -139,9 +171,17 @@ class SolicitudFormalRepositoryAdapter {
                     limite_base,
                     limite_completo,
                     solicita_ampliacion_credito,
-                    nuevo_limite_completo_solicitado
+                    nuevo_limite_completo_solicitado,
+                    ponderador,
+                    razon_social_empleador,
+                    cargo_funcion_empleador,
+                    sector_empleador,
+                    codigo_postal_empleador,
+                    localidad_empleador,
+                    provincia_empleador,
+                    telefono_empleador
                 )
-                VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
+                VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13,$14, $15, $16, $17, $18, $19, $20, $21)
                 RETURNING id
         `;
                 const solicitudValues = [
@@ -157,7 +197,15 @@ class SolicitudFormalRepositoryAdapter {
                     solicitudFormal.getLimiteBase(),
                     solicitudFormal.getLimiteCompleto(),
                     solicitudFormal.getSolicitaAmpliacionDeCredito(),
-                    solicitudFormal.getNuevoLimiteCompletoSolicitado()
+                    solicitudFormal.getNuevoLimiteCompletoSolicitado(),
+                    solicitudFormal.getPonderador(),
+                    solicitudFormal.getRazonSocialEmpleador() || null,
+                    solicitudFormal.getCargoEmpleador() || null,
+                    solicitudFormal.getSectorEmpleador() || null,
+                    solicitudFormal.getCodigoPostalEmpleador() || null,
+                    solicitudFormal.getLocalidadEmpleador() || null,
+                    solicitudFormal.getProvinciaEmpleador() || null,
+                    solicitudFormal.getTelefonoEmpleador() || null,
                 ];
                 const solicitudResult = yield client.query(solicitudQuery, solicitudValues);
                 const solicitudId = solicitudResult.rows[0].id;
@@ -173,7 +221,7 @@ class SolicitudFormalRepositoryAdapter {
                         referente.getNombreCompleto(),
                         referente.getApellido(),
                         referente.getVinculo(),
-                        referente.getTelefono()
+                        referente.getTelefono(),
                     ];
                     const referenteResult = yield client.query(referenteQuery, referenteValues);
                     const referenteId = referenteResult.rows[0].id;
@@ -183,13 +231,13 @@ class SolicitudFormalRepositoryAdapter {
                 `;
                     yield client.query(relacionQuery, [solicitudId, referenteId, i + 1]);
                 }
-                yield client.query('COMMIT');
+                yield client.query("COMMIT");
                 // Retornar la solicitud creada
-                return yield this.getSolicitudFormalById(solicitudId);
+                return (yield this.getSolicitudFormalById(solicitudId));
             }
             catch (error) {
-                yield client.query('ROLLBACK');
-                throw new Error(`Error al crear solicitud formal: ${error instanceof Error ? error.message : 'Error desconocido'}`);
+                yield client.query("ROLLBACK");
+                throw new Error(`Error al crear solicitud formal: ${error instanceof Error ? error.message : "Error desconocido"}`);
             }
             finally {
                 client.release();
@@ -216,7 +264,12 @@ class SolicitudFormalRepositoryAdapter {
                 sf.acepta_tarjeta,
                 c.fecha_nacimiento,
                 c.domicilio,
-                c.datos_empleador,
+                c.sexo,
+                c.codigo_postal,
+                c.localidad,
+                c.provincia,
+                c.numero_domicilio,
+                c.barrio,
                 sf.comentarios,
                 sf.solicitud_inicial_id,
                 sf.comerciante_id,
@@ -230,7 +283,15 @@ class SolicitudFormalRepositoryAdapter {
                 sf.cliente_id,
                 sf.solicita_ampliacion_credito,
                 sf.nuevo_limite_completo_solicitado,
-                sf.ponderador
+                sf.ponderador,
+                sf.razon_social_empleador,
+                sf.cuit_empleador,
+                sf.cargo_funcion_empleador,
+                sf.sector_empleador,
+                sf.codigo_postal_empleador,
+                sf.localidad_empleador,
+                sf.provincia_empleador,
+                sf.telefono_empleador
             FROM solicitudes_formales sf
             INNER JOIN clientes c ON sf.cliente_id = c.id
             WHERE sf.id = $1
@@ -249,11 +310,9 @@ class SolicitudFormalRepositoryAdapter {
             ORDER BY sr.orden
         `;
             const referentesResult = yield DatabaseDonfig_1.pool.query(referentesQuery, [id]);
-            const referentes = referentesResult.rows.map(refRow => new Referente_1.Referente(refRow.nombre_completo, refRow.apellido, refRow.vinculo, refRow.telefono));
+            const referentes = referentesResult.rows.map((refRow) => new Referente_1.Referente(refRow.nombre_completo, refRow.apellido, refRow.vinculo, refRow.telefono));
             return new SolicitudFormal_1.SolicitudFormal(Number(row.id), // Convertir a número
-            row.solicitud_inicial_id, row.comerciante_id, row.nombre_completo, row.apellido, 
-            //row.dni,
-            row.telefono, row.email, new Date(row.fecha_solicitud), row.recibo, row.estado, row.acepta_tarjeta, new Date(row.fecha_nacimiento), row.domicilio, row.datos_empleador, referentes, row.importe_neto, row.comentarios || [], Number(row.ponderador) || 0, row.solicita_ampliacion_credito || false, row.cliente_id || 0, row.fecha_aprobacion ? new Date(row.fecha_aprobacion) : undefined, row.analista_aprobador_id, row.administrador_aprobador_id, row.comerciante_aprobador_id, row.nuevo_limite_completo_solicitado !== null
+            row.solicitud_inicial_id, row.comerciante_id, row.nombre_completo, row.apellido, row.telefono, row.email, new Date(row.fecha_solicitud), row.recibo, row.estado, row.acepta_tarjeta, new Date(row.fecha_nacimiento), row.domicilio, referentes, row.importe_neto, row.comentarios || [], Number(row.ponderador) || 0, row.solicita_ampliacion_credito || false, row.cliente_id || 0, row.razon_social_empleador, row.cuit_empleador, row.cargo_funcion_empleador, row.sector_empleador, row.codigo_postal_empleador, row.localidad_empleador, row.provincia_empleador, row.telefono_empleador, row.sexo, row.codigo_postal, row.localidad, row.provincia, row.numero_domicilio, row.barrio, row.fecha_aprobacion ? new Date(row.fecha_aprobacion) : undefined, row.analista_aprobador_id, row.administrador_aprobador_id, row.comerciante_aprobador_id, row.nuevo_limite_completo_solicitado !== null
                 ? Number(row.nuevo_limite_completo_solicitado)
                 : null);
         });
@@ -267,14 +326,16 @@ class SolicitudFormalRepositoryAdapter {
         return __awaiter(this, void 0, void 0, function* () {
             const client = yield DatabaseDonfig_1.pool.connect();
             try {
-                yield client.query('BEGIN');
+                yield client.query("BEGIN");
                 // Buscar la solicitud formal por solicitud_inicial_id
                 const buscarQuery = `
                 SELECT sf.id, sf.cliente_id 
                 FROM solicitudes_formales sf 
                 WHERE sf.solicitud_inicial_id = $1
             `;
-                const buscarResult = yield client.query(buscarQuery, [solicitudFormal.getSolicitudInicialId()]);
+                const buscarResult = yield client.query(buscarQuery, [
+                    solicitudFormal.getSolicitudInicialId(),
+                ]);
                 if (buscarResult.rows.length === 0) {
                     throw new Error(`No existe una solicitud formal con solicitud_inicial_id: ${solicitudFormal.getSolicitudInicialId()}`);
                 }
@@ -284,8 +345,8 @@ class SolicitudFormalRepositoryAdapter {
                 const actualizarClienteQuery = `
                 UPDATE clientes 
                 SET nombre_completo = $1, apellido = $2, telefono = $3, email = $4,
-                    fecha_nacimiento = $5, domicilio = $6, datos_empleador = $7, acepta_tarjeta = $8
-                WHERE id = $9
+                    fecha_nacimiento = $5, domicilio = $6, acepta_tarjeta = $7
+                WHERE id = $8
             `;
                 yield client.query(actualizarClienteQuery, [
                     solicitudFormal.getNombreCompleto(),
@@ -294,9 +355,8 @@ class SolicitudFormalRepositoryAdapter {
                     solicitudFormal.getEmail(),
                     solicitudFormal.getFechaNacimiento(),
                     solicitudFormal.getDomicilio(),
-                    solicitudFormal.getDatosEmpleador(),
                     solicitudFormal.getAceptaTarjeta(),
-                    clienteId
+                    clienteId,
                 ]);
                 // Actualizar solicitud formal
                 const actualizarSolicitudQuery = `
@@ -309,7 +369,15 @@ class SolicitudFormalRepositoryAdapter {
                     fecha_actualizacion = CURRENT_TIMESTAMP,
                     importe_neto = $7,
                     limite_base = $8,
-                    limite_completo = $9
+                    limite_completo = $9,
+                    razon_social_empleador = $10,
+                    cuit_empleador = $11,
+                    cargo_funcion_empleador = $12,
+                    sector_empleador = $13,
+                    codigo_postal_empleador = $14,
+                    localidad_empleador = $15,
+                    provincia_empleador = $16,
+                    telefono_empleador = $17
                 WHERE id = $6
             `;
                 yield client.query(actualizarSolicitudQuery, [
@@ -321,13 +389,23 @@ class SolicitudFormalRepositoryAdapter {
                     solicitudId,
                     solicitudFormal.getImporteNeto(),
                     solicitudFormal.getLimiteBase(),
-                    solicitudFormal.getLimiteCompleto()
+                    solicitudFormal.getLimiteCompleto(),
+                    solicitudFormal.getRazonSocialEmpleador(),
+                    solicitudFormal.getCuitEmpleador(),
+                    solicitudFormal.getCargoEmpleador(),
+                    solicitudFormal.getSectorEmpleador(),
+                    solicitudFormal.getCodigoPostalEmpleador(),
+                    solicitudFormal.getLocalidadEmpleador(),
+                    solicitudFormal.getProvinciaEmpleador(),
+                    solicitudFormal.getTelefonoEmpleador()
                 ]);
                 // Eliminar referentes existentes
-                yield client.query('DELETE FROM solicitud_referente WHERE solicitud_formal_id = $1', [solicitudId]);
-                const referentesIds = yield client.query('SELECT referente_id FROM solicitud_referente WHERE solicitud_formal_id = $1', [solicitudId]);
+                yield client.query("DELETE FROM solicitud_referente WHERE solicitud_formal_id = $1", [solicitudId]);
+                const referentesIds = yield client.query("SELECT referente_id FROM solicitud_referente WHERE solicitud_formal_id = $1", [solicitudId]);
                 for (const refId of referentesIds.rows) {
-                    yield client.query('DELETE FROM referentes WHERE id = $1', [refId.referente_id]);
+                    yield client.query("DELETE FROM referentes WHERE id = $1", [
+                        refId.referente_id,
+                    ]);
                 }
                 // Insertar nuevos referentes
                 for (let i = 0; i < solicitudFormal.getReferentes().length; i++) {
@@ -341,17 +419,17 @@ class SolicitudFormalRepositoryAdapter {
                         referente.getNombreCompleto(),
                         referente.getApellido(),
                         referente.getVinculo(),
-                        referente.getTelefono()
+                        referente.getTelefono(),
                     ]);
                     const referenteId = referenteResult.rows[0].id;
-                    yield client.query('INSERT INTO solicitud_referente (solicitud_formal_id, referente_id, orden) VALUES ($1, $2, $3)', [solicitudId, referenteId, i + 1]);
+                    yield client.query("INSERT INTO solicitud_referente (solicitud_formal_id, referente_id, orden) VALUES ($1, $2, $3)", [solicitudId, referenteId, i + 1]);
                 }
-                yield client.query('COMMIT');
-                return yield this.getSolicitudFormalById(solicitudId.toString());
+                yield client.query("COMMIT");
+                return (yield this.getSolicitudFormalById(solicitudId.toString()));
             }
             catch (error) {
-                yield client.query('ROLLBACK');
-                throw new Error(`Error al actualizar solicitud formal: ${error instanceof Error ? error.message : 'Error desconocido'}`);
+                yield client.query("ROLLBACK");
+                throw new Error(`Error al actualizar solicitud formal: ${error instanceof Error ? error.message : "Error desconocido"}`);
             }
             finally {
                 client.release();
@@ -367,11 +445,11 @@ class SolicitudFormalRepositoryAdapter {
         return __awaiter(this, void 0, void 0, function* () {
             const client = yield DatabaseDonfig_1.pool.connect();
             try {
-                yield client.query('BEGIN');
+                yield client.query("BEGIN");
                 // Obtener ID directamente de la entidad
                 const solicitudId = solicitudFormal.getId();
                 // 1. Obtener cliente_id de la solicitud
-                const clienteIdQuery = 'SELECT cliente_id FROM solicitudes_formales WHERE id = $1';
+                const clienteIdQuery = "SELECT cliente_id FROM solicitudes_formales WHERE id = $1";
                 const clienteIdResult = yield client.query(clienteIdQuery, [solicitudId]);
                 if (clienteIdResult.rows.length === 0) {
                     throw new Error(`Solicitud formal no encontrada: ${solicitudId}`);
@@ -381,8 +459,10 @@ class SolicitudFormalRepositoryAdapter {
                 const actualizarClienteQuery = `
                 UPDATE clientes 
                 SET nombre_completo = $1, apellido = $2, telefono = $3, email = $4,
-                    fecha_nacimiento = $5, domicilio = $6, datos_empleador = $7, acepta_tarjeta = $8
-                WHERE id = $9
+                  fecha_nacimiento = $5, domicilio = $6, acepta_tarjeta = $7,
+                  sexo = $9, codigo_postal = $10, localidad = $11, provincia = $12,
+                  numero_domicilio = $13, barrio = $14
+                WHERE id = $8
             `;
                 yield client.query(actualizarClienteQuery, [
                     solicitudFormal.getNombreCompleto(),
@@ -391,9 +471,14 @@ class SolicitudFormalRepositoryAdapter {
                     solicitudFormal.getEmail(),
                     solicitudFormal.getFechaNacimiento(),
                     solicitudFormal.getDomicilio(),
-                    solicitudFormal.getDatosEmpleador(),
                     solicitudFormal.getAceptaTarjeta(),
-                    clienteId
+                    clienteId,
+                    solicitudFormal.getSexo(),
+                    solicitudFormal.getCodigoPostal(),
+                    solicitudFormal.getLocalidad(),
+                    solicitudFormal.getProvincia(),
+                    solicitudFormal.getNumeroDomicilio(),
+                    solicitudFormal.getBarrio()
                 ]);
                 // Actualizar solicitud formal
                 const actualizarSolicitudQuery = `
@@ -419,13 +504,15 @@ class SolicitudFormalRepositoryAdapter {
                     solicitudFormal.getId(),
                     solicitudFormal.getAnalistaAprobadorId(),
                     solicitudFormal.getAdministradorAprobadorId(),
-                    solicitudFormal.getComercianteAprobadorId() || null
+                    solicitudFormal.getComercianteAprobadorId() || null,
                 ]);
                 // Eliminar referentes existentes
-                yield client.query('DELETE FROM solicitud_referente WHERE solicitud_formal_id = $1', [solicitudId]);
-                const referentesIds = yield client.query('SELECT referente_id FROM solicitud_referente WHERE solicitud_formal_id = $1', [solicitudId]);
+                yield client.query("DELETE FROM solicitud_referente WHERE solicitud_formal_id = $1", [solicitudId]);
+                const referentesIds = yield client.query("SELECT referente_id FROM solicitud_referente WHERE solicitud_formal_id = $1", [solicitudId]);
                 for (const refId of referentesIds.rows) {
-                    yield client.query('DELETE FROM referentes WHERE id = $1', [refId.referente_id]);
+                    yield client.query("DELETE FROM referentes WHERE id = $1", [
+                        refId.referente_id,
+                    ]);
                 }
                 // Insertar nuevos referentes
                 for (let i = 0; i < solicitudFormal.getReferentes().length; i++) {
@@ -439,17 +526,17 @@ class SolicitudFormalRepositoryAdapter {
                         referente.getNombreCompleto(),
                         referente.getApellido(),
                         referente.getVinculo(),
-                        referente.getTelefono()
+                        referente.getTelefono(),
                     ]);
                     const referenteId = referenteResult.rows[0].id;
-                    yield client.query('INSERT INTO solicitud_referente (solicitud_formal_id, referente_id, orden) VALUES ($1, $2, $3)', [solicitudId, referenteId, i + 1]);
+                    yield client.query("INSERT INTO solicitud_referente (solicitud_formal_id, referente_id, orden) VALUES ($1, $2, $3)", [solicitudId, referenteId, i + 1]);
                 }
-                yield client.query('COMMIT');
-                return yield this.getSolicitudFormalById(solicitudId);
+                yield client.query("COMMIT");
+                return (yield this.getSolicitudFormalById(solicitudId));
             }
             catch (error) {
-                yield client.query('ROLLBACK');
-                throw new Error(`Error al actualizar solicitud formal: ${error instanceof Error ? error.message : 'Error desconocido'}`);
+                yield client.query("ROLLBACK");
+                throw new Error(`Error al actualizar solicitud formal: ${error instanceof Error ? error.message : "Error desconocido"}`);
             }
             finally {
                 client.release();
@@ -465,7 +552,7 @@ class SolicitudFormalRepositoryAdapter {
         return __awaiter(this, void 0, void 0, function* () {
             const client = yield DatabaseDonfig_1.pool.connect();
             try {
-                yield client.query('BEGIN');
+                yield client.query("BEGIN");
                 const solicitudId = solicitudFormal.getId();
                 // Actualizar solicitud formal con información de rechazo
                 const actualizarSolicitudQuery = `
@@ -483,27 +570,29 @@ class SolicitudFormalRepositoryAdapter {
                     solicitudFormal.getComentarios(),
                     solicitudFormal.getAnalistaAprobadorId(),
                     solicitudFormal.getAdministradorAprobadorId(),
-                    solicitudId
+                    solicitudId,
                 ]);
                 // Registrar acción en el historial
                 const accion = `Solicitud formal ${solicitudId} rechazada`;
                 const detalles = {
                     comentarios: solicitudFormal.getComentarios(),
-                    aprobador_id: solicitudFormal.getAnalistaAprobadorId() || solicitudFormal.getAdministradorAprobadorId()
+                    aprobador_id: solicitudFormal.getAnalistaAprobadorId() ||
+                        solicitudFormal.getAdministradorAprobadorId(),
                 };
-                yield client.query('INSERT INTO historial (usuario_id, accion, entidad_afectada, entidad_id, detalles) VALUES ($1, $2, $3, $4, $5)', [
-                    solicitudFormal.getAnalistaAprobadorId() || solicitudFormal.getAdministradorAprobadorId(),
+                yield client.query("INSERT INTO historial (usuario_id, accion, entidad_afectada, entidad_id, detalles) VALUES ($1, $2, $3, $4, $5)", [
+                    solicitudFormal.getAnalistaAprobadorId() ||
+                        solicitudFormal.getAdministradorAprobadorId(),
                     accion,
-                    'solicitudes_formales',
+                    "solicitudes_formales",
                     solicitudId,
-                    JSON.stringify(detalles)
+                    JSON.stringify(detalles),
                 ]);
-                yield client.query('COMMIT');
-                return yield this.getSolicitudFormalById(solicitudId);
+                yield client.query("COMMIT");
+                return (yield this.getSolicitudFormalById(solicitudId));
             }
             catch (error) {
-                yield client.query('ROLLBACK');
-                throw new Error(`Error al rechazar solicitud formal: ${error instanceof Error ? error.message : 'Error desconocido'}`);
+                yield client.query("ROLLBACK");
+                throw new Error(`Error al rechazar solicitud formal: ${error instanceof Error ? error.message : "Error desconocido"}`);
             }
             finally {
                 client.release();
@@ -519,9 +608,9 @@ class SolicitudFormalRepositoryAdapter {
         return __awaiter(this, void 0, void 0, function* () {
             const client = yield DatabaseDonfig_1.pool.connect();
             try {
-                yield client.query('BEGIN');
+                yield client.query("BEGIN");
                 // Buscar la solicitud formal
-                const buscarQuery = 'SELECT id FROM solicitudes_formales WHERE solicitud_inicial_id = $1';
+                const buscarQuery = "SELECT id FROM solicitudes_formales WHERE solicitud_inicial_id = $1";
                 const buscarResult = yield client.query(buscarQuery, [id]);
                 if (buscarResult.rows.length === 0) {
                     throw new Error(`No existe una solicitud formal con solicitud_inicial_id: ${id}`);
@@ -531,19 +620,25 @@ class SolicitudFormalRepositoryAdapter {
                 const referentesQuery = `
                 SELECT referente_id FROM solicitud_referente WHERE solicitud_formal_id = $1
             `;
-                const referentesResult = yield client.query(referentesQuery, [solicitudId]);
+                const referentesResult = yield client.query(referentesQuery, [
+                    solicitudId,
+                ]);
                 for (const ref of referentesResult.rows) {
-                    yield client.query('DELETE FROM referentes WHERE id = $1', [ref.referente_id]);
+                    yield client.query("DELETE FROM referentes WHERE id = $1", [
+                        ref.referente_id,
+                    ]);
                 }
                 // Eliminar relaciones solicitud-referente
-                yield client.query('DELETE FROM solicitud_referente WHERE solicitud_formal_id = $1', [solicitudId]);
+                yield client.query("DELETE FROM solicitud_referente WHERE solicitud_formal_id = $1", [solicitudId]);
                 // Eliminar solicitud formal (el cliente se mantiene)
-                yield client.query('DELETE FROM solicitudes_formales WHERE id = $1', [solicitudId]);
-                yield client.query('COMMIT');
+                yield client.query("DELETE FROM solicitudes_formales WHERE id = $1", [
+                    solicitudId,
+                ]);
+                yield client.query("COMMIT");
             }
             catch (error) {
-                yield client.query('ROLLBACK');
-                throw new Error(`Error al eliminar solicitud formal: ${error instanceof Error ? error.message : 'Error desconocido'}`);
+                yield client.query("ROLLBACK");
+                throw new Error(`Error al eliminar solicitud formal: ${error instanceof Error ? error.message : "Error desconocido"}`);
             }
             finally {
                 client.release();
@@ -569,13 +664,20 @@ class SolicitudFormalRepositoryAdapter {
                 sf.acepta_tarjeta,
                 c.fecha_nacimiento,
                 c.domicilio,
-                c.datos_empleador,
                 sf.comentarios,
                 sf.solicitud_inicial_id,
                 sf.importe_neto,          
                 sf.limite_base,            
                 sf.limite_completo,
-                sf.ponderador             
+                sf.ponderador,
+                sf.razon_social_empleador,
+                sf.cuit_empleador,
+                sf.cargo_funcion_empleador,
+                sf.sector_empleador,
+                sf.codigo_postal_empleador,
+                sf.localidad_empleador,
+                sf.provincia_empleador,
+                sf.telefono_empleador             
             FROM solicitudes_formales sf
             INNER JOIN clientes c ON sf.cliente_id = c.id
             ORDER BY sf.fecha_solicitud DESC
@@ -592,10 +694,8 @@ class SolicitudFormalRepositoryAdapter {
                 ORDER BY sr.orden
             `;
                 const referentesResult = yield DatabaseDonfig_1.pool.query(referentesQuery, [row.id]);
-                const referentes = referentesResult.rows.map(refRow => new Referente_1.Referente(refRow.nombre_completo, refRow.apellido, refRow.vinculo, refRow.telefono));
-                solicitudes.push(new SolicitudFormal_1.SolicitudFormal(row.id.toString(), row.solicitud_inicial_id, row.comerciante_id, row.nombre_completo, row.apellido, 
-                //row.dni,
-                row.telefono, row.email, new Date(row.fecha_solicitud), Buffer.alloc(0), row.estado, row.acepta_tarjeta, new Date(row.fecha_nacimiento), row.domicilio, row.datos_empleador, referentes, row.importe_neto, row.cuotas_solicitadas, row.comentarios || [], row.ponderador));
+                const referentes = referentesResult.rows.map((refRow) => new Referente_1.Referente(refRow.nombre_completo, refRow.apellido, refRow.vinculo, refRow.telefono));
+                solicitudes.push(new SolicitudFormal_1.SolicitudFormal(row.id.toString(), row.solicitud_inicial_id, row.comerciante_id, row.nombre_completo, row.apellido, row.telefono, row.email, new Date(row.fecha_solicitud), Buffer.alloc(0), row.estado, row.acepta_tarjeta, new Date(row.fecha_nacimiento), row.domicilio, referentes, row.importe_neto, row.cuotas_solicitadas, row.comentarios || [], row.ponderador, row.razon_social_empleador, row.cuit_empleador, row.cargo_funcion_empleador, row.sector_empleador, row.codigo_postal_empleador, row.localidad_empleador, row.provincia_empleador, row.telefono_empleador));
             }
             return solicitudes;
         });
@@ -620,13 +720,34 @@ class SolicitudFormalRepositoryAdapter {
                 sf.acepta_tarjeta,
                 c.fecha_nacimiento,
                 c.domicilio,
-                c.datos_empleador,
                 sf.comentarios,
                 sf.solicitud_inicial_id,
                 sf.importe_neto,
                 sf.limite_base,
                 sf.limite_completo,
-                sf.ponderador 
+                sf.ponderador,
+                sf.comerciante_id,
+                sf.razon_social_empleador,
+                sf.cuit_empleador,
+                sf.cargo_funcion_empleador,
+                sf.sector_empleador,
+                sf.codigo_postal_empleador,
+                sf.localidad_empleador,
+                sf.provincia_empleador,
+                sf.telefono_empleador,
+                sf.solicita_ampliacion_credito,
+                sf.cliente_id,
+                sf.nuevo_limite_completo_solicitado,
+                c.sexo,
+                c.codigo_postal,
+                c.localidad,
+                c.provincia,
+                c.numero_domicilio,
+                c.barrio,
+                sf.fecha_aprobacion,
+                sf.analista_aprobador_id,
+                sf.administrador_aprobador_id,
+                sf.comerciante_aprobador_id
             FROM solicitudes_formales sf
             INNER JOIN clientes c ON sf.cliente_id = c.id
             WHERE c.dni = $1
@@ -655,13 +776,34 @@ class SolicitudFormalRepositoryAdapter {
                 sf.acepta_tarjeta,
                 c.fecha_nacimiento,
                 c.domicilio,
-                c.datos_empleador,
                 sf.comentarios,
                 sf.solicitud_inicial_id,
                 sf.importe_neto,
                 sf.limite_base,
                 sf.limite_completo,
-                sf.ponderador 
+                sf.ponderador,
+                sf.comerciante_id,
+                sf.razon_social_empleador,
+                sf.cuit_empleador,
+                sf.cargo_funcion_empleador,
+                sf.sector_empleador,
+                sf.codigo_postal_empleador,
+                sf.localidad_empleador,
+                sf.provincia_empleador,
+                sf.telefono_empleador,
+                sf.solicita_ampliacion_credito,
+                sf.cliente_id,
+                sf.nuevo_limite_completo_solicitado,
+                c.sexo,
+                c.codigo_postal,
+                c.localidad,
+                c.provincia,
+                c.numero_domicilio,
+                c.barrio,
+                sf.fecha_aprobacion,
+                sf.analista_aprobador_id,
+                sf.administrador_aprobador_id,
+                sf.comerciante_aprobador_id 
             FROM solicitudes_formales sf
             INNER JOIN clientes c ON sf.cliente_id = c.id
             WHERE sf.estado = $1
@@ -690,13 +832,34 @@ class SolicitudFormalRepositoryAdapter {
                 sf.acepta_tarjeta,
                 c.fecha_nacimiento,
                 c.domicilio,
-                c.datos_empleador,
                 sf.comentarios,
                 sf.solicitud_inicial_id,
                 sf.importe_neto,
                 sf.limite_base,
                 sf.limite_completo,
-                sf.ponderador 
+                sf.ponderador,
+                sf.comerciante_id,
+                sf.razon_social_empleador,
+                sf.cuit_empleador,
+                sf.cargo_funcion_empleador,
+                sf.sector_empleador,
+                sf.codigo_postal_empleador,
+                sf.localidad_empleador,
+                sf.provincia_empleador,
+                sf.telefono_empleador,
+                sf.solicita_ampliacion_credito,
+                sf.cliente_id,
+                sf.nuevo_limite_completo_solicitado,
+                c.sexo,
+                c.codigo_postal,
+                c.localidad,
+                c.provincia,
+                c.numero_domicilio,
+                c.barrio,
+                sf.fecha_aprobacion,
+                sf.analista_aprobador_id,
+                sf.administrador_aprobador_id,
+                sf.comerciante_aprobador_id
             FROM solicitudes_formales sf
             INNER JOIN clientes c ON sf.cliente_id = c.id
             WHERE DATE(sf.fecha_solicitud) = DATE($1)
@@ -720,17 +883,39 @@ class SolicitudFormalRepositoryAdapter {
                 c.telefono,
                 c.email,
                 sf.fecha_solicitud,
+                sf.recibo,
                 sf.estado,
                 sf.acepta_tarjeta,
                 c.fecha_nacimiento,
                 c.domicilio,
-                c.datos_empleador,
                 sf.comentarios,
                 sf.solicitud_inicial_id,
                 sf.importe_neto,
                 sf.limite_base,
                 sf.limite_completo,
-                sf.ponderador 
+                sf.ponderador,
+                sf.comerciante_id,
+                sf.razon_social_empleador,
+                sf.cuit_empleador,
+                sf.cargo_funcion_empleador,
+                sf.sector_empleador,
+                sf.codigo_postal_empleador,
+                sf.localidad_empleador,
+                sf.provincia_empleador,
+                sf.telefono_empleador,
+                sf.solicita_ampliacion_credito,
+                sf.cliente_id,
+                sf.nuevo_limite_completo_solicitado,
+                c.sexo,
+                c.codigo_postal,
+                c.localidad,
+                c.provincia,
+                c.numero_domicilio,
+                c.barrio,
+                sf.fecha_aprobacion,
+                sf.analista_aprobador_id,
+                sf.administrador_aprobador_id,
+                sf.comerciante_aprobador_id
             FROM solicitudes_formales sf
             INNER JOIN clientes c ON sf.cliente_id = c.id
             WHERE sf.comerciante_id = $1
@@ -759,13 +944,34 @@ class SolicitudFormalRepositoryAdapter {
                 sf.acepta_tarjeta,
                 c.fecha_nacimiento,
                 c.domicilio,
-                c.datos_empleador,
                 sf.comentarios,
                 sf.solicitud_inicial_id,
                 sf.importe_neto,
                 sf.limite_base,
                 sf.limite_completo,
-                sf.ponderador 
+                sf.ponderador,
+                sf.comerciante_id,
+                sf.razon_social_empleador,
+                sf.cuit_empleador,
+                sf.cargo_funcion_empleador,
+                sf.sector_empleador,
+                sf.codigo_postal_empleador,
+                sf.localidad_empleador,
+                sf.provincia_empleador,
+                sf.telefono_empleador,
+                sf.solicita_ampliacion_credito,
+                sf.cliente_id,
+                sf.nuevo_limite_completo_solicitado,
+                c.sexo,
+                c.codigo_postal,
+                c.localidad,
+                c.provincia,
+                c.numero_domicilio,
+                c.barrio,
+                sf.fecha_aprobacion,
+                sf.analista_aprobador_id,
+                sf.administrador_aprobador_id,
+                sf.comerciante_aprobador_id
             FROM solicitudes_formales sf
             INNER JOIN clientes c ON sf.cliente_id = c.id
             WHERE sf.analista_aprobador_id = $1
@@ -794,14 +1000,34 @@ class SolicitudFormalRepositoryAdapter {
                 sf.acepta_tarjeta,
                 c.fecha_nacimiento,
                 c.domicilio,
-                c.datos_empleador,
                 sf.comentarios,
                 sf.solicitud_inicial_id,
                 sf.importe_neto,
                 sf.limite_base,
                 sf.limite_completo,
                 sf.ponderador,
-                sf.comerciante_id 
+                sf.comerciante_id,
+                sf.razon_social_empleador,
+                sf.cuit_empleador,
+                sf.cargo_funcion_empleador,
+                sf.sector_empleador,
+                sf.codigo_postal_empleador,
+                sf.localidad_empleador,
+                sf.provincia_empleador,
+                sf.telefono_empleador,
+                sf.solicita_ampliacion_credito,
+                sf.cliente_id,
+                sf.nuevo_limite_completo_solicitado,
+                c.sexo,
+                c.codigo_postal,
+                c.localidad,
+                c.provincia,
+                c.numero_domicilio,
+                c.barrio,
+                sf.fecha_aprobacion,
+                sf.analista_aprobador_id,
+                sf.administrador_aprobador_id,
+                sf.comerciante_aprobador_id
             FROM solicitudes_formales sf
             INNER JOIN clientes c ON sf.cliente_id = c.id
             WHERE sf.solicitud_inicial_id = $1
@@ -820,9 +1046,9 @@ class SolicitudFormalRepositoryAdapter {
         return __awaiter(this, void 0, void 0, function* () {
             const client = yield DatabaseDonfig_1.pool.connect();
             try {
-                yield client.query('BEGIN');
+                yield client.query("BEGIN");
                 // Buscar la solicitud formal por solicitud_inicial_id
-                const buscarQuery = 'SELECT id FROM solicitudes_formales WHERE solicitud_inicial_id = $1';
+                const buscarQuery = "SELECT id FROM solicitudes_formales WHERE solicitud_inicial_id = $1";
                 const buscarResult = yield client.query(buscarQuery, [solicitudId]);
                 if (buscarResult.rows.length === 0) {
                     throw new Error(`No existe una solicitud formal con solicitud_inicial_id: ${solicitudId}`);
@@ -834,15 +1060,18 @@ class SolicitudFormalRepositoryAdapter {
                 SET solicitud_formal_id = $1 
                 WHERE id = $2
             `;
-                const result = yield client.query(vincularQuery, [solicitudFormalId, contratoId]);
+                const result = yield client.query(vincularQuery, [
+                    solicitudFormalId,
+                    contratoId,
+                ]);
                 if (result.rowCount === 0) {
                     throw new Error(`No existe un contrato con ID: ${contratoId}`);
                 }
-                yield client.query('COMMIT');
+                yield client.query("COMMIT");
             }
             catch (error) {
-                yield client.query('ROLLBACK');
-                throw new Error(`Error al vincular contrato: ${error instanceof Error ? error.message : 'Error desconocido'}`);
+                yield client.query("ROLLBACK");
+                throw new Error(`Error al vincular contrato: ${error instanceof Error ? error.message : "Error desconocido"}`);
             }
             finally {
                 client.release();
@@ -865,8 +1094,11 @@ class SolicitudFormalRepositoryAdapter {
                 ORDER BY sr.orden
             `;
                 const referentesResult = yield DatabaseDonfig_1.pool.query(referentesQuery, [row.id]);
-                const referentes = referentesResult.rows.map(refRow => new Referente_1.Referente(refRow.nombre_completo, refRow.apellido, refRow.vinculo, refRow.telefono));
-                solicitudes.push(new SolicitudFormal_1.SolicitudFormal(row.id.toString(), row.solicitud_inicial_id, row.comerciante_id, row.nombre_completo, row.apellido, row.telefono, row.email, new Date(row.fecha_solicitud), row.recibo, row.estado, row.acepta_tarjeta, new Date(row.fecha_nacimiento), row.domicilio, row.datos_empleador, referentes, row.importe_neto, row.comentarios || [], (_a = row.ponderador) !== null && _a !== void 0 ? _a : 0));
+                const referentes = referentesResult.rows.map((refRow) => new Referente_1.Referente(refRow.nombre_completo, refRow.apellido, refRow.vinculo, refRow.telefono));
+                solicitudes.push(new SolicitudFormal_1.SolicitudFormal(Number(row.id), row.solicitud_inicial_id, row.comerciante_id, row.nombre_completo, row.apellido, row.telefono, row.email, new Date(row.fecha_solicitud), row.recibo, row.estado, row.acepta_tarjeta, new Date(row.fecha_nacimiento), row.domicilio, referentes, row.importe_neto, row.comentarios || [], (_a = row.ponderador) !== null && _a !== void 0 ? _a : 0, row.solicita_ampliacion_credito || false, // Campo booleano correcto
+                row.cliente_id, row.razon_social_empleador, row.cuit_empleador, row.cargo_funcion_empleador, row.sector_empleador, row.codigo_postal_empleador, row.localidad_empleador, row.provincia_empleador, row.telefono_empleador, row.sexo, row.codigo_postal, row.localidad, row.provincia, row.numero_domicilio, row.barrio, row.fecha_aprobacion ? new Date(row.fecha_aprobacion) : undefined, row.analista_aprobador_id, row.administrador_aprobador_id, row.comerciante_aprobador_id, row.nuevo_limite_completo_solicitado !== null
+                    ? Number(row.nuevo_limite_completo_solicitado)
+                    : null));
             }
             return solicitudes;
         });
@@ -892,11 +1124,18 @@ class SolicitudFormalRepositoryAdapter {
             sf.acepta_tarjeta,
             c.fecha_nacimiento,
             c.domicilio,
-            c.datos_empleador,
             sf.comentarios,
             sf.solicitud_inicial_id,
             sf.comerciante_id,
-            sf.ponderador 
+            sf.ponderador,
+            sf.razon_social_empleador,
+            sf.cuit_empleador,
+            sf.cargo_funcion_empleador,
+            sf.sector_empleador,
+            sf.codigo_postal_empleador,
+            sf.localidad_empleador,
+            sf.provincia_empleador,
+            sf.telefono_empleador 
         FROM solicitudes_formales sf
         INNER JOIN clientes c ON sf.cliente_id = c.id
         WHERE sf.comerciante_id = $1 AND sf.estado = $2
@@ -909,7 +1148,7 @@ class SolicitudFormalRepositoryAdapter {
         return __awaiter(this, void 0, void 0, function* () {
             const client = yield DatabaseDonfig_1.pool.connect();
             try {
-                yield client.query('BEGIN');
+                yield client.query("BEGIN");
                 const query = `
                 UPDATE solicitudes_formales
                 SET estado = $1,
@@ -923,17 +1162,17 @@ class SolicitudFormalRepositoryAdapter {
                     solicitud.getEstado(),
                     solicitud.getNuevoLimiteCompletoSolicitado(),
                     solicitud.getComentarios(),
-                    solicitud.getId()
+                    solicitud.getId(),
                 ]);
                 if (result.rows.length === 0) {
                     throw new Error("Error al actualizar la solicitud");
                 }
-                yield client.query('COMMIT');
-                return yield this.getSolicitudFormalById(solicitud.getId());
+                yield client.query("COMMIT");
+                return (yield this.getSolicitudFormalById(solicitud.getId()));
             }
             catch (error) {
-                yield client.query('ROLLBACK');
-                throw new Error(`Error al solicitar ampliación: ${error instanceof Error ? error.message : 'Error desconocido'}`);
+                yield client.query("ROLLBACK");
+                throw new Error(`Error al solicitar ampliación: ${error instanceof Error ? error.message : "Error desconocido"}`);
             }
             finally {
                 client.release();
@@ -944,7 +1183,7 @@ class SolicitudFormalRepositoryAdapter {
         return __awaiter(this, void 0, void 0, function* () {
             const client = yield DatabaseDonfig_1.pool.connect();
             try {
-                yield client.query('BEGIN');
+                yield client.query("BEGIN");
                 const query = `
                 UPDATE solicitudes_formales
                 SET estado = $1,
@@ -963,17 +1202,17 @@ class SolicitudFormalRepositoryAdapter {
                     solicitud.getComentarios(),
                     solicitud.getAnalistaAprobadorId(),
                     solicitud.getAdministradorAprobadorId(),
-                    solicitud.getId()
+                    solicitud.getId(),
                 ]);
                 if (result.rows.length === 0) {
                     throw new Error("Error al aprobar ampliación");
                 }
-                yield client.query('COMMIT');
-                return yield this.getSolicitudFormalById(solicitud.getId());
+                yield client.query("COMMIT");
+                return (yield this.getSolicitudFormalById(solicitud.getId()));
             }
             catch (error) {
-                yield client.query('ROLLBACK');
-                throw new Error(`Error al aprobar ampliación: ${error instanceof Error ? error.message : 'Error desconocido'}`);
+                yield client.query("ROLLBACK");
+                throw new Error(`Error al aprobar ampliación: ${error instanceof Error ? error.message : "Error desconocido"}`);
             }
             finally {
                 client.release();
@@ -984,7 +1223,7 @@ class SolicitudFormalRepositoryAdapter {
         return __awaiter(this, void 0, void 0, function* () {
             const client = yield DatabaseDonfig_1.pool.connect();
             try {
-                yield client.query('BEGIN');
+                yield client.query("BEGIN");
                 const query = `
                 UPDATE solicitudes_formales
                 SET estado = $1,
@@ -1001,17 +1240,17 @@ class SolicitudFormalRepositoryAdapter {
                     solicitud.getComentarios(),
                     solicitud.getAnalistaAprobadorId(),
                     solicitud.getAdministradorAprobadorId(),
-                    solicitud.getId()
+                    solicitud.getId(),
                 ]);
                 if (result.rows.length === 0) {
                     throw new Error("Error al rechazar ampliación");
                 }
-                yield client.query('COMMIT');
-                return yield this.getSolicitudFormalById(solicitud.getId());
+                yield client.query("COMMIT");
+                return (yield this.getSolicitudFormalById(solicitud.getId()));
             }
             catch (error) {
-                yield client.query('ROLLBACK');
-                throw new Error(`Error al rechazar ampliación: ${error instanceof Error ? error.message : 'Error desconocido'}`);
+                yield client.query("ROLLBACK");
+                throw new Error(`Error al rechazar ampliación: ${error instanceof Error ? error.message : "Error desconocido"}`);
             }
             finally {
                 client.release();

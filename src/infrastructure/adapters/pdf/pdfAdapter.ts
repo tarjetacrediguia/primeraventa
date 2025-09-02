@@ -178,6 +178,12 @@ export class PdfAdapter implements PdfPort{
         '{{FECHA_NACIMIENTO}}': formatDate(contrato.clienteFechaNacimiento),
         '{{ESTADO_CIVIL}}': contrato.clienteEstadoCivil || '',
         '{{NACIONALIDAD}}': contrato.clienteNacionalidad || '',
+        '{{REFERENTE1_NOMBRE_COMPLETO}}': `${contrato.clienteReferente1Nombre || ''} ${contrato.clienteReferente1Apellido || ''}`.trim(),
+        '{{REFERENTE1_VINCULO}}': contrato.clienteReferente1Vinculo || '',
+        '{{REFERENTE1_TELEFONO}}': contrato.clienteReferente1Telefono || '',
+        '{{REFERENTE2_NOMBRE_COMPLETO}}': `${contrato.clienteReferente2Nombre || ''} ${contrato.clienteReferente2Apellido || ''}`.trim(),
+        '{{REFERENTE2_VINCULO}}': contrato.clienteReferente2Vinculo || '',
+        '{{REFERENTE2_TELEFONO}}': contrato.clienteReferente2Telefono || '',
         '{{DOMICILIO_CALLE}}': contrato.clienteDomicilioCalle || '',
         '{{DOMICILIO_NUMERO}}': contrato.clienteDomicilioNumero || '',
         '{{DOMICILIO_PISO}}': contrato.clienteDomicilioPiso || '',
@@ -197,6 +203,11 @@ export class PdfAdapter implements PdfPort{
         '{{SECTOR}}': contrato.clienteDatosLaboralesSector || '',
         '{{DOMICILIO_LEGAL}}': contrato.clienteDatosLaboralesDomicilioLegal || '',
         '{{SUELDO}}': solicitudFormal.importeNeto?.toString() || '',
+        '{{CLIENTE_SUELDO_NETO}}': contrato.clienteSueldoNeto?.toString() || '',
+        '{{EMPLEADOR_COD_POSTAL}}': contrato.clienteDatosLaboralesCodigoPostal || '',
+        '{{EMPLEADOR_LOCALIDAD}}': contrato.clienteDatosLaboralesLocalidad || '',
+        '{{EMPLEADOR_PROVINCIA}}': contrato.clienteDatosLaboralesProvincia || '',
+        '{{EMPLEADOR_TELEFONO}}': contrato.clienteDatosLaboralesTelefono || '',
         
         // Página 2 (Contrato)
         '{{TITULAR_NOMBRE}}': `${solicitudFormal.nombreCompleto} ${solicitudFormal.apellido}`,
@@ -204,7 +215,6 @@ export class PdfAdapter implements PdfPort{
         '{{TITULAR_CUIT}}': contrato.clienteCuitOcuil || '',
         '{{TITULAR_DOMICILIO}}': [
             contrato.clienteDomicilioCalle,
-            contrato.clienteDomicilioNumero,
             contrato.clienteDomicilioLocalidad
         ].filter(Boolean).join(', '),
         // Páginas 3-10 (Usar mismos datos en múltiples páginas)
@@ -228,7 +238,6 @@ export class PdfAdapter implements PdfPort{
         '{{PLATINIUM_ATRASO_32_60}}': contrato.tasasPlatiniumAtraso32_60Dias?.toString() || '649',
         '{{PLATINIUM_ATRASO_61_90}}': contrato.tasasPlatiniumAtraso61_90Dias?.toString() || '742',
         '{{PLATINIUM_PAGO_FACIL}}': contrato.tasasPlatiniumPagoFacil?.toString() || '99',
-
         };
     }
 }

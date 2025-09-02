@@ -21,6 +21,7 @@ const SolicitudInicialRepositoryAdapter_1 = require("../../adapters/repository/S
 const ComercianteRepositoryAdapter_1 = require("../../adapters/repository/ComercianteRepositoryAdapter");
 const GenerarYDescargarContratoUseCase_1 = require("../../../application/use-cases/Contrato/GenerarYDescargarContratoUseCase");
 const CompraRepositoryAdapter_1 = require("../../adapters/repository/CompraRepositoryAdapter");
+const TasasRepositoryAdapter_1 = require("../../adapters/repository/TasasRepositoryAdapter");
 // Inicializar adapters
 const contratoRepository = new ContratoRepositoryAdapter_1.ContratoRepositoryAdapter();
 const solicitudRepository = new SolicitudFormalRepositoryAdapter_1.SolicitudFormalRepositoryAdapter();
@@ -31,8 +32,9 @@ const solicitudInicialRepository = new SolicitudInicialRepositoryAdapter_1.Solic
 const comercianteRepository = new ComercianteRepositoryAdapter_1.ComercianteRepositoryAdapter();
 const historialRepository = new HistorialRepositoryAdapter_1.HistorialRepositoryAdapter();
 const compraRepository = new CompraRepositoryAdapter_1.CompraRepositoryAdapter();
+const tasasRepository = new TasasRepositoryAdapter_1.TasasRepositoryAdapter();
 // Inicializar el nuevo caso de uso unificado
-const generacionYDescargaUC = new GenerarYDescargarContratoUseCase_1.GeneracionYDescargaContratoUseCase(solicitudRepository, contratoRepository, pdfService, notificationService, clienteRepository, historialRepository, solicitudInicialRepository, comercianteRepository, compraRepository);
+const generacionYDescargaUC = new GenerarYDescargarContratoUseCase_1.GeneracionYDescargaContratoUseCase(solicitudRepository, contratoRepository, pdfService, notificationService, clienteRepository, historialRepository, solicitudInicialRepository, comercianteRepository, compraRepository, tasasRepository);
 const generarYDescargarContratoPDF = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     var _a;
     try {

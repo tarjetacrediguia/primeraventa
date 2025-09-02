@@ -29,8 +29,6 @@ export class SolicitudFormal {
     private readonly id: number;
     private nombreCompleto: string;
     private apellido: string;
-    //private dni: string | null = null; // DNI opcional, puede ser CUIL
-    //private cuil: string;
     private telefono: string;
     private email: string;
     private fechaSolicitud: Date;
@@ -39,7 +37,6 @@ export class SolicitudFormal {
     private aceptaTarjeta: boolean;
     private fechaNacimiento: Date;
     private domicilio: string;
-    private datosEmpleador: string;
     private referentes: Referente[];
     private comentarios: string[];
     private solicitudInicialId: number;
@@ -55,7 +52,20 @@ export class SolicitudFormal {
     private ponderador:number;
     private solicitaAmpliacionDeCredito: boolean;
     private nuevoLimiteCompletoSolicitado?: number | null;
-    
+    private razonSocialEmpleador: string;
+    private cuitEmpleador: string;
+    private cargoEmpleador: string;
+    private sectorEmpleador: string;
+    private codigoPostalEmpleador: string;
+    private localidadEmpleador: string;
+    private provinciaEmpleador: string;
+    private telefonoEmpleador: string;
+    private sexo: string | null;
+    private codigoPostal: string | null;
+    private localidad: string | null;
+    private provincia: string | null;
+    private numeroDomicilio: string | null;
+    private barrio: string | null;  
 
   /**
    * Constructor de la clase SolicitudFormal.
@@ -93,7 +103,6 @@ export class SolicitudFormal {
     comercianteId: number, 
     nombreCompleto: string,
     apellido: string,
-    //cuil: string,
     telefono: string,
     email: string,
     fechaSolicitud: Date,
@@ -102,27 +111,40 @@ export class SolicitudFormal {
     aceptaTarjeta: boolean,
     fechaNacimiento: Date,
     domicilio: string,
-    datosEmpleador: string,
     referentes: Referente[],
     importeNeto: number,
     comentarios: string[] = [],
     ponderador: number,
     solicitaAmpliacionDeCredito: boolean = false,
     clienteId?: number,
+    razonSocialEmpleador?: string,
+    cuitEmpleador?: string,
+    cargoEmpleador?: string,
+    sectorEmpleador?: string,
+    codigoPostalEmpleador?: string,
+    localidadEmpleador?: string,
+    provinciaEmpleador?: string,
+    telefonoEmpleador?: string,
+    sexo?: string,
+    codigoPostal?: string,
+    localidad?: string,
+    provincia?: string,
+    numeroDomicilio?: string,
+    barrio?: string,
     fechaAprobacion?: Date,
     analistaAprobadorId?: number,
     administradorAprobadorId?: number,
     comercianteAprobadorId?: number,
     nuevoLimiteCompletoSolicitado?: number | null,
-    //dni?: string
+    
+
     
   ) {
     this.id = id;
     this.solicitudInicialId = solicitudInicialId;
     this.comercianteId = comercianteId;
     this.nombreCompleto = nombreCompleto;
-    this.apellido = apellido;
-    //this.cuil = cuil;
+    this.apellido = apellido; 
     this.telefono = telefono;
     this.email = email;
     this.fechaSolicitud = fechaSolicitud;
@@ -131,7 +153,6 @@ export class SolicitudFormal {
     this.aceptaTarjeta = aceptaTarjeta;
     this.fechaNacimiento = fechaNacimiento;
     this.domicilio = domicilio;
-    this.datosEmpleador = datosEmpleador;
     this.referentes = referentes || [];
     this.comentarios = comentarios;
     this.clienteId = clienteId;
@@ -139,21 +160,114 @@ export class SolicitudFormal {
     this.analistaAprobadorId = analistaAprobadorId;
     this.administradorAprobadorId = administradorAprobadorId;
     this.importeNeto = importeNeto;
-    this.calcularLimites();
     this.ponderador = ponderador;
     this.nuevoLimiteCompletoSolicitado = nuevoLimiteCompletoSolicitado ?? null;
     this.solicitaAmpliacionDeCredito = solicitaAmpliacionDeCredito;
-    
-  }
-/*
-  setCuil(cuil: string) {
-    this.cuil = cuil;
+    this.calcularLimites();
+    this.razonSocialEmpleador = razonSocialEmpleador || "";
+    this.cuitEmpleador = cuitEmpleador || "";
+    this.cargoEmpleador = cargoEmpleador || "";
+    this.sectorEmpleador = sectorEmpleador || "";
+    this.codigoPostalEmpleador = codigoPostalEmpleador || "";
+    this.localidadEmpleador = localidadEmpleador || "";
+    this.provinciaEmpleador = provinciaEmpleador || "";
+    this.telefonoEmpleador = telefonoEmpleador || "";
+    this.sexo = sexo || null;
+    this.codigoPostal = codigoPostal || null;
+    this.localidad = localidad || null;
+    this.provincia = provincia || null;
+    this.numeroDomicilio = numeroDomicilio || null;
+    this.barrio = barrio || null;
   }
 
-  getCuil(): string {
-    return this.cuil;
-  } 
-*/
+  setSexo(sexo: string) {
+        this.sexo = sexo;
+    }
+
+    getSexo() {
+        return this.sexo;
+    }
+    setCodigoPostal(codigoPostal: string) {
+        this.codigoPostal = codigoPostal;
+    }
+    getCodigoPostal() {
+        return this.codigoPostal;
+    }
+    setLocalidad(localidad: string) {
+        this.localidad = localidad;
+    }
+    getLocalidad() {
+        return this.localidad;
+    }
+    setProvincia(provincia: string) {
+        this.provincia = provincia;
+    }
+    getProvincia() {
+        return this.provincia;
+    }
+    setNumeroDomicilio(numeroDomicilio: string) {
+        this.numeroDomicilio = numeroDomicilio;
+    }
+    getNumeroDomicilio() {
+        return this.numeroDomicilio;
+    }
+    setBarrio(barrio: string) {
+        this.barrio = barrio;
+    }
+    getBarrio() {
+        return this.barrio;
+    }
+    
+
+  setRazonSocialEmpleador(razonSocial: string) {
+        this.razonSocialEmpleador = razonSocial;
+    }
+    getRazonSocialEmpleador() {
+        return this.razonSocialEmpleador;
+    }
+    setCuitEmpleador(cuit: string) {
+        this.cuitEmpleador = cuit;
+    }
+    getCuitEmpleador() {
+        return this.cuitEmpleador;
+    } 
+    setCargoEmpleador(cargo: string) {
+        this.cargoEmpleador = cargo;
+    } 
+    getCargoEmpleador() {
+        return this.cargoEmpleador;
+    }
+    setSectorEmpleador(sector: string) {
+        this.sectorEmpleador = sector;
+    }
+    getSectorEmpleador() {
+        return this.sectorEmpleador;
+    }
+    setCodigoPostalEmpleador(codigoPostal: string) {
+        this.codigoPostalEmpleador = codigoPostal;
+    }
+    getCodigoPostalEmpleador() {
+        return this.codigoPostalEmpleador;
+    }
+    setLocalidadEmpleador(localidad: string) {
+        this.localidadEmpleador = localidad;
+    }
+    getLocalidadEmpleador() {
+        return this.localidadEmpleador;
+    }
+    setProvinciaEmpleador(provincia: string) {
+        this.provinciaEmpleador = provincia;
+    }
+    getProvinciaEmpleador() {
+        return this.provinciaEmpleador;
+    }
+    setTelefonoEmpleador(telefono: string) {
+        this.telefonoEmpleador = telefono;
+    }
+    getTelefonoEmpleador() {
+        return this.telefonoEmpleador;
+    }
+
   setComercianteAprobadorId(id: number) {
         this.comercianteAprobadorId = id;
     }
@@ -521,24 +635,6 @@ export class SolicitudFormal {
   }
 
   /**
-   * Obtiene los datos del empleador del solicitante.
-   * 
-   * @returns string - Datos del empleador del solicitante.
-   */
-  public getDatosEmpleador(): string {
-    return this.datosEmpleador;
-  }
-
-  /**
-   * Establece los datos del empleador del solicitante.
-   * 
-   * @param datosEmpleador - Nuevos datos del empleador del solicitante.
-   */
-  public setDatosEmpleador(datosEmpleador: string): void {
-    this.datosEmpleador = datosEmpleador;
-  }
-
-  /**
    * Obtiene los referentes del solicitante.
    * 
    * @returns Referente[] - Array de referentes del solicitante.
@@ -629,30 +725,48 @@ export class SolicitudFormal {
    */
   public toPlainObject(): any {
     return {
-      id: this.id,
-      nombreCompleto: this.nombreCompleto,
-      apellido: this.apellido,
-      //cuil: this.cuil,
-      telefono: this.telefono,
-      email: this.email,
-      fechaSolicitud: this.fechaSolicitud,
-      recibo: this.recibo,
-      estado: this.estado,
-      aceptaTarjeta: this.aceptaTarjeta,
-      fechaNacimiento: this.fechaNacimiento,
-      domicilio: this.domicilio,
-      datosEmpleador: this.datosEmpleador,
-      referentes: this.referentes.map(r => r.toPlainObject()),
-      comentarios: this.comentarios,
-      analistaAprobadorId: this.analistaAprobadorId,
-      administradorAprobadorId: this.administradorAprobadorId,
-      importeNeto: this.importeNeto,
-      limiteBase: this.limiteBase,
-      limiteCompleto: this.limiteCompleto,
-      solicitaAmpliacionDeCredito: this.solicitaAmpliacionDeCredito,
-      nuevoLimiteCompletoSolicitado: this.nuevoLimiteCompletoSolicitado
+        id: this.id,
+        solicitudInicialId: this.solicitudInicialId,
+        comercianteId: this.comercianteId,
+        nombreCompleto: this.nombreCompleto,
+        apellido: this.apellido,
+        telefono: this.telefono,
+        email: this.email,
+        fechaSolicitud: this.fechaSolicitud,
+        recibo: this.recibo,
+        estado: this.estado,
+        aceptaTarjeta: this.aceptaTarjeta,
+        fechaNacimiento: this.fechaNacimiento,
+        domicilio: this.domicilio,
+        referentes: this.referentes.map(r => r.toPlainObject()),
+        comentarios: this.comentarios,
+        clienteId: this.clienteId,
+        fechaAprobacion: this.fechaAprobacion,
+        analistaAprobadorId: this.analistaAprobadorId,
+        administradorAprobadorId: this.administradorAprobadorId,
+        comercianteAprobadorId: this.comercianteAprobadorId,
+        importeNeto: this.importeNeto,
+        limiteBase: this.limiteBase,
+        limiteCompleto: this.limiteCompleto,
+        ponderador: this.ponderador,
+        solicitaAmpliacionDeCredito: this.solicitaAmpliacionDeCredito,
+        nuevoLimiteCompletoSolicitado: this.nuevoLimiteCompletoSolicitado,
+        razonSocialEmpleador: this.razonSocialEmpleador,
+        cuitEmpleador: this.cuitEmpleador,
+        cargoEmpleador: this.cargoEmpleador,
+        sectorEmpleador: this.sectorEmpleador,
+        codigoPostalEmpleador: this.codigoPostalEmpleador,
+        localidadEmpleador: this.localidadEmpleador,
+        provinciaEmpleador: this.provinciaEmpleador,
+        telefonoEmpleador: this.telefonoEmpleador,
+        sexo: this.sexo,
+        codigoPostal: this.codigoPostal,
+        localidad: this.localidad,
+        provincia: this.provincia,
+        numeroDomicilio: this.numeroDomicilio,
+        barrio: this.barrio
     };
-  }
+}
 
   /**
    * Crea una instancia de SolicitudFormal desde un mapa de datos.
@@ -663,37 +777,51 @@ export class SolicitudFormal {
    */
   public static fromMap(map: any): SolicitudFormal {
     return new SolicitudFormal(
-      map.id,
-      map.solicitudInicialId,
-      map.comercianteId,
-      map.nombreCompleto,
-      map.apellido,
-      map.cuil,
-      map.telefono,
-      map.email,
-      map.fechaSolicitud,
-      map.recibo,
-      map.estado,
-      map.aceptaTarjeta,
-      map.fechaNacimiento,
-      map.domicilio,
-      map.datosEmpleador,
-      map.referentes.map((r: any) => Referente.fromMap(r)),
-      map.importeNeto,
-      map.comentarios || [],
-      map.ponderador || 0,
-      map.solicitaAmpliacionDeCredito || false,
-      map.clienteId || 0,
-      map.fechaAprobacion,
-      map.analistaAprobadorId,
-      map.nuevoLimiteCompletoSolicitado
+        map.id,
+        map.solicitudInicialId,
+        map.comercianteId,
+        map.nombreCompleto,
+        map.apellido,
+        map.telefono,
+        map.email,
+        map.fechaSolicitud,
+        map.recibo,
+        map.estado,
+        map.aceptaTarjeta,
+        map.fechaNacimiento,
+        map.domicilio,
+        map.referentes.map((r: any) => Referente.fromMap(r)),
+        map.importeNeto,
+        map.comentarios || [],
+        map.ponderador || 0,
+        map.solicitaAmpliacionDeCredito || false,
+        map.clienteId,
+        map.razonSocialEmpleador,
+        map.cuitEmpleador,
+        map.cargoEmpleador,
+        map.sectorEmpleador,
+        map.codigoPostalEmpleador,
+        map.localidadEmpleador,
+        map.provinciaEmpleador,
+        map.telefonoEmpleador,
+        map.sexo,
+        map.codigoPostal,
+        map.localidad,
+        map.provincia,
+        map.numeroDomicilio,
+        map.barrio,
+        map.fechaAprobacion,
+        map.analistaAprobadorId,
+        map.administradorAprobadorId,
+        map.comercianteAprobadorId,
+        map.nuevoLimiteCompletoSolicitado
     );
-  }
+}
 
   // Métodos para cálculos financieros
     private calcularLimites(): void {
         this.limiteBase = this.importeNeto / 2;
-        this.limiteCompleto = this.limiteBase * this.ponderador;
+        this.limiteCompleto = this.importeNeto * this.ponderador;
     }
 
     public validarCompletitud(): void {
@@ -705,7 +833,6 @@ export class SolicitudFormal {
             this.recibo,
             this.fechaNacimiento,
             this.domicilio,
-            this.datosEmpleador,
             this.importeNeto
         ];
 

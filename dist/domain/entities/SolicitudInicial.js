@@ -40,7 +40,7 @@ class SolicitudInicial {
      * @param analistaAprobadorId - ID del analista que aprobó (opcional).
      * @param administradorAprobadorId - ID del administrador que aprobó (opcional).
      */
-    constructor(id, fechaCreacion, estado, clienteId, comercianteId, comentarios = [], analistaAprobadorId, administradorAprobadorId, dniCliente, cuilCliente) {
+    constructor(id, fechaCreacion, estado, clienteId, comercianteId, comentarios = [], analistaAprobadorId, administradorAprobadorId, dniCliente, cuilCliente, motivoRechazo) {
         this.id = id;
         this.fechaCreacion = fechaCreacion;
         this.estado = estado;
@@ -51,6 +51,35 @@ class SolicitudInicial {
         this.clienteId = clienteId;
         this.analistaAprobadorId = analistaAprobadorId;
         this.administradorAprobadorId = administradorAprobadorId;
+        this.motivoRechazo = motivoRechazo;
+    }
+    setComercianteNombre(nombre) {
+        this.comercianteNombre = nombre;
+    }
+    getComercianteNombre() {
+        return this.comercianteNombre;
+    }
+    setNombreComercio(nombreComercio) {
+        this.nombreComercio = nombreComercio;
+    }
+    getNombreComercio() {
+        return this.nombreComercio;
+    }
+    /**
+     * Obtiene el motivo de rechazo de la solicitud.
+     *
+     * @returns string | undefined - Motivo de rechazo o undefined si no fue rechazada.
+     */
+    getMotivoRechazo() {
+        return this.motivoRechazo;
+    }
+    /**
+     * Establece el motivo de rechazo de la solicitud.
+     *
+     * @param motivo - Nuevo motivo de rechazo.
+     */
+    setMotivoRechazo(motivo) {
+        this.motivoRechazo = motivo;
     }
     /**
      * Establece el ID del analista que aprobó la solicitud.
@@ -254,7 +283,10 @@ class SolicitudInicial {
             comentarios: this.comentarios,
             clienteId: this.clienteId,
             analistaAprobadorId: this.analistaAprobadorId,
-            administradorAprobadorId: this.administradorAprobadorId
+            administradorAprobadorId: this.administradorAprobadorId,
+            motivoRechazo: this.motivoRechazo,
+            comercianteNombre: this.comercianteNombre,
+            nombreComercio: this.nombreComercio
         };
     }
     /**
@@ -265,11 +297,7 @@ class SolicitudInicial {
      * @returns SolicitudInicial - Nueva instancia de SolicitudInicial.
      */
     static fromMap(map) {
-        return new SolicitudInicial(map.id, map.fechaCreacion, map.estado, 
-        //map.dniCliente,
-        map.clienteId || 0, 
-        //map.cuilCliente,
-        map.comercianteId, map.comentarios || [], map.analista_aprobador_id ? Number(map.analista_aprobador_id) : undefined, map.administrador_aprobador_id ? Number(map.administrador_aprobador_id) : undefined, map.dniCliente, map.cuilCliente);
+        return new SolicitudInicial(map.id, map.fechaCreacion, map.estado, map.clienteId || 0, map.comercianteId, map.comentarios || [], map.analista_aprobador_id ? Number(map.analista_aprobador_id) : undefined, map.administrador_aprobador_id ? Number(map.administrador_aprobador_id) : undefined, map.dniCliente, map.cuilCliente, map.motivoRechazo);
     }
 }
 exports.SolicitudInicial = SolicitudInicial;

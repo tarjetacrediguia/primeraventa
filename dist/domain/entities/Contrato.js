@@ -35,17 +35,17 @@ class Contrato {
      * @param estado - Estado actual del contrato.
      * @param solicitudFormalId - ID de la solicitud formal asociada.
      * @param clienteId - ID del cliente beneficiario.
-     * @param numeroTarjeta - Número de tarjeta asignado (opcional).
+     * @param numeroAutorizacion - Número de tarjeta asignado (opcional).
      * @param numeroCuenta - Número de cuenta asignado (opcional).
      */
-    constructor(id, fechaGeneracion, estado, solicitudFormalId, clienteId, monto, numeroTarjeta, numeroCuenta, comercioNombre, comercioFecha, comercioNAutorizacion, comercioProducto, comercioSucursal, clienteNombreCompleto, clienteSexo, clienteCuitOcuil, clienteTipoDocumento, clienteDni, clienteFechaNacimiento, clienteEstadoCivil, clienteNacionalidad, clienteDomicilioCalle, clienteDomicilioNumero, clienteDomicilioPiso, clienteDomicilioDepartamento, clienteDomicilioLocalidad, clienteDomicilioProvincia, clienteDomicilioBarrio, clienteDomicilioPais, clienteDomicilioCodigoPostal, clienteDomicilioCorreoElectronico, clienteDomicilioTelefonoFijo, clienteDomicilioTelefonoCelular, clienteDatosLaboralesActividad, clienteDatosLaboralesRazonSocial, clienteDatosLaboralesCuit, clienteDatosLaboralesInicioActividades, clienteDatosLaboralesCargo, clienteDatosLaboralesSector, clienteDatosLaboralesDomicilioLegal, clienteDatosLaboralesCodigoPostal, clienteDatosLaboralesLocalidad, clienteDatosLaboralesProvincia, clienteDatosLaboralesTelefono, tasasTeaCtfFinanciacion, tasasTnaCompensatoriosFinanciacion, tasasTnaPunitorios, tasasCtfFinanciacion, tasasComisionRenovacionAnual, tasasComisionMantenimiento, tasasComisionReposicionPlastico, tasasAtraso05_31Dias, tasasAtraso32_60Dias, tasasAtraso61_90Dias, tasasPagoFacil, tasasPlatiniumPagoFacil, tasasPlatiniumTeaCtfFinanciacion, tasasPlatiniumTnaCompensatoriosFinanciacion, tasasPlatiniumTnaPunitorios, tasasPlatiniumCtfFinanciacion, tasasPlatiniumComisionRenovacionAnual, tasasPlatiniumComisionMantenimiento, tasasPlatiniumComisionReposicionPlastico, tasasPlatiniumAtraso05_31Dias, tasasPlatiniumAtraso32_60Dias, tasasPlatiniumAtraso61_90Dias) {
+    constructor(id, fechaGeneracion, estado, solicitudFormalId, clienteId, monto, numeroAutorizacion, numeroCuenta, comercioNombre, comercioFecha, comercioNAutorizacion, comercioProducto, comercioSucursal, clienteNombreCompleto, clienteSexo, clienteCuitOcuil, clienteTipoDocumento, clienteDni, clienteFechaNacimiento, clienteEstadoCivil, clienteNacionalidad, clienteSueldoNeto, clienteDomicilioCalle, clienteDomicilioNumero, clienteDomicilioPiso, clienteDomicilioDepartamento, clienteDomicilioLocalidad, clienteDomicilioProvincia, clienteDomicilioBarrio, clienteDomicilioPais, clienteDomicilioCodigoPostal, clienteDomicilioCorreoElectronico, clienteDomicilioTelefonoFijo, clienteDomicilioTelefonoCelular, clienteReferente1Nombre, clienteReferente1Apellido, clienteReferente1Vinculo, clienteReferente1Telefono, clienteReferente2Nombre, clienteReferente2Apellido, clienteReferente2Vinculo, clienteReferente2Telefono, clienteDatosLaboralesActividad, clienteDatosLaboralesRazonSocial, clienteDatosLaboralesCuit, clienteDatosLaboralesInicioActividades, clienteDatosLaboralesCargo, clienteDatosLaboralesSector, clienteDatosLaboralesDomicilioLegal, clienteDatosLaboralesCodigoPostal, clienteDatosLaboralesLocalidad, clienteDatosLaboralesProvincia, clienteDatosLaboralesTelefono, tasasTeaCtfFinanciacion, tasasTnaCompensatoriosFinanciacion, tasasTnaPunitorios, tasasCtfFinanciacion, tasasComisionRenovacionAnual, tasasComisionMantenimiento, tasasComisionReposicionPlastico, tasasAtraso05_31Dias, tasasAtraso32_60Dias, tasasAtraso61_90Dias, tasasPagoFacil, tasasPlatiniumPagoFacil, tasasPlatiniumTeaCtfFinanciacion, tasasPlatiniumTnaCompensatoriosFinanciacion, tasasPlatiniumTnaPunitorios, tasasPlatiniumCtfFinanciacion, tasasPlatiniumComisionRenovacionAnual, tasasPlatiniumComisionMantenimiento, tasasPlatiniumComisionReposicionPlastico, tasasPlatiniumAtraso05_31Dias, tasasPlatiniumAtraso32_60Dias, tasasPlatiniumAtraso61_90Dias) {
         this.id = id;
         this.fechaGeneracion = fechaGeneracion;
         this.estado = estado;
         this.solicitudFormalId = solicitudFormalId;
         this.clienteId = clienteId;
         this.monto = monto;
-        this.numeroTarjeta = numeroTarjeta;
+        this.numeroAutorizacion = numeroAutorizacion;
         this.numeroCuenta = numeroCuenta;
         this.comercioNombre = comercioNombre;
         this.comercioFecha = comercioFecha;
@@ -60,6 +60,7 @@ class Contrato {
         this.clienteFechaNacimiento = clienteFechaNacimiento;
         this.clienteEstadoCivil = clienteEstadoCivil;
         this.clienteNacionalidad = clienteNacionalidad;
+        this.clienteSueldoNeto = clienteSueldoNeto;
         this.clienteDomicilioCalle = clienteDomicilioCalle;
         this.clienteDomicilioNumero = clienteDomicilioNumero;
         this.clienteDomicilioPiso = clienteDomicilioPiso;
@@ -72,6 +73,14 @@ class Contrato {
         this.clienteDomicilioCorreoElectronico = clienteDomicilioCorreoElectronico;
         this.clienteDomicilioTelefonoFijo = clienteDomicilioTelefonoFijo;
         this.clienteDomicilioTelefonoCelular = clienteDomicilioTelefonoCelular;
+        this.clienteReferente1Nombre = clienteReferente1Nombre;
+        this.clienteReferente1Apellido = clienteReferente1Apellido;
+        this.clienteReferente1Vinculo = clienteReferente1Vinculo;
+        this.clienteReferente1Telefono = clienteReferente1Telefono;
+        this.clienteReferente2Nombre = clienteReferente2Nombre;
+        this.clienteReferente2Apellido = clienteReferente2Apellido;
+        this.clienteReferente2Vinculo = clienteReferente2Vinculo;
+        this.clienteReferente2Telefono = clienteReferente2Telefono;
         this.clienteDatosLaboralesActividad = clienteDatosLaboralesActividad;
         this.clienteDatosLaboralesRazonSocial = clienteDatosLaboralesRazonSocial;
         this.clienteDatosLaboralesCuit = clienteDatosLaboralesCuit;
@@ -105,6 +114,60 @@ class Contrato {
         this.tasasPlatiniumAtraso05_31Dias = tasasPlatiniumAtraso05_31Dias;
         this.tasasPlatiniumAtraso32_60Dias = tasasPlatiniumAtraso32_60Dias;
         this.tasasPlatiniumAtraso61_90Dias = tasasPlatiniumAtraso61_90Dias;
+    }
+    getClienteSueldoNeto() {
+        return this.clienteSueldoNeto;
+    }
+    setClienteSueldoNeto(clienteSueldoNeto) {
+        this.clienteSueldoNeto = clienteSueldoNeto;
+    }
+    getClienteReferente1Nombre() {
+        return this.clienteReferente1Nombre;
+    }
+    setClienteReferente1Nombre(clienteReferente1Nombre) {
+        this.clienteReferente1Nombre = clienteReferente1Nombre;
+    }
+    getClienteReferente1Apellido() {
+        return this.clienteReferente1Apellido;
+    }
+    setClienteReferente1Apellido(clienteReferente1Apellido) {
+        this.clienteReferente1Apellido = clienteReferente1Apellido;
+    }
+    getClienteReferente1Vinculo() {
+        return this.clienteReferente1Vinculo;
+    }
+    setClienteReferente1Vinculo(clienteReferente1Vinculo) {
+        this.clienteReferente1Vinculo = clienteReferente1Vinculo;
+    }
+    getClienteReferente1Telefono() {
+        return this.clienteReferente1Telefono;
+    }
+    setClienteReferente1Telefono(clienteReferente1Telefono) {
+        this.clienteReferente1Telefono = clienteReferente1Telefono;
+    }
+    getClienteReferente2Nombre() {
+        return this.clienteReferente2Nombre;
+    }
+    setClienteReferente2Nombre(clienteReferente2Nombre) {
+        this.clienteReferente2Nombre = clienteReferente2Nombre;
+    }
+    getClienteReferente2Apellido() {
+        return this.clienteReferente2Apellido;
+    }
+    setClienteReferente2Apellido(clienteReferente2Apellido) {
+        this.clienteReferente2Apellido = clienteReferente2Apellido;
+    }
+    getClienteReferente2Vinculo() {
+        return this.clienteReferente2Vinculo;
+    }
+    setClienteReferente2Vinculo(clienteReferente2Vinculo) {
+        this.clienteReferente2Vinculo = clienteReferente2Vinculo;
+    }
+    getClienteReferente2Telefono() {
+        return this.clienteReferente2Telefono;
+    }
+    setClienteReferente2Telefono(clienteReferente2Telefono) {
+        this.clienteReferente2Telefono = clienteReferente2Telefono;
     }
     getMonto() {
         return this.monto;
@@ -553,16 +616,16 @@ class Contrato {
      *
      * @returns string | undefined - Número de tarjeta o undefined.
      */
-    getNumeroTarjeta() {
-        return this.numeroTarjeta;
+    getNumeroAutorizacion() {
+        return this.numeroAutorizacion;
     }
     /**
      * Establece el número de tarjeta asignado.
      *
-     * @param numeroTarjeta - Nuevo número de tarjeta.
+     * @param numeroAutorizacion - Nuevo número de tarjeta.
      */
-    setNumeroTarjeta(numeroTarjeta) {
-        this.numeroTarjeta = numeroTarjeta;
+    setNumeroAutorizacion(numeroAutorizacion) {
+        this.numeroAutorizacion = numeroAutorizacion;
     }
     /**
      * Obtiene el número de cuenta asignado.
@@ -618,7 +681,7 @@ class Contrato {
      * @returns string - Representación en string del contrato.
      */
     toString() {
-        return `Contrato [id=${this.id}, fechaGeneracion=${this.fechaGeneracion}, estado=${this.estado}, solicitudFormalId=${this.solicitudFormalId}, clienteId=${this.clienteId}, numeroTarjeta=${this.numeroTarjeta || 'No asignado'}, numeroCuenta=${this.numeroCuenta || 'No asignado'}]`;
+        return `Contrato [id=${this.id}, fechaGeneracion=${this.fechaGeneracion}, estado=${this.estado}, solicitudFormalId=${this.solicitudFormalId}, clienteId=${this.clienteId}, numeroAutorización=${this.numeroAutorizacion || 'No asignado'}, numeroCuenta=${this.numeroCuenta || 'No asignado'}]`;
     }
     /**
      * Convierte el contrato a un objeto plano.
@@ -634,7 +697,7 @@ class Contrato {
             solicitudFormalId: this.solicitudFormalId,
             clienteId: this.clienteId,
             monto: this.monto,
-            numeroTarjeta: this.numeroTarjeta,
+            numeroAutorizacion: this.numeroAutorizacion,
             numeroCuenta: this.numeroCuenta,
             comercioNombre: this.comercioNombre,
             comercioFecha: this.comercioFecha,
@@ -649,6 +712,7 @@ class Contrato {
             clienteFechaNacimiento: this.clienteFechaNacimiento,
             clienteEstadoCivil: this.clienteEstadoCivil,
             clienteNacionalidad: this.clienteNacionalidad,
+            clienteSueldoNeto: this.clienteSueldoNeto,
             clienteDomicilioCalle: this.clienteDomicilioCalle,
             clienteDomicilioNumero: this.clienteDomicilioNumero,
             clienteDomicilioPiso: this.clienteDomicilioPiso,
@@ -661,6 +725,14 @@ class Contrato {
             clienteDomicilioCorreoElectronico: this.clienteDomicilioCorreoElectronico,
             clienteDomicilioTelefonoFijo: this.clienteDomicilioTelefonoFijo,
             clienteDomicilioTelefonoCelular: this.clienteDomicilioTelefonoCelular,
+            clienteReferente1Nombre: this.clienteReferente1Nombre,
+            clienteReferente1Apellido: this.clienteReferente1Apellido,
+            clienteReferente1Vinculo: this.clienteReferente1Vinculo,
+            clienteReferente1Telefono: this.clienteReferente1Telefono,
+            clienteReferente2Nombre: this.clienteReferente2Nombre,
+            clienteReferente2Apellido: this.clienteReferente2Apellido,
+            clienteReferente2Vinculo: this.clienteReferente2Vinculo,
+            clienteReferente2Telefono: this.clienteReferente2Telefono,
             clienteDatosLaboralesActividad: this.clienteDatosLaboralesActividad,
             clienteDatosLaboralesRazonSocial: this.clienteDatosLaboralesRazonSocial,
             clienteDatosLaboralesCuit: this.clienteDatosLaboralesCuit,
@@ -693,7 +765,7 @@ class Contrato {
             tasasPlatiniumComisionReposicionPlastico: this.tasasPlatiniumComisionReposicionPlastico,
             tasasPlatiniumAtraso05_31Dias: this.tasasPlatiniumAtraso05_31Dias,
             tasasPlatiniumAtraso32_60Dias: this.tasasPlatiniumAtraso32_60Dias,
-            tasasPlatiniumAtraso61_90Dias: this.tasasPlatiniumAtraso61_90Dias
+            tasasPlatiniumAtraso61_90Dias: this.tasasPlatiniumAtraso61_90Dias,
         };
     }
     /**
@@ -707,7 +779,7 @@ class Contrato {
         const conjuntoTasas = map.conjuntoTasas
             ? ConjuntoTasas_1.ConjuntoTasas.fromMap(map.conjuntoTasas)
             : undefined;
-        return new Contrato(map.id, map.fechaGeneracion, map.estado, map.solicitudFormalId, map.clienteId, map.monto ? parseFloat(map.monto) : undefined, map.numeroTarjeta, map.numeroCuenta, map.comercio_nombre, map.comercio_fecha, map.comercio_n_autorizacion, map.comercio_producto, map.comercio_sucursal, map.cliente_nombre_completo, map.cliente_sexo, map.cliente_cuitocuil, map.cliente_tipo_documento, map.cliente_dni, map.cliente_fecha_nacimiento, map.cliente_estado_civil, map.cliente_nacionalidad, map.cliente_domicilio_calle, map.cliente_domicilio_numero, map.cliente_domicilio_piso, map.cliente_domicilio_departamento, map.cliente_domicilio_localidad, map.cliente_domicilio_provincia, map.cliente_domicilio_barrio, map.cliente_domicilio_pais, map.cliente_domicilio_codigo_postal, map.cliente_domicilio_correo_electronico, map.cliente_domicilio_telefono_fijo, map.cliente_domicilio_telefono_celular, map.cliente_datos_laborales_actividad, map.cliente_datos_laborales_razon_social, map.cliente_datos_laborales_cuit, map.cliente_datos_laborales_inicio_actividades, map.cliente_datos_laborales_cargo, map.cliente_datos_laborales_sector, map.cliente_datos_laborales_domicilio_legal, map.cliente_datos_laborales_codigo_postal, map.cliente_datos_laborales_localidad, map.cliente_datos_laborales_provincia, map.cliente_datos_laborales_telefono, map.tasas_tea_ctf_financiacion ? parseFloat(map.tasas_tea_ctf_financiacion) : undefined, map.tasas_tna_compensatorios_financiacion ? parseFloat(map.tasas_tna_compensatorios_financiacion) : undefined, map.tasas_tna_punitorios ? parseFloat(map.tasas_tna_punitorios) : undefined, map.tasas_ctf_financiacion ? parseFloat(map.tasas_ctf_financiacion) : undefined, map.tasas_comision_renovacion_anual ? parseFloat(map.tasas_comision_renovacion_anual) : undefined, map.tasas_comision_mantenimiento ? parseFloat(map.tasas_comision_mantenimiento) : undefined, map.tasas_comision_reposicion_plastico ? parseFloat(map.tasas_comision_reposicion_plastico) : undefined, map.tasas_atraso_05_31_dias ? parseFloat(map.tasas_atraso_05_31_dias) : undefined, map.tasas_atraso_32_60_dias ? parseFloat(map.tasas_atraso_32_60_dias) : undefined, map.tasas_atraso_61_90_dias ? parseFloat(map.tasas_atraso_61_90_dias) : undefined, map.tasas_pago_facil ? parseFloat(map.tasas_pago_facil) : undefined, map.tasas_platinium_pago_facil ? parseFloat(map.tasas_platinium_pago_facil) : undefined, map.tasas_platinium_tea_ctf_financiacion ? parseFloat(map.tasas_platinium_tea_ctf_financiacion) : undefined, map.tasas_platinium_tna_compensatorios_financiacion ? parseFloat(map.tasas_platinium_tna_compensatorios_financiacion) : undefined, map.tasas_platinium_tna_punitorios ? parseFloat(map.tasas_platinium_tna_punitorios) : undefined, map.tasas_platinium_ctf_financiacion ? parseFloat(map.tasas_platinium_ctf_financiacion) : undefined, map.tasas_platinium_comision_renovacion_anual ? parseFloat(map.tasas_platinium_comision_renovacion_anual) : undefined, map.tasas_platinium_comision_mantenimiento ? parseFloat(map.tasas_platinium_comision_mantenimiento) : undefined, map.tasas_platinium_comision_reposicion_plastico ? parseFloat(map.tasas_platinium_comision_reposicion_plastico) : undefined, map.tasas_platinium_atraso_05_31_dias ? parseFloat(map.tasas_platinium_atraso_05_31_dias) : undefined, map.tasas_platinium_atraso_32_60_dias ? parseFloat(map.tasas_platinium_atraso_32_60_dias) : undefined, map.tasas_platinium_atraso_61_90_dias ? parseFloat(map.tasas_platinium_atraso_61_90_dias) : undefined);
+        return new Contrato(map.id, map.fechaGeneracion, map.estado, map.solicitudFormalId, map.clienteId, map.monto ? parseFloat(map.monto) : undefined, map.numeroAutorizacion, map.numeroCuenta, map.comercio_nombre, map.comercio_fecha, map.comercio_n_autorizacion, map.comercio_producto, map.comercio_sucursal, map.cliente_nombre_completo, map.cliente_sexo, map.cliente_cuitocuil, map.cliente_tipo_documento, map.cliente_dni, map.cliente_fecha_nacimiento, map.cliente_estado_civil, map.cliente_nacionalidad, map.cliente_Sueldo_Neto, map.cliente_domicilio_calle, map.cliente_domicilio_numero, map.cliente_domicilio_piso, map.cliente_domicilio_departamento, map.cliente_domicilio_localidad, map.cliente_domicilio_provincia, map.cliente_domicilio_barrio, map.cliente_domicilio_pais, map.cliente_domicilio_codigo_postal, map.cliente_domicilio_correo_electronico, map.cliente_domicilio_telefono_fijo, map.cliente_domicilio_telefono_celular, map.cliente_referente1_nombre, map.cliente_referente1_apellido, map.cliente_referente1_vinculo, map.cliente_referente1_telefono, map.cliente_referente2_nombre, map.cliente_referente2_apellido, map.cliente_referente2_vinculo, map.cliente_referente2_telefono, map.cliente_datos_laborales_actividad, map.cliente_datos_laborales_razon_social, map.cliente_datos_laborales_cuit, map.cliente_datos_laborales_inicio_actividades, map.cliente_datos_laborales_cargo, map.cliente_datos_laborales_sector, map.cliente_datos_laborales_domicilio_legal, map.cliente_datos_laborales_codigo_postal, map.cliente_datos_laborales_localidad, map.cliente_datos_laborales_provincia, map.cliente_datos_laborales_telefono, map.tasas_tea_ctf_financiacion ? parseFloat(map.tasas_tea_ctf_financiacion) : undefined, map.tasas_tna_compensatorios_financiacion ? parseFloat(map.tasas_tna_compensatorios_financiacion) : undefined, map.tasas_tna_punitorios ? parseFloat(map.tasas_tna_punitorios) : undefined, map.tasas_ctf_financiacion ? parseFloat(map.tasas_ctf_financiacion) : undefined, map.tasas_comision_renovacion_anual ? parseFloat(map.tasas_comision_renovacion_anual) : undefined, map.tasas_comision_mantenimiento ? parseFloat(map.tasas_comision_mantenimiento) : undefined, map.tasas_comision_reposicion_plastico ? parseFloat(map.tasas_comision_reposicion_plastico) : undefined, map.tasas_atraso_05_31_dias ? parseFloat(map.tasas_atraso_05_31_dias) : undefined, map.tasas_atraso_32_60_dias ? parseFloat(map.tasas_atraso_32_60_dias) : undefined, map.tasas_atraso_61_90_dias ? parseFloat(map.tasas_atraso_61_90_dias) : undefined, map.tasas_pago_facil ? parseFloat(map.tasas_pago_facil) : undefined, map.tasas_platinium_pago_facil ? parseFloat(map.tasas_platinium_pago_facil) : undefined, map.tasas_platinium_tea_ctf_financiacion ? parseFloat(map.tasas_platinium_tea_ctf_financiacion) : undefined, map.tasas_platinium_tna_compensatorios_financiacion ? parseFloat(map.tasas_platinium_tna_compensatorios_financiacion) : undefined, map.tasas_platinium_tna_punitorios ? parseFloat(map.tasas_platinium_tna_punitorios) : undefined, map.tasas_platinium_ctf_financiacion ? parseFloat(map.tasas_platinium_ctf_financiacion) : undefined, map.tasas_platinium_comision_renovacion_anual ? parseFloat(map.tasas_platinium_comision_renovacion_anual) : undefined, map.tasas_platinium_comision_mantenimiento ? parseFloat(map.tasas_platinium_comision_mantenimiento) : undefined, map.tasas_platinium_comision_reposicion_plastico ? parseFloat(map.tasas_platinium_comision_reposicion_plastico) : undefined, map.tasas_platinium_atraso_05_31_dias ? parseFloat(map.tasas_platinium_atraso_05_31_dias) : undefined, map.tasas_platinium_atraso_32_60_dias ? parseFloat(map.tasas_platinium_atraso_32_60_dias) : undefined, map.tasas_platinium_atraso_61_90_dias ? parseFloat(map.tasas_platinium_atraso_61_90_dias) : undefined);
     }
     /**
      * Genera el PDF del contrato.

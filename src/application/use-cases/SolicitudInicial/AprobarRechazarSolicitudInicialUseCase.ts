@@ -77,7 +77,7 @@ export class AprobarRechazarSolicitudInicialUseCase {
             });
             throw new Error("Solicitud inicial no encontrada");
         }
-
+/*
         if (solicitud.getEstado() !== "pendiente") {
             await this.historialRepository.registrarEvento({
                 usuarioId: aprobadorId,
@@ -92,7 +92,7 @@ export class AprobarRechazarSolicitudInicialUseCase {
             });
             throw new Error("Solo se pueden aprobar solicitudes pendientes");
         }
-
+*/
         if (esAdministrador) {
         solicitud.setAdministradorAprobadorId(aprobadorId);
     } else {
@@ -154,11 +154,11 @@ export class AprobarRechazarSolicitudInicialUseCase {
             });
             throw new Error("Solicitud inicial no encontrada");
         }
-
+/*
         if (solicitud.getEstado() !== "pendiente") {
             throw new Error("Solo se pueden rechazar solicitudes pendientes");
         }
-
+*/
         if (!comentario || comentario.trim().length < 10) {
             await this.historialRepository.registrarEvento({
                 usuarioId: aprobadorId,
@@ -181,6 +181,7 @@ export class AprobarRechazarSolicitudInicialUseCase {
         const cliente = await this.clienteRepository.findById(clienteId);
         const rol = esAdministrador ? 'administrador' : 'analista';
         solicitud.agregarComentario(`Rechazo por ${rol}: ${comentario}`);
+        solicitud.setMotivoRechazo(comentario);
         solicitud.setEstado("rechazada");
         
         const solicitudActualizada = await this.repository.updateSolicitudInicialAprobaciónRechazo(solicitud,cliente);

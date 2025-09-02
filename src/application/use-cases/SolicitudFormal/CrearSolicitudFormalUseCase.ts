@@ -93,12 +93,28 @@ export class CrearSolicitudFormalUseCase {
             aceptaTarjeta: boolean;
             fechaNacimiento: Date;
             domicilio: string;
-            datosEmpleador: string;
+            numeroDomicilio: string;
             referentes: any[];
             importeNeto: number;
+            sexo: string;
+            codigoPostal: string;
+            localidad: string;
+            provincia: string;
+            barrio: string;
+
         },
         comentarioInicial: string = "Solicitud creada por comerciante",
-        solicitaAmpliacionDeCredito:boolean
+        solicitaAmpliacionDeCredito:boolean,
+        datosEmpleador:{
+            razonSocialEmpleador: string,
+            cuitEmpleador: string,
+            cargoEmpleador: string,
+            sectorEmpleador: string,
+            codigoPostalEmpleador: string,
+            localidadEmpleador: string,
+            provinciaEmpleador: string,
+            telefonoEmpleador: string
+        }
     ): Promise<SolicitudFormal> {
         try {
             // Verificar crédito activo
@@ -271,7 +287,6 @@ export class CrearSolicitudFormalUseCase {
                 comercianteId,
                 datosSolicitud.nombreCompleto,
                 datosSolicitud.apellido,
-                //datosSolicitud.cuil,
                 datosSolicitud.telefono,
                 datosSolicitud.email,
                 new Date(),
@@ -282,17 +297,28 @@ export class CrearSolicitudFormalUseCase {
                 datosSolicitud.aceptaTarjeta,
                 datosSolicitud.fechaNacimiento,
                 datosSolicitud.domicilio,
-                datosSolicitud.datosEmpleador,
                 datosSolicitud.referentes,
-                datosSolicitud.importeNeto,
+                datosSolicitud.importeNeto, 
                 [comentarioInicial],
                 ponderador,
                 solicitaAmpliacionDeCredito,
-                0 // clienteId (temporal)
-                
-
-                
+                0,
+                datosEmpleador.razonSocialEmpleador,
+                datosEmpleador.cuitEmpleador,
+                datosEmpleador.cargoEmpleador,
+                datosEmpleador.sectorEmpleador,
+                datosEmpleador.codigoPostalEmpleador,
+                datosEmpleador.localidadEmpleador,
+                datosEmpleador.provinciaEmpleador,
+                datosEmpleador.telefonoEmpleador,
+                datosSolicitud.sexo,
+                datosSolicitud.codigoPostal,
+                datosSolicitud.localidad,
+                datosSolicitud.provincia,
+                datosSolicitud.numeroDomicilio,
+                datosSolicitud.barrio
             );
+            console.log("Solicitud formal creada en memoria:", solicitudFormal);
             // Validar completitud de datos
             solicitudFormal.validarCompletitud();
             // 6. Vincular con solicitud inicial (propiedad adicional necesaria)
@@ -418,7 +444,6 @@ export class CrearSolicitudFormalUseCase {
         }
         const idCliente = solicitudInicial.getClienteId();
         const cliente = await this.clienteRepository.findById(idCliente);
-        console.log("Cliente encontrado:", cliente);
         //verificar si el cliente tiene un contrato generado
         const contrato = await this.contratoRepository.getContratoById(cliente.getId().toString());
         // Verificar cada solicitud formal para ver si tiene un contrato activo asociado

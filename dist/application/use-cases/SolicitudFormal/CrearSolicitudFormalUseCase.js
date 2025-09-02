@@ -97,7 +97,7 @@ class CrearSolicitudFormalUseCase {
      * @throws Error - Si no se cumplen las validaciones o ocurre un error en el proceso
      */
     execute(solicitudInicialId_1, comercianteId_1, datosSolicitud_1) {
-        return __awaiter(this, arguments, void 0, function* (solicitudInicialId, comercianteId, datosSolicitud, comentarioInicial = "Solicitud creada por comerciante", solicitaAmpliacionDeCredito) {
+        return __awaiter(this, arguments, void 0, function* (solicitudInicialId, comercianteId, datosSolicitud, comentarioInicial = "Solicitud creada por comerciante", solicitaAmpliacionDeCredito, datosEmpleador) {
             try {
                 // Verificar crédito activo
                 const tieneCredito = yield this.tieneCreditoActivo(solicitudInicialId);
@@ -248,12 +248,10 @@ class CrearSolicitudFormalUseCase {
                 }
                 // 5. Crear la solicitud formal con comentario inicial
                 const solicitudFormal = new SolicitudFormal_1.SolicitudFormal(0, // ID se asignará automáticamente
-                solicitudInicialId, comercianteId, datosSolicitud.nombreCompleto, datosSolicitud.apellido, 
-                //datosSolicitud.cuil,
-                datosSolicitud.telefono, datosSolicitud.email, new Date(), typeof datosSolicitud.recibo === "string"
+                solicitudInicialId, comercianteId, datosSolicitud.nombreCompleto, datosSolicitud.apellido, datosSolicitud.telefono, datosSolicitud.email, new Date(), typeof datosSolicitud.recibo === "string"
                     ? Buffer.from(datosSolicitud.recibo, "base64")
-                    : datosSolicitud.recibo, "pendiente", datosSolicitud.aceptaTarjeta, datosSolicitud.fechaNacimiento, datosSolicitud.domicilio, datosSolicitud.datosEmpleador, datosSolicitud.referentes, datosSolicitud.importeNeto, [comentarioInicial], ponderador, solicitaAmpliacionDeCredito, 0 // clienteId (temporal)
-                );
+                    : datosSolicitud.recibo, "pendiente", datosSolicitud.aceptaTarjeta, datosSolicitud.fechaNacimiento, datosSolicitud.domicilio, datosSolicitud.referentes, datosSolicitud.importeNeto, [comentarioInicial], ponderador, solicitaAmpliacionDeCredito, 0, datosEmpleador.razonSocialEmpleador, datosEmpleador.cuitEmpleador, datosEmpleador.cargoEmpleador, datosEmpleador.sectorEmpleador, datosEmpleador.codigoPostalEmpleador, datosEmpleador.localidadEmpleador, datosEmpleador.provinciaEmpleador, datosEmpleador.telefonoEmpleador, datosSolicitud.sexo, datosSolicitud.codigoPostal, datosSolicitud.localidad, datosSolicitud.provincia, datosSolicitud.numeroDomicilio, datosSolicitud.barrio);
+                console.log("Solicitud formal creada en memoria:", solicitudFormal);
                 // Validar completitud de datos
                 solicitudFormal.validarCompletitud();
                 // 6. Vincular con solicitud inicial (propiedad adicional necesaria)
@@ -375,7 +373,6 @@ class CrearSolicitudFormalUseCase {
             }
             const idCliente = solicitudInicial.getClienteId();
             const cliente = yield this.clienteRepository.findById(idCliente);
-            console.log("Cliente encontrado:", cliente);
             //verificar si el cliente tiene un contrato generado
             const contrato = yield this.contratoRepository.getContratoById(cliente.getId().toString());
             // Verificar cada solicitud formal para ver si tiene un contrato activo asociado

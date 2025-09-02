@@ -13,7 +13,6 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.crearYAprobarSolicitudFormal = exports.rechazarSolicitudInicial = exports.aprobarSolicitudInicial = exports.listarSolicitudesFormalesByComerciante = exports.obtenerSolicitudFormalPorIdComerciante = exports.obtenerSolicitudFormalPoridSolicitudInicial = exports.obtenerSolicitudFormalAnalista = exports.listarSolicitudesFormalesByComercianteYEstado = exports.listarSolicitudesInicialesByComerciante = exports.obtenerDetalleSolicitudFormal = exports.actualizarSolicitudFormal = exports.listarSolicitudesFormales = exports.rechazarSolicitudFormal = exports.aprobarSolicitudFormal = exports.obtenerReciboSolicitudFormal = exports.crearSolicitudFormal = exports.verificarEstadoCrediticio = exports.listarSolicitudesIniciales = exports.crearSolicitudInicial = void 0;
 const CrearSolicitudInicialUseCase_1 = require("../../../application/use-cases/SolicitudInicial/CrearSolicitudInicialUseCase");
 const GetSolicitudesInicialesByEstadoUseCase_1 = require("../../../application/use-cases/SolicitudInicial/GetSolicitudesInicialesByEstadoUseCase");
-const VerificarAprobacionSolicitudInicialUseCase_1 = require("../../../application/use-cases/SolicitudInicial/VerificarAprobacionSolicitudInicialUseCase");
 const CrearSolicitudFormalUseCase_1 = require("../../../application/use-cases/SolicitudFormal/CrearSolicitudFormalUseCase");
 const AprobarSolicitudesFormalesUseCase_1 = require("../../../application/use-cases/SolicitudFormal/AprobarSolicitudesFormalesUseCase");
 const GetSolicitudesFormalesByEstadoUseCase_1 = require("../../../application/use-cases/SolicitudFormal/GetSolicitudesFormalesByEstadoUseCase");
@@ -40,6 +39,9 @@ const CrearYAprobarSolicitudFormalUseCase_1 = require("../../../application/use-
 const GetSolicitudesInicialesByComercianteUseCase_1 = require("../../../application/use-cases/SolicitudInicial/GetSolicitudesInicialesByComercianteUseCase");
 const GetSolicitudFormalBySolicitudInicialIdUseCase_1 = require("../../../application/use-cases/SolicitudFormal/GetSolicitudFormalBySolicitudInicialIdUseCase");
 const nosisAdapter_1 = require("../../adapters/nosis/nosisAdapter");
+const mockNosisAdapter_1 = require("../../adapters/nosis/mockNosisAdapter");
+const GetComercianteByIdUseCase_1 = require("../../../application/use-cases/Comerciante/GetComercianteByIdUseCase");
+const ComercianteRepositoryAdapter_1 = require("../../adapters/repository/ComercianteRepositoryAdapter");
 // Inyección de dependencias (deberían venir de un contenedor DI)
 const verazService = new VerazAdapter_1.VerazAdapter();
 const notificationService = new NotificationAdapter_1.NotificationAdapter();
@@ -53,13 +55,15 @@ const analistaRepository = new AnalistaRepositoryAdapter_1.AnalistaRepositoryAda
 const getSolicitudesInicialesByComerciante = new GetSolicitudesInicialesByComercianteUseCase_1.GetSolicitudesInicialesByComercianteUseCase(solicitudInicialRepo);
 const configuracionRepo = new ConfiguracionRepositoryAdapter_1.ConfiguracionRepositoryAdapter();
 const compraRepository = new CompraRepositoryAdapter_1.CompraRepositoryAdapter();
-const nosisAdapter = new nosisAdapter_1.NosisAdapter('https://ws01.nosis.com/rest/variables', process.env.API_KEY || '');
+const nosisAdapter = process.env.MODO_TEST === "true"
+    ? new mockNosisAdapter_1.MockNosisAdapter()
+    : new nosisAdapter_1.NosisAdapter('https://ws01.nosis.com/rest/variables', process.env.API_KEY || '');
 // Casos de uso inicializados
 const crearSolicitudInicialUC = new CrearSolicitudInicialUseCase_1.CrearSolicitudInicialUseCase(solicitudInicialRepo, contratoRepo, solicitudFormalRepo, notificationService, clienteRepository, historialRepository, analistaRepository, nosisAdapter, process.env.NOSIS_AUTO === 'true' // Modo automático de Veraz
 );
+const getComerciantePorIdUC = new GetComercianteByIdUseCase_1.GetComercianteByIdUseCase(new ComercianteRepositoryAdapter_1.ComercianteRepositoryAdapter());
 const aprobarRechazarSolicitudInicialUC = new AprobarRechazarSolicitudInicialUseCase_1.AprobarRechazarSolicitudInicialUseCase(solicitudInicialRepo, notificationService, historialRepository, clienteRepository);
 const getSolicitudesInicialesByEstadoUC = new GetSolicitudesInicialesByEstadoUseCase_1.GetSolicitudesInicialesByEstadoUseCase(solicitudInicialRepo);
-const verificarAprobacionUC = new VerificarAprobacionSolicitudInicialUseCase_1.VerificarAprobacionSolicitudInicialUseCase(solicitudInicialRepo, verazService, notificationService, clienteRepository);
 const crearSolicitudFormalUC = new CrearSolicitudFormalUseCase_1.CrearSolicitudFormalUseCase(solicitudInicialRepo, solicitudFormalRepo, permisoRepo, notificationService, new AnalistaRepositoryAdapter_1.AnalistaRepositoryAdapter(), contratoRepo, clienteRepository, historialRepository, configuracionRepo);
 const aprobarSolicitudesUC = new AprobarSolicitudesFormalesUseCase_1.AprobarSolicitudesFormalesUseCase(solicitudFormalRepo, notificationService, historialRepository, compraRepository);
 const crearYAprobarSolicitudFormalUC = new CrearYAprobarSolicitudFormalUseCase_1.CrearYAprobarSolicitudFormalUseCase(crearSolicitudFormalUC, aprobarSolicitudesUC, permisoRepo);
@@ -83,7 +87,8 @@ const crearSolicitudInicial = (req, res) => __awaiter(void 0, void 0, void 0, fu
         }
         const comercianteId = Number(req.user.id);
         const result = yield crearSolicitudInicialUC.execute(dniCliente, cuilCliente, comercianteId);
-        const response = Object.assign(Object.assign({}, result.solicitud.toPlainObject()), { nosisData: result.nosisData });
+        const nombreComercio = yield getComerciantePorIdUC.execute(comercianteId).then(c => c ? c.getNombreComercio() : 'N/A');
+        const response = Object.assign(Object.assign({}, result.solicitud.toPlainObject()), { nosisData: result.nosisData, motivoRechazo: result.motivoRechazo, reglasFallidas: result.reglasFallidas, nombreComercio: nombreComercio });
         res.status(201).json(response);
     }
     catch (error) {
@@ -155,7 +160,7 @@ exports.verificarEstadoCrediticio = verificarEstadoCrediticio;
 const crearSolicitudFormal = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     //TODO: cambiar nombre de cliente a DatosCliente para no generar confusión con el cliente de la API
     try {
-        const { idSolicitudInicial, cliente, referentes, importeNeto, solicitaAmpliacionDeCredito, comentarioInicial } = req.body;
+        const { idSolicitudInicial, cliente, referentes, importeNeto, solicitaAmpliacionDeCredito, comentarioInicial, datosEmpleador } = req.body;
         // Validar que el recibo sea proporcionado
         if (!cliente.recibo) {
             return res.status(400).json({ error: 'El recibo es obligatorio' });
@@ -190,7 +195,6 @@ const crearSolicitudFormal = (req, res) => __awaiter(void 0, void 0, void 0, fun
             return res.status(401).json({ error: 'Usuario no autenticado' });
         }
         const comercianteId = Number(req.user.id);
-        console.log(cliente);
         const solicitudFormal = yield crearSolicitudFormalUC.execute(idSolicitudInicial, comercianteId, {
             nombreCompleto: cliente.nombreCompleto,
             apellido: cliente.apellido,
@@ -200,10 +204,15 @@ const crearSolicitudFormal = (req, res) => __awaiter(void 0, void 0, void 0, fun
             aceptaTarjeta: cliente.aceptaTarjeta,
             fechaNacimiento: new Date(cliente.fechaNacimiento),
             domicilio: cliente.domicilio,
-            datosEmpleador: cliente.datosEmpleador,
+            numeroDomicilio: cliente.numeroDomicilio,
             referentes: referentesInstances,
-            importeNeto: importeNeto
-        }, comentarioInicial, solicitaAmpliacionDeCredito);
+            importeNeto: importeNeto,
+            sexo: cliente.sexo,
+            codigoPostal: cliente.codigoPostal,
+            localidad: cliente.localidad,
+            provincia: cliente.provincia,
+            barrio: cliente.barrio
+        }, comentarioInicial, solicitaAmpliacionDeCredito, datosEmpleador);
         res.status(201).json(solicitudFormal);
     }
     catch (error) {
@@ -303,7 +312,7 @@ exports.obtenerReciboSolicitudFormal = obtenerReciboSolicitudFormal;
 const aprobarSolicitudFormal = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const id = req.params.id;
-        const { generarTarjeta, comentario } = req.body;
+        const { comentario } = req.body;
         if (!req.user || !req.user.id || !req.user.rol) {
             return res.status(401).json({ error: 'Usuario no autenticado' });
         }
@@ -411,6 +420,7 @@ const actualizarSolicitudFormal = (req, res) => __awaiter(void 0, void 0, void 0
         const updates = req.body;
         const userId = parseInt((_b = (_a = req.user) === null || _a === void 0 ? void 0 : _a.id) !== null && _b !== void 0 ? _b : '0', 10);
         const userRole = (_c = req.user) === null || _c === void 0 ? void 0 : _c.rol;
+        console.log('Actualizando solicitud formal ID:', id, 'con datos:', updates, 'por usuario ID:', userId, 'rol:', userRole);
         const solicitudExistente = yield getSolicitudFormalByIdUC.execute(id);
         if (!solicitudExistente) {
             return res.status(404).json({ error: 'Solicitud no encontrada' });
@@ -443,8 +453,18 @@ const actualizarSolicitudFormal = (req, res) => __awaiter(void 0, void 0, void 0
                 solicitudExistente.setAceptaTarjeta(cliente.aceptaTarjeta);
             if (cliente.domicilio !== undefined)
                 solicitudExistente.setDomicilio(cliente.domicilio);
-            if (cliente.datosEmpleador !== undefined)
-                solicitudExistente.setDatosEmpleador(cliente.datosEmpleador);
+            if (cliente.sexo !== undefined)
+                solicitudExistente.setSexo(cliente.sexo);
+            if (cliente.codigoPostal !== undefined)
+                solicitudExistente.setCodigoPostal(cliente.codigoPostal);
+            if (cliente.localidad !== undefined)
+                solicitudExistente.setLocalidad(cliente.localidad);
+            if (cliente.provincia !== undefined)
+                solicitudExistente.setProvincia(cliente.provincia);
+            if (cliente.numeroDomicilio !== undefined)
+                solicitudExistente.setNumeroDomicilio(cliente.numeroDomicilio);
+            if (cliente.barrio !== undefined)
+                solicitudExistente.setBarrio(cliente.barrio);
             // Manejar conversión de fecha
             if (cliente.fechaNacimiento !== undefined) {
                 solicitudExistente.setFechaNacimiento(new Date(cliente.fechaNacimiento));
@@ -459,6 +479,27 @@ const actualizarSolicitudFormal = (req, res) => __awaiter(void 0, void 0, void 0
                 solicitudExistente.setRecibo(reciboBuffer);
             }
         }
+        // Actualizar campos del empleador
+        if (updates.datosEmpleador) {
+            const empleador = updates.datosEmpleador;
+            if (empleador.razonSocialEmpleador !== undefined)
+                solicitudExistente.setRazonSocialEmpleador(empleador.razonSocialEmpleador);
+            if (empleador.cuitEmpleador !== undefined)
+                solicitudExistente.setCuitEmpleador(empleador.cuitEmpleador);
+            if (empleador.cargoEmpleador !== undefined)
+                solicitudExistente.setCargoEmpleador(empleador.cargoEmpleador);
+            if (empleador.sectorEmpleador !== undefined)
+                solicitudExistente.setSectorEmpleador(empleador.sectorEmpleador);
+            if (empleador.codigoPostalEmpleador !== undefined)
+                solicitudExistente.setCodigoPostalEmpleador(empleador.codigoPostalEmpleador);
+            if (empleador.localidadEmpleador !== undefined)
+                solicitudExistente.setLocalidadEmpleador(empleador.localidadEmpleador);
+            if (empleador.provinciaEmpleador !== undefined)
+                solicitudExistente.setProvinciaEmpleador(empleador.provinciaEmpleador);
+            if (empleador.telefonoEmpleador !== undefined)
+                solicitudExistente.setTelefonoEmpleador(empleador.telefonoEmpleador);
+        }
+        console.log('Solicitud antes de actualizar:', solicitudExistente.toPlainObject());
         const solicitudActualizada = yield updateSolicitudFormalUC.execute(solicitudExistente, userId);
         res.status(200).json(solicitudActualizada);
     }
@@ -555,6 +596,7 @@ const obtenerSolicitudFormalAnalista = (req, res) => __awaiter(void 0, void 0, v
     try {
         const idSolicitudInicial = Number(req.params.idSolicitudInicial);
         const solicitud = yield getSolicitudFormalBySolicitudInicialIdUC.execute(idSolicitudInicial);
+        console.log('Solicitud formal obtenida:', solicitud);
         if (!solicitud) {
             return res.status(404).json({ error: 'Solicitud formal no encontrada' });
         }
@@ -571,7 +613,6 @@ const obtenerSolicitudFormalPoridSolicitudInicial = (req, res) => __awaiter(void
     var _a;
     try {
         const idSolicitudInicial = Number(req.params.idSolicitudInicial); // Ahora es el ID de la solicitud inicial
-        console.log(idSolicitudInicial);
         const solicitud = yield getSolicitudFormalBySolicitudInicialIdUC.execute(idSolicitudInicial);
         if (!solicitud) {
             return res.status(404).json({ error: 'Solicitud formal no encontrada' });
@@ -580,8 +621,6 @@ const obtenerSolicitudFormalPoridSolicitudInicial = (req, res) => __awaiter(void
         if (((_a = req.user) === null || _a === void 0 ? void 0 : _a.rol) === 'comerciante') {
             const comercianteId = Number(req.user.id);
             if (solicitud.getComercianteId() !== comercianteId) {
-                console.log("comerciante" + comercianteId);
-                console.log("comerciante solicitud:" + solicitud.getComercianteId());
                 return res.status(403).json({ error: 'No tienes permisos para acceder a esta solicitud' });
             }
         }
@@ -635,7 +674,6 @@ const listarSolicitudesFormalesByComerciante = (req, res) => __awaiter(void 0, v
     var _a;
     try {
         const comercianteId = (_a = req.user) === null || _a === void 0 ? void 0 : _a.id;
-        console.log('Comerciante ID:', comercianteId);
         // Validar parámetros
         if (!comercianteId) {
             return res.status(400).json({ error: 'Se requieren id' });
@@ -716,7 +754,7 @@ function handleErrorResponse(res, error) {
 }
 const crearYAprobarSolicitudFormal = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        const { idSolicitudInicial, cliente, referentes, importeNeto, solicitaAmpliacionDeCredito, comentarioInicial } = req.body;
+        const { idSolicitudInicial, cliente, referentes, importeNeto, solicitaAmpliacionDeCredito, comentarioInicial, datosEmpleador } = req.body;
         // Validar que el recibo sea proporcionado
         if (!cliente.recibo) {
             return res.status(400).json({ error: 'El recibo es obligatorio' });
@@ -762,9 +800,15 @@ const crearYAprobarSolicitudFormal = (req, res) => __awaiter(void 0, void 0, voi
             fechaNacimiento: new Date(cliente.fechaNacimiento),
             domicilio: cliente.domicilio,
             datosEmpleador: cliente.datosEmpleador,
+            numeroDomicilio: cliente.numeroDomicilio,
             referentes: referentesInstances,
-            importeNeto: importeNeto
-        }, comentarioInicial, solicitaAmpliacionDeCredito);
+            importeNeto: importeNeto,
+            sexo: cliente.sexo,
+            codigoPostal: cliente.codigoPostal,
+            localidad: cliente.localidad,
+            provincia: cliente.provincia,
+            barrio: cliente.barrio
+        }, comentarioInicial, solicitaAmpliacionDeCredito, datosEmpleador);
         res.status(201).json(solicitudFormal);
     }
     catch (error) {

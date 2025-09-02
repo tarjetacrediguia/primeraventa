@@ -26,7 +26,6 @@ import { NotificationPort } from "../../ports/NotificationPort";
 import { AnalistaRepositoryPort } from "../../ports/AnalistaRepositoryPort";
 import { HISTORIAL_ACTIONS } from "../../constants/historialActions";
 import { SolicitudInicialRepositoryAdapter } from "../../../infrastructure/adapters/repository/SolicitudInicialRepositoryAdapter";
-import { ConfiguracionRepositoryPort } from "../../ports/ConfiguracionRepositoryPort";
 
 export class CrearCompraUseCase {
     constructor(
@@ -35,8 +34,7 @@ export class CrearCompraUseCase {
         private readonly historialRepository: HistorialRepositoryPort,
         private readonly notificationService: NotificationPort,
         private readonly analistaRepo: AnalistaRepositoryPort,
-        private readonly solicitudInicialRepository: SolicitudInicialRepositoryAdapter,
-        private readonly configuracionRepo: ConfiguracionRepositoryPort
+        private readonly solicitudInicialRepository: SolicitudInicialRepositoryAdapter
     ) {}
 
     /**
@@ -187,42 +185,16 @@ export class CrearCompraUseCase {
                     throw new Error(`La cantidad del item '${item.nombre}' debe ser mayor que cero`);
                 }
             }
-            const configs = await this.configuracionRepo.obtenerConfiguracion();
-            const ponderadorConfig = configs.find(c => c.getClave() === 'ponderador');
             
-            if (!ponderadorConfig) {
-                await this.historialRepository.registrarEvento({
-                    usuarioId: usuarioId,
-                    accion: HISTORIAL_ACTIONS.ERROR_PROCESO,
-                    entidadAfectada: 'compras',
-                    entidadId: 0,
-                    detalles: { error: "Configuración de ponderador no encontrada" },
-                    solicitudInicialId: solicitudInicialId
-                });
-                throw new Error("Configuración de ponderador no encontrada");
-            }
 
-            const ponderador = parseFloat(ponderadorConfig.getValor());
-            if (isNaN(ponderador)) {
-                await this.historialRepository.registrarEvento({
-                    usuarioId: usuarioId,
-                    accion: HISTORIAL_ACTIONS.ERROR_PROCESO,
-                    entidadAfectada: 'compras',
-                    entidadId: 0,
-                    detalles: { error: "Ponderador no es un número válido" },
-                    solicitudInicialId: solicitudInicialId
-                });
-                throw new Error("Ponderador no es un número válido");
-            }
+            // 4. Crear entidad Compra
              const montoTotalReal = items.reduce(
                 (total, item) => total + (item.precio * item.cantidad), 
                 0
             );
             console.log(`Monto total real: ${montoTotalReal}`);
-            const montoTotalPonderado = montoTotalReal * ponderador; 
-            console.log(`Monto total ponderado: ${montoTotalPonderado}`);
 
-            if (montoTotalPonderado > solicitudFormal.getLimiteCompleto()) {
+            if (montoTotalReal > solicitudFormal.getLimiteCompleto()) {
                 // Caso 1: Si no tiene solicitud de ampliación -> ERROR
                 if (!solicitudFormal.getSolicitaAmpliacionDeCredito()) {
                     // Registrar evento de error
@@ -233,18 +205,18 @@ export class CrearCompraUseCase {
                         entidadId: 0,
                         detalles: {
                             error: "Monto excede límite de crédito",
-                            monto_ponderado: montoTotalPonderado,
+                            montoTotalReal: montoTotalReal,
                             limite_credito: solicitudFormal.getLimiteCompleto(),
                             tiene_ampliacion: false
                         },
                         solicitudInicialId: solicitudInicial.getId()
                     });
                     
-                    throw new Error(`El monto ponderado (${montoTotalPonderado}) excede el límite de crédito (${solicitudFormal.getLimiteCompleto()}). Solicite ampliación primero.`);
+                    throw new Error(`El monto (${montoTotalReal}) excede el límite de crédito (${solicitudFormal.getLimiteCompleto()}). Solicite ampliación primero.`);
                 }
                 // Caso 2: Si tiene solicitud de ampliación -> Continuar
                 else {
-                    solicitudFormal.setNuevoLimiteCompletoSolicitado(montoTotalPonderado);
+                    solicitudFormal.setNuevoLimiteCompletoSolicitado(montoTotalReal);
                     await this.solicitudFormalRepository.updateSolicitudFormal(solicitudFormal);
                     // Registrar evento informativo
                     await this.historialRepository.registrarEvento({
@@ -253,7 +225,7 @@ export class CrearCompraUseCase {
                         entidadAfectada: 'compras',
                         entidadId: 0,
                         detalles: {
-                            monto_ponderado: montoTotalPonderado,
+                            monto_ampliado: montoTotalReal,
                             limite_credito: solicitudFormal.getLimiteCompleto(),
                             nuevo_limite_solicitado: solicitudFormal.getNuevoLimiteCompletoSolicitado()
                         },
@@ -272,9 +244,7 @@ export class CrearCompraUseCase {
                 montoTotal: montoTotalReal, // Monto real calculado
                 fechaCreacion: new Date(),
                 fechaActualizacion: new Date(),
-                valorCuota: cantidadCuotas > 0 ? montoTotalPonderado / cantidadCuotas : 0,
-                ponderador: ponderador,
-                montoTotalPonderado: montoTotalPonderado, // Monto ponderado calculado
+                valorCuota: cantidadCuotas > 0 ? montoTotalReal / cantidadCuotas : 0,
                 clienteId: solicitudFormal.getClienteId(),
                 comercianteId: usuarioId, // Asignar comerciante actual
             }

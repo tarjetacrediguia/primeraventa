@@ -37,7 +37,7 @@ export class Contrato {
    * @param estado - Estado actual del contrato.
    * @param solicitudFormalId - ID de la solicitud formal asociada.
    * @param clienteId - ID del cliente beneficiario.
-   * @param numeroTarjeta - Número de tarjeta asignado (opcional).
+   * @param numeroAutorizacion - Número de tarjeta asignado (opcional).
    * @param numeroCuenta - Número de cuenta asignado (opcional).
    */
 
@@ -48,7 +48,7 @@ export class Contrato {
     public solicitudFormalId: number,
     public clienteId: number,
     public monto?: number,
-    public numeroTarjeta?: string,
+    public numeroAutorizacion?: string,
     public numeroCuenta?: string,
     public comercioNombre?: string,
     public comercioFecha?: string,
@@ -63,6 +63,7 @@ export class Contrato {
     public clienteFechaNacimiento?: string,
     public clienteEstadoCivil?: string,
     public clienteNacionalidad?: string,
+    public clienteSueldoNeto?: string,
     public clienteDomicilioCalle?: string,
     public clienteDomicilioNumero?: string,
     public clienteDomicilioPiso?: string,
@@ -75,6 +76,14 @@ export class Contrato {
     public clienteDomicilioCorreoElectronico?: string,
     public clienteDomicilioTelefonoFijo?: string,
     public clienteDomicilioTelefonoCelular?: string,
+    public clienteReferente1Nombre?: string,
+    public clienteReferente1Apellido?: string,
+    public clienteReferente1Vinculo?: string,
+    public clienteReferente1Telefono?: string,
+    public clienteReferente2Nombre?: string,
+    public clienteReferente2Apellido?: string,
+    public clienteReferente2Vinculo?: string,
+    public clienteReferente2Telefono?: string,
     public clienteDatosLaboralesActividad?: string,
     public clienteDatosLaboralesRazonSocial?: string,
     public clienteDatosLaboralesCuit?: string,
@@ -108,7 +117,66 @@ export class Contrato {
     public tasasPlatiniumAtraso05_31Dias?: number,
     public tasasPlatiniumAtraso32_60Dias?: number,
     public tasasPlatiniumAtraso61_90Dias?: number
+    
   ) {}
+
+
+  public getClienteSueldoNeto(): string | undefined {
+    return this.clienteSueldoNeto;
+  }
+  public setClienteSueldoNeto(clienteSueldoNeto: string): void {
+    this.clienteSueldoNeto = clienteSueldoNeto;
+  }
+
+  public getClienteReferente1Nombre(): string | undefined { 
+    return this.clienteReferente1Nombre;
+  }
+  public setClienteReferente1Nombre(clienteReferente1Nombre: string): void {
+    this.clienteReferente1Nombre = clienteReferente1Nombre;
+  }
+  public getClienteReferente1Apellido(): string | undefined { 
+    return this.clienteReferente1Apellido;
+  }
+  public setClienteReferente1Apellido(clienteReferente1Apellido: string): void {
+    this.clienteReferente1Apellido = clienteReferente1Apellido;
+  }
+  public getClienteReferente1Vinculo(): string | undefined { 
+    return this.clienteReferente1Vinculo;
+  }
+  public setClienteReferente1Vinculo(clienteReferente1Vinculo: string): void {
+    this.clienteReferente1Vinculo = clienteReferente1Vinculo;
+  }
+  public getClienteReferente1Telefono(): string | undefined { 
+    return this.clienteReferente1Telefono;
+  }
+  public setClienteReferente1Telefono(clienteReferente1Telefono: string): void {
+    this.clienteReferente1Telefono = clienteReferente1Telefono;
+  }
+  public getClienteReferente2Nombre(): string | undefined { 
+    return this.clienteReferente2Nombre;
+  }
+  public setClienteReferente2Nombre(clienteReferente2Nombre: string): void {
+    this.clienteReferente2Nombre = clienteReferente2Nombre;
+  }
+  public getClienteReferente2Apellido(): string | undefined { 
+    return this.clienteReferente2Apellido;
+  }
+  public setClienteReferente2Apellido(clienteReferente2Apellido: string): void {
+    this.clienteReferente2Apellido = clienteReferente2Apellido;
+  }
+  public getClienteReferente2Vinculo(): string | undefined { 
+    return this.clienteReferente2Vinculo;
+  }
+  public setClienteReferente2Vinculo(clienteReferente2Vinculo: string): void {
+    this.clienteReferente2Vinculo = clienteReferente2Vinculo;
+  }
+  public getClienteReferente2Telefono(): string | undefined { 
+    return this.clienteReferente2Telefono;
+  }
+  public setClienteReferente2Telefono(clienteReferente2Telefono: string): void {
+    this.clienteReferente2Telefono = clienteReferente2Telefono;
+  }
+
 
   public getMonto(): number | undefined {
     return this.monto;
@@ -629,17 +697,17 @@ export class Contrato {
    * 
    * @returns string | undefined - Número de tarjeta o undefined.
    */
-  public getNumeroTarjeta(): string | undefined {
-    return this.numeroTarjeta;
+  public getNumeroAutorizacion(): string | undefined {
+    return this.numeroAutorizacion;
   }
 
   /**
    * Establece el número de tarjeta asignado.
    * 
-   * @param numeroTarjeta - Nuevo número de tarjeta.
+   * @param numeroAutorizacion - Nuevo número de tarjeta.
    */
-  public setNumeroTarjeta(numeroTarjeta: string): void {
-    this.numeroTarjeta = numeroTarjeta;
+  public setNumeroAutorizacion(numeroAutorizacion: string): void {
+    this.numeroAutorizacion = numeroAutorizacion;
   }
 
   /**
@@ -703,7 +771,7 @@ export class Contrato {
    * @returns string - Representación en string del contrato.
    */
   public toString(): string {
-    return `Contrato [id=${this.id}, fechaGeneracion=${this.fechaGeneracion}, estado=${this.estado}, solicitudFormalId=${this.solicitudFormalId}, clienteId=${this.clienteId}, numeroTarjeta=${this.numeroTarjeta || 'No asignado'}, numeroCuenta=${this.numeroCuenta || 'No asignado'}]`;
+    return `Contrato [id=${this.id}, fechaGeneracion=${this.fechaGeneracion}, estado=${this.estado}, solicitudFormalId=${this.solicitudFormalId}, clienteId=${this.clienteId}, numeroAutorización=${this.numeroAutorizacion || 'No asignado'}, numeroCuenta=${this.numeroCuenta || 'No asignado'}]`;
   }
 
   /**
@@ -720,7 +788,7 @@ export class Contrato {
       solicitudFormalId: this.solicitudFormalId,
       clienteId: this.clienteId,
       monto: this.monto,
-      numeroTarjeta: this.numeroTarjeta,
+      numeroAutorizacion: this.numeroAutorizacion,
       numeroCuenta: this.numeroCuenta,
       comercioNombre: this.comercioNombre,
       comercioFecha: this.comercioFecha,
@@ -735,6 +803,7 @@ export class Contrato {
       clienteFechaNacimiento: this.clienteFechaNacimiento,
       clienteEstadoCivil: this.clienteEstadoCivil,
       clienteNacionalidad: this.clienteNacionalidad,
+      clienteSueldoNeto: this.clienteSueldoNeto,
       clienteDomicilioCalle: this.clienteDomicilioCalle,
       clienteDomicilioNumero: this.clienteDomicilioNumero,
       clienteDomicilioPiso: this.clienteDomicilioPiso,
@@ -747,6 +816,14 @@ export class Contrato {
       clienteDomicilioCorreoElectronico: this.clienteDomicilioCorreoElectronico,
       clienteDomicilioTelefonoFijo: this.clienteDomicilioTelefonoFijo,
       clienteDomicilioTelefonoCelular: this.clienteDomicilioTelefonoCelular,
+      clienteReferente1Nombre: this.clienteReferente1Nombre,
+      clienteReferente1Apellido: this.clienteReferente1Apellido,
+      clienteReferente1Vinculo: this.clienteReferente1Vinculo,
+      clienteReferente1Telefono: this.clienteReferente1Telefono,
+      clienteReferente2Nombre: this.clienteReferente2Nombre,
+      clienteReferente2Apellido: this.clienteReferente2Apellido,
+      clienteReferente2Vinculo: this.clienteReferente2Vinculo,
+      clienteReferente2Telefono: this.clienteReferente2Telefono,
       clienteDatosLaboralesActividad: this.clienteDatosLaboralesActividad,
       clienteDatosLaboralesRazonSocial: this.clienteDatosLaboralesRazonSocial,
       clienteDatosLaboralesCuit: this.clienteDatosLaboralesCuit,
@@ -779,7 +856,8 @@ export class Contrato {
       tasasPlatiniumComisionReposicionPlastico: this.tasasPlatiniumComisionReposicionPlastico,
       tasasPlatiniumAtraso05_31Dias: this.tasasPlatiniumAtraso05_31Dias,
       tasasPlatiniumAtraso32_60Dias: this.tasasPlatiniumAtraso32_60Dias,
-      tasasPlatiniumAtraso61_90Dias: this.tasasPlatiniumAtraso61_90Dias
+      tasasPlatiniumAtraso61_90Dias: this.tasasPlatiniumAtraso61_90Dias,
+
     };
   }
 
@@ -802,7 +880,7 @@ export class Contrato {
             map.solicitudFormalId,
             map.clienteId,
             map.monto ? parseFloat(map.monto) : undefined,
-            map.numeroTarjeta,
+            map.numeroAutorizacion,
             map.numeroCuenta,
             map.comercio_nombre,
             map.comercio_fecha,
@@ -817,6 +895,7 @@ export class Contrato {
             map.cliente_fecha_nacimiento,
             map.cliente_estado_civil,
             map.cliente_nacionalidad,
+            map.cliente_Sueldo_Neto,
             map.cliente_domicilio_calle,
             map.cliente_domicilio_numero,
             map.cliente_domicilio_piso,
@@ -829,6 +908,14 @@ export class Contrato {
             map.cliente_domicilio_correo_electronico,
             map.cliente_domicilio_telefono_fijo,
             map.cliente_domicilio_telefono_celular,
+            map.cliente_referente1_nombre,
+            map.cliente_referente1_apellido,
+            map.cliente_referente1_vinculo,
+            map.cliente_referente1_telefono,
+            map.cliente_referente2_nombre,
+            map.cliente_referente2_apellido,
+            map.cliente_referente2_vinculo,
+            map.cliente_referente2_telefono,
             map.cliente_datos_laborales_actividad,
             map.cliente_datos_laborales_razon_social,
             map.cliente_datos_laborales_cuit,
@@ -862,6 +949,7 @@ export class Contrato {
             map.tasas_platinium_atraso_05_31_dias ? parseFloat(map.tasas_platinium_atraso_05_31_dias) : undefined,
             map.tasas_platinium_atraso_32_60_dias ? parseFloat(map.tasas_platinium_atraso_32_60_dias) : undefined,
             map.tasas_platinium_atraso_61_90_dias ? parseFloat(map.tasas_platinium_atraso_61_90_dias) : undefined,
+
         );
     }
 

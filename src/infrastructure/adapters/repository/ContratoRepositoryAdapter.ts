@@ -33,7 +33,7 @@ export class ContratoRepositoryAdapter implements ContratoRepositoryPort {
   async getContratoById(id: string): Promise<Contrato | null> {
     const query = `
             SELECT id, fecha_generacion, monto, estado, solicitud_formal_id, 
-                   cliente_id, numero_tarjeta, numero_cuenta, pdf_contrato
+                   cliente_id, numero_autorizacion, numero_cuenta, pdf_contrato
             FROM contratos 
             WHERE id = $1
         `;
@@ -62,7 +62,7 @@ export class ContratoRepositoryAdapter implements ContratoRepositoryPort {
           estado = $2, 
           cliente_id = $3, 
           monto = $4,
-          numero_tarjeta = $5, 
+          numero_autorizacion = $5, 
           numero_cuenta = $6,
           pdf_contrato = $7,
           comercio_nombre = $8,
@@ -90,47 +90,55 @@ export class ContratoRepositoryAdapter implements ContratoRepositoryPort {
           cliente_domicilio_correo_electronico = $30,
           cliente_domicilio_telefono_fijo = $31,
           cliente_domicilio_telefono_celular = $32,
-          cliente_datos_laborales_actividad = $33,
-          cliente_datos_laborales_razon_social = $34,
-          cliente_datos_laborales_cuit = $35,
-          cliente_datos_laborales_inicio_actividades = $36,
-          cliente_datos_laborales_cargo = $37,
-          cliente_datos_laborales_sector = $38,
-          cliente_datos_laborales_domicilio_legal = $39,
-          cliente_datos_laborales_codigo_postal = $40,
-          cliente_datos_laborales_localidad = $41,
-          cliente_datos_laborales_provincia = $42,
-          cliente_datos_laborales_telefono = $43,
-          tasas_tea_ctf_financiacion = $44,
-          tasas_tna_compensatorios_financiacion = $45,
-          tasas_tna_punitorios = $46,
-          tasas_ctf_financiacion = $47,
-          tasas_comision_renovacion_anual = $48,
-          tasas_comision_mantenimiento = $49,
-          tasas_comision_reposicion_plastico = $50,
-          tasas_atraso_05_31_dias = $51,
-          tasas_atraso_32_60_dias = $52,
-          tasas_atraso_61_90_dias = $53,
-          tasas_pago_facil = $54,
-          tasas_platinium_pago_facil = $55,
-          tasas_platinium_tea_ctf_financiacion = $56,
-          tasas_platinium_tna_compensatorios_financiacion = $57,
-          tasas_platinium_tna_punitorios = $58,
-          tasas_platinium_ctf_financiacion = $59,
-          tasas_platinium_comision_renovacion_anual = $60,
-          tasas_platinium_comision_mantenimiento = $61,
-          tasas_platinium_comision_reposicion_plastico = $62,
-          tasas_platinium_atraso_05_31_dias = $63,
-          tasas_platinium_atraso_32_60_dias = $64,
-          tasas_platinium_atraso_61_90_dias = $65
-      WHERE id = $66
+          cliente_referente1_nombre = $33,
+          cliente_referente1_apellido = $34,
+          cliente_referente1_vinculo = $35,
+          cliente_referente1_telefono = $36,
+          cliente_referente2_nombre = $37,
+          cliente_referente2_apellido = $38,
+          cliente_referente2_vinculo = $39,
+          cliente_referente2_telefono = $40,
+          cliente_datos_laborales_actividad = $41,
+          cliente_datos_laborales_razon_social = $42,
+          cliente_datos_laborales_cuit = $43,
+          cliente_datos_laborales_inicio_actividades = $44,
+          cliente_datos_laborales_cargo = $45,
+          cliente_datos_laborales_sector = $46,
+          cliente_datos_laborales_domicilio_legal = $47,
+          cliente_datos_laborales_codigo_postal = $48,
+          cliente_datos_laborales_localidad = $49,
+          cliente_datos_laborales_provincia = $50,
+          cliente_datos_laborales_telefono = $51,
+          tasas_tea_ctf_financiacion = $52,
+          tasas_tna_compensatorios_financiacion = $53,
+          tasas_tna_punitorios = $54,
+          tasas_ctf_financiacion = $55,
+          tasas_comision_renovacion_anual = $56,
+          tasas_comision_mantenimiento = $57,
+          tasas_comision_reposicion_plastico = $58,
+          tasas_atraso_05_31_dias = $59,
+          tasas_atraso_32_60_dias = $60,
+          tasas_atraso_61_90_dias = $61,
+          tasas_pago_facil = $62,
+          tasas_platinium_pago_facil = $63,
+          tasas_platinium_tea_ctf_financiacion = $64,
+          tasas_platinium_tna_compensatorios_financiacion = $65,
+          tasas_platinium_tna_punitorios = $66,
+          tasas_platinium_ctf_financiacion = $67,
+          tasas_platinium_comision_renovacion_anual = $68,
+          tasas_platinium_comision_mantenimiento = $69,
+          tasas_platinium_comision_reposicion_plastico = $70,
+          tasas_platinium_atraso_05_31_dias = $71,
+          tasas_platinium_atraso_32_60_dias = $72,
+          tasas_platinium_atraso_61_90_dias = $73
+      WHERE id = $74
             `;
       await client.query(query, [
       contrato.getFechaGeneracion(),
       contrato.getEstado(),
       contrato.getClienteId(),
       contrato.getMonto(),
-      contrato.getNumeroTarjeta(),
+      contrato.getNumeroAutorizacion(),
       contrato.getNumeroCuenta(),
       contrato.getPdfContrato(),
       contrato.comercioNombre,
@@ -158,6 +166,14 @@ export class ContratoRepositoryAdapter implements ContratoRepositoryPort {
       contrato.clienteDomicilioCorreoElectronico,
       contrato.clienteDomicilioTelefonoFijo,
       contrato.clienteDomicilioTelefonoCelular,
+      contrato.clienteReferente1Nombre,
+      contrato.clienteReferente1Apellido,
+      contrato.clienteReferente1Vinculo,
+      contrato.clienteReferente1Telefono,
+      contrato.clienteReferente2Nombre,
+      contrato.clienteReferente2Apellido,
+      contrato.clienteReferente2Vinculo,
+      contrato.clienteReferente2Telefono,
       contrato.clienteDatosLaboralesActividad,
       contrato.clienteDatosLaboralesRazonSocial,
       contrato.clienteDatosLaboralesCuit,
@@ -191,7 +207,7 @@ export class ContratoRepositoryAdapter implements ContratoRepositoryPort {
       contrato.tasasPlatiniumAtraso05_31Dias,
       contrato.tasasPlatiniumAtraso32_60Dias,
       contrato.tasasPlatiniumAtraso61_90Dias,
-      contrato.getId() // Último parámetro (WHERE id = $66)
+      contrato.getId() // Último parámetro (WHERE id = $74)
     ]);
 
       await client.query("COMMIT");
@@ -246,7 +262,7 @@ export class ContratoRepositoryAdapter implements ContratoRepositoryPort {
             monto,
             fecha_generacion,
             estado,
-            numero_tarjeta,
+            numero_autorizacion,
             numero_cuenta,
             pdf_contrato,
             comercio_nombre,
@@ -262,6 +278,7 @@ export class ContratoRepositoryAdapter implements ContratoRepositoryPort {
             cliente_fecha_nacimiento,
             cliente_estado_civil,
             cliente_nacionalidad,
+            cliente_Sueldo_Neto,
             cliente_domicilio_calle,
             cliente_domicilio_numero,
             cliente_domicilio_piso,
@@ -274,6 +291,14 @@ export class ContratoRepositoryAdapter implements ContratoRepositoryPort {
             cliente_domicilio_correo_electronico,
             cliente_domicilio_telefono_fijo,
             cliente_domicilio_telefono_celular,
+            cliente_referente1_nombre,
+            cliente_referente1_apellido,
+            cliente_referente1_vinculo,
+            cliente_referente1_telefono,
+            cliente_referente2_nombre,
+            cliente_referente2_apellido,
+            cliente_referente2_vinculo,
+            cliente_referente2_telefono,
             cliente_datos_laborales_actividad,
             cliente_datos_laborales_razon_social,
             cliente_datos_laborales_cuit,
@@ -308,24 +333,25 @@ export class ContratoRepositoryAdapter implements ContratoRepositoryPort {
             tasas_platinium_atraso_32_60_dias,
             tasas_platinium_atraso_61_90_dias
         ) VALUES (
-            $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, 
+            $1, $2, $3, $4, $5, $6, $7, $8, $9, $10,
             $11, $12, $13, $14, $15, $16, $17, $18, $19, $20,
             $21, $22, $23, $24, $25, $26, $27, $28, $29, $30,
             $31, $32, $33, $34, $35, $36, $37, $38, $39, $40,
             $41, $42, $43, $44, $45, $46, $47, $48, $49, $50,
             $51, $52, $53, $54, $55, $56, $57, $58, $59, $60,
-            $61, $62, $63, $64, $65, $66
+            $61, $62, $63, $64, $65, $66, $67, $68, $69, $70,
+            $71, $72, $73, $74, $75
         )
         RETURNING *;
     `;
-
+ 
       const params = [
         contrato.solicitudFormalId,
         contrato.clienteId,
         contrato.getMonto(),
         contrato.fechaGeneracion,
         contrato.estado,
-        contrato.numeroTarjeta,
+        contrato.numeroAutorizacion,
         contrato.numeroCuenta,
         contrato.getPdfContrato(),
         contrato.comercioNombre,
@@ -341,6 +367,7 @@ export class ContratoRepositoryAdapter implements ContratoRepositoryPort {
         contrato.clienteFechaNacimiento,
         contrato.clienteEstadoCivil,
         contrato.clienteNacionalidad,
+        contrato.clienteSueldoNeto,
         contrato.clienteDomicilioCalle,
         contrato.clienteDomicilioNumero,
         contrato.clienteDomicilioPiso,
@@ -353,6 +380,14 @@ export class ContratoRepositoryAdapter implements ContratoRepositoryPort {
         contrato.clienteDomicilioCorreoElectronico,
         contrato.clienteDomicilioTelefonoFijo,
         contrato.clienteDomicilioTelefonoCelular,
+        contrato.clienteReferente1Nombre,
+        contrato.clienteReferente1Apellido,
+        contrato.clienteReferente1Vinculo,
+        contrato.clienteReferente1Telefono,
+        contrato.clienteReferente2Nombre,
+        contrato.clienteReferente2Apellido,
+        contrato.clienteReferente2Vinculo,
+        contrato.clienteReferente2Telefono,
         contrato.clienteDatosLaboralesActividad,
         contrato.clienteDatosLaboralesRazonSocial,
         contrato.clienteDatosLaboralesCuit,
@@ -412,7 +447,7 @@ export class ContratoRepositoryAdapter implements ContratoRepositoryPort {
   async getAllContratos(): Promise<Contrato[]> {
     const query = `
             SELECT id, fecha_generacion, monto, estado, solicitud_formal_id, 
-                   cliente_id, numero_tarjeta, numero_cuenta
+                   cliente_id, numero_autorizacion, numero_cuenta
             FROM contratos
         `;
     const result = await pool.query(query);
@@ -429,7 +464,7 @@ export class ContratoRepositoryAdapter implements ContratoRepositoryPort {
   ): Promise<Contrato[]> {
     const query = `
             SELECT id, fecha_generacion, monto, estado, solicitud_formal_id, 
-                   cliente_id, numero_tarjeta, numero_cuenta
+                   cliente_id, numero_autorizacion, numero_cuenta
             FROM contratos
             WHERE solicitud_formal_id = $1
         `;
@@ -446,7 +481,7 @@ export class ContratoRepositoryAdapter implements ContratoRepositoryPort {
     const query = `
             SELECT c.id, c.fecha_generacion, c.monto, c.estado, 
                    c.solicitud_formal_id, c.cliente_id, 
-                   c.numero_tarjeta, c.numero_cuenta
+                   c.numero_autorizacion, c.numero_cuenta
             FROM contratos c
             JOIN solicitudes_formales sf ON c.solicitud_formal_id = sf.id
             WHERE sf.analista_aprobador_id = $1
@@ -466,7 +501,7 @@ export class ContratoRepositoryAdapter implements ContratoRepositoryPort {
     const query = `
             SELECT c.id, c.fecha_generacion, c.monto, c.estado, 
                    c.solicitud_formal_id, c.cliente_id, 
-                   c.numero_tarjeta, c.numero_cuenta
+                   c.numero_autorizacion, c.numero_cuenta
             FROM contratos c
             JOIN solicitudes_formales sf ON c.solicitud_formal_id = sf.id
             WHERE sf.comerciante_id = $1
@@ -483,7 +518,7 @@ export class ContratoRepositoryAdapter implements ContratoRepositoryPort {
   async getContratosByEstado(estado: string): Promise<Contrato[]> {
     const query = `
             SELECT id, fecha_generacion, monto, estado, solicitud_formal_id, 
-                   cliente_id, numero_tarjeta, numero_cuenta
+                   cliente_id, numero_autorizacion, numero_cuenta
             FROM contratos
             WHERE estado = $1
         `;
@@ -499,7 +534,7 @@ export class ContratoRepositoryAdapter implements ContratoRepositoryPort {
             Number(row.solicitud_formal_id),
             Number(row.cliente_id),
             row.monto ? parseFloat(row.monto) : undefined,
-            row.numero_tarjeta,
+            row.numero_autorizacion,
             row.numero_cuenta,
             row.comercio_nombre ?? undefined,
             row.comercio_fecha ?? undefined,
@@ -514,6 +549,7 @@ export class ContratoRepositoryAdapter implements ContratoRepositoryPort {
             row.cliente_fecha_nacimiento ?? undefined,
             row.cliente_estado_civil ?? undefined,
             row.cliente_nacionalidad ?? undefined,
+            row.cliente_Sueldo_Neto ?? undefined,
             row.cliente_domicilio_calle ?? undefined,
             row.cliente_domicilio_numero ?? undefined,
             row.cliente_domicilio_piso ?? undefined,
@@ -526,6 +562,14 @@ export class ContratoRepositoryAdapter implements ContratoRepositoryPort {
             row.cliente_domicilio_correo_electronico ?? undefined,
             row.cliente_domicilio_telefono_fijo ?? undefined,
             row.cliente_domicilio_telefono_celular ?? undefined,
+            row.cliente_referente1_nombre ?? undefined,
+            row.cliente_referente1_apellido ?? undefined,
+            row.cliente_referente1_vinculo ?? undefined,
+            row.cliente_referente1_telefono ?? undefined,
+            row.cliente_referente2_nombre ?? undefined,
+            row.cliente_referente2_apellido ?? undefined,
+            row.cliente_referente2_vinculo ?? undefined,
+            row.cliente_referente2_telefono ?? undefined,
             row.cliente_datos_laborales_actividad ?? undefined,
             row.cliente_datos_laborales_razon_social ?? undefined,
             row.cliente_datos_laborales_cuit ?? undefined,

@@ -32,13 +32,11 @@ export class CompraRepositoryAdapter implements CompraRepositoryPort {
                     items: items,
                     estado: row.estado,
                     montoTotal: row.monto_total,
-                    ponderador: row.ponderador,
-                    montoTotalPonderado: row.monto_total_ponderado,
                     clienteId: row.cliente_id,
                     fechaCreacion: row.fecha_creacion,
                     fechaActualizacion: row.fecha_actualizacion,
                     valorCuota: row.valor_cuota,
-                    numeroTarjeta: row.numero_tarjeta,
+                    numeroAutorizacion: row.numero_autorizacion,
                     numeroCuenta: row.numero_cuenta,
                     comercianteId: row.comerciante_id,
                     analistaAprobadorId: row.analista_aprobador_id
@@ -80,16 +78,14 @@ export class CompraRepositoryAdapter implements CompraRepositoryPort {
                 descripcion, 
                 cantidad_cuotas, 
                 estado, 
-                ponderador, 
-                monto_total_ponderado,
                 cuotas_solicitadas, 
                 valor_cuota,
-                numero_tarjeta,
+                numero_autorizacion,
                 numero_cuenta,
                 comerciante_id,
                 analista_aprobador_id
                 )
-                VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
+                VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
                 RETURNING id, fecha_creacion, fecha_actualizacion
             `;
             const compraValues = [
@@ -99,11 +95,9 @@ export class CompraRepositoryAdapter implements CompraRepositoryPort {
                 compra.getDescripcion(),
                 compra.getCantidadCuotas(),
                 compra.getEstado(),
-                compra.getPonderador(),
-                compra.getMontoTotalPonderado(),
                 compra.getCantidadCuotas(),
                 compra.getValorCuota(),
-                compra.getNumeroTarjeta(),
+                compra.getNumeroAutorizacion(),
                 compra.getNumeroCuenta(),
                 compra.getComercianteId(),
                 compra.getAnalistaAprobadorId()
@@ -142,13 +136,11 @@ export class CompraRepositoryAdapter implements CompraRepositoryPort {
                 items: compra.getItems(),
                 estado: compra.getEstado(),
                 montoTotal: compra.getMontoTotal(),
-                ponderador: compra.getPonderador(),
-                montoTotalPonderado: compra.getMontoTotalPonderado(),
                 clienteId: clienteId,
                 fechaCreacion: fechaCreacion,
                 fechaActualizacion: fechaActualizacion,
                 valorCuota: compra.getValorCuota(),
-                numeroTarjeta: compra.getNumeroTarjeta(),
+                numeroAutorizacion: compra.getNumeroAutorizacion(),
                 numeroCuenta: compra.getNumeroCuenta(),
                 comercianteId: compra.getComercianteId(),
                 analistaAprobadorId: compra.getAnalistaAprobadorId()
@@ -195,13 +187,11 @@ export class CompraRepositoryAdapter implements CompraRepositoryPort {
                 items: items,
                 estado: compraData.estado,
                 montoTotal: compraData.monto_total,
-                ponderador: compraData.ponderador,
-                montoTotalPonderado: compraData.monto_total_ponderado,
                 clienteId: compraData.cliente_id,
                 fechaCreacion: compraData.fecha_creacion,
                 fechaActualizacion: compraData.fecha_actualizacion,
                 valorCuota: compraData.valor_cuota,
-                numeroTarjeta: compraData.numero_tarjeta,
+                numeroAutorizacion: compraData.numero_autorizacion,
                 numeroCuenta: compraData.numero_cuenta,
                 comercianteId: compraData.comerciante_id,
                 analistaAprobadorId: compraData.analista_aprobador_id
@@ -224,15 +214,14 @@ export class CompraRepositoryAdapter implements CompraRepositoryPort {
                 cantidad_cuotas = $3, 
                 estado = $4, 
                 cuotas_solicitadas = $5, 
-                valor_cuota = $6, ponderador = $7,
-                monto_total_ponderado = $8,
-                numero_tarjeta = $9,
-                numero_cuenta = $10,
-                cliente_id = $11,
+                valor_cuota = $6, 
+                numero_autorizacion = $7,
+                numero_cuenta = $8,
+                cliente_id = $9,
                 fecha_actualizacion = CURRENT_TIMESTAMP,
-                comerciante_id = $13,
-                analista_aprobador_id = $14
-                WHERE id = $12
+                comerciante_id = $11,
+                analista_aprobador_id = $12
+                WHERE id = $10
                 RETURNING fecha_actualizacion
             `;
             const compraValues = [
@@ -242,9 +231,7 @@ export class CompraRepositoryAdapter implements CompraRepositoryPort {
                 compra.getEstado(),
                 compra.getCantidadCuotas(),
                 compra.getValorCuota(),
-                compra.getPonderador(),
-                compra.getMontoTotalPonderado(),
-                compra.getNumeroTarjeta(),
+                compra.getNumeroAutorizacion(),
                 compra.getNumeroCuenta(),
                 clienteId,
                 compra.getId(),
@@ -377,13 +364,11 @@ export class CompraRepositoryAdapter implements CompraRepositoryPort {
             items: items,
             estado: compraData.estado,
             montoTotal: compraData.monto_total,
-            ponderador: compraData.ponderador,
-            montoTotalPonderado: compraData.monto_total_ponderado,
             clienteId: compraData.cliente_id,
             fechaCreacion: compraData.fecha_creacion,
             fechaActualizacion: compraData.fecha_actualizacion,
             valorCuota: compraData.valor_cuota,
-            numeroTarjeta: compraData.numero_tarjeta,
+            numeroAutorizacion: compraData.numero_autorizacion,
             numeroCuenta: compraData.numero_cuenta,
             comercianteId: compraData.comerciante_id,
             analistaAprobadorId: compraData.analista_aprobador_id
@@ -422,13 +407,11 @@ export class CompraRepositoryAdapter implements CompraRepositoryPort {
                     items: items,
                     estado: row.estado,
                     montoTotal: row.monto_total,
-                    ponderador: row.ponderador,
-                    montoTotalPonderado: row.monto_total_ponderado,
                     clienteId: row.cliente_id,
                     fechaCreacion: row.fecha_creacion,
                     fechaActualizacion: row.fecha_actualizacion,
                     valorCuota: row.valor_cuota,
-                    numeroTarjeta: row.numero_tarjeta,
+                    numeroAutorizacion: row.numero_autorizacion,
                     numeroCuenta: row.numero_cuenta,
                     comercianteId: row.comerciante_id,
                     analistaAprobadorId: row.analista_aprobador_id
@@ -470,13 +453,11 @@ export class CompraRepositoryAdapter implements CompraRepositoryPort {
                     items: items,
                     estado: row.estado,
                     montoTotal: row.monto_total,
-                    ponderador: row.ponderador,
-                    montoTotalPonderado: row.monto_total_ponderado,
                     clienteId: row.cliente_id,
                     fechaCreacion: row.fecha_creacion,
                     fechaActualizacion: row.fecha_actualizacion,
                     valorCuota: row.valor_cuota,
-                    numeroTarjeta: row.numero_tarjeta,
+                    numeroAutorizacion: row.numero_autorizacion,
                     numeroCuenta: row.numero_cuenta,
                     comercianteId: row.comerciante_id,
                     analistaAprobadorId: row.analista_aprobador_id

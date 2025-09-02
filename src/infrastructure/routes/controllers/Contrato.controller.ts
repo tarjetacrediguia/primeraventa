@@ -18,6 +18,7 @@ import { SolicitudInicialRepositoryAdapter } from '../../adapters/repository/Sol
 import { ComercianteRepositoryAdapter } from '../../adapters/repository/ComercianteRepositoryAdapter';
 import { GeneracionYDescargaContratoUseCase } from '../../../application/use-cases/Contrato/GenerarYDescargarContratoUseCase';
 import { CompraRepositoryAdapter } from '../../adapters/repository/CompraRepositoryAdapter';
+import { TasasRepositoryAdapter } from '../../adapters/repository/TasasRepositoryAdapter';
 
 // Inicializar adapters
 const contratoRepository = new ContratoRepositoryAdapter();
@@ -29,6 +30,7 @@ const solicitudInicialRepository = new SolicitudInicialRepositoryAdapter();
 const comercianteRepository = new ComercianteRepositoryAdapter();
 const historialRepository = new HistorialRepositoryAdapter();
 const compraRepository = new CompraRepositoryAdapter();
+const tasasRepository = new TasasRepositoryAdapter();
 
 // Inicializar el nuevo caso de uso unificado
 const generacionYDescargaUC = new GeneracionYDescargaContratoUseCase(
@@ -40,7 +42,8 @@ const generacionYDescargaUC = new GeneracionYDescargaContratoUseCase(
     historialRepository,
     solicitudInicialRepository,
     comercianteRepository,
-    compraRepository
+    compraRepository,
+    tasasRepository
 );
 
 export const generarYDescargarContratoPDF = async (req: Request, res: Response) => {

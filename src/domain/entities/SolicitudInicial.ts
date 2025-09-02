@@ -33,6 +33,9 @@ export class SolicitudInicial {
   private administradorAprobadorId?: number;
   private cuilCliente?: string;
   private dniCliente?: string;
+  private motivoRechazo?: string;
+  private comercianteNombre?: string;
+  private nombreComercio?: string;
 
   /**
    * Constructor de la clase SolicitudInicial.
@@ -60,7 +63,8 @@ export class SolicitudInicial {
     analistaAprobadorId?: number,
     administradorAprobadorId?: number,
     dniCliente?: string,
-    cuilCliente?: string
+    cuilCliente?: string,
+    motivoRechazo?: string
   ) {
     this.id = id;
     this.fechaCreacion = fechaCreacion;
@@ -72,6 +76,40 @@ export class SolicitudInicial {
     this.clienteId = clienteId;
     this.analistaAprobadorId = analistaAprobadorId;
     this.administradorAprobadorId = administradorAprobadorId;
+    this.motivoRechazo = motivoRechazo;
+  }
+
+  public setComercianteNombre(nombre: string): void {
+    this.comercianteNombre = nombre;
+}
+
+public getComercianteNombre(): string | undefined {
+    return this.comercianteNombre;
+}
+
+public setNombreComercio(nombreComercio: string): void {
+    this.nombreComercio = nombreComercio;
+}
+
+public getNombreComercio(): string | undefined {
+    return this.nombreComercio;
+}
+
+  /**
+   * Obtiene el motivo de rechazo de la solicitud.
+   * 
+   * @returns string | undefined - Motivo de rechazo o undefined si no fue rechazada.
+   */
+  public getMotivoRechazo(): string | undefined {
+    return this.motivoRechazo;
+  }
+  /**
+   * Establece el motivo de rechazo de la solicitud.
+   * 
+   * @param motivo - Nuevo motivo de rechazo.
+   */
+  public setMotivoRechazo(motivo: string): void {
+    this.motivoRechazo = motivo;
   }
 
   /**
@@ -305,7 +343,10 @@ public getAdministradorAprobadorId(): number | undefined {
       comentarios: this.comentarios,
       clienteId: this.clienteId,
       analistaAprobadorId: this.analistaAprobadorId,
-      administradorAprobadorId: this.administradorAprobadorId
+      administradorAprobadorId: this.administradorAprobadorId,
+      motivoRechazo: this.motivoRechazo,
+      comercianteNombre: this.comercianteNombre,
+      nombreComercio: this.nombreComercio
     };
 }
 
@@ -321,15 +362,14 @@ public getAdministradorAprobadorId(): number | undefined {
       map.id,
       map.fechaCreacion,
       map.estado,
-      //map.dniCliente,
       map.clienteId || 0,
-      //map.cuilCliente,
       map.comercianteId,
       map.comentarios || [],
       map.analista_aprobador_id ? Number(map.analista_aprobador_id) : undefined,
       map.administrador_aprobador_id ? Number(map.administrador_aprobador_id) : undefined,
       map.dniCliente,
-      map.cuilCliente
+      map.cuilCliente,
+      map.motivoRechazo
     );
   }
 

@@ -19,26 +19,17 @@ export class CrearYAprobarSolicitudFormalUseCase {
     rol: string,
     datosSolicitud: any,
     comentario: string = "Solicitud creada y aprobada por comerciante",
-    solicitaAmpliacionDeCredito: boolean
+    solicitaAmpliacionDeCredito: boolean,
+    datosEmpleador?: any
   ): Promise<SolicitudFormal> {
-    // Verificar permiso especial
-    /*
-    const tienePermisoAutoAprobacion = await this.permisoRepo.usuarioTienePermiso(
-      comercianteId,
-      "auto_approve_solicitudFormal"
-    );
-
-    if (!tienePermisoAutoAprobacion) {
-      throw new Error("No tiene permisos para auto-aprobar solicitudes");
-    }
-    */
     // Crear solicitud
     const solicitudCreada = await this.crearUseCase.execute(
       solicitudInicialId,
       comercianteId,
       datosSolicitud,
       comentario,
-      solicitaAmpliacionDeCredito
+      solicitaAmpliacionDeCredito,
+      datosEmpleador
     );
 
     // Aprobar inmediatamente

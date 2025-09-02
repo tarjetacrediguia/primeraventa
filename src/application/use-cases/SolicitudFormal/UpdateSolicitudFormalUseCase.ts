@@ -72,13 +72,15 @@ export class UpdateSolicitudFormalUseCase {
             if (!original) {
                 throw new Error("Solicitud no encontrada");
             }
-
+            /*
             if (original.getEstado() == "aprobada") {
                 throw new Error("No se puede actualizar una solicitud aprobada");
             }
-
+            */
             // 2. Detectar cambios antes de actualizar
             const cambios = this.detectarCambios(original, solicitud);
+
+            console.log("Cambios detectados:", cambios);
             
             // 3. Actualizar la solicitud
             const actualizada = await this.repository.updateSolicitudFormal(solicitud);
@@ -129,22 +131,34 @@ export class UpdateSolicitudFormalUseCase {
      * @returns any[] - Array con los cambios detectados
      */
     private detectarCambios(original: SolicitudFormal, actualizada: SolicitudFormal): any[] {
-        const cambios: any[] = [];
-        
-        // Lista de campos a monitorear
-        const campos = [
-            'nombreCompleto', 'apellido', 'dni', 'telefono', 'email',
-            'fechaSolicitud', 'estado', 'aceptaTarjeta', 'fechaNacimiento',
-            'domicilio', 'datosEmpleador', 'referentes', 'comentarios',
-            'clienteId', 'numeroTarjeta', 'numeroCuenta', 'fechaAprobacion',
-            'analistaAprobadorId', 'administradorAprobadorId'
-        ];
-        
-        for (const campo of campos) {
-            const valorOriginal = (original as any)[campo];
-            const valorActual = (actualizada as any)[campo];
+    const cambios: any[] = [];
+    
+    // Lista de campos válidos que existen en SolicitudFormal y tienen getters
+    const campos = [
+        'nombreCompleto', 'apellido', 'telefono', 'email',
+        'fechaSolicitud', 'estado', 'aceptaTarjeta', 'fechaNacimiento',
+        'domicilio', 'referentes', 'comentarios', 'clienteId', 
+        'fechaAprobacion', 'analistaAprobadorId', 'administradorAprobadorId',
+        'comercianteAprobadorId', 'importeNeto', 'limiteBase', 'limiteCompleto',
+        'ponderador', 'solicitaAmpliacionDeCredito', 'nuevoLimiteCompletoSolicitado',
+        'razonSocialEmpleador', 'cuitEmpleador', 'cargoEmpleador', 'sectorEmpleador',
+        'codigoPostalEmpleador', 'localidadEmpleador', 'provinciaEmpleador', 'telefonoEmpleador',
+        'sexo', 'codigoPostal', 'localidad', 'provincia', 'numeroDomicilio', 'barrio'
+    ];
+    
+    for (const campo of campos) {
+        try {
+            const getterName = `get${campo.charAt(0).toUpperCase() + campo.slice(1)}`;
             
-            // Comparación especial para arrays y objetos
+            // Verificar que el getter exista en el objeto
+            if (typeof (original as any)[getterName] !== 'function') {
+                console.warn(`Getter ${getterName} no encontrado`);
+                continue; // Saltar campos sin getter
+            }
+            
+            const valorOriginal = (original as any)[getterName]();
+            const valorActual = (actualizada as any)[getterName]();
+            
             if (Array.isArray(valorOriginal)) {
                 if (!this.sonArraysIguales(valorOriginal, valorActual)) {
                     cambios.push({
@@ -153,17 +167,30 @@ export class UpdateSolicitudFormalUseCase {
                         nuevo: valorActual
                     });
                 }
+            } else if (valorOriginal instanceof Date && valorActual instanceof Date) {
+                // Comparar fechas por su valor de tiempo
+                if (valorOriginal.getTime() !== valorActual.getTime()) {
+                    cambios.push({
+                        campo,
+                        anterior: valorOriginal, 
+                        nuevo: valorActual
+                    });
+                }
             } else if (valorOriginal !== valorActual) {
                 cambios.push({
                     campo,
-                    anterior: valorOriginal,
+                    anterior: valorOriginal, 
                     nuevo: valorActual
                 });
             }
+        } catch (error) {
+            // Ignorar errores de getters que no existen
+            console.warn(`Error al obtener el campo ${campo}:`, error);
         }
-        
-        return cambios;
     }
+    
+    return cambios;
+}
 
     /**
      * Compara si dos arrays son iguales, incluyendo comparación de objetos.

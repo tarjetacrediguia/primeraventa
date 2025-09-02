@@ -32,10 +32,13 @@ import {
   PersonalData,
   VerifyDataNosisUseCase,
 } from "../Nosis/VerifyDataNosisUseCase";
+import { PageEmbeddingMismatchedContextError } from "pdf-lib";
 
 export type CrearSolicitudInicialResponse = {
   solicitud: SolicitudInicial;
   nosisData?: PersonalData;
+  motivoRechazo?: string;
+  reglasFallidas?: string[];
 };
 /**
  * Caso de uso para crear una nueva solicitud inicial de crédito.
@@ -116,6 +119,9 @@ export class CrearSolicitudInicialUseCase {
           message: `El cliente con CUIL ${cuilCliente} ya tiene un crédito activo`,
         });
 
+
+
+
         // Registrar evento de rechazo
         await this.historialRepository.registrarEvento({
           usuarioId: comercianteId,
@@ -163,7 +169,10 @@ export class CrearSolicitudInicialUseCase {
         },
         solicitudInicialId: solicitudInicialId,
       });
+
       let nosisData: PersonalData | undefined;
+      let motivoRechazo: string | undefined;
+      let reglasFallidas: string[] | undefined;
 
       try {
         const getNosisData = new GetDataNosisUseCase(this.nosisPort);
@@ -172,20 +181,32 @@ export class CrearSolicitudInicialUseCase {
         const resultadoNosis = await verifyNosis.execute(nosisResponse);
         nosisData = resultadoNosis.personalData;
 
+        cliente.setSexo(nosisData && nosisData.documentacion && typeof nosisData.documentacion.sexo !== "undefined" ? nosisData.documentacion.sexo : null);
+        cliente.setCodigoPostal(nosisData && nosisData.domicilio && nosisData.domicilio.codigoPostal ? nosisData.domicilio.codigoPostal : null);
+        cliente.setLocalidad(nosisData && nosisData.domicilio && nosisData.domicilio.localidad ? nosisData.domicilio.localidad : null);
+        cliente.setProvincia(nosisData && nosisData.domicilio && nosisData.domicilio.provincia ? nosisData.domicilio.provincia : null);
+        cliente.setNumeroDomicilio(nosisData && nosisData.domicilio && nosisData.domicilio.numero ? nosisData.domicilio.numero : null);
+        //TODO: guardar la razon social del empleador en la solicitud formal
+        //TODO: guardar el cuit del empleador en la solicitud formal
+        //TODO: guardar datos del empleador en la solicitud formal
+        //TODO: guardar en la BD los datos del cliente
+        //TODO : actualizar el cliente con los datos obtenidos de Nosis
+        //TODO: actualizar la solicitud formal con los datos del empleador
+        console.log("Actualizando cliente con datos de Nosis:", cliente);
         if (this.nosisAutomatico) {
           const getNosisData = new GetDataNosisUseCase(this.nosisPort);
           const nosisData = await getNosisData.execute(cuilCliente);
 
           const verifyNosis = new VerifyDataNosisUseCase();
           const resultadoNosis = await verifyNosis.execute(nosisData);
-
+          
           if (resultadoNosis.status === "aprobado") {
             solicitudCreada.setEstado("aprobada");
             await this.solicitudInicialRepository.updateSolicitudInicial(
               solicitudCreada,
               cliente
             );
-
+            solicitud.agregarComentario(`Aprobado: Nosis automático`);
             await this.historialRepository.registrarEvento({
               usuarioId: null,
               accion: HISTORIAL_ACTIONS.APPROVE_SOLICITUD_INICIAL,
@@ -199,7 +220,12 @@ export class CrearSolicitudInicialUseCase {
               solicitudInicialId,
             });
           } else if (resultadoNosis.status === "rechazado") {
+            motivoRechazo = resultadoNosis.motivo;
+            reglasFallidas = resultadoNosis.reglasFallidas;
             solicitudCreada.setEstado("rechazada");
+            solicitud.setMotivoRechazo(motivoRechazo ?? "");
+            solicitud.agregarComentario(`Rechazo: ${motivoRechazo}`);
+            //se guarda el motivo de rechazo en la solicitud
             await this.solicitudInicialRepository.updateSolicitudInicial(
               solicitudCreada,
               cliente
@@ -214,6 +240,7 @@ export class CrearSolicitudInicialUseCase {
                 sistema: "Nosis",
                 score: resultadoNosis.score,
                 motivo: resultadoNosis.motivo,
+                reglasFallidas: resultadoNosis.reglasFallidas
               },
               solicitudInicialId,
             });
@@ -243,6 +270,8 @@ export class CrearSolicitudInicialUseCase {
       return {
         solicitud: solicitudCreada,
         nosisData,
+        motivoRechazo,
+        reglasFallidas
       };
     } catch (error) {
       // Notificar error al comerciante
@@ -341,3 +370,41 @@ export class CrearSolicitudInicialUseCase {
     }
   }
 }
+
+
+/*
+{
+  "idSolicitudInicial": 1,
+  "importeNeto":1500000,
+  "comentarioInicial":"Solicitud creada por comerciante",
+  "solicitaAmpliacionDeCredito":false,
+  "datosEmpleador":{
+    "razonSocialEmpleador":"Acme S.A",
+    "cuitEmpleador":"123456",
+    "cargoEmpleador":"cargo en la empresa",
+    "sectorEmpleador": "sector en la empresa",
+    "codigoPostalEmpleador":"8300",
+    "localidadEmpleador":"NEUQUEN",
+    "provinciaEmpleador":"NEUQUEN",
+    "telefonoEmpleador":"299456789"
+  },
+  "cliente": {
+    "nombreCompleto": "Benito",
+    "apellido": "Dongato",
+    "telefono": "+549555222669",
+    "email": "Benito.Dongato@example.com",
+    "aceptaTarjeta": true,
+    "fechaNacimiento": "1985-05-15",
+    "domicilio": "Calle Falsa 123, Buenos Aires",
+    "sexo":"M",
+    "codigoPostal":"8300",
+    "localidad":"NEUQUEN",
+    "provincia":"NEUQUEN",
+    "numeroDomicilio":"1234",
+    "barrio":"Barrio Falso",
+    "recibo":"/9j/4AAQSkZJRgABAQEAYABgAAD/2wBDAAMCAgMCA
+
+
+
+
+*/

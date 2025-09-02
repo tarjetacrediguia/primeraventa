@@ -276,14 +276,21 @@ export const paginas = {
                 <div class="flex-cell red-header" style="flex-grow: 2;">SEXO</div>
             </div>
         </div>
-        
-        <div class="white-header"><span class="fuente-dato">{{SOLICITANTE_NOMBRE}}</span><span class="fuente-dato">{{SOLICITANTE_SEXO}}</span></div>
-        
+        <div class="flex-table data-table">
+        <div class="flex-row">
+                <div class="flex-cell white-header" style="flex-grow: 10;">
+                    <span class="fuente-dato">{{SOLICITANTE_NOMBRE}}</span>
+                </div>
+                <div class="flex-cell white-header" style="flex-grow: 2;">
+                    <span class="fuente-dato">{{SOLICITANTE_SEXO}}</span>
+                </div>
+            </div>
+        </div>
         <!-- Tabla convertida a flex -->
         <div class="flex-table data-table">
             <div class="flex-row">
                 <div class="flex-cell gray-header-small" style="flex-grow: 2;">N° CUIT O CUIL: <span class="fuente-dato">{{CUIL_CUIT}}</span></div>
-                <div class="flex-cell gray-header-small" style="flex-grow: 2;">TIPO DOC<br>DNI</div>
+                <div class="flex-cell gray-header-small" style="flex-grow: 2;">TIPO DOC: <span class="fuente-dato">DNI</span></div>
                 <div class="flex-cell gray-header-small" style="flex-grow: 2;">NÚMERO: <span class="fuente-dato">{{DNI}}</span></div>
                 <div class="flex-cell gray-header-small" style="flex-grow: 2;">FECHA DE NACIMIENTO: <span class="fuente-dato">{{FECHA_NACIMIENTO}}</span></div>
                 <div class="flex-cell gray-header-small" style="flex-grow: 2;">ESTADO CIVIL: <span class="fuente-dato">{{ESTADO_CIVIL}}</span></div>
@@ -304,12 +311,12 @@ export const paginas = {
         <!-- Tabla convertida a flex -->
         <div class="flex-table data-table">
             <div class="flex-row">
-                <div class="flex-cell gray-header-small" style="flex-grow: 6;">1-APELLIDOS Y NOMBRES / VÍNCULO *</div>
-                <div class="flex-cell gray-header-small" style="flex-grow: 6;">2-APELLIDOS Y NOMBRES / VÍNCULO *</div>
+                <div class="flex-cell gray-header-small" style="flex-grow: 6;">1-APELLIDOS Y NOMBRES / VÍNCULO *: <span class="fuente-dato">{{REFERENTE1_NOMBRE_COMPLETO}} / </span><span class="fuente-dato">{{REFERENTE1_VINCULO}}</div>
+                <div class="flex-cell gray-header-small" style="flex-grow: 6;">2-APELLIDOS Y NOMBRES / VÍNCULO *: <span class="fuente-dato">{{REFERENTE2_NOMBRE_COMPLETO}} / <span class="fuente-dato">{{REFERENTE2_VINCULO}}</div>
             </div>
             <div class="flex-row">
-                <div class="flex-cell white-header-small" style="flex-grow: 6;">DIRECCIÓN / TELÉFONOS *</div>
-                <div class="flex-cell white-header-small" style="flex-grow: 6;">DIRECCIÓN / TELÉFONOS *</div>
+                <div class="flex-cell white-header-small" style="flex-grow: 6;">DIRECCIÓN / TELÉFONOS *: <span class="fuente-dato">{{REFERENTE1_TELEFONO}}</div>
+                <div class="flex-cell white-header-small" style="flex-grow: 6;">DIRECCIÓN / TELÉFONOS *: <span class="fuente-dato">{{REFERENTE2_TELEFONO}}</div>
             </div>
         </div>
         
@@ -362,7 +369,7 @@ export const paginas = {
                 <div class="flex-cell white-header-small" style="flex-grow: 1;">COD POSTAL: <span class="fuente-dato">{{CODIGO_POSTAL}}</span></div>
                 <div class="flex-cell white-header-small" style="flex-grow: 1;">LOCALIDAD: <span class="fuente-dato">{{LOCALIDAD}}</span></div>
                 <div class="flex-cell white-header-small" style="flex-grow: 1;">PROVINCIA: <span class="fuente-dato">{{PROVINCIA}}</span></div>
-                <div class="flex-cell white-header-small" style="flex-grow: 1;">BARRIO: <span class="fuente-dato">{{BARRIO}}</span></div>
+                <div class="flex-cell white-header-small" style="flex-grow: 1;">BARRIO: <span class="fuente-dato">{{BARRIO}}</span></div> 
                 <div class="flex-cell white-header-small" style="flex-grow: 1;">SECTOR</div>
             </div>
         </div>
@@ -413,10 +420,10 @@ export const paginas = {
         <!-- Tabla convertida a flex -->
         <div class="flex-table data-table">
             <div class="flex-row">
-                <div class="flex-cell white-header-small" style="flex-grow: 3;">COD POSTAL</div>
-                <div class="flex-cell white-header-small" style="flex-grow: 3;">LOCALIDAD</div>
-                <div class="flex-cell white-header-small" style="flex-grow: 3;">PROVINCIA</div>
-                <div class="flex-cell white-header-small" style="flex-grow: 3;">TELÉFONO *</div>
+                <div class="flex-cell white-header-small" style="flex-grow: 3;">COD POSTAL:  <span class="fuente-dato">{{EMPLEADOR_COD_POSTAL}}</span></div>
+                <div class="flex-cell white-header-small" style="flex-grow: 3;">LOCALIDAD:  <span class="fuente-dato">{{EMPLEADOR_LOCALIDAD}}</span></div>
+                <div class="flex-cell white-header-small" style="flex-grow: 3;">PROVINCIA:  <span class="fuente-dato">{{EMPLEADOR_PROVINCIA}}</span></div>
+                <div class="flex-cell white-header-small" style="flex-grow: 3;">TELÉFONO *:  <span class="fuente-dato">{{EMPLEADOR_TELEFONO}}</span></div>
             </div>
         </div>
         
@@ -426,7 +433,7 @@ export const paginas = {
         <div class="flex-table data-table">
             <div class="flex-row">
                 <div class="flex-cell gray-header-small" style="flex-grow: 4;">OTRA OCUPACIÓN O PROFESIÓN</div>
-                <div class="flex-cell gray-header-small" style="flex-grow: 3;">SUELDO INGRESO NETO MENSUAL $</div>
+                <div class="flex-cell gray-header-small" style="flex-grow: 3;">SUELDO INGRESO NETO MENSUAL $ : <span class="fuente-dato">{{SUELDO}}</span></div>
                 <div class="flex-cell gray-header-small" style="flex-grow: 3;">OTROS INGRESOS DEMOSTRABLES $</div>
                 <div class="flex-cell gray-header-small" style="flex-grow: 2;">TOTAL DE INGRESOS $</div>
             </div>

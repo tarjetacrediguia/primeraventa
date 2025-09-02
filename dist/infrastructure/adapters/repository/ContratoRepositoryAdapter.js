@@ -36,7 +36,7 @@ class ContratoRepositoryAdapter {
         return __awaiter(this, void 0, void 0, function* () {
             const query = `
             SELECT id, fecha_generacion, monto, estado, solicitud_formal_id, 
-                   cliente_id, numero_tarjeta, numero_cuenta, pdf_contrato
+                   cliente_id, numero_autorizacion, numero_cuenta, pdf_contrato
             FROM contratos 
             WHERE id = $1
         `;
@@ -63,7 +63,7 @@ class ContratoRepositoryAdapter {
           estado = $2, 
           cliente_id = $3, 
           monto = $4,
-          numero_tarjeta = $5, 
+          numero_autorizacion = $5, 
           numero_cuenta = $6,
           pdf_contrato = $7,
           comercio_nombre = $8,
@@ -91,47 +91,55 @@ class ContratoRepositoryAdapter {
           cliente_domicilio_correo_electronico = $30,
           cliente_domicilio_telefono_fijo = $31,
           cliente_domicilio_telefono_celular = $32,
-          cliente_datos_laborales_actividad = $33,
-          cliente_datos_laborales_razon_social = $34,
-          cliente_datos_laborales_cuit = $35,
-          cliente_datos_laborales_inicio_actividades = $36,
-          cliente_datos_laborales_cargo = $37,
-          cliente_datos_laborales_sector = $38,
-          cliente_datos_laborales_domicilio_legal = $39,
-          cliente_datos_laborales_codigo_postal = $40,
-          cliente_datos_laborales_localidad = $41,
-          cliente_datos_laborales_provincia = $42,
-          cliente_datos_laborales_telefono = $43,
-          tasas_tea_ctf_financiacion = $44,
-          tasas_tna_compensatorios_financiacion = $45,
-          tasas_tna_punitorios = $46,
-          tasas_ctf_financiacion = $47,
-          tasas_comision_renovacion_anual = $48,
-          tasas_comision_mantenimiento = $49,
-          tasas_comision_reposicion_plastico = $50,
-          tasas_atraso_05_31_dias = $51,
-          tasas_atraso_32_60_dias = $52,
-          tasas_atraso_61_90_dias = $53,
-          tasas_pago_facil = $54,
-          tasas_platinium_pago_facil = $55,
-          tasas_platinium_tea_ctf_financiacion = $56,
-          tasas_platinium_tna_compensatorios_financiacion = $57,
-          tasas_platinium_tna_punitorios = $58,
-          tasas_platinium_ctf_financiacion = $59,
-          tasas_platinium_comision_renovacion_anual = $60,
-          tasas_platinium_comision_mantenimiento = $61,
-          tasas_platinium_comision_reposicion_plastico = $62,
-          tasas_platinium_atraso_05_31_dias = $63,
-          tasas_platinium_atraso_32_60_dias = $64,
-          tasas_platinium_atraso_61_90_dias = $65
-      WHERE id = $66
+          cliente_referente1_nombre = $33,
+          cliente_referente1_apellido = $34,
+          cliente_referente1_vinculo = $35,
+          cliente_referente1_telefono = $36,
+          cliente_referente2_nombre = $37,
+          cliente_referente2_apellido = $38,
+          cliente_referente2_vinculo = $39,
+          cliente_referente2_telefono = $40,
+          cliente_datos_laborales_actividad = $41,
+          cliente_datos_laborales_razon_social = $42,
+          cliente_datos_laborales_cuit = $43,
+          cliente_datos_laborales_inicio_actividades = $44,
+          cliente_datos_laborales_cargo = $45,
+          cliente_datos_laborales_sector = $46,
+          cliente_datos_laborales_domicilio_legal = $47,
+          cliente_datos_laborales_codigo_postal = $48,
+          cliente_datos_laborales_localidad = $49,
+          cliente_datos_laborales_provincia = $50,
+          cliente_datos_laborales_telefono = $51,
+          tasas_tea_ctf_financiacion = $52,
+          tasas_tna_compensatorios_financiacion = $53,
+          tasas_tna_punitorios = $54,
+          tasas_ctf_financiacion = $55,
+          tasas_comision_renovacion_anual = $56,
+          tasas_comision_mantenimiento = $57,
+          tasas_comision_reposicion_plastico = $58,
+          tasas_atraso_05_31_dias = $59,
+          tasas_atraso_32_60_dias = $60,
+          tasas_atraso_61_90_dias = $61,
+          tasas_pago_facil = $62,
+          tasas_platinium_pago_facil = $63,
+          tasas_platinium_tea_ctf_financiacion = $64,
+          tasas_platinium_tna_compensatorios_financiacion = $65,
+          tasas_platinium_tna_punitorios = $66,
+          tasas_platinium_ctf_financiacion = $67,
+          tasas_platinium_comision_renovacion_anual = $68,
+          tasas_platinium_comision_mantenimiento = $69,
+          tasas_platinium_comision_reposicion_plastico = $70,
+          tasas_platinium_atraso_05_31_dias = $71,
+          tasas_platinium_atraso_32_60_dias = $72,
+          tasas_platinium_atraso_61_90_dias = $73
+      WHERE id = $74
             `;
                 yield client.query(query, [
                     contrato.getFechaGeneracion(),
                     contrato.getEstado(),
                     contrato.getClienteId(),
                     contrato.getMonto(),
-                    contrato.getNumeroTarjeta(),
+                    contrato.getNumeroAutorizacion(),
                     contrato.getNumeroCuenta(),
                     contrato.getPdfContrato(),
                     contrato.comercioNombre,
@@ -159,6 +167,14 @@ class ContratoRepositoryAdapter {
                     contrato.clienteDomicilioCorreoElectronico,
                     contrato.clienteDomicilioTelefonoFijo,
                     contrato.clienteDomicilioTelefonoCelular,
+                    contrato.clienteReferente1Nombre,
+                    contrato.clienteReferente1Apellido,
+                    contrato.clienteReferente1Vinculo,
+                    contrato.clienteReferente1Telefono,
+                    contrato.clienteReferente2Nombre,
+                    contrato.clienteReferente2Apellido,
+                    contrato.clienteReferente2Vinculo,
+                    contrato.clienteReferente2Telefono,
                     contrato.clienteDatosLaboralesActividad,
                     contrato.clienteDatosLaboralesRazonSocial,
                     contrato.clienteDatosLaboralesCuit,
@@ -192,7 +208,7 @@ class ContratoRepositoryAdapter {
                     contrato.tasasPlatiniumAtraso05_31Dias,
                     contrato.tasasPlatiniumAtraso32_60Dias,
                     contrato.tasasPlatiniumAtraso61_90Dias,
-                    contrato.getId() // Último parámetro (WHERE id = $66)
+                    contrato.getId() // Último parámetro (WHERE id = $74)
                 ]);
                 yield client.query("COMMIT");
                 // Devolver el contrato actualizado
@@ -250,7 +266,7 @@ class ContratoRepositoryAdapter {
             monto,
             fecha_generacion,
             estado,
-            numero_tarjeta,
+            numero_autorizacion,
             numero_cuenta,
             pdf_contrato,
             comercio_nombre,
@@ -266,6 +282,7 @@ class ContratoRepositoryAdapter {
             cliente_fecha_nacimiento,
             cliente_estado_civil,
             cliente_nacionalidad,
+            cliente_Sueldo_Neto,
             cliente_domicilio_calle,
             cliente_domicilio_numero,
             cliente_domicilio_piso,
@@ -278,6 +295,14 @@ class ContratoRepositoryAdapter {
             cliente_domicilio_correo_electronico,
             cliente_domicilio_telefono_fijo,
             cliente_domicilio_telefono_celular,
+            cliente_referente1_nombre,
+            cliente_referente1_apellido,
+            cliente_referente1_vinculo,
+            cliente_referente1_telefono,
+            cliente_referente2_nombre,
+            cliente_referente2_apellido,
+            cliente_referente2_vinculo,
+            cliente_referente2_telefono,
             cliente_datos_laborales_actividad,
             cliente_datos_laborales_razon_social,
             cliente_datos_laborales_cuit,
@@ -312,13 +337,14 @@ class ContratoRepositoryAdapter {
             tasas_platinium_atraso_32_60_dias,
             tasas_platinium_atraso_61_90_dias
         ) VALUES (
-            $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, 
+            $1, $2, $3, $4, $5, $6, $7, $8, $9, $10,
             $11, $12, $13, $14, $15, $16, $17, $18, $19, $20,
             $21, $22, $23, $24, $25, $26, $27, $28, $29, $30,
             $31, $32, $33, $34, $35, $36, $37, $38, $39, $40,
             $41, $42, $43, $44, $45, $46, $47, $48, $49, $50,
             $51, $52, $53, $54, $55, $56, $57, $58, $59, $60,
-            $61, $62, $63, $64, $65, $66
+            $61, $62, $63, $64, $65, $66, $67, $68, $69, $70,
+            $71, $72, $73, $74, $75
         )
         RETURNING *;
     `;
@@ -328,7 +354,7 @@ class ContratoRepositoryAdapter {
                     contrato.getMonto(),
                     contrato.fechaGeneracion,
                     contrato.estado,
-                    contrato.numeroTarjeta,
+                    contrato.numeroAutorizacion,
                     contrato.numeroCuenta,
                     contrato.getPdfContrato(),
                     contrato.comercioNombre,
@@ -344,6 +370,7 @@ class ContratoRepositoryAdapter {
                     contrato.clienteFechaNacimiento,
                     contrato.clienteEstadoCivil,
                     contrato.clienteNacionalidad,
+                    contrato.clienteSueldoNeto,
                     contrato.clienteDomicilioCalle,
                     contrato.clienteDomicilioNumero,
                     contrato.clienteDomicilioPiso,
@@ -356,6 +383,14 @@ class ContratoRepositoryAdapter {
                     contrato.clienteDomicilioCorreoElectronico,
                     contrato.clienteDomicilioTelefonoFijo,
                     contrato.clienteDomicilioTelefonoCelular,
+                    contrato.clienteReferente1Nombre,
+                    contrato.clienteReferente1Apellido,
+                    contrato.clienteReferente1Vinculo,
+                    contrato.clienteReferente1Telefono,
+                    contrato.clienteReferente2Nombre,
+                    contrato.clienteReferente2Apellido,
+                    contrato.clienteReferente2Vinculo,
+                    contrato.clienteReferente2Telefono,
                     contrato.clienteDatosLaboralesActividad,
                     contrato.clienteDatosLaboralesRazonSocial,
                     contrato.clienteDatosLaboralesCuit,
@@ -413,7 +448,7 @@ class ContratoRepositoryAdapter {
         return __awaiter(this, void 0, void 0, function* () {
             const query = `
             SELECT id, fecha_generacion, monto, estado, solicitud_formal_id, 
-                   cliente_id, numero_tarjeta, numero_cuenta
+                   cliente_id, numero_autorizacion, numero_cuenta
             FROM contratos
         `;
             const result = yield DatabaseDonfig_1.pool.query(query);
@@ -429,7 +464,7 @@ class ContratoRepositoryAdapter {
         return __awaiter(this, void 0, void 0, function* () {
             const query = `
             SELECT id, fecha_generacion, monto, estado, solicitud_formal_id, 
-                   cliente_id, numero_tarjeta, numero_cuenta
+                   cliente_id, numero_autorizacion, numero_cuenta
             FROM contratos
             WHERE solicitud_formal_id = $1
         `;
@@ -447,7 +482,7 @@ class ContratoRepositoryAdapter {
             const query = `
             SELECT c.id, c.fecha_generacion, c.monto, c.estado, 
                    c.solicitud_formal_id, c.cliente_id, 
-                   c.numero_tarjeta, c.numero_cuenta
+                   c.numero_autorizacion, c.numero_cuenta
             FROM contratos c
             JOIN solicitudes_formales sf ON c.solicitud_formal_id = sf.id
             WHERE sf.analista_aprobador_id = $1
@@ -466,7 +501,7 @@ class ContratoRepositoryAdapter {
             const query = `
             SELECT c.id, c.fecha_generacion, c.monto, c.estado, 
                    c.solicitud_formal_id, c.cliente_id, 
-                   c.numero_tarjeta, c.numero_cuenta
+                   c.numero_autorizacion, c.numero_cuenta
             FROM contratos c
             JOIN solicitudes_formales sf ON c.solicitud_formal_id = sf.id
             WHERE sf.comerciante_id = $1
@@ -484,7 +519,7 @@ class ContratoRepositoryAdapter {
         return __awaiter(this, void 0, void 0, function* () {
             const query = `
             SELECT id, fecha_generacion, monto, estado, solicitud_formal_id, 
-                   cliente_id, numero_tarjeta, numero_cuenta
+                   cliente_id, numero_autorizacion, numero_cuenta
             FROM contratos
             WHERE estado = $1
         `;
@@ -493,8 +528,8 @@ class ContratoRepositoryAdapter {
         });
     }
     mapRowToContrato(row) {
-        var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k, _l, _m, _o, _p, _q, _r, _s, _t, _u, _v, _w, _x, _y, _z, _0, _1, _2, _3, _4, _5, _6, _7, _8, _9, _10, _11;
-        const contrato = new Contrato_1.Contrato(row.id, row.fecha_generacion, row.estado, Number(row.solicitud_formal_id), Number(row.cliente_id), row.monto ? parseFloat(row.monto) : undefined, row.numero_tarjeta, row.numero_cuenta, (_a = row.comercio_nombre) !== null && _a !== void 0 ? _a : undefined, (_b = row.comercio_fecha) !== null && _b !== void 0 ? _b : undefined, (_c = row.comercio_n_autorizacion) !== null && _c !== void 0 ? _c : undefined, (_d = row.comercio_producto) !== null && _d !== void 0 ? _d : undefined, (_e = row.comercio_sucursal) !== null && _e !== void 0 ? _e : undefined, (_f = row.cliente_nombre_completo) !== null && _f !== void 0 ? _f : undefined, (_g = row.cliente_sexo) !== null && _g !== void 0 ? _g : undefined, (_h = row.cliente_cuitocuil) !== null && _h !== void 0 ? _h : undefined, (_j = row.cliente_tipo_documento) !== null && _j !== void 0 ? _j : undefined, (_k = row.cliente_dni) !== null && _k !== void 0 ? _k : undefined, (_l = row.cliente_fecha_nacimiento) !== null && _l !== void 0 ? _l : undefined, (_m = row.cliente_estado_civil) !== null && _m !== void 0 ? _m : undefined, (_o = row.cliente_nacionalidad) !== null && _o !== void 0 ? _o : undefined, (_p = row.cliente_domicilio_calle) !== null && _p !== void 0 ? _p : undefined, (_q = row.cliente_domicilio_numero) !== null && _q !== void 0 ? _q : undefined, (_r = row.cliente_domicilio_piso) !== null && _r !== void 0 ? _r : undefined, (_s = row.cliente_domicilio_departamento) !== null && _s !== void 0 ? _s : undefined, (_t = row.cliente_domicilio_localidad) !== null && _t !== void 0 ? _t : undefined, (_u = row.cliente_domicilio_provincia) !== null && _u !== void 0 ? _u : undefined, (_v = row.cliente_domicilio_barrio) !== null && _v !== void 0 ? _v : undefined, (_w = row.cliente_domicilio_pais) !== null && _w !== void 0 ? _w : undefined, (_x = row.cliente_domicilio_codigo_postal) !== null && _x !== void 0 ? _x : undefined, (_y = row.cliente_domicilio_correo_electronico) !== null && _y !== void 0 ? _y : undefined, (_z = row.cliente_domicilio_telefono_fijo) !== null && _z !== void 0 ? _z : undefined, (_0 = row.cliente_domicilio_telefono_celular) !== null && _0 !== void 0 ? _0 : undefined, (_1 = row.cliente_datos_laborales_actividad) !== null && _1 !== void 0 ? _1 : undefined, (_2 = row.cliente_datos_laborales_razon_social) !== null && _2 !== void 0 ? _2 : undefined, (_3 = row.cliente_datos_laborales_cuit) !== null && _3 !== void 0 ? _3 : undefined, (_4 = row.cliente_datos_laborales_inicio_actividades) !== null && _4 !== void 0 ? _4 : undefined, (_5 = row.cliente_datos_laborales_cargo) !== null && _5 !== void 0 ? _5 : undefined, (_6 = row.cliente_datos_laborales_sector) !== null && _6 !== void 0 ? _6 : undefined, (_7 = row.cliente_datos_laborales_domicilio_legal) !== null && _7 !== void 0 ? _7 : undefined, (_8 = row.cliente_datos_laborales_codigo_postal) !== null && _8 !== void 0 ? _8 : undefined, (_9 = row.cliente_datos_laborales_localidad) !== null && _9 !== void 0 ? _9 : undefined, (_10 = row.cliente_datos_laborales_provincia) !== null && _10 !== void 0 ? _10 : undefined, (_11 = row.cliente_datos_laborales_telefono) !== null && _11 !== void 0 ? _11 : undefined, row.tasas_tea_ctf_financiacion ? parseFloat(row.tasas_tea_ctf_financiacion) : undefined, row.tasas_tna_compensatorios_financiacion ? parseFloat(row.tasas_tna_compensatorios_financiacion) : undefined, row.tasas_tna_punitorios ? parseFloat(row.tasas_tna_punitorios) : undefined, row.tasas_ctf_financiacion ? parseFloat(row.tasas_ctf_financiacion) : undefined, row.tasas_comision_renovacion_anual ? parseFloat(row.tasas_comision_renovacion_anual) : undefined, row.tasas_comision_mantenimiento ? parseFloat(row.tasas_comision_mantenimiento) : undefined, row.tasas_comision_reposicion_plastico ? parseFloat(row.tasas_comision_reposicion_plastico) : undefined, row.tasas_atraso_05_31_dias ? parseFloat(row.tasas_atraso_05_31_dias) : undefined, row.tasas_atraso_32_60_dias ? parseFloat(row.tasas_atraso_32_60_dias) : undefined, row.tasas_atraso_61_90_dias ? parseFloat(row.tasas_atraso_61_90_dias) : undefined, row.tasas_pago_facil ? parseFloat(row.tasas_pago_facil) : undefined, row.tasas_platinium_pago_facil ? parseFloat(row.tasas_platinium_pago_facil) : undefined, row.tasas_platinium_tea_ctf_financiacion ? parseFloat(row.tasas_platinium_tea_ctf_financiacion) : undefined, row.tasas_platinium_tna_compensatorios_financiacion ? parseFloat(row.tasas_platinium_tna_compensatorios_financiacion) : undefined, row.tasas_platinium_tna_punitorios ? parseFloat(row.tasas_platinium_tna_punitorios) : undefined, row.tasas_platinium_ctf_financiacion ? parseFloat(row.tasas_platinium_ctf_financiacion) : undefined, row.tasas_platinium_comision_renovacion_anual ? parseFloat(row.tasas_platinium_comision_renovacion_anual) : undefined, row.tasas_platinium_comision_mantenimiento ? parseFloat(row.tasas_platinium_comision_mantenimiento) : undefined, row.tasas_platinium_comision_reposicion_plastico ? parseFloat(row.tasas_platinium_comision_reposicion_plastico) : undefined, row.tasas_platinium_atraso_05_31_dias ? parseFloat(row.tasas_platinium_atraso_05_31_dias) : undefined, row.tasas_platinium_atraso_32_60_dias ? parseFloat(row.tasas_platinium_atraso_32_60_dias) : undefined, row.tasas_platinium_atraso_61_90_dias ? parseFloat(row.tasas_platinium_atraso_61_90_dias) : undefined);
+        var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k, _l, _m, _o, _p, _q, _r, _s, _t, _u, _v, _w, _x, _y, _z, _0, _1, _2, _3, _4, _5, _6, _7, _8, _9, _10, _11, _12, _13, _14, _15, _16, _17, _18, _19, _20;
+        const contrato = new Contrato_1.Contrato(row.id, row.fecha_generacion, row.estado, Number(row.solicitud_formal_id), Number(row.cliente_id), row.monto ? parseFloat(row.monto) : undefined, row.numero_autorizacion, row.numero_cuenta, (_a = row.comercio_nombre) !== null && _a !== void 0 ? _a : undefined, (_b = row.comercio_fecha) !== null && _b !== void 0 ? _b : undefined, (_c = row.comercio_n_autorizacion) !== null && _c !== void 0 ? _c : undefined, (_d = row.comercio_producto) !== null && _d !== void 0 ? _d : undefined, (_e = row.comercio_sucursal) !== null && _e !== void 0 ? _e : undefined, (_f = row.cliente_nombre_completo) !== null && _f !== void 0 ? _f : undefined, (_g = row.cliente_sexo) !== null && _g !== void 0 ? _g : undefined, (_h = row.cliente_cuitocuil) !== null && _h !== void 0 ? _h : undefined, (_j = row.cliente_tipo_documento) !== null && _j !== void 0 ? _j : undefined, (_k = row.cliente_dni) !== null && _k !== void 0 ? _k : undefined, (_l = row.cliente_fecha_nacimiento) !== null && _l !== void 0 ? _l : undefined, (_m = row.cliente_estado_civil) !== null && _m !== void 0 ? _m : undefined, (_o = row.cliente_nacionalidad) !== null && _o !== void 0 ? _o : undefined, (_p = row.cliente_Sueldo_Neto) !== null && _p !== void 0 ? _p : undefined, (_q = row.cliente_domicilio_calle) !== null && _q !== void 0 ? _q : undefined, (_r = row.cliente_domicilio_numero) !== null && _r !== void 0 ? _r : undefined, (_s = row.cliente_domicilio_piso) !== null && _s !== void 0 ? _s : undefined, (_t = row.cliente_domicilio_departamento) !== null && _t !== void 0 ? _t : undefined, (_u = row.cliente_domicilio_localidad) !== null && _u !== void 0 ? _u : undefined, (_v = row.cliente_domicilio_provincia) !== null && _v !== void 0 ? _v : undefined, (_w = row.cliente_domicilio_barrio) !== null && _w !== void 0 ? _w : undefined, (_x = row.cliente_domicilio_pais) !== null && _x !== void 0 ? _x : undefined, (_y = row.cliente_domicilio_codigo_postal) !== null && _y !== void 0 ? _y : undefined, (_z = row.cliente_domicilio_correo_electronico) !== null && _z !== void 0 ? _z : undefined, (_0 = row.cliente_domicilio_telefono_fijo) !== null && _0 !== void 0 ? _0 : undefined, (_1 = row.cliente_domicilio_telefono_celular) !== null && _1 !== void 0 ? _1 : undefined, (_2 = row.cliente_referente1_nombre) !== null && _2 !== void 0 ? _2 : undefined, (_3 = row.cliente_referente1_apellido) !== null && _3 !== void 0 ? _3 : undefined, (_4 = row.cliente_referente1_vinculo) !== null && _4 !== void 0 ? _4 : undefined, (_5 = row.cliente_referente1_telefono) !== null && _5 !== void 0 ? _5 : undefined, (_6 = row.cliente_referente2_nombre) !== null && _6 !== void 0 ? _6 : undefined, (_7 = row.cliente_referente2_apellido) !== null && _7 !== void 0 ? _7 : undefined, (_8 = row.cliente_referente2_vinculo) !== null && _8 !== void 0 ? _8 : undefined, (_9 = row.cliente_referente2_telefono) !== null && _9 !== void 0 ? _9 : undefined, (_10 = row.cliente_datos_laborales_actividad) !== null && _10 !== void 0 ? _10 : undefined, (_11 = row.cliente_datos_laborales_razon_social) !== null && _11 !== void 0 ? _11 : undefined, (_12 = row.cliente_datos_laborales_cuit) !== null && _12 !== void 0 ? _12 : undefined, (_13 = row.cliente_datos_laborales_inicio_actividades) !== null && _13 !== void 0 ? _13 : undefined, (_14 = row.cliente_datos_laborales_cargo) !== null && _14 !== void 0 ? _14 : undefined, (_15 = row.cliente_datos_laborales_sector) !== null && _15 !== void 0 ? _15 : undefined, (_16 = row.cliente_datos_laborales_domicilio_legal) !== null && _16 !== void 0 ? _16 : undefined, (_17 = row.cliente_datos_laborales_codigo_postal) !== null && _17 !== void 0 ? _17 : undefined, (_18 = row.cliente_datos_laborales_localidad) !== null && _18 !== void 0 ? _18 : undefined, (_19 = row.cliente_datos_laborales_provincia) !== null && _19 !== void 0 ? _19 : undefined, (_20 = row.cliente_datos_laborales_telefono) !== null && _20 !== void 0 ? _20 : undefined, row.tasas_tea_ctf_financiacion ? parseFloat(row.tasas_tea_ctf_financiacion) : undefined, row.tasas_tna_compensatorios_financiacion ? parseFloat(row.tasas_tna_compensatorios_financiacion) : undefined, row.tasas_tna_punitorios ? parseFloat(row.tasas_tna_punitorios) : undefined, row.tasas_ctf_financiacion ? parseFloat(row.tasas_ctf_financiacion) : undefined, row.tasas_comision_renovacion_anual ? parseFloat(row.tasas_comision_renovacion_anual) : undefined, row.tasas_comision_mantenimiento ? parseFloat(row.tasas_comision_mantenimiento) : undefined, row.tasas_comision_reposicion_plastico ? parseFloat(row.tasas_comision_reposicion_plastico) : undefined, row.tasas_atraso_05_31_dias ? parseFloat(row.tasas_atraso_05_31_dias) : undefined, row.tasas_atraso_32_60_dias ? parseFloat(row.tasas_atraso_32_60_dias) : undefined, row.tasas_atraso_61_90_dias ? parseFloat(row.tasas_atraso_61_90_dias) : undefined, row.tasas_pago_facil ? parseFloat(row.tasas_pago_facil) : undefined, row.tasas_platinium_pago_facil ? parseFloat(row.tasas_platinium_pago_facil) : undefined, row.tasas_platinium_tea_ctf_financiacion ? parseFloat(row.tasas_platinium_tea_ctf_financiacion) : undefined, row.tasas_platinium_tna_compensatorios_financiacion ? parseFloat(row.tasas_platinium_tna_compensatorios_financiacion) : undefined, row.tasas_platinium_tna_punitorios ? parseFloat(row.tasas_platinium_tna_punitorios) : undefined, row.tasas_platinium_ctf_financiacion ? parseFloat(row.tasas_platinium_ctf_financiacion) : undefined, row.tasas_platinium_comision_renovacion_anual ? parseFloat(row.tasas_platinium_comision_renovacion_anual) : undefined, row.tasas_platinium_comision_mantenimiento ? parseFloat(row.tasas_platinium_comision_mantenimiento) : undefined, row.tasas_platinium_comision_reposicion_plastico ? parseFloat(row.tasas_platinium_comision_reposicion_plastico) : undefined, row.tasas_platinium_atraso_05_31_dias ? parseFloat(row.tasas_platinium_atraso_05_31_dias) : undefined, row.tasas_platinium_atraso_32_60_dias ? parseFloat(row.tasas_platinium_atraso_32_60_dias) : undefined, row.tasas_platinium_atraso_61_90_dias ? parseFloat(row.tasas_platinium_atraso_61_90_dias) : undefined);
         if (row.pdf_contrato) {
             contrato.setPdfContrato(row.pdf_contrato);
         }

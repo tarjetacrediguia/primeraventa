@@ -33,10 +33,15 @@ export class Cliente {
     private email: string | null;
     private fechaNacimiento: Date | null;
     private domicilio: string | null;
-    private datosEmpleador: string | null;
     private aceptaTarjeta: boolean;
     private readonly fechaCreacion: Date;
-    public comercianteId: number
+    public comercianteId: number;
+    private sexo: string | null;
+    private codigoPostal: string | null;
+    private localidad: string | null;
+    private provincia: string | null;
+    private numeroDomicilio: string | null;
+    private barrio: string | null;  
 
     /**
      * Constructor de la clase Cliente.
@@ -55,6 +60,13 @@ export class Cliente {
      * @param aceptaTarjeta - Indica si el cliente acepta tarjeta de crédito.
      * @param fechaCreacion - Fecha de creación del registro (opcional).
      * @param comercianteId - ID del comerciante asociado al cliente.
+     * @param sexo - Sexo del cliente (opcional).
+     * @param codigoPostal - Código postal del cliente (opcional).
+     * @param localidad - Localidad del cliente (opcional).
+     * @param provincia - Provincia del cliente (opcional).
+     * @param cuitLaboral - CUIL laboral del cliente (opcional).
+     * @param numeroDomicilio - Número del domicilio del cliente (opcional).
+     * @param barrio - Barrio del cliente (opcional).
      */
     constructor(
         id: number,
@@ -66,10 +78,16 @@ export class Cliente {
         email: string | null = null,
         fechaNacimiento: Date | null = null,
         domicilio: string | null = null,
-        datosEmpleador: string | null = null,
         aceptaTarjeta: boolean = false,
         fechaCreacion: Date | null = null,
-        comercianteId: number = 0
+        comercianteId: number = 0,
+        sexo: string | null = null,
+        codigoPostal: string | null = null,
+        localidad: string | null = null,
+        provincia: string | null = null,
+        numeroDomicilio: string | null = null,
+        barrio: string | null = null
+
     ) {
         this.id = id;
         this.nombreCompleto = nombreCompleto;
@@ -80,10 +98,98 @@ export class Cliente {
         this.email = email;
         this.fechaNacimiento = fechaNacimiento;
         this.domicilio = domicilio;
-        this.datosEmpleador = datosEmpleador;
         this.aceptaTarjeta = aceptaTarjeta;
         this.fechaCreacion = fechaCreacion || new Date();
         this.comercianteId = comercianteId;
+        this.sexo = sexo;
+        this.codigoPostal = codigoPostal;
+        this.localidad = localidad;
+        this.provincia = provincia;
+        this.numeroDomicilio = numeroDomicilio;
+        this.barrio = barrio;
+
+    }
+
+    /*
+        * Obtiene el barrio del cliente.
+        * 
+        * @returns string | null - Barrio del cliente o null si no tiene.
+        */
+    public getBarrio(): string | null {
+        return this.barrio;
+    }
+    /**
+     * Establece el barrio del cliente.
+     * 
+     * @param barrio - Nuevo barrio del cliente.
+     */
+    public setBarrio(barrio: string | null): void {
+        this.barrio = barrio;
+    }
+    /*
+        * Obtiene el número del domicilio del cliente.
+        * 
+        * @returns string | null - Número del domicilio del cliente o null si no tiene.
+        */
+    public getNumeroDomicilio(): string | null {
+        return this.numeroDomicilio;
+    }
+    /**
+     * Establece el número del domicilio del cliente.
+     * 
+     * @param numeroDomicilio - Nuevo número del domicilio del cliente.
+     */
+    public setNumeroDomicilio(numeroDomicilio: string | null): void {
+        this.numeroDomicilio = numeroDomicilio;
+    }
+
+    /*
+        * Obtiene el código postal del cliente.
+        * 
+        * @returns string | null - Código postal del cliente o null si no tiene.
+        */
+    public getCodigoPostal(): string | null {
+        return this.codigoPostal;
+    }
+    /**
+     * Establece el código postal del cliente.
+     * 
+     * @param codigoPostal - Nuevo código postal del cliente.
+     */
+    public setCodigoPostal(codigoPostal: string | null): void {
+        this.codigoPostal = codigoPostal;
+    }
+    /*
+        * Obtiene la localidad del cliente.
+        * 
+        * @returns string | null - Localidad del cliente o null si no tiene.
+        */
+    public getLocalidad(): string | null {
+        return this.localidad;
+    }
+    /**
+     * Establece la localidad del cliente.
+     * 
+     * @param localidad - Nueva localidad del cliente.
+     */
+    public setLocalidad(localidad: string | null): void {
+        this.localidad = localidad;
+    }
+    /*
+        * Obtiene la provincia del cliente.
+        * 
+        * @returns string | null - Provincia del cliente o null si no tiene.
+        */
+    public getProvincia(): string | null {
+        return this.provincia;
+    }
+    /**
+     * Establece la provincia del cliente.
+     * 
+     * @param provincia - Nueva provincia del cliente.
+     */
+    public setProvincia(provincia: string | null): void {
+        this.provincia = provincia;
     }
 
     /**
@@ -167,6 +273,24 @@ export class Cliente {
         return this.cuil;
     }
 
+    /*
+        * Obtiene el sexo del cliente.
+        * 
+        * @returns string | null - Sexo del cliente o null si no tiene.
+        */
+    public getSexo(): string | null {
+        return this.sexo;
+    }
+
+    /**
+     * Establece el sexo del cliente.
+     * 
+     * @param sexo - Nuevo sexo del cliente.
+     */
+    public setSexo(sexo: string | null): void {
+        this.sexo = sexo;
+    }
+
     /**
      * Establece el CUIL del cliente.
      * 
@@ -246,24 +370,6 @@ export class Cliente {
      */
     public setDomicilio(domicilio: string | null): void {
         this.domicilio = domicilio;
-    }
-
-    /**
-     * Obtiene los datos del empleador del cliente.
-     * 
-     * @returns string | null - Datos del empleador o null si no tiene.
-     */
-    public getDatosEmpleador(): string | null {
-        return this.datosEmpleador;
-    }
-
-    /**
-     * Establece los datos del empleador del cliente.
-     * 
-     * @param datosEmpleador - Nuevos datos del empleador.
-     */
-    public setDatosEmpleador(datosEmpleador: string | null): void {
-        this.datosEmpleador = datosEmpleador;
     }
 
     /**
@@ -350,8 +456,7 @@ export class Cliente {
     public esElegibleParaTarjeta(): boolean {
         return this.esMayorDeEdad() && 
                this.tieneContactoCompleto() && 
-               this.domicilio !== null &&
-               this.datosEmpleador !== null;
+               this.domicilio !== null
     }
 
     /**
@@ -442,7 +547,6 @@ export class Cliente {
             email: this.email,
             fechaNacimiento: this.fechaNacimiento,
             domicilio: this.domicilio,
-            datosEmpleador: this.datosEmpleador,
             aceptaTarjeta: this.aceptaTarjeta,
             fechaCreacion: this.fechaCreacion,
             comercianteId: this.comercianteId
@@ -468,7 +572,6 @@ export class Cliente {
             map.fechaNacimiento ? new Date(map.fechaNacimiento) : 
             map.fecha_nacimiento ? new Date(map.fecha_nacimiento) : null,
             map.domicilio,
-            map.datosEmpleador || map.datos_empleador,
             map.aceptaTarjeta ?? map.acepta_tarjeta ?? false,
             map.fechaCreacion ? new Date(map.fechaCreacion) : 
             map.fecha_creacion ? new Date(map.fecha_creacion) : new Date(),
@@ -492,7 +595,6 @@ export class Cliente {
             this.email,
             this.fechaNacimiento,
             this.domicilio,
-            this.datosEmpleador,
             this.aceptaTarjeta,
             this.fechaCreacion,
             this.comercianteId
@@ -532,9 +634,6 @@ export class Cliente {
         }
         if (datosActualizados.domicilio !== undefined) {
             this.setDomicilio(datosActualizados.domicilio);
-        }
-        if (datosActualizados.datosEmpleador !== undefined) {
-            this.setDatosEmpleador(datosActualizados.datosEmpleador);
         }
         if (datosActualizados.aceptaTarjeta !== undefined) {
             this.setAceptaTarjeta(datosActualizados.aceptaTarjeta);

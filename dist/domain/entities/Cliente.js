@@ -42,8 +42,15 @@ class Cliente {
      * @param aceptaTarjeta - Indica si el cliente acepta tarjeta de crédito.
      * @param fechaCreacion - Fecha de creación del registro (opcional).
      * @param comercianteId - ID del comerciante asociado al cliente.
+     * @param sexo - Sexo del cliente (opcional).
+     * @param codigoPostal - Código postal del cliente (opcional).
+     * @param localidad - Localidad del cliente (opcional).
+     * @param provincia - Provincia del cliente (opcional).
+     * @param cuitLaboral - CUIL laboral del cliente (opcional).
+     * @param numeroDomicilio - Número del domicilio del cliente (opcional).
+     * @param barrio - Barrio del cliente (opcional).
      */
-    constructor(id, nombreCompleto, apellido, dni, cuil, telefono = null, email = null, fechaNacimiento = null, domicilio = null, datosEmpleador = null, aceptaTarjeta = false, fechaCreacion = null, comercianteId = 0) {
+    constructor(id, nombreCompleto, apellido, dni, cuil, telefono = null, email = null, fechaNacimiento = null, domicilio = null, aceptaTarjeta = false, fechaCreacion = null, comercianteId = 0, sexo = null, codigoPostal = null, localidad = null, provincia = null, numeroDomicilio = null, barrio = null) {
         this.id = id;
         this.nombreCompleto = nombreCompleto;
         this.apellido = apellido;
@@ -53,10 +60,95 @@ class Cliente {
         this.email = email;
         this.fechaNacimiento = fechaNacimiento;
         this.domicilio = domicilio;
-        this.datosEmpleador = datosEmpleador;
         this.aceptaTarjeta = aceptaTarjeta;
         this.fechaCreacion = fechaCreacion || new Date();
         this.comercianteId = comercianteId;
+        this.sexo = sexo;
+        this.codigoPostal = codigoPostal;
+        this.localidad = localidad;
+        this.provincia = provincia;
+        this.numeroDomicilio = numeroDomicilio;
+        this.barrio = barrio;
+    }
+    /*
+        * Obtiene el barrio del cliente.
+        *
+        * @returns string | null - Barrio del cliente o null si no tiene.
+        */
+    getBarrio() {
+        return this.barrio;
+    }
+    /**
+     * Establece el barrio del cliente.
+     *
+     * @param barrio - Nuevo barrio del cliente.
+     */
+    setBarrio(barrio) {
+        this.barrio = barrio;
+    }
+    /*
+        * Obtiene el número del domicilio del cliente.
+        *
+        * @returns string | null - Número del domicilio del cliente o null si no tiene.
+        */
+    getNumeroDomicilio() {
+        return this.numeroDomicilio;
+    }
+    /**
+     * Establece el número del domicilio del cliente.
+     *
+     * @param numeroDomicilio - Nuevo número del domicilio del cliente.
+     */
+    setNumeroDomicilio(numeroDomicilio) {
+        this.numeroDomicilio = numeroDomicilio;
+    }
+    /*
+        * Obtiene el código postal del cliente.
+        *
+        * @returns string | null - Código postal del cliente o null si no tiene.
+        */
+    getCodigoPostal() {
+        return this.codigoPostal;
+    }
+    /**
+     * Establece el código postal del cliente.
+     *
+     * @param codigoPostal - Nuevo código postal del cliente.
+     */
+    setCodigoPostal(codigoPostal) {
+        this.codigoPostal = codigoPostal;
+    }
+    /*
+        * Obtiene la localidad del cliente.
+        *
+        * @returns string | null - Localidad del cliente o null si no tiene.
+        */
+    getLocalidad() {
+        return this.localidad;
+    }
+    /**
+     * Establece la localidad del cliente.
+     *
+     * @param localidad - Nueva localidad del cliente.
+     */
+    setLocalidad(localidad) {
+        this.localidad = localidad;
+    }
+    /*
+        * Obtiene la provincia del cliente.
+        *
+        * @returns string | null - Provincia del cliente o null si no tiene.
+        */
+    getProvincia() {
+        return this.provincia;
+    }
+    /**
+     * Establece la provincia del cliente.
+     *
+     * @param provincia - Nueva provincia del cliente.
+     */
+    setProvincia(provincia) {
+        this.provincia = provincia;
     }
     /**
      * Obtiene el ID del comerciante asociado al cliente.
@@ -130,6 +222,22 @@ class Cliente {
     getCuil() {
         return this.cuil;
     }
+    /*
+        * Obtiene el sexo del cliente.
+        *
+        * @returns string | null - Sexo del cliente o null si no tiene.
+        */
+    getSexo() {
+        return this.sexo;
+    }
+    /**
+     * Establece el sexo del cliente.
+     *
+     * @param sexo - Nuevo sexo del cliente.
+     */
+    setSexo(sexo) {
+        this.sexo = sexo;
+    }
     /**
      * Establece el CUIL del cliente.
      *
@@ -201,22 +309,6 @@ class Cliente {
      */
     setDomicilio(domicilio) {
         this.domicilio = domicilio;
-    }
-    /**
-     * Obtiene los datos del empleador del cliente.
-     *
-     * @returns string | null - Datos del empleador o null si no tiene.
-     */
-    getDatosEmpleador() {
-        return this.datosEmpleador;
-    }
-    /**
-     * Establece los datos del empleador del cliente.
-     *
-     * @param datosEmpleador - Nuevos datos del empleador.
-     */
-    setDatosEmpleador(datosEmpleador) {
-        this.datosEmpleador = datosEmpleador;
     }
     /**
      * Obtiene si el cliente acepta tarjeta de crédito.
@@ -294,8 +386,7 @@ class Cliente {
     esElegibleParaTarjeta() {
         return this.esMayorDeEdad() &&
             this.tieneContactoCompleto() &&
-            this.domicilio !== null &&
-            this.datosEmpleador !== null;
+            this.domicilio !== null;
     }
     /**
      * Valida el formato del DNI del cliente.
@@ -383,7 +474,6 @@ class Cliente {
             email: this.email,
             fechaNacimiento: this.fechaNacimiento,
             domicilio: this.domicilio,
-            datosEmpleador: this.datosEmpleador,
             aceptaTarjeta: this.aceptaTarjeta,
             fechaCreacion: this.fechaCreacion,
             comercianteId: this.comercianteId
@@ -399,7 +489,7 @@ class Cliente {
     static fromMap(map) {
         var _a, _b, _c, _d;
         return new Cliente((_a = map.id) === null || _a === void 0 ? void 0 : _a.toString(), map.nombreCompleto || map.nombre_completo, map.apellido, map.dni, map.cuil, map.telefono, map.email, map.fechaNacimiento ? new Date(map.fechaNacimiento) :
-            map.fecha_nacimiento ? new Date(map.fecha_nacimiento) : null, map.domicilio, map.datosEmpleador || map.datos_empleador, (_c = (_b = map.aceptaTarjeta) !== null && _b !== void 0 ? _b : map.acepta_tarjeta) !== null && _c !== void 0 ? _c : false, map.fechaCreacion ? new Date(map.fechaCreacion) :
+            map.fecha_nacimiento ? new Date(map.fecha_nacimiento) : null, map.domicilio, (_c = (_b = map.aceptaTarjeta) !== null && _b !== void 0 ? _b : map.acepta_tarjeta) !== null && _c !== void 0 ? _c : false, map.fechaCreacion ? new Date(map.fechaCreacion) :
             map.fecha_creacion ? new Date(map.fecha_creacion) : new Date(), (_d = map.comercianteId) !== null && _d !== void 0 ? _d : 0);
     }
     /**
@@ -408,7 +498,7 @@ class Cliente {
      * @returns Cliente - Nueva instancia con los mismos datos.
      */
     clone() {
-        return new Cliente(this.id, this.nombreCompleto, this.apellido, this.dni, this.cuil, this.telefono, this.email, this.fechaNacimiento, this.domicilio, this.datosEmpleador, this.aceptaTarjeta, this.fechaCreacion, this.comercianteId);
+        return new Cliente(this.id, this.nombreCompleto, this.apellido, this.dni, this.cuil, this.telefono, this.email, this.fechaNacimiento, this.domicilio, this.aceptaTarjeta, this.fechaCreacion, this.comercianteId);
     }
     /**
      * Actualiza los datos del cliente con la información proporcionada.
@@ -434,9 +524,6 @@ class Cliente {
         }
         if (datosActualizados.domicilio !== undefined) {
             this.setDomicilio(datosActualizados.domicilio);
-        }
-        if (datosActualizados.datosEmpleador !== undefined) {
-            this.setDatosEmpleador(datosActualizados.datosEmpleador);
         }
         if (datosActualizados.aceptaTarjeta !== undefined) {
             this.setAceptaTarjeta(datosActualizados.aceptaTarjeta);

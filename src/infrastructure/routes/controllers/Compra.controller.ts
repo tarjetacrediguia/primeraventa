@@ -45,8 +45,7 @@ export const crearCompra = async (req: Request, res: Response) => {
             historialRepository,
             notificationService,
             analistaRepo,
-            solicitudInicialRepository,
-            configuracionRepo
+            solicitudInicialRepository
         );
 
         const compra = await useCase.execute(
@@ -147,8 +146,8 @@ export const obtenerCompraPorSolicitudFormalAnalista = async (req: Request, res:
 // Controlador para aprobar compra
 export const aprobarCompra = async (req: Request, res: Response) => {
     try {
-        const { numeroTarjeta, numeroCuenta } = req.body;
-        if (!numeroTarjeta && !numeroCuenta) {
+        const { numeroAutorizacion, numeroCuenta } = req.body;
+        if (!numeroAutorizacion && !numeroCuenta) {
             return res.status(400).json({ error: 'Debe proporcionar al menos un número de tarjeta o cuenta' });
         }
         const id = parseInt(req.params.id, 10);
@@ -165,7 +164,7 @@ export const aprobarCompra = async (req: Request, res: Response) => {
             clienteRepository
         );
 
-        const compraActualizada = await useCase.execute(id, Number(usuarioId), numeroTarjeta, numeroCuenta);
+        const compraActualizada = await useCase.execute(id, Number(usuarioId), numeroAutorizacion, numeroCuenta);
         res.status(200).json(compraActualizada.toPlainObject());
     } catch (error: any) {
         console.error('Error al aprobar compra:', error);

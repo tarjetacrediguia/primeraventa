@@ -164,7 +164,7 @@ class PdfAdapter {
         return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
     }
     createReplacements(contractData) {
-        var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k, _l, _m, _o, _p, _q, _r, _s, _t, _u, _v, _w;
+        var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k, _l, _m, _o, _p, _q, _r, _s, _t, _u, _v, _w, _x;
         const { contrato, solicitudFormal } = contractData;
         const formatDate = (dateString) => {
             if (!dateString)
@@ -190,6 +190,12 @@ class PdfAdapter {
             '{{FECHA_NACIMIENTO}}': formatDate(contrato.clienteFechaNacimiento),
             '{{ESTADO_CIVIL}}': contrato.clienteEstadoCivil || '',
             '{{NACIONALIDAD}}': contrato.clienteNacionalidad || '',
+            '{{REFERENTE1_NOMBRE_COMPLETO}}': `${contrato.clienteReferente1Nombre || ''} ${contrato.clienteReferente1Apellido || ''}`.trim(),
+            '{{REFERENTE1_VINCULO}}': contrato.clienteReferente1Vinculo || '',
+            '{{REFERENTE1_TELEFONO}}': contrato.clienteReferente1Telefono || '',
+            '{{REFERENTE2_NOMBRE_COMPLETO}}': `${contrato.clienteReferente2Nombre || ''} ${contrato.clienteReferente2Apellido || ''}`.trim(),
+            '{{REFERENTE2_VINCULO}}': contrato.clienteReferente2Vinculo || '',
+            '{{REFERENTE2_TELEFONO}}': contrato.clienteReferente2Telefono || '',
             '{{DOMICILIO_CALLE}}': contrato.clienteDomicilioCalle || '',
             '{{DOMICILIO_NUMERO}}': contrato.clienteDomicilioNumero || '',
             '{{DOMICILIO_PISO}}': contrato.clienteDomicilioPiso || '',
@@ -209,36 +215,40 @@ class PdfAdapter {
             '{{SECTOR}}': contrato.clienteDatosLaboralesSector || '',
             '{{DOMICILIO_LEGAL}}': contrato.clienteDatosLaboralesDomicilioLegal || '',
             '{{SUELDO}}': ((_a = solicitudFormal.importeNeto) === null || _a === void 0 ? void 0 : _a.toString()) || '',
+            '{{CLIENTE_SUELDO_NETO}}': ((_b = contrato.clienteSueldoNeto) === null || _b === void 0 ? void 0 : _b.toString()) || '',
+            '{{EMPLEADOR_COD_POSTAL}}': contrato.clienteDatosLaboralesCodigoPostal || '',
+            '{{EMPLEADOR_LOCALIDAD}}': contrato.clienteDatosLaboralesLocalidad || '',
+            '{{EMPLEADOR_PROVINCIA}}': contrato.clienteDatosLaboralesProvincia || '',
+            '{{EMPLEADOR_TELEFONO}}': contrato.clienteDatosLaboralesTelefono || '',
             // Página 2 (Contrato)
             '{{TITULAR_NOMBRE}}': `${solicitudFormal.nombreCompleto} ${solicitudFormal.apellido}`,
             '{{TITULAR_DNI}}': contrato.clienteDni || '',
             '{{TITULAR_CUIT}}': contrato.clienteCuitOcuil || '',
             '{{TITULAR_DOMICILIO}}': [
                 contrato.clienteDomicilioCalle,
-                contrato.clienteDomicilioNumero,
                 contrato.clienteDomicilioLocalidad
             ].filter(Boolean).join(', '),
             // Páginas 3-10 (Usar mismos datos en múltiples páginas)
-            '{{TEA_FINANCIACION}}': ((_b = contrato.tasasTeaCtfFinanciacion) === null || _b === void 0 ? void 0 : _b.toString()) || '84.40%',
-            '{{TNA_COMPENSATORIOS}}': ((_c = contrato.tasasTnaCompensatoriosFinanciacion) === null || _c === void 0 ? void 0 : _c.toString()) || '62.78%',
-            '{{TNA_PUNITORIOS}}': ((_d = contrato.tasasTnaPunitorios) === null || _d === void 0 ? void 0 : _d.toString()) || '31.39%',
-            '{{COMISION_RENOVACION}}': ((_e = contrato.tasasComisionRenovacionAnual) === null || _e === void 0 ? void 0 : _e.toString()) || '3300',
-            '{{COMISION_MANTENIMIENTO}}': ((_f = contrato.tasasComisionMantenimiento) === null || _f === void 0 ? void 0 : _f.toString()) || '650',
-            '{{COMISION_REPOSICION}}': ((_g = contrato.tasasComisionReposicionPlastico) === null || _g === void 0 ? void 0 : _g.toString()) || '1026',
-            '{{ATRASO_05_31}}': ((_h = contrato.tasasAtraso05_31Dias) === null || _h === void 0 ? void 0 : _h.toString()) || '380',
-            '{{ATRASO_32_60}}': ((_j = contrato.tasasAtraso32_60Dias) === null || _j === void 0 ? void 0 : _j.toString()) || '649',
-            '{{ATRASO_61_90}}': ((_k = contrato.tasasAtraso61_90Dias) === null || _k === void 0 ? void 0 : _k.toString()) || '742',
-            '{{PAGO_FACIL}}': ((_l = contrato.tasasPagoFacil) === null || _l === void 0 ? void 0 : _l.toString()) || '99',
-            '{{PLATINIUM_TEA}}': ((_m = contrato.tasasPlatiniumTeaCtfFinanciacion) === null || _m === void 0 ? void 0 : _m.toString()) || '84.40',
-            '{{PLATINIUM_TNA_COMPENSATORIOS}}': ((_o = contrato.tasasPlatiniumTnaCompensatoriosFinanciacion) === null || _o === void 0 ? void 0 : _o.toString()) || '62.78',
-            '{{PLATINIUM_TNA_PUNITORIOS}}': ((_p = contrato.tasasPlatiniumTnaPunitorios) === null || _p === void 0 ? void 0 : _p.toString()) || '31.39',
-            '{{PLATINIUM_COMISION_RENOVACION}}': ((_q = contrato.tasasPlatiniumComisionRenovacionAnual) === null || _q === void 0 ? void 0 : _q.toString()) || '3300',
-            '{{PLATINIUM_COMISION_MANTENIMIENTO}}': ((_r = contrato.tasasPlatiniumComisionMantenimiento) === null || _r === void 0 ? void 0 : _r.toString()) || '650',
-            '{{PLATINIUM_COMISION_REPOSICION}}': ((_s = contrato.tasasPlatiniumComisionReposicionPlastico) === null || _s === void 0 ? void 0 : _s.toString()) || '1026',
-            '{{PLATINIUM_ATRASO_05_31}}': ((_t = contrato.tasasPlatiniumAtraso05_31Dias) === null || _t === void 0 ? void 0 : _t.toString()) || '380',
-            '{{PLATINIUM_ATRASO_32_60}}': ((_u = contrato.tasasPlatiniumAtraso32_60Dias) === null || _u === void 0 ? void 0 : _u.toString()) || '649',
-            '{{PLATINIUM_ATRASO_61_90}}': ((_v = contrato.tasasPlatiniumAtraso61_90Dias) === null || _v === void 0 ? void 0 : _v.toString()) || '742',
-            '{{PLATINIUM_PAGO_FACIL}}': ((_w = contrato.tasasPlatiniumPagoFacil) === null || _w === void 0 ? void 0 : _w.toString()) || '99',
+            '{{TEA_FINANCIACION}}': ((_c = contrato.tasasTeaCtfFinanciacion) === null || _c === void 0 ? void 0 : _c.toString()) || '84.40%',
+            '{{TNA_COMPENSATORIOS}}': ((_d = contrato.tasasTnaCompensatoriosFinanciacion) === null || _d === void 0 ? void 0 : _d.toString()) || '62.78%',
+            '{{TNA_PUNITORIOS}}': ((_e = contrato.tasasTnaPunitorios) === null || _e === void 0 ? void 0 : _e.toString()) || '31.39%',
+            '{{COMISION_RENOVACION}}': ((_f = contrato.tasasComisionRenovacionAnual) === null || _f === void 0 ? void 0 : _f.toString()) || '3300',
+            '{{COMISION_MANTENIMIENTO}}': ((_g = contrato.tasasComisionMantenimiento) === null || _g === void 0 ? void 0 : _g.toString()) || '650',
+            '{{COMISION_REPOSICION}}': ((_h = contrato.tasasComisionReposicionPlastico) === null || _h === void 0 ? void 0 : _h.toString()) || '1026',
+            '{{ATRASO_05_31}}': ((_j = contrato.tasasAtraso05_31Dias) === null || _j === void 0 ? void 0 : _j.toString()) || '380',
+            '{{ATRASO_32_60}}': ((_k = contrato.tasasAtraso32_60Dias) === null || _k === void 0 ? void 0 : _k.toString()) || '649',
+            '{{ATRASO_61_90}}': ((_l = contrato.tasasAtraso61_90Dias) === null || _l === void 0 ? void 0 : _l.toString()) || '742',
+            '{{PAGO_FACIL}}': ((_m = contrato.tasasPagoFacil) === null || _m === void 0 ? void 0 : _m.toString()) || '99',
+            '{{PLATINIUM_TEA}}': ((_o = contrato.tasasPlatiniumTeaCtfFinanciacion) === null || _o === void 0 ? void 0 : _o.toString()) || '84.40',
+            '{{PLATINIUM_TNA_COMPENSATORIOS}}': ((_p = contrato.tasasPlatiniumTnaCompensatoriosFinanciacion) === null || _p === void 0 ? void 0 : _p.toString()) || '62.78',
+            '{{PLATINIUM_TNA_PUNITORIOS}}': ((_q = contrato.tasasPlatiniumTnaPunitorios) === null || _q === void 0 ? void 0 : _q.toString()) || '31.39',
+            '{{PLATINIUM_COMISION_RENOVACION}}': ((_r = contrato.tasasPlatiniumComisionRenovacionAnual) === null || _r === void 0 ? void 0 : _r.toString()) || '3300',
+            '{{PLATINIUM_COMISION_MANTENIMIENTO}}': ((_s = contrato.tasasPlatiniumComisionMantenimiento) === null || _s === void 0 ? void 0 : _s.toString()) || '650',
+            '{{PLATINIUM_COMISION_REPOSICION}}': ((_t = contrato.tasasPlatiniumComisionReposicionPlastico) === null || _t === void 0 ? void 0 : _t.toString()) || '1026',
+            '{{PLATINIUM_ATRASO_05_31}}': ((_u = contrato.tasasPlatiniumAtraso05_31Dias) === null || _u === void 0 ? void 0 : _u.toString()) || '380',
+            '{{PLATINIUM_ATRASO_32_60}}': ((_v = contrato.tasasPlatiniumAtraso32_60Dias) === null || _v === void 0 ? void 0 : _v.toString()) || '649',
+            '{{PLATINIUM_ATRASO_61_90}}': ((_w = contrato.tasasPlatiniumAtraso61_90Dias) === null || _w === void 0 ? void 0 : _w.toString()) || '742',
+            '{{PLATINIUM_PAGO_FACIL}}': ((_x = contrato.tasasPlatiniumPagoFacil) === null || _x === void 0 ? void 0 : _x.toString()) || '99',
         };
     }
 }

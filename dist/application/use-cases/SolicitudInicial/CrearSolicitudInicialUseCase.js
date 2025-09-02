@@ -118,12 +118,26 @@ class CrearSolicitudInicialUseCase {
                     solicitudInicialId: solicitudInicialId,
                 });
                 let nosisData;
+                let motivoRechazo;
+                let reglasFallidas;
                 try {
                     const getNosisData = new GetDataNosisUseCase_1.GetDataNosisUseCase(this.nosisPort);
                     const nosisResponse = yield getNosisData.execute(cuilCliente);
                     const verifyNosis = new VerifyDataNosisUseCase_1.VerifyDataNosisUseCase();
                     const resultadoNosis = yield verifyNosis.execute(nosisResponse);
                     nosisData = resultadoNosis.personalData;
+                    cliente.setSexo(nosisData && nosisData.documentacion && typeof nosisData.documentacion.sexo !== "undefined" ? nosisData.documentacion.sexo : null);
+                    cliente.setCodigoPostal(nosisData && nosisData.domicilio && nosisData.domicilio.codigoPostal ? nosisData.domicilio.codigoPostal : null);
+                    cliente.setLocalidad(nosisData && nosisData.domicilio && nosisData.domicilio.localidad ? nosisData.domicilio.localidad : null);
+                    cliente.setProvincia(nosisData && nosisData.domicilio && nosisData.domicilio.provincia ? nosisData.domicilio.provincia : null);
+                    cliente.setNumeroDomicilio(nosisData && nosisData.domicilio && nosisData.domicilio.numero ? nosisData.domicilio.numero : null);
+                    //TODO: guardar la razon social del empleador en la solicitud formal
+                    //TODO: guardar el cuit del empleador en la solicitud formal
+                    //TODO: guardar datos del empleador en la solicitud formal
+                    //TODO: guardar en la BD los datos del cliente
+                    //TODO : actualizar el cliente con los datos obtenidos de Nosis
+                    //TODO: actualizar la solicitud formal con los datos del empleador
+                    console.log("Actualizando cliente con datos de Nosis:", cliente);
                     if (this.nosisAutomatico) {
                         const getNosisData = new GetDataNosisUseCase_1.GetDataNosisUseCase(this.nosisPort);
                         const nosisData = yield getNosisData.execute(cuilCliente);
@@ -132,6 +146,7 @@ class CrearSolicitudInicialUseCase {
                         if (resultadoNosis.status === "aprobado") {
                             solicitudCreada.setEstado("aprobada");
                             yield this.solicitudInicialRepository.updateSolicitudInicial(solicitudCreada, cliente);
+                            solicitud.agregarComentario(`Aprobado: Nosis automático`);
                             yield this.historialRepository.registrarEvento({
                                 usuarioId: null,
                                 accion: historialActions_1.HISTORIAL_ACTIONS.APPROVE_SOLICITUD_INICIAL,
@@ -146,7 +161,12 @@ class CrearSolicitudInicialUseCase {
                             });
                         }
                         else if (resultadoNosis.status === "rechazado") {
+                            motivoRechazo = resultadoNosis.motivo;
+                            reglasFallidas = resultadoNosis.reglasFallidas;
                             solicitudCreada.setEstado("rechazada");
+                            solicitud.setMotivoRechazo(motivoRechazo !== null && motivoRechazo !== void 0 ? motivoRechazo : "");
+                            solicitud.agregarComentario(`Rechazo: ${motivoRechazo}`);
+                            //se guarda el motivo de rechazo en la solicitud
                             yield this.solicitudInicialRepository.updateSolicitudInicial(solicitudCreada, cliente);
                             yield this.historialRepository.registrarEvento({
                                 usuarioId: null,
@@ -157,6 +177,7 @@ class CrearSolicitudInicialUseCase {
                                     sistema: "Nosis",
                                     score: resultadoNosis.score,
                                     motivo: resultadoNosis.motivo,
+                                    reglasFallidas: resultadoNosis.reglasFallidas
                                 },
                                 solicitudInicialId,
                             });
@@ -184,6 +205,8 @@ class CrearSolicitudInicialUseCase {
                 return {
                     solicitud: solicitudCreada,
                     nosisData,
+                    motivoRechazo,
+                    reglasFallidas
                 };
             }
             catch (error) {
@@ -270,3 +293,39 @@ class CrearSolicitudInicialUseCase {
     }
 }
 exports.CrearSolicitudInicialUseCase = CrearSolicitudInicialUseCase;
+/*
+{
+  "idSolicitudInicial": 1,
+  "importeNeto":1500000,
+  "comentarioInicial":"Solicitud creada por comerciante",
+  "solicitaAmpliacionDeCredito":false,
+  "datosEmpleador":{
+    "razonSocialEmpleador":"Acme S.A",
+    "cuitEmpleador":"123456",
+    "cargoEmpleador":"cargo en la empresa",
+    "sectorEmpleador": "sector en la empresa",
+    "codigoPostalEmpleador":"8300",
+    "localidadEmpleador":"NEUQUEN",
+    "provinciaEmpleador":"NEUQUEN",
+    "telefonoEmpleador":"299456789"
+  },
+  "cliente": {
+    "nombreCompleto": "Benito",
+    "apellido": "Dongato",
+    "telefono": "+549555222669",
+    "email": "Benito.Dongato@example.com",
+    "aceptaTarjeta": true,
+    "fechaNacimiento": "1985-05-15",
+    "domicilio": "Calle Falsa 123, Buenos Aires",
+    "sexo":"M",
+    "codigoPostal":"8300",
+    "localidad":"NEUQUEN",
+    "provincia":"NEUQUEN",
+    "numeroDomicilio":"1234",
+    "barrio":"Barrio Falso",
+    "recibo":"/9j/4AAQSkZJRgABAQEAYABgAAD/2wBDAAMCAgMCA
+
+
+
+
+*/ 

@@ -55,11 +55,14 @@ class UpdateSolicitudFormalUseCase {
                 if (!original) {
                     throw new Error("Solicitud no encontrada");
                 }
+                /*
                 if (original.getEstado() == "aprobada") {
                     throw new Error("No se puede actualizar una solicitud aprobada");
                 }
+                */
                 // 2. Detectar cambios antes de actualizar
                 const cambios = this.detectarCambios(original, solicitud);
+                console.log("Cambios detectados:", cambios);
                 // 3. Actualizar la solicitud
                 const actualizada = yield this.repository.updateSolicitudFormal(solicitud);
                 // 4. Registrar en el historial si hay cambios
@@ -108,20 +111,48 @@ class UpdateSolicitudFormalUseCase {
      */
     detectarCambios(original, actualizada) {
         const cambios = [];
-        // Lista de campos a monitorear
+        // Lista de campos válidos que existen en SolicitudFormal y tienen getters
         const campos = [
-            'nombreCompleto', 'apellido', 'dni', 'telefono', 'email',
+            'nombreCompleto', 'apellido', 'telefono', 'email',
             'fechaSolicitud', 'estado', 'aceptaTarjeta', 'fechaNacimiento',
-            'domicilio', 'datosEmpleador', 'referentes', 'comentarios',
-            'clienteId', 'numeroTarjeta', 'numeroCuenta', 'fechaAprobacion',
-            'analistaAprobadorId', 'administradorAprobadorId'
+            'domicilio', 'referentes', 'comentarios', 'clienteId',
+            'fechaAprobacion', 'analistaAprobadorId', 'administradorAprobadorId',
+            'comercianteAprobadorId', 'importeNeto', 'limiteBase', 'limiteCompleto',
+            'ponderador', 'solicitaAmpliacionDeCredito', 'nuevoLimiteCompletoSolicitado',
+            'razonSocialEmpleador', 'cuitEmpleador', 'cargoEmpleador', 'sectorEmpleador',
+            'codigoPostalEmpleador', 'localidadEmpleador', 'provinciaEmpleador', 'telefonoEmpleador',
+            'sexo', 'codigoPostal', 'localidad', 'provincia', 'numeroDomicilio', 'barrio'
         ];
         for (const campo of campos) {
-            const valorOriginal = original[campo];
-            const valorActual = actualizada[campo];
-            // Comparación especial para arrays y objetos
-            if (Array.isArray(valorOriginal)) {
-                if (!this.sonArraysIguales(valorOriginal, valorActual)) {
+            try {
+                const getterName = `get${campo.charAt(0).toUpperCase() + campo.slice(1)}`;
+                // Verificar que el getter exista en el objeto
+                if (typeof original[getterName] !== 'function') {
+                    console.warn(`Getter ${getterName} no encontrado`);
+                    continue; // Saltar campos sin getter
+                }
+                const valorOriginal = original[getterName]();
+                const valorActual = actualizada[getterName]();
+                if (Array.isArray(valorOriginal)) {
+                    if (!this.sonArraysIguales(valorOriginal, valorActual)) {
+                        cambios.push({
+                            campo,
+                            anterior: valorOriginal,
+                            nuevo: valorActual
+                        });
+                    }
+                }
+                else if (valorOriginal instanceof Date && valorActual instanceof Date) {
+                    // Comparar fechas por su valor de tiempo
+                    if (valorOriginal.getTime() !== valorActual.getTime()) {
+                        cambios.push({
+                            campo,
+                            anterior: valorOriginal,
+                            nuevo: valorActual
+                        });
+                    }
+                }
+                else if (valorOriginal !== valorActual) {
                     cambios.push({
                         campo,
                         anterior: valorOriginal,
@@ -129,12 +160,9 @@ class UpdateSolicitudFormalUseCase {
                     });
                 }
             }
-            else if (valorOriginal !== valorActual) {
-                cambios.push({
-                    campo,
-                    anterior: valorOriginal,
-                    nuevo: valorActual
-                });
+            catch (error) {
+                // Ignorar errores de getters que no existen
+                console.warn(`Error al obtener el campo ${campo}:`, error);
             }
         }
         return cambios;

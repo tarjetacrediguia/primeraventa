@@ -4,7 +4,7 @@ import { SolicitudFormalRepositoryPort } from '../../ports/SolicitudFormalReposi
 export class GetSolicitudFormalBySolicitudInicialIdUseCase {
   constructor(private solicitudFormalRepository: SolicitudFormalRepositoryPort) {}
 
-  async execute(solicitudInicialId: number) {
+  async execute(solicitudInicialId: number) { 
     const solicitudes = await this.solicitudFormalRepository.getSolicitudesFormalesBySolicitudInicialId(solicitudInicialId);
     
     if (solicitudes.length === 0) {

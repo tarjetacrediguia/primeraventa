@@ -54,7 +54,7 @@ export class AprobarCompraUseCase {
   async execute(
     id: number, 
     usuarioId: number,
-    numeroTarjeta: string,
+    numeroAutorizacion: string,
     numeroCuenta: string
     ): Promise<Compra> {
     try {
@@ -94,7 +94,7 @@ export class AprobarCompraUseCase {
         );
       const solicitudInicialId = solicitudFormal?.getSolicitudInicialId();
         // Registrar número de tarjeta y cuenta
-      compra.setNumeroTarjeta(numeroTarjeta);
+      compra.setNumeroAutorizacion(numeroAutorizacion);
       compra.setNumeroCuenta(numeroCuenta);
 
 
@@ -155,11 +155,11 @@ export class AprobarCompraUseCase {
         );
       }
       // 4. Validar monto ponderado vs límite de crédito
-      const montoPonderado = compra.getMontoTotalPonderado();
+      const montoCompra = compra.getMontoTotal();
       const limiteActual = solicitudFormal.getLimiteCompleto();
       const tieneAmpliacion = solicitudFormal.getSolicitaAmpliacionDeCredito();
 
-      if (montoPonderado > limiteActual) {
+      if (montoCompra > limiteActual) {
         if (!tieneAmpliacion) {
           // Registrar evento de límite excedido sin ampliación
           await this.historialRepository.registrarEvento({
@@ -169,18 +169,17 @@ export class AprobarCompraUseCase {
             entidadId: id,
             detalles: {
               error: "Límite de crédito excedido sin ampliación solicitada",
-              monto_ponderado: montoPonderado,
+              monto_compra: montoCompra,
               limite_credito: limiteActual,
               tiene_ampliacion: false
             },
             solicitudInicialId: solicitudInicialId,
           });
-          throw new Error(`El monto ponderado (${montoPonderado}) excede el límite de crédito (${limiteActual}) y no se solicitó ampliación.`);
+          throw new Error(`El monto de la compra (${montoCompra}) excede el límite de crédito (${limiteActual}) y no se solicitó ampliación.`);
         }
 
         // Aprobar nuevo límite automáticamente con el monto ponderado
-        solicitudFormal.setNuevoLimiteCompletoSolicitado(montoPonderado);
-
+        solicitudFormal.setNuevoLimiteCompletoSolicitado(montoCompra);
 
         // Registrar evento de ampliación aprobada automáticamente
         await this.historialRepository.registrarEvento({
@@ -190,7 +189,7 @@ export class AprobarCompraUseCase {
           entidadId: solicitudFormal.getId(),
           detalles: {
             monto_anterior: limiteActual,
-            nuevo_limite: montoPonderado,
+            nuevo_limite: montoCompra,
             compra_id: id
           },
           solicitudInicialId: solicitudInicialId

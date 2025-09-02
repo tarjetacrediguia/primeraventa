@@ -30,9 +30,17 @@ export type PersonalData = {
   datosLaborales: {
     situacionLaboral?: string;
     empleador?: {
-      razonSocial?: string;
-      cuit?: string;
+    razonSocial?: string;
+    cuit?: string;
+    telefono?: string;
+    domicilio?: {
+      calle?: string;
+      numero?: string;
+      localidad?: string;
+      codigoPostal?: string;
+      provincia?: string;
     };
+  };
     monotributo?: {
       esMonotributista?: string;
       categoria?: string;
@@ -121,11 +129,9 @@ export class VerifyDataNosisUseCase {
 
     // Verificación específica para monotributistas
     const esMonotributista = variables.find(v => v.Nombre === 'VI_Inscrip_Monotributo_Es')?.Valor === 'Si';
-    console.log("es monotributista "+esMonotributista)
     if (esMonotributista) {
       // Solo rechazamos si es monotributista Y NO tiene empleo registrado
       const tieneEmpleoRegistrado = this.tieneEmpleoRegistrado(variables);
-      console.log("tieneEmpleoRegistrado "+tieneEmpleoRegistrado)
       if (!tieneEmpleoRegistrado) {
         reglasFallidas.push('Cliente es monotributista sin empleo registrado');
       }
@@ -134,27 +140,13 @@ export class VerifyDataNosisUseCase {
     // Regla personalizada para situación laboral (solo para no monotributistas)
     if (!esMonotributista) {
       const tieneLaboral = this.verificarSituacionLaboral(variables);
-      console.log("tieneLaboral"+tieneLaboral)
       if (!tieneLaboral) {
         reglasFallidas.push('Cliente no tiene situación laboral registrada');
       }
     }
-    /*
-    // Reglas personalizadas para deudas específicas (requieren análisis XML)
-    const tieneDeudaTarjetaNaranja = this.verificarDeudaEspecifica(variables, 'TARJETA NARANJA');
-    if (tieneDeudaTarjetaNaranja) {
-      reglasFallidas.push('Tiene deuda con Tarjeta Naranja');
-    }
-
-    const tieneDeudaMercadoLibre = this.verificarDeudaEspecifica(variables, 'MERCADO LIBRE');
-    if (tieneDeudaMercadoLibre) {
-      reglasFallidas.push('Tiene deuda con Mercado Libre');
-    }
-*/
     // Extraer datos personales
     const personalData = this.extraerDatosPersonales(variables);
 
-    console.log('Datos personales extraídos:', personalData);
     
     const isApproved = reglasFallidas.length === 0;
     
@@ -164,10 +156,10 @@ export class VerifyDataNosisUseCase {
         approved: true,
         score,
         motivo: "Cumple con todos los criterios de aprobación",
+        reglasFallidas: [],
         personalData
       };
     }
-    console.log("regrlas fallidas:"+reglasFallidas)
     return {
       status: 'rechazado',
       approved: false,
@@ -193,7 +185,6 @@ export class VerifyDataNosisUseCase {
         entidadesConDeuda.add(registro.entidad);
       }
     }
-    console.log("entidadesConDeuda.size :"+ entidadesConDeuda.size)
     return entidadesConDeuda.size >= 3;
   }
 
@@ -233,16 +224,6 @@ export class VerifyDataNosisUseCase {
     
     return esEmpleado || parseInt(aportes) > 0;
     }
-/*
-    private verificarDeudaEspecifica(variables: NosisVariable[], entidad: string): boolean {
-    const detalleDeudas = variables.find(v => v.Nombre === 'CI_24m_Detalle')?.Valor;
-    if (!detalleDeudas) return false;
-
-    // Analizar el XML de detalle de deudas
-    // Esta es una implementación simplificada
-    return detalleDeudas.includes(entidad);
-  }
-*/
     private extraerDatosPersonales(variables: NosisVariable[]): PersonalData {
     const getValor = (nombre: string): string | undefined => {
       const variable = variables.find(v => v.Nombre === nombre);
@@ -295,6 +276,35 @@ export class VerifyDataNosisUseCase {
     const categoriaMonotributo = getValor('VI_Inscrip_Monotributo');
     const actividadMonotributo = getValor('VI_Inscrip_Monotributo_Act');
 
+    // Obtener datos del empleador
+    const razonSocialEmpleador = getValor('VI_Empleador_RZ');
+    const cuitEmpleador = getValor('VI_Empleador_CUIT');
+    const telCodAreaEmpleador = getValor('VI_Empleador_TelCodArea');
+    const telNroEmpleador = getValor('VI_Empleador_TelNro');
+    const telefonoEmpleador = telCodAreaEmpleador && telNroEmpleador ? 
+      `${telCodAreaEmpleador}${telNroEmpleador}` : undefined;
+
+    // Domicilio del empleador
+    const calleEmpleador = getValor('VI_Empleador_Dom_Calle');
+    const numeroEmpleador = getValor('VI_Empleador_Dom_Nro');
+    const localidadEmpleador = getValor('VI_Empleador_Dom_Loc');
+    const codigoPostalEmpleador = getValor('VI_Empleador_Dom_CP');
+    const provinciaEmpleador = getValor('VI_Empleador_Dom_Prov');
+
+    // Construir objeto empleador solo si existe razón social
+    const empleador = razonSocialEmpleador ? {
+      razonSocial: razonSocialEmpleador,
+      cuit: cuitEmpleador,
+      telefono: telefonoEmpleador,
+      domicilio: {
+        calle: calleEmpleador,
+        numero: numeroEmpleador,
+        localidad: localidadEmpleador,
+        codigoPostal: codigoPostalEmpleador,
+        provincia: provinciaEmpleador
+      }
+    } : undefined;
+
     // Referencias personales
     const referenciasPersonales = [];
     for (let i = 1; i <= 2; i++) {
@@ -326,10 +336,7 @@ export class VerifyDataNosisUseCase {
       telefonos,
       datosLaborales: {
         situacionLaboral,
-        empleador: {
-          razonSocial: getValor('VI_Empleador_RZ'),
-          cuit: getValor('VI_Empleador_CUIT')
-        },
+        empleador,
         monotributo: {
           esMonotributista,
           categoria: categoriaMonotributo,

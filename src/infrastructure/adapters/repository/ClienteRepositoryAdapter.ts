@@ -27,10 +27,15 @@ export class ClienteRepositoryAdapter implements ClienteRepositoryPort {
             row.email,
             row.fecha_nacimiento ? new Date(row.fecha_nacimiento) : null,
             row.domicilio,
-            row.datos_empleador,
             row.acepta_tarjeta,
             row.fecha_creacion ? new Date(row.fecha_creacion) : new Date(),
-            0 // comercianteId no está en la tabla clientes
+            0, // comercianteId no está en la tabla clientes
+            row.sexo || '',
+            row.codigo_postal || '',
+            row.localidad || '',
+            row.provincia || '',
+            row.numero_domicilio || '',
+            row.barrio || null
         );
     }
 
@@ -119,7 +124,7 @@ export class ClienteRepositoryAdapter implements ClienteRepositoryPort {
      */
     async save(cliente: Cliente): Promise<void> {
         const query = `
-            INSERT INTO clientes (
+            INSERT INTO clientes ( 
                 nombre_completo, 
                 apellido, 
                 dni, 
@@ -128,10 +133,15 @@ export class ClienteRepositoryAdapter implements ClienteRepositoryPort {
                 email, 
                 fecha_nacimiento, 
                 domicilio, 
-                datos_empleador, 
-                acepta_tarjeta
+                acepta_tarjeta,
+                sexo,
+                codigo_postal,
+                localidad,
+                provincia,
+                numero_domicilio,
+                barrio
             ) 
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
         `;
         
         const values = [
@@ -143,8 +153,13 @@ export class ClienteRepositoryAdapter implements ClienteRepositoryPort {
             cliente.getEmail(),
             cliente.getFechaNacimiento(),
             cliente.getDomicilio(),
-            cliente.getDatosEmpleador(),
-            cliente.getAceptaTarjeta()
+            cliente.getAceptaTarjeta(),
+            cliente.getSexo(),
+            cliente.getCodigoPostal(),
+            cliente.getLocalidad(),
+            cliente.getProvincia(),
+            cliente.getNumeroDomicilio(),
+            cliente.getBarrio()
         ];
         
         await pool.query(query, values);
@@ -166,9 +181,14 @@ export class ClienteRepositoryAdapter implements ClienteRepositoryPort {
                 email = $6,
                 fecha_nacimiento = $7,
                 domicilio = $8,
-                datos_empleador = $9,
-                acepta_tarjeta = $10
-            WHERE id = $11
+                acepta_tarjeta = $9,
+                sexo = $10,
+                codigo_postal = $11,
+                localidad = $12,
+                provincia = $13,
+                numero_domicilio = $14,
+                barrio = $15
+            WHERE id = $16
         `;
         
         const values = [
@@ -180,8 +200,13 @@ export class ClienteRepositoryAdapter implements ClienteRepositoryPort {
             cliente.getEmail(),
             cliente.getFechaNacimiento(),
             cliente.getDomicilio(),
-            cliente.getDatosEmpleador(),
             cliente.getAceptaTarjeta(),
+            cliente.getSexo(),
+            cliente.getCodigoPostal(),
+            cliente.getLocalidad(),
+            cliente.getProvincia(),
+            cliente.getNumeroDomicilio(),
+            cliente.getBarrio(),
             cliente.getId()
         ];
         

@@ -10,13 +10,11 @@ export interface CompraParams {
     items?: ItemCompra[];
     estado?: EstadoCompra;
     montoTotal: number;
-    ponderador: number;
-    montoTotalPonderado: number;
     clienteId: number;
     fechaCreacion?: Date;
     fechaActualizacion?: Date;
     valorCuota?: number;
-    numeroTarjeta?: string;
+    numeroAutorizacion?: string;
     numeroCuenta?: string;
     comercianteId?: number;
     analistaAprobadorId?: number;
@@ -54,10 +52,8 @@ export class Compra {
     private items: ItemCompra[];
     private estado: EstadoCompra;
     private valorCuota: number;
-    private ponderador: number;
-    private montoTotalPonderado: number;
     private clienteId: number; // ID del cliente asociado a la compra
-    private numeroTarjeta?: string;
+    private numeroAutorizacion?: string;
     private numeroCuenta?: string;
     private comercianteId?: number;
     private analistaAprobadorId?: number;
@@ -85,11 +81,9 @@ export class Compra {
         this.fechaCreacion = params.fechaCreacion || new Date();
         this.fechaActualizacion = params.fechaActualizacion || new Date();
         this.estado = params.estado || EstadoCompra.PENDIENTE;
-        this.valorCuota = params.valorCuota || (this.cantidadCuotas > 0 ? (this.montoTotal * params.ponderador) / this.cantidadCuotas : 0);
-        this.ponderador = params.ponderador || 1;
-        this.montoTotalPonderado = params.montoTotalPonderado || this.montoTotal * this.ponderador;
+        this.valorCuota = params.valorCuota || (this.cantidadCuotas > 0 ? (this.montoTotal) / this.cantidadCuotas : 0);
         this.clienteId = params.clienteId;
-        this.numeroTarjeta = params.numeroTarjeta;
+        this.numeroAutorizacion = params.numeroAutorizacion;
         this.numeroCuenta = params.numeroCuenta;
         this.comercianteId = params.comercianteId;
         this.analistaAprobadorId = params.analistaAprobadorId;
@@ -143,19 +137,12 @@ export class Compra {
         return this.valorCuota;
     }
 
-    public getPonderador(): number {
-        return this.ponderador;
-    }
-    public getMontoTotalPonderado(): number {
-        return this.montoTotalPonderado;
+    public getNumeroAutorizacion(): string | undefined {
+        return this.numeroAutorizacion;
     }
 
-       public getNumeroTarjeta(): string | undefined {
-        return this.numeroTarjeta;
-    }
-
-    public setNumeroTarjeta(numeroTarjeta: string | undefined): void {
-        this.numeroTarjeta = numeroTarjeta;
+    public setNumeroAutorizacion(numeroAutorizacion: string | undefined): void {
+        this.numeroAutorizacion = numeroAutorizacion;
     }
 
     public getNumeroCuenta(): string | undefined {
@@ -183,13 +170,6 @@ export class Compra {
     // Setters
     public setClienteId(clienteId: number): void {
         this.clienteId = clienteId;
-    }
-    public setPonderador(ponderador: number): void {
-        this.ponderador = ponderador;
-        this.montoTotalPonderado = this.montoTotal * this.ponderador;
-    }
-    public setMontoTotalPonderado(montoTotalPonderado: number): void {
-        this.montoTotalPonderado = montoTotalPonderado;
     }
     public setValorCuota(valorCuota: number): void {
         this.valorCuota = valorCuota;
@@ -247,9 +227,7 @@ export class Compra {
             items: this.items.map(item => item.toPlainObject()),
             estado: this.estado,
             valorCuota: this.valorCuota,
-            ponderador: this.ponderador,
-            montoTotalPonderado: this.montoTotalPonderado,
-            numeroTarjeta: this.numeroTarjeta,
+            numeroAutorizacion: this.numeroAutorizacion,
             numeroCuenta: this.numeroCuenta,
             clienteId: this.clienteId,
             comercianteId: this.comercianteId,
@@ -266,13 +244,11 @@ export class Compra {
             items: map.items ? map.items.map((i: any) => ItemCompra.fromMap(i)) : [],
             estado: map.estado || EstadoCompra.PENDIENTE,
             montoTotal: map.montoTotal,
-            ponderador: map.ponderador,
-            montoTotalPonderado: map.montoTotalPonderado,
             clienteId: map.clienteId,
             fechaCreacion: map.fechaCreacion ? new Date(map.fechaCreacion) : undefined,
             fechaActualizacion: map.fechaActualizacion ? new Date(map.fechaActualizacion) : undefined,
             valorCuota: map.valorCuota || (map.cantidadCuotas > 0 ? map.montoTotal / map.cantidadCuotas : 0),
-            numeroTarjeta: map.numeroTarjeta,
+            numeroAutorizacion: map.numeroAutorizacion,
             numeroCuenta: map.numeroCuenta,
             comercianteId: map.comercianteId,
             analistaAprobadorId: map.analistaAprobadorId

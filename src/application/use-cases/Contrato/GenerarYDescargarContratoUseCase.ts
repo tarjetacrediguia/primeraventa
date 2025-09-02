@@ -15,6 +15,8 @@ import { Compra } from "../../../domain/entities/Compra";
 import { CompraRepositoryPort } from "../../ports/CompraRepositoryPort";
 import { SolicitudInicial } from "../../../domain/entities/SolicitudInicial";
 import { Cliente } from "../../../domain/entities/Cliente";
+import { TasasRepositoryPort } from "../../ports/TasasRepositoryPort";
+import { ConjuntoTasas } from "../../../domain/entities/ConjuntoTasas";
 
 export class GeneracionYDescargaContratoUseCase {
     constructor(
@@ -26,7 +28,8 @@ export class GeneracionYDescargaContratoUseCase {
         private readonly historialRepository: HistorialRepositoryPort,
         private readonly solicitudInicialRepository: SolicitudInicialRepositoryPort,
         private readonly comercianteRepository: ComercianteRepositoryPort,
-        private readonly compraRepository: CompraRepositoryPort
+        private readonly compraRepository: CompraRepositoryPort,
+        private readonly tasasRepository: TasasRepositoryPort
     ) {}
 
     /**
@@ -109,7 +112,6 @@ export class GeneracionYDescargaContratoUseCase {
         if (!solicitud) {
             throw new Error(`Solicitud formal no encontrada: ${numeroSolicitud}`);
         }
-        console.log(`Solicitud formal encontrada: ${solicitud}`);
         // Añadir esta verificación
         const clienteExistente = await this.clienteRepository.findById(solicitud.getClienteId());
         if (!clienteExistente) {
@@ -140,7 +142,11 @@ export class GeneracionYDescargaContratoUseCase {
 
     private async crearYGuardarContrato(solicitud: SolicitudFormal,solicitudInicial: SolicitudInicial, usuarioId: number, compra:Compra,cliente:Cliente): Promise<Contrato> {
 
-
+        const tasasResult = await this.tasasRepository.findConjuntoTasasById(1);
+        if (!tasasResult) {
+            throw new Error("No se encontró el conjunto de tasas con ID 1.");
+        }
+        const tasas: ConjuntoTasas = tasasResult;
         const contrato = new Contrato(
             0, 
             new Date(),
@@ -148,11 +154,12 @@ export class GeneracionYDescargaContratoUseCase {
             solicitud.getId(), 
             solicitud.getClienteId()
         );
-        contrato.setNumeroTarjeta(compra.getNumeroTarjeta() || "TARJETA-123456");
+        console.log("numero de autorizacion de la compra",compra.getNumeroAutorizacion())
+        contrato.setNumeroAutorizacion(compra.getNumeroAutorizacion() || "AUTORIZACION-123456");
         contrato.setNumeroCuenta(compra.getNumeroCuenta() || "CUENTA-123456");
         contrato.clienteCuitOcuil = cliente.getCuil();
         contrato.clienteDni = cliente.getDni() || ""; // Usar valor por defecto si no existe
-        contrato.setMonto(compra.getMontoTotalPonderado());
+        contrato.setMonto(compra.getMontoTotal());
 
 
         // Obtener datos del comerciante
@@ -167,72 +174,83 @@ export class GeneracionYDescargaContratoUseCase {
         // Asignar datos desanidados al contrato
         contrato.comercioNombre = comerciante.getNombreComercio();
         contrato.comercioFecha = new Date().toISOString().split('T')[0];
-        contrato.comercioNAutorizacion = "AUT-123456"; 
-        contrato.comercioProducto = "Préstamo Personal";
-        contrato.comercioSucursal = "Sucursal Central";
+        contrato.comercioNAutorizacion = compra.getNumeroAutorizacion(); //Este es el numero de autorizacion de la compra
+        contrato.comercioProducto = "Primera Venta";
+        contrato.comercioSucursal = "";
         
         contrato.clienteNombreCompleto = cliente.getNombreCompleto();
-        contrato.clienteSexo = "Masculino"; // Ejemplo
+        contrato.clienteSexo = cliente.getSexo() ?? undefined; 
         contrato.clienteCuitOcuil = cliente.getCuil();
         contrato.clienteTipoDocumento = "DNI";
         contrato.clienteDni = cliente.getDni();
         contrato.clienteFechaNacimiento = cliente.getFechaNacimiento() ? cliente.getFechaNacimiento()!.toISOString().split('T')[0] : "";
-        contrato.clienteEstadoCivil = "Soltero"; // Ejemplo
-        contrato.clienteNacionalidad = "Argentina"; // Ejemplo
+        contrato.clienteEstadoCivil = ""; 
+        contrato.clienteNacionalidad = "";
+        contrato.clienteSueldoNeto = solicitud.getImporteNeto().toString();
         
         // Referencias personales (tomamos los primeros dos referentes)
         // Nota: Solo almacenamos en contrato, no en BD directamente
         const referencia1 = referentes[0] || {};
         const referencia2 = referentes[1] || {};
-        
-        contrato.clienteDomicilioCalle = cliente.getDomicilio() ? cliente.getDomicilio()!.split(',')[0] : "";
-        contrato.clienteDomicilioNumero = "123"; // Ejemplo
-        contrato.clienteDomicilioPiso = "1";
-        contrato.clienteDomicilioDepartamento = "A";
-        contrato.clienteDomicilioLocalidad = "Ciudad Ejemplo";
-        contrato.clienteDomicilioProvincia = "Provincia Ejemplo";
-        contrato.clienteDomicilioBarrio = "Barrio Ejemplo";
+        //Datos del cliente
+        contrato.clienteDomicilioCalle = cliente.getDomicilio() + " " + (cliente.getNumeroDomicilio() ?? "");
+        contrato.clienteDomicilioNumero = cliente.getNumeroDomicilio() ?? undefined;
+        contrato.clienteDomicilioPiso = "";
+        contrato.clienteDomicilioDepartamento = "";
+        contrato.clienteDomicilioLocalidad = cliente.getLocalidad() ?? "Localidad Ejemplo";
+        contrato.clienteDomicilioProvincia = cliente.getProvincia() ?? "Provincia Ejemplo";
+        contrato.clienteDomicilioBarrio = cliente.getBarrio() ?? "Barrio Ejemplo";
         contrato.clienteDomicilioPais = "Argentina";
-        contrato.clienteDomicilioCodigoPostal = "1234";
+        contrato.clienteDomicilioCodigoPostal = cliente.getCodigoPostal() ?? "0000";
         contrato.clienteDomicilioCorreoElectronico = cliente.getEmail() ?? undefined;
         contrato.clienteDomicilioTelefonoFijo = "";
         contrato.clienteDomicilioTelefonoCelular = solicitud.getTelefono();
-        
-        contrato.clienteDatosLaboralesActividad = "Empleado";
-        contrato.clienteDatosLaboralesRazonSocial = cliente.getDatosEmpleador() ?? undefined;
-        contrato.clienteDatosLaboralesCuit = "20-12345678-9";
-        contrato.clienteDatosLaboralesInicioActividades = "2020-01-01";
-        contrato.clienteDatosLaboralesCargo = "Analista";
-        contrato.clienteDatosLaboralesSector = "Tecnología";
-        contrato.clienteDatosLaboralesDomicilioLegal = "Calle Legal 456";
-        contrato.clienteDatosLaboralesCodigoPostal = "5678";
-        contrato.clienteDatosLaboralesLocalidad = "Ciudad Legal";
-        contrato.clienteDatosLaboralesProvincia = "Provincia Legal";
-        contrato.clienteDatosLaboralesTelefono = "987654321";
+        //Datos laborales
+        contrato.clienteDatosLaboralesActividad = "";
+        contrato.clienteDatosLaboralesRazonSocial = solicitud.getRazonSocialEmpleador() ?? undefined;
+        contrato.clienteDatosLaboralesCuit = solicitud.getCuitEmpleador() ?? undefined;
+        contrato.clienteDatosLaboralesInicioActividades = "";
+        contrato.clienteDatosLaboralesCargo = solicitud.getCargoEmpleador() ?? undefined;
+        contrato.clienteDatosLaboralesSector = solicitud.getSectorEmpleador() ?? undefined;
+        contrato.clienteDatosLaboralesDomicilioLegal = "";
+        contrato.clienteDatosLaboralesCodigoPostal = solicitud.getCodigoPostalEmpleador() ?? undefined;
+        contrato.clienteDatosLaboralesLocalidad = solicitud.getLocalidadEmpleador() ?? undefined;
+        contrato.clienteDatosLaboralesProvincia = solicitud.getProvinciaEmpleador() ?? undefined;
+        contrato.clienteDatosLaboralesTelefono = solicitud.getTelefonoEmpleador() ?? undefined;
+        //Datos de los referentes
+        contrato.clienteReferente1Nombre = referencia1.getNombreCompleto() || '';
+        contrato.clienteReferente1Apellido = referencia1.getApellido() || '';
+        contrato.clienteReferente1Vinculo = referencia1.getVinculo() || '';
+        contrato.clienteReferente1Telefono = referencia1.getTelefono() || '';
+
+        contrato.clienteReferente2Nombre = referencia2.getNombreCompleto() || '';
+        contrato.clienteReferente2Apellido = referencia2.getApellido() || '';
+        contrato.clienteReferente2Vinculo = referencia2.getVinculo() || '';
+        contrato.clienteReferente2Telefono = referencia2.getTelefono() || '';
         
         // Tasas (valores de ejemplo) actualizar según las tasas reales
-        contrato.tasasTeaCtfFinanciacion = 84.4;
-        contrato.tasasTnaCompensatoriosFinanciacion = 62.78;
-        contrato.tasasTnaPunitorios = 31.39;
-        contrato.tasasCtfFinanciacion = 84.4;
-        contrato.tasasComisionRenovacionAnual = 3300;
-        contrato.tasasComisionMantenimiento = 650;
-        contrato.tasasComisionReposicionPlastico = 1026;
-        contrato.tasasAtraso05_31Dias = 380;
-        contrato.tasasAtraso32_60Dias = 649;
-        contrato.tasasAtraso61_90Dias = 742;
-        contrato.tasasPagoFacil = 99;
-        contrato.tasasPlatiniumTeaCtfFinanciacion = 84.4;
-        contrato.tasasPlatiniumTnaCompensatoriosFinanciacion = 62.78;
-        contrato.tasasPlatiniumTnaPunitorios = 31.39;
-        contrato.tasasPlatiniumCtfFinanciacion = 84.4;
-        contrato.tasasPlatiniumComisionRenovacionAnual = 3300;
-        contrato.tasasPlatiniumComisionMantenimiento = 650;
-        contrato.tasasPlatiniumComisionReposicionPlastico = 1026;
-        contrato.tasasPlatiniumAtraso05_31Dias = 380;
-        contrato.tasasPlatiniumAtraso32_60Dias = 649;
-        contrato.tasasPlatiniumAtraso61_90Dias = 742;
-        contrato.tasasPlatiniumPagoFacil = 99;
+        contrato.tasasTeaCtfFinanciacion = tasas.obtenerTasa("TEA_INTERES_FINANCIERO_GOLD");
+        contrato.tasasTnaCompensatoriosFinanciacion = tasas.obtenerTasa("TNA_INTERES_FINANCIERO_GOLD");
+        contrato.tasasTnaPunitorios = tasas.obtenerTasa("TNA_INTERESES_PUNITORIOS_GOLD");
+        contrato.tasasCtfFinanciacion = tasas.obtenerTasa("CFT_FINANCIACION_GOLD");
+        contrato.tasasComisionRenovacionAnual = tasas.obtenerTasa("COMISION_RENOVACION_ANUAL_GOLD");
+        contrato.tasasComisionMantenimiento = tasas.obtenerTasa("COMISION_MANTENIMIENTO_CUENTA_GOLD");
+        contrato.tasasComisionReposicionPlastico = tasas.obtenerTasa("COMISION_REPOSICION_PLASTICO_GOLD");
+        contrato.tasasAtraso05_31Dias = tasas.obtenerTasa("CARGO_GESTION_COBRANZA_05_31_DIAS_GOLD");
+        contrato.tasasAtraso32_60Dias = tasas.obtenerTasa("CARGO_GESTION_COBRANZA_32_60_DIAS_GOLD");
+        contrato.tasasAtraso61_90Dias = tasas.obtenerTasa("CARGO_GESTION_COBRANZA_61_90_DIAS_GOLD");
+        contrato.tasasPagoFacil = tasas.obtenerTasa("CARGO_COBRANZA_ELECTRONICA_PAGOFACIL_GOLD");
+        contrato.tasasPlatiniumTeaCtfFinanciacion = tasas.obtenerTasa("TEA_INTERES_FINANCIERO_PLATINIUM");
+        contrato.tasasPlatiniumTnaCompensatoriosFinanciacion = tasas.obtenerTasa("TNA_INTERES_FINANCIERO_PLATINIUM");
+        contrato.tasasPlatiniumTnaPunitorios = tasas.obtenerTasa("TNA_INTERESES_PUNITORIOS_PLATINIUM");
+        contrato.tasasPlatiniumCtfFinanciacion = tasas.obtenerTasa("CFT_FINANCIACION_PLATINIUM");
+        contrato.tasasPlatiniumComisionRenovacionAnual = tasas.obtenerTasa("COMISION_RENOVACION_ANUAL_PLATINIUM");
+        contrato.tasasPlatiniumComisionMantenimiento = tasas.obtenerTasa("COMISION_MANTENIMIENTO_CUENTA_PLATINIUM");
+        contrato.tasasPlatiniumComisionReposicionPlastico = tasas.obtenerTasa("COMISION_REPOSICION_PLASTICO_PLATINIUM");
+        contrato.tasasPlatiniumAtraso05_31Dias = tasas.obtenerTasa("CARGO_GESTION_COBRANZA_05_31_DIAS_PLATINIUM");
+        contrato.tasasPlatiniumAtraso32_60Dias = tasas.obtenerTasa("CARGO_GESTION_COBRANZA_32_60_DIAS_PLATINIUM");
+        contrato.tasasPlatiniumAtraso61_90Dias = tasas.obtenerTasa("CARGO_GESTION_COBRANZA_61_90_DIAS_PLATINIUM");
+        contrato.tasasPlatiniumPagoFacil = tasas.obtenerTasa("CARGO_COBRANZA_ELECTRONICA_PAGOFACIL_PLATINIUM");  
 
         //guardar el contrato en la base de datos
         const contratoGuardado = await this.contratoRepository.saveContrato(contrato);
@@ -245,7 +263,7 @@ export class GeneracionYDescargaContratoUseCase {
             entidadAfectada: 'contratos',
             entidadId: contratoGuardado.getId(),
             detalles: {
-                numero_tarjeta: contratoGuardado.getNumeroTarjeta(),
+                numero_tarjeta: contratoGuardado.getNumeroAutorizacion(),
                 numero_cuenta: contratoGuardado.getNumeroCuenta(),
                 solicitud_formal_id: solicitud.getId()
             },
@@ -304,7 +322,7 @@ export class GeneracionYDescargaContratoUseCase {
         contrato: Contrato,
         pdfBuffer: Buffer
     ): Promise<void> {
-        const mensaje = `Su contrato ${contrato.getNumeroTarjeta()} ha sido generado con éxito.}`;
+        const mensaje = `Su contrato ${contrato.getNumeroAutorizacion()} ha sido generado con éxito.}`;
         await this.enviarNotificacion(solicitud, mensaje, pdfBuffer);
     }
 

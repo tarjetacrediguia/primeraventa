@@ -1,34 +1,28 @@
-import { NosisPort } from "../../../application/ports/NosisPort";
-import { NosisResponse } from "../../../domain/entities/NosisData";
-
-
-export class MockNosisAdapter implements NosisPort {
-  private testData: NosisResponse;
-
-  constructor(testData?: NosisResponse) {
-    // Usar datos de prueba por defecto si no se proporcionan
-    this.testData = testData || {
-      Contenido: {
-      Pedido: {
-        Usuario: "60965",
-        Documento: "20187505020",
-        VR: "1",
-        CDA: "10001",
-        Timeout: "300"
+{
+  "VariablesResponse": {
+    "@xmlns:i": "http://www.w3.org/2001/XMLSchema-instance",
+    "@xmlns": "http://schemas.nosis.com/sac/ws01/types",
+    "Contenido": {
+      "Pedido": {
+        "Usuario": "60965",
+        "Documento": "20187505020",
+        "VR": "1",
+        "CDA": "10001",
+        "Timeout": "300"
       },
-      Resultado: {
-        Estado: "200",
-        Novedad: "OK",
-        Tiempo: "2887",
-        FechaRecepcion: "2025-08-21T10:13:06",
-        Transaccion: "e5aa08ab-f9d4-4b41-8880-b6e29b8b15c7",
-        Referencia: "20187505020",
-        Servidor: "SACWEBZ11",
-        Version: "1.3.0"
+      "Resultado": {
+        "Estado": "200",
+        "Novedad": "OK",
+        "Tiempo": "2887",
+        "FechaRecepcion": "2025-08-21T10:13:06",
+        "Transaccion": "e5aa08ab-f9d4-4b41-8880-b6e29b8b15c7",
+        "Referencia": "20187505020",
+        "Servidor": "SACWEBZ11",
+        "Version": "1.3.0"
       },
-      Datos: {
-        Variables: {
-          Variable: [
+      "Datos": {
+        "Variables": {
+          "Variable": [
             {
               "Nombre": "VI_RazonSocial",
               "Valor": "ROJAS VALENZUELA EDISON",
@@ -1397,19 +1391,5 @@ export class MockNosisAdapter implements NosisPort {
         }
       }
     }
-    };
-  }
-
-  async getData(cuil: string): Promise<NosisResponse> {
-    // Modificar el CUIL en los datos de prueba para reflejar la entrada
-    this.testData.Contenido.Pedido.Documento = cuil;
-    const identificacion = this.testData.Contenido.Datos.Variables.Variable.find(
-      v => v.Nombre === 'VI_Identificacion'
-    );
-    if (identificacion) {
-      identificacion.Valor = cuil;
-    }
-    
-    return this.testData;
   }
 }
