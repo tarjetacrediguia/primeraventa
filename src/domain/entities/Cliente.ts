@@ -22,7 +22,7 @@
  * Contiene toda la información personal, de contacto y laboral del cliente,
  * así como métodos de validación y cálculo de elegibilidad para productos.
  */
-export class Cliente {
+export class Cliente { 
     // Atributos
     private readonly id: number;
     private nombreCompleto: string;
@@ -41,7 +41,17 @@ export class Cliente {
     private localidad: string | null;
     private provincia: string | null;
     private numeroDomicilio: string | null;
-    private barrio: string | null;  
+    private barrio: string | null;
+    private empleadorRazonSocial: string | null;
+    private empleadorCuit: string | null;
+    private empleadorDomicilio: string | null;
+    private empleadorTelefono: string | null;
+    private empleadorCodigoPostal: string | null;
+    private empleadorLocalidad: string | null;
+    private empleadorProvincia: string | null;
+    private nacionalidad: string | null;
+    private estadoCivil: string | null;
+
 
     /**
      * Constructor de la clase Cliente.
@@ -86,7 +96,16 @@ export class Cliente {
         localidad: string | null = null,
         provincia: string | null = null,
         numeroDomicilio: string | null = null,
-        barrio: string | null = null
+        barrio: string | null = null,
+        empleadorRazonSocial: string | null = null,
+        empleadorCuit: string | null = null,
+        empleadorDomicilio: string | null = null,
+        empleadorTelefono: string | null = null,
+        empleadorCodigoPostal: string | null = null,
+        empleadorLocalidad: string | null = null,
+        empleadorProvincia: string | null = null,
+        nacionalidad: string | null = null,
+        estadoCivil: string | null = null,
 
     ) {
         this.id = id;
@@ -107,7 +126,161 @@ export class Cliente {
         this.provincia = provincia;
         this.numeroDomicilio = numeroDomicilio;
         this.barrio = barrio;
+        this.empleadorRazonSocial = empleadorRazonSocial;
+        this.empleadorCuit = empleadorCuit;
+        this.empleadorDomicilio = empleadorDomicilio;
+        this.empleadorTelefono = empleadorTelefono;
+        this.empleadorCodigoPostal = empleadorCodigoPostal;
+        this.empleadorLocalidad = empleadorLocalidad;
+        this.empleadorProvincia = empleadorProvincia;
+        this.nacionalidad = nacionalidad;
+        this.estadoCivil = estadoCivil;
 
+    }
+
+    /*
+        * Obtiene la razón social del empleador del cliente.
+        * 
+        * @returns string | null - Razón social del empleador o null si no tiene.
+        */
+    public getEmpleadorRazonSocial(): string | null {
+        return this.empleadorRazonSocial;
+    }
+    /**
+     * Establece la razón social del empleador del cliente.
+     * 
+     * @param empleadorRazonSocial - Nueva razón social del empleador.
+     */
+    public setEmpleadorRazonSocial(empleadorRazonSocial: string | null): void {
+        this.empleadorRazonSocial = empleadorRazonSocial;
+    }
+    /*
+        * Obtiene el CUIL del empleador del cliente.
+        * 
+        * @returns string | null - CUIL del empleador o null si no tiene.
+        */
+    public getEmpleadorCuit(): string | null {
+        return this.empleadorCuit;
+    }
+    /**
+     * Establece el CUIL del empleador del cliente.
+     * 
+     * @param empleadorCuit - Nuevo CUIL del empleador.
+     */
+    public setEmpleadorCuit(empleadorCuit: string | null): void {
+        this.empleadorCuit = empleadorCuit;
+    }
+    /*
+        * Obtiene el domicilio del empleador del cliente.
+        * 
+        * @returns string | null - Domicilio del empleador o null si no tiene.
+        */
+       public getEmpleadorDomicilio(): string | null {
+        return this.empleadorDomicilio;
+    }
+    /**
+     * Establece el domicilio del empleador del cliente.
+     * 
+     * @param empleadorDomicilio - Nuevo domicilio del empleador.
+     */
+    public setEmpleadorDomicilio(empleadorDomicilio: string | null): void {
+        this.empleadorDomicilio = empleadorDomicilio;
+    }
+    /*
+        * Obtiene el teléfono del empleador del cliente.
+        * 
+        * @returns string | null - Teléfono del empleador o null si no tiene.
+        */
+       public getEmpleadorTelefono(): string | null {
+        return this.empleadorTelefono;
+    }
+    /**
+     * Establece el teléfono del empleador del cliente.
+     * 
+     * @param empleadorTelefono - Nuevo teléfono del empleador.
+     */
+    public setEmpleadorTelefono(empleadorTelefono: string | null): void {
+        this.empleadorTelefono = empleadorTelefono;
+    }
+    /*
+        * Obtiene el código postal del empleador del cliente.
+        * 
+        * @returns string | null - Código postal del empleador o null si no tiene.
+        */
+       public getEmpleadorCodigoPostal(): string | null {
+        return this.empleadorCodigoPostal;
+    }
+    /**
+     * Establece el código postal del empleador del cliente.
+     * 
+     * @param empleadorCodigoPostal - Nuevo código postal del empleador.
+     */
+    public setEmpleadorCodigoPostal(empleadorCodigoPostal: string | null): void {
+        this.empleadorCodigoPostal = empleadorCodigoPostal;
+    }
+    /*
+        * Obtiene la localidad del empleador del cliente.
+        * 
+        * @returns string | null - Localidad del empleador o null si no tiene.
+        */
+       public getEmpleadorLocalidad(): string | null {
+        return this.empleadorLocalidad;
+    }
+    /**
+     * Establece la localidad del empleador del cliente.
+     * 
+     * @param empleadorLocalidad - Nueva localidad del empleador.
+     */
+    public setEmpleadorLocalidad(empleadorLocalidad: string | null): void {
+        this.empleadorLocalidad = empleadorLocalidad;
+    }
+    /*
+        * Obtiene la provincia del empleador del cliente.
+        * 
+        * @returns string | null - Provincia del empleador o null si no tiene.
+        */
+       public getEmpleadorProvincia(): string | null {
+        return this.empleadorProvincia;
+    }
+    /**
+     * Establece la provincia del empleador del cliente.
+     * 
+     * @param empleadorProvincia - Nueva provincia del empleador.
+     */
+    public setEmpleadorProvincia(empleadorProvincia: string | null): void {
+        this.empleadorProvincia = empleadorProvincia;
+    }
+    /*
+        * Obtiene la nacionalidad del cliente.
+        * 
+        * @returns string | null - Nacionalidad del cliente o null si no tiene.
+        */
+    public getNacionalidad(): string | null {
+        return this.nacionalidad;
+    }
+    /**
+     * Establece la nacionalidad del cliente.
+     * 
+     * @param nacionalidad - Nueva nacionalidad del cliente.
+     */
+    public setNacionalidad(nacionalidad: string | null): void {
+        this.nacionalidad = nacionalidad;
+    }
+    /*
+        * Obtiene el estado civil del cliente.
+        * 
+        * @returns string | null - Estado civil del cliente o null si no tiene.
+        */
+    public getEstadoCivil(): string | null {
+        return this.estadoCivil;
+    }
+    /**
+     * Establece el estado civil del cliente.
+     * 
+     * @param estadoCivil - Nuevo estado civil del cliente.
+     */
+    public setEstadoCivil(estadoCivil: string | null): void {
+        this.estadoCivil = estadoCivil;
     }
 
     /*
@@ -549,7 +722,22 @@ export class Cliente {
             domicilio: this.domicilio,
             aceptaTarjeta: this.aceptaTarjeta,
             fechaCreacion: this.fechaCreacion,
-            comercianteId: this.comercianteId
+            comercianteId: this.comercianteId,
+            sexo: this.sexo,
+            codigoPostal: this.codigoPostal,
+            localidad: this.localidad,
+            provincia: this.provincia,
+            numeroDomicilio: this.numeroDomicilio,
+            barrio: this.barrio,
+            empleadorRazonSocial: this.empleadorRazonSocial,
+            empleadorCuit: this.empleadorCuit,
+            empleadorDomicilio: this.empleadorDomicilio,
+            empleadorTelefono: this.empleadorTelefono,
+            empleadorCodigoPostal: this.empleadorCodigoPostal,
+            empleadorLocalidad: this.empleadorLocalidad,
+            empleadorProvincia: this.empleadorProvincia,
+            nacionalidad: this.nacionalidad,
+            estadoCivil: this.estadoCivil
         };
     }
 

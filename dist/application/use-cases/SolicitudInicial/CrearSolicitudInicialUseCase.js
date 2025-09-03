@@ -66,15 +66,20 @@ class CrearSolicitudInicialUseCase {
      */
     execute(dniCliente, cuilCliente, comercianteId) {
         return __awaiter(this, void 0, void 0, function* () {
+            var _a, _b, _c, _d, _e, _f, _g;
             try {
                 let cliente;
+                let clienteTemporal;
                 try {
                     cliente = yield this.clienteRepository.findByCuil(cuilCliente);
                 }
-                catch (_a) {
+                catch (error) {
+                    // No se encontró el cliente, se creará uno nuevo
+                }
+                finally {
                     // Crear con datos mínimos si no existe
                     cliente = new Cliente_1.Cliente(0, "Nombre temporal", "Apellido temporal", dniCliente, cuilCliente);
-                    yield this.clienteRepository.save(cliente);
+                    clienteTemporal = yield this.clienteRepository.save(cliente);
                 }
                 // 1. Verificar si el cliente tiene crédito activo
                 const tieneCreditoActivo = yield this.tieneCreditoActivo(cuilCliente); // Usar CUIL en lugar de DNI
@@ -100,9 +105,9 @@ class CrearSolicitudInicialUseCase {
                     throw new Error("El cliente ya tiene un crédito activo");
                 }
                 // Crear solicitud vinculada al cliente
-                const solicitud = new SolicitudInicial_1.SolicitudInicial(0, new Date(), "pendiente", cliente.getId(), comercianteId);
+                const solicitud = new SolicitudInicial_1.SolicitudInicial(0, new Date(), "pendiente", clienteTemporal.getId(), comercianteId);
                 // 3. Guardar solicitud inicial
-                const solicitudCreada = yield this.solicitudInicialRepository.createSolicitudInicial(solicitud, cliente);
+                const solicitudCreada = yield this.solicitudInicialRepository.createSolicitudInicial(solicitud, clienteTemporal);
                 const solicitudInicialId = solicitudCreada.getId();
                 // Registrar evento de creación
                 yield this.historialRepository.registrarEvento({
@@ -126,18 +131,68 @@ class CrearSolicitudInicialUseCase {
                     const verifyNosis = new VerifyDataNosisUseCase_1.VerifyDataNosisUseCase();
                     const resultadoNosis = yield verifyNosis.execute(nosisResponse);
                     nosisData = resultadoNosis.personalData;
-                    cliente.setSexo(nosisData && nosisData.documentacion && typeof nosisData.documentacion.sexo !== "undefined" ? nosisData.documentacion.sexo : null);
-                    cliente.setCodigoPostal(nosisData && nosisData.domicilio && nosisData.domicilio.codigoPostal ? nosisData.domicilio.codigoPostal : null);
-                    cliente.setLocalidad(nosisData && nosisData.domicilio && nosisData.domicilio.localidad ? nosisData.domicilio.localidad : null);
-                    cliente.setProvincia(nosisData && nosisData.domicilio && nosisData.domicilio.provincia ? nosisData.domicilio.provincia : null);
-                    cliente.setNumeroDomicilio(nosisData && nosisData.domicilio && nosisData.domicilio.numero ? nosisData.domicilio.numero : null);
-                    //TODO: guardar la razon social del empleador en la solicitud formal
-                    //TODO: guardar el cuit del empleador en la solicitud formal
-                    //TODO: guardar datos del empleador en la solicitud formal
-                    //TODO: guardar en la BD los datos del cliente
-                    //TODO : actualizar el cliente con los datos obtenidos de Nosis
-                    //TODO: actualizar la solicitud formal con los datos del empleador
-                    console.log("Actualizando cliente con datos de Nosis:", cliente);
+                    ///////////////////// Actualizar datos del cliente con info de Nosis //////////////
+                    clienteTemporal.setNombreCompleto(nosisData && ((_a = nosisData.nombreCompleto) === null || _a === void 0 ? void 0 : _a.nombre)
+                        ? nosisData.nombreCompleto.nombre
+                        : "");
+                    clienteTemporal.setApellido(nosisData && ((_b = nosisData.nombreCompleto) === null || _b === void 0 ? void 0 : _b.apellido)
+                        ? nosisData.nombreCompleto.apellido
+                        : "");
+                    clienteTemporal.setDni(nosisData && ((_c = nosisData.documentacion) === null || _c === void 0 ? void 0 : _c.dni)
+                        ? nosisData.documentacion.dni
+                        : dniCliente);
+                    clienteTemporal.setCuil(nosisData && ((_d = nosisData.documentacion) === null || _d === void 0 ? void 0 : _d.cuil)
+                        ? nosisData.documentacion.cuil
+                        : cuilCliente);
+                    clienteTemporal.setFechaNacimiento(nosisData && ((_e = nosisData.documentacion) === null || _e === void 0 ? void 0 : _e.fechaNacimiento)
+                        ? new Date(nosisData.documentacion.fechaNacimiento)
+                        : null);
+                    clienteTemporal.setSexo(nosisData &&
+                        nosisData.documentacion &&
+                        typeof nosisData.documentacion.sexo !== "undefined"
+                        ? nosisData.documentacion.sexo
+                        : null);
+                    clienteTemporal.setCodigoPostal(nosisData && nosisData.domicilio && nosisData.domicilio.codigoPostal
+                        ? nosisData.domicilio.codigoPostal
+                        : null);
+                    clienteTemporal.setLocalidad(nosisData && nosisData.domicilio && nosisData.domicilio.localidad
+                        ? nosisData.domicilio.localidad
+                        : null);
+                    clienteTemporal.setProvincia(nosisData && nosisData.domicilio && nosisData.domicilio.provincia
+                        ? nosisData.domicilio.provincia
+                        : null);
+                    clienteTemporal.setNumeroDomicilio(nosisData && nosisData.domicilio && nosisData.domicilio.numero
+                        ? nosisData.domicilio.numero
+                        : null);
+                    clienteTemporal.setNacionalidad(nosisData && ((_f = nosisData.documentacion) === null || _f === void 0 ? void 0 : _f.nacionalidad)
+                        ? nosisData.documentacion.nacionalidad
+                        : null);
+                    clienteTemporal.setEstadoCivil(nosisData && ((_g = nosisData.documentacion) === null || _g === void 0 ? void 0 : _g.estadoCivil)
+                        ? nosisData.documentacion.estadoCivil
+                        : null);
+                    //Datos laborales
+                    if (nosisData &&
+                        nosisData.datosLaborales &&
+                        nosisData.datosLaborales.empleador) {
+                        clienteTemporal.setEmpleadorRazonSocial(nosisData.datosLaborales.empleador.razonSocial || null);
+                        clienteTemporal.setEmpleadorCuit(nosisData.datosLaborales.empleador.cuit || null);
+                        clienteTemporal.setEmpleadorDomicilio(nosisData.datosLaborales.empleador.domicilio
+                            ? `${nosisData.datosLaborales.empleador.domicilio.calle || ""} ${nosisData.datosLaborales.empleador.domicilio.numero || ""}`
+                            : null);
+                        clienteTemporal.setEmpleadorTelefono(nosisData.datosLaborales.empleador.telefono || null);
+                        clienteTemporal.setEmpleadorCodigoPostal(nosisData.datosLaborales.empleador.domicilio && nosisData.datosLaborales.empleador.domicilio.codigoPostal
+                            ? nosisData.datosLaborales.empleador.domicilio.codigoPostal
+                            : null);
+                        clienteTemporal.setEmpleadorLocalidad(nosisData.datosLaborales.empleador.domicilio && nosisData.datosLaborales.empleador.domicilio.localidad
+                            ? nosisData.datosLaborales.empleador.domicilio.localidad
+                            : null);
+                        clienteTemporal.setEmpleadorProvincia(nosisData.datosLaborales.empleador.domicilio && nosisData.datosLaborales.empleador.domicilio.provincia
+                            ? nosisData.datosLaborales.empleador.domicilio.provincia
+                            : null);
+                    }
+                    yield this.clienteRepository.update(clienteTemporal);
+                    //////////////////// FIN Actualizar datos del cliente con info de Nosis //////////////
+                    console.log("Actualizando cliente con datos de Nosis:", clienteTemporal);
                     if (this.nosisAutomatico) {
                         const getNosisData = new GetDataNosisUseCase_1.GetDataNosisUseCase(this.nosisPort);
                         const nosisData = yield getNosisData.execute(cuilCliente);
@@ -145,7 +200,7 @@ class CrearSolicitudInicialUseCase {
                         const resultadoNosis = yield verifyNosis.execute(nosisData);
                         if (resultadoNosis.status === "aprobado") {
                             solicitudCreada.setEstado("aprobada");
-                            yield this.solicitudInicialRepository.updateSolicitudInicial(solicitudCreada, cliente);
+                            yield this.solicitudInicialRepository.updateSolicitudInicial(solicitudCreada, clienteTemporal);
                             solicitud.agregarComentario(`Aprobado: Nosis automático`);
                             yield this.historialRepository.registrarEvento({
                                 usuarioId: null,
@@ -167,7 +222,7 @@ class CrearSolicitudInicialUseCase {
                             solicitud.setMotivoRechazo(motivoRechazo !== null && motivoRechazo !== void 0 ? motivoRechazo : "");
                             solicitud.agregarComentario(`Rechazo: ${motivoRechazo}`);
                             //se guarda el motivo de rechazo en la solicitud
-                            yield this.solicitudInicialRepository.updateSolicitudInicial(solicitudCreada, cliente);
+                            yield this.solicitudInicialRepository.updateSolicitudInicial(solicitudCreada, clienteTemporal);
                             yield this.historialRepository.registrarEvento({
                                 usuarioId: null,
                                 accion: historialActions_1.HISTORIAL_ACTIONS.REJECT_SOLICITUD_INICIAL,
@@ -177,20 +232,20 @@ class CrearSolicitudInicialUseCase {
                                     sistema: "Nosis",
                                     score: resultadoNosis.score,
                                     motivo: resultadoNosis.motivo,
-                                    reglasFallidas: resultadoNosis.reglasFallidas
+                                    reglasFallidas: resultadoNosis.reglasFallidas,
                                 },
                                 solicitudInicialId,
                             });
                         }
                         else {
                             solicitudCreada.setEstado("pendiente");
-                            yield this.solicitudInicialRepository.updateSolicitudInicial(solicitudCreada, cliente);
-                            yield this.notificarAnalistas(solicitudCreada, cliente);
+                            yield this.solicitudInicialRepository.updateSolicitudInicial(solicitudCreada, clienteTemporal);
+                            yield this.notificarAnalistas(solicitudCreada, clienteTemporal);
                         }
                     }
                     else {
                         // Modo manual
-                        yield this.notificarAnalistas(solicitudCreada, cliente);
+                        yield this.notificarAnalistas(solicitudCreada, clienteTemporal);
                     }
                 }
                 catch (error) {
@@ -206,7 +261,7 @@ class CrearSolicitudInicialUseCase {
                     solicitud: solicitudCreada,
                     nosisData,
                     motivoRechazo,
-                    reglasFallidas
+                    reglasFallidas,
                 };
             }
             catch (error) {
@@ -328,4 +383,4 @@ exports.CrearSolicitudInicialUseCase = CrearSolicitudInicialUseCase;
 
 
 
-*/ 
+*/

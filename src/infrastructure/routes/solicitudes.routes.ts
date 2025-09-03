@@ -26,6 +26,7 @@ import {
   crearYAprobarSolicitudFormal,
   obtenerSolicitudFormalPoridSolicitudInicial,
   obtenerSolicitudFormalAnalista,
+  obtenerDatosClienteComerciante,
 } from './controllers/Solicitudes.controller';
 import { esComerciante, esAnalista, esComercianteOAnalista, esAdministrador, esAnalistaOAdministrador } from './middlewares/rolesMiddleware';
 
@@ -89,6 +90,12 @@ router.get(
     '/solicitud-formal-analista/:idSolicitudInicial',
     esAnalistaOAdministrador,
     obtenerSolicitudFormalAnalista
+);
+
+router.get(
+    '/clientes/:id/comerciante',
+    esComerciante,
+    obtenerDatosClienteComerciante
 );
 
 export default router;

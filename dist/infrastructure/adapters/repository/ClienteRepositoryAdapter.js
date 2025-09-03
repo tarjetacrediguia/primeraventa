@@ -16,8 +16,7 @@ const DatabaseDonfig_1 = require("../../config/Database/DatabaseDonfig");
 class ClienteRepositoryAdapter {
     constructor() { }
     mapRowToCliente(row) {
-        return new Cliente_1.Cliente(row.id, row.nombre_completo, row.apellido, row.dni, row.cuil || '', row.telefono, row.email, row.fecha_nacimiento ? new Date(row.fecha_nacimiento) : null, row.domicilio, row.acepta_tarjeta, row.fecha_creacion ? new Date(row.fecha_creacion) : new Date(), 0, // comercianteId no está en la tabla clientes
-        row.sexo || '', row.codigo_postal || '', row.localidad || '', row.provincia || '', row.numero_domicilio || '', row.barrio || null);
+        return new Cliente_1.Cliente(row.id, row.nombre_completo, row.apellido, row.dni, row.cuil || "", row.telefono, row.email, row.fecha_nacimiento ? new Date(row.fecha_nacimiento) : null, row.domicilio, row.acepta_tarjeta, row.fecha_creacion ? new Date(row.fecha_creacion) : new Date(), row.comerciante_id || 0, row.sexo || null, row.codigo_postal || null, row.localidad || null, row.provincia || null, row.numero_domicilio || null, row.barrio || null, row.empleador_razon_social || null, row.empleador_cuit || null, row.empleador_domicilio || null, row.empleador_telefono || null, row.empleador_codigo_postal || null, row.empleador_localidad || null, row.empleador_provincia || null, row.nacionalidad || null, row.estado_civil || null);
     }
     /**
      * Obtiene un cliente por su ID.
@@ -27,10 +26,10 @@ class ClienteRepositoryAdapter {
      */
     findById(id) {
         return __awaiter(this, void 0, void 0, function* () {
-            const query = 'SELECT * FROM clientes WHERE id = $1';
+            const query = "SELECT * FROM clientes WHERE id = $1";
             const result = yield DatabaseDonfig_1.pool.query(query, [id]);
             if (result.rows.length === 0) {
-                throw new Error('Cliente no encontrado');
+                throw new Error("Cliente no encontrado");
             }
             return this.mapRowToCliente(result.rows[0]);
         });
@@ -43,10 +42,10 @@ class ClienteRepositoryAdapter {
      */
     findByDni(dni) {
         return __awaiter(this, void 0, void 0, function* () {
-            const query = 'SELECT * FROM clientes WHERE dni = $1';
+            const query = "SELECT * FROM clientes WHERE dni = $1";
             const result = yield DatabaseDonfig_1.pool.query(query, [dni]);
             if (result.rows.length === 0) {
-                throw new Error('Cliente no encontrado');
+                throw new Error("Cliente no encontrado");
             }
             return this.mapRowToCliente(result.rows[0]);
         });
@@ -59,10 +58,10 @@ class ClienteRepositoryAdapter {
      */
     findByCuil(cuil) {
         return __awaiter(this, void 0, void 0, function* () {
-            const query = 'SELECT * FROM clientes WHERE cuil = $1';
+            const query = "SELECT * FROM clientes WHERE cuil = $1";
             const result = yield DatabaseDonfig_1.pool.query(query, [cuil]);
             if (result.rows.length === 0) {
-                throw new Error('Cliente no encontrado');
+                throw new Error("Cliente no encontrado");
             }
             return this.mapRowToCliente(result.rows[0]);
         });
@@ -75,10 +74,10 @@ class ClienteRepositoryAdapter {
      */
     findByEmail(email) {
         return __awaiter(this, void 0, void 0, function* () {
-            const query = 'SELECT * FROM clientes WHERE email = $1';
+            const query = "SELECT * FROM clientes WHERE email = $1";
             const result = yield DatabaseDonfig_1.pool.query(query, [email]);
             if (result.rows.length === 0) {
-                throw new Error('Cliente no encontrado');
+                throw new Error("Cliente no encontrado");
             }
             return this.mapRowToCliente(result.rows[0]);
         });
@@ -89,7 +88,7 @@ class ClienteRepositoryAdapter {
      */
     findAll() {
         return __awaiter(this, void 0, void 0, function* () {
-            const query = 'SELECT * FROM clientes';
+            const query = "SELECT * FROM clientes";
             const result = yield DatabaseDonfig_1.pool.query(query);
             return result.rows.map((row) => this.mapRowToCliente(row));
         });
@@ -117,9 +116,19 @@ class ClienteRepositoryAdapter {
                 localidad,
                 provincia,
                 numero_domicilio,
-                barrio
+                barrio,
+                nacionalidad,
+                estado_civil,
+                empleador_razon_social,
+                empleador_cuit,
+                empleador_domicilio,
+                empleador_telefono,
+                empleador_codigo_postal,
+                empleador_localidad,
+                empleador_provincia
             ) 
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24)
+            RETURNING *
         `;
             const values = [
                 cliente.getNombreCompleto(),
@@ -136,9 +145,19 @@ class ClienteRepositoryAdapter {
                 cliente.getLocalidad(),
                 cliente.getProvincia(),
                 cliente.getNumeroDomicilio(),
-                cliente.getBarrio()
+                cliente.getBarrio(),
+                cliente.getNacionalidad(),
+                cliente.getEstadoCivil(),
+                cliente.getEmpleadorRazonSocial(),
+                cliente.getEmpleadorCuit(),
+                cliente.getEmpleadorDomicilio(),
+                cliente.getEmpleadorTelefono(),
+                cliente.getEmpleadorCodigoPostal(),
+                cliente.getEmpleadorLocalidad(),
+                cliente.getEmpleadorProvincia(),
             ];
-            yield DatabaseDonfig_1.pool.query(query, values);
+            const result = yield DatabaseDonfig_1.pool.query(query, values);
+            return this.mapRowToCliente(result.rows[0]);
         });
     }
     /**
@@ -164,8 +183,18 @@ class ClienteRepositoryAdapter {
                 localidad = $12,
                 provincia = $13,
                 numero_domicilio = $14,
-                barrio = $15
-            WHERE id = $16
+                barrio = $15,
+                nacionalidad = $16,
+                estado_civil = $17,
+                empleador_razon_social = $18,
+                empleador_cuit = $19,
+                empleador_domicilio = $20,
+                empleador_telefono = $21,
+                empleador_codigo_postal = $22,
+                empleador_localidad = $23,
+                empleador_provincia = $24
+            WHERE id = $25
+            RETURNING *
         `;
             const values = [
                 cliente.getNombreCompleto(),
@@ -183,9 +212,19 @@ class ClienteRepositoryAdapter {
                 cliente.getProvincia(),
                 cliente.getNumeroDomicilio(),
                 cliente.getBarrio(),
-                cliente.getId()
+                cliente.getNacionalidad(),
+                cliente.getEstadoCivil(),
+                cliente.getEmpleadorRazonSocial(),
+                cliente.getEmpleadorCuit(),
+                cliente.getEmpleadorDomicilio(),
+                cliente.getEmpleadorTelefono(),
+                cliente.getEmpleadorCodigoPostal(),
+                cliente.getEmpleadorLocalidad(),
+                cliente.getEmpleadorProvincia(),
+                cliente.getId(),
             ];
-            yield DatabaseDonfig_1.pool.query(query, values);
+            const result = yield DatabaseDonfig_1.pool.query(query, values);
+            return this.mapRowToCliente(result.rows[0]);
         });
     }
     /**
@@ -195,8 +234,29 @@ class ClienteRepositoryAdapter {
      */
     delete(id) {
         return __awaiter(this, void 0, void 0, function* () {
-            const query = 'DELETE FROM clientes WHERE id = $1';
+            const query = "DELETE FROM clientes WHERE id = $1";
             yield DatabaseDonfig_1.pool.query(query, [id]);
+        });
+    }
+    /*
+     * Obtiene un cliente por ID con verificación de pertenencia al comerciante
+     * @param id - ID del cliente
+     * @param comercianteId - ID del comerciante
+     * @returns Promise<Cliente> - El cliente si existe y pertenece al comerciante
+     */
+    findByIdWithComercianteCheck(id, comercianteId) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const query = `
+            SELECT c.* 
+            FROM clientes c
+            INNER JOIN solicitudes_iniciales si ON c.id = si.cliente_id
+            WHERE c.id = $1 AND si.comerciante_id = $2
+        `;
+            const result = yield DatabaseDonfig_1.pool.query(query, [id, comercianteId]);
+            if (result.rows.length === 0) {
+                throw new Error("Cliente no encontrado o no pertenece al comerciante");
+            }
+            return this.mapRowToCliente(result.rows[0]);
         });
     }
 }

@@ -10,7 +10,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.crearYAprobarSolicitudFormal = exports.rechazarSolicitudInicial = exports.aprobarSolicitudInicial = exports.listarSolicitudesFormalesByComerciante = exports.obtenerSolicitudFormalPorIdComerciante = exports.obtenerSolicitudFormalPoridSolicitudInicial = exports.obtenerSolicitudFormalAnalista = exports.listarSolicitudesFormalesByComercianteYEstado = exports.listarSolicitudesInicialesByComerciante = exports.obtenerDetalleSolicitudFormal = exports.actualizarSolicitudFormal = exports.listarSolicitudesFormales = exports.rechazarSolicitudFormal = exports.aprobarSolicitudFormal = exports.obtenerReciboSolicitudFormal = exports.crearSolicitudFormal = exports.verificarEstadoCrediticio = exports.listarSolicitudesIniciales = exports.crearSolicitudInicial = void 0;
+exports.obtenerDatosClienteComerciante = exports.crearYAprobarSolicitudFormal = exports.rechazarSolicitudInicial = exports.aprobarSolicitudInicial = exports.listarSolicitudesFormalesByComerciante = exports.obtenerSolicitudFormalPorIdComerciante = exports.obtenerSolicitudFormalPoridSolicitudInicial = exports.obtenerSolicitudFormalAnalista = exports.listarSolicitudesFormalesByComercianteYEstado = exports.listarSolicitudesInicialesByComerciante = exports.obtenerDetalleSolicitudFormal = exports.actualizarSolicitudFormal = exports.listarSolicitudesFormales = exports.rechazarSolicitudFormal = exports.aprobarSolicitudFormal = exports.obtenerReciboSolicitudFormal = exports.crearSolicitudFormal = exports.verificarEstadoCrediticio = exports.listarSolicitudesIniciales = exports.crearSolicitudInicial = void 0;
 const CrearSolicitudInicialUseCase_1 = require("../../../application/use-cases/SolicitudInicial/CrearSolicitudInicialUseCase");
 const GetSolicitudesInicialesByEstadoUseCase_1 = require("../../../application/use-cases/SolicitudInicial/GetSolicitudesInicialesByEstadoUseCase");
 const CrearSolicitudFormalUseCase_1 = require("../../../application/use-cases/SolicitudFormal/CrearSolicitudFormalUseCase");
@@ -42,6 +42,7 @@ const nosisAdapter_1 = require("../../adapters/nosis/nosisAdapter");
 const mockNosisAdapter_1 = require("../../adapters/nosis/mockNosisAdapter");
 const GetComercianteByIdUseCase_1 = require("../../../application/use-cases/Comerciante/GetComercianteByIdUseCase");
 const ComercianteRepositoryAdapter_1 = require("../../adapters/repository/ComercianteRepositoryAdapter");
+const ObtenerDatosClienteComercianteUseCase_1 = require("../../../application/use-cases/Cliente/ObtenerDatosClienteComercianteUseCase");
 // Inyección de dependencias (deberían venir de un contenedor DI)
 const verazService = new VerazAdapter_1.VerazAdapter();
 const notificationService = new NotificationAdapter_1.NotificationAdapter();
@@ -73,6 +74,7 @@ const getSolicitudesFormalesByFechaUC = new GetSolicitudesFormalesByFechaUseCase
 const updateSolicitudFormalUC = new UpdateSolicitudFormalUseCase_1.UpdateSolicitudFormalUseCase(solicitudFormalRepo, historialRepository);
 const getSolicitudFormalByIdUC = new GetSolicitudFormalByIdUseCase_1.GetSolicitudesFormalesByIdUseCase(solicitudFormalRepo);
 const listSolicitudesInicialesUC = new ListSolicitudesInicialesUseCase_1.ListSolicitudesInicialesUseCase(solicitudInicialRepo);
+const obtenerDatosClienteComercianteUC = new ObtenerDatosClienteComercianteUseCase_1.ObtenerDatosClienteComercianteUseCase(clienteRepository);
 /**
  * Crea una nueva solicitud inicial.
  * @param req - Request de Express con los datos del cliente y recibo en el body.
@@ -833,3 +835,28 @@ const crearYAprobarSolicitudFormal = (req, res) => __awaiter(void 0, void 0, voi
     }
 });
 exports.crearYAprobarSolicitudFormal = crearYAprobarSolicitudFormal;
+const obtenerDatosClienteComerciante = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const { id } = req.params;
+        if (!req.user || !req.user.id) {
+            return res.status(401).json({ error: 'Usuario no autenticado' });
+        }
+        const comercianteId = Number(req.user.id);
+        const cliente = yield obtenerDatosClienteComercianteUC.execute(Number(id), comercianteId);
+        res.status(200).json(cliente.toPlainObject());
+    }
+    catch (error) {
+        if (error instanceof Error) {
+            if (error.message.includes('no encontrado') || error.message.includes('no pertenece')) {
+                res.status(404).json({ error: error.message });
+            }
+            else {
+                res.status(400).json({ error: error.message });
+            }
+        }
+        else {
+            res.status(500).json({ error: 'Error interno del servidor' });
+        }
+    }
+});
+exports.obtenerDatosClienteComerciante = obtenerDatosClienteComerciante;

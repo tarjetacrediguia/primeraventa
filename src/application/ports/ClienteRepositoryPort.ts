@@ -71,7 +71,7 @@ export interface ClienteRepositoryPort {
      * @returns Promise<void>
      * @throws Error si el cliente ya existe o los datos son inválidos
      */
-    save(cliente: Cliente): Promise<void>;
+    save(cliente: Cliente): Promise<Cliente>;
 
     /**
      * Actualiza los datos de un cliente existente.
@@ -80,7 +80,7 @@ export interface ClienteRepositoryPort {
      * @returns Promise<void>
      * @throws Error si el cliente no existe
      */
-    update(cliente: Cliente): Promise<void>;
+    update(cliente: Cliente): Promise<Cliente>;
 
     /**
      * Elimina un cliente del repositorio.
@@ -90,4 +90,12 @@ export interface ClienteRepositoryPort {
      * @throws Error si el cliente no existe
      */
     delete(id: number): Promise<void>;
+    /**
+     * Obtiene un cliente por ID con verificación de pertenencia al comerciante
+     * @param id - ID del cliente
+     * @param comercianteId - ID del comerciante
+     * @returns Promise<Cliente> - El cliente si existe y pertenece al comerciante
+     * @throws Error si el cliente no existe o no pertenece al comerciante
+     */
+    findByIdWithComercianteCheck(id: number, comercianteId: number): Promise<Cliente>;
 }

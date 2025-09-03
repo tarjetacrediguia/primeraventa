@@ -507,7 +507,7 @@ class SolicitudInicialRepositoryAdapter {
         SELECT 
             si.id, si.fecha_creacion, si.estado, si.reciboSueldo, 
             si.comentarios, si.comerciante_id,
-            c.dni as dni_cliente, c.cuil as cuil_cliente, si.motivo_rechazo
+            c.dni as dni_cliente, c.cuil as cuil_cliente, si.motivo_rechazo, c.id as cliente_id
         FROM solicitudes_iniciales si
         INNER JOIN clientes c ON si.cliente_id = c.id
         WHERE si.comerciante_id = $1

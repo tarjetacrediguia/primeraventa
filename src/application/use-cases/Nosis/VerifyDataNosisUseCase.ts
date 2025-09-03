@@ -30,17 +30,17 @@ export type PersonalData = {
   datosLaborales: {
     situacionLaboral?: string;
     empleador?: {
-    razonSocial?: string;
-    cuit?: string;
-    telefono?: string;
-    domicilio?: {
-      calle?: string;
-      numero?: string;
-      localidad?: string;
-      codigoPostal?: string;
-      provincia?: string;
+      razonSocial?: string;
+      cuit?: string;
+      telefono?: string;
+        domicilio?: {
+          calle?: string;
+          numero?: string;
+          localidad?: string;
+          codigoPostal?: string;
+          provincia?: string;
+        };
     };
-  };
     monotributo?: {
       esMonotributista?: string;
       categoria?: string;

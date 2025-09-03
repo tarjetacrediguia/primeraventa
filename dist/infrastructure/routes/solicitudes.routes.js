@@ -32,4 +32,5 @@ router.post('/solicitudes-formales/crearYAprobarSolicitudFormal', rolesMiddlewar
 router.get('/solicitudes-formales-comerciante', rolesMiddleware_1.esComercianteOAnalista, Solicitudes_controller_1.listarSolicitudesFormalesByComerciante);
 router.get('/solicitud-formal-comerciante/:idSolicitudInicial', rolesMiddleware_1.esComercianteOAnalista, Solicitudes_controller_1.obtenerSolicitudFormalPoridSolicitudInicial);
 router.get('/solicitud-formal-analista/:idSolicitudInicial', rolesMiddleware_1.esAnalistaOAdministrador, Solicitudes_controller_1.obtenerSolicitudFormalAnalista);
+router.get('/clientes/:id/comerciante', rolesMiddleware_1.esComerciante, Solicitudes_controller_1.obtenerDatosClienteComerciante);
 exports.default = router;

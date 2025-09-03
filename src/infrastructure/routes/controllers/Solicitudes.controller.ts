@@ -55,6 +55,7 @@ import { NosisAdapter } from '../../adapters/nosis/nosisAdapter';
 import { MockNosisAdapter } from '../../adapters/nosis/mockNosisAdapter';
 import { GetComercianteByIdUseCase } from '../../../application/use-cases/Comerciante/GetComercianteByIdUseCase';
 import { ComercianteRepositoryAdapter } from '../../adapters/repository/ComercianteRepositoryAdapter';
+import { ObtenerDatosClienteComercianteUseCase } from '../../../application/use-cases/Cliente/ObtenerDatosClienteComercianteUseCase';
 
 // Inyección de dependencias (deberían venir de un contenedor DI)
 const verazService: VerazPort = new VerazAdapter();
@@ -123,12 +124,12 @@ const crearYAprobarSolicitudFormalUC = new CrearYAprobarSolicitudFormalUseCase(
 );
 
 const getSolicitudFormalBySolicitudInicialIdUC = new GetSolicitudFormalBySolicitudInicialIdUseCase(solicitudFormalRepo);
-
 const getSolicitudesFormalesByEstadoUC = new GetSolicitudesFormalesByEstadoUseCase(solicitudFormalRepo);
 const getSolicitudesFormalesByFechaUC = new GetSolicitudesFormalesByFechaUseCase(solicitudFormalRepo);
 const updateSolicitudFormalUC = new UpdateSolicitudFormalUseCase(solicitudFormalRepo,historialRepository);
 const getSolicitudFormalByIdUC = new GetSolicitudesFormalesByIdUseCase(solicitudFormalRepo);
 const listSolicitudesInicialesUC = new ListSolicitudesInicialesUseCase(solicitudInicialRepo);
+const obtenerDatosClienteComercianteUC = new ObtenerDatosClienteComercianteUseCase(clienteRepository);
 
 /**
  * Crea una nueva solicitud inicial.
@@ -950,5 +951,30 @@ export const crearYAprobarSolicitudFormal = async (req: Request, res: Response) 
       res.status(500).json({ error: 'Error interno del servidor' });
     }
   }
+};
+
+export const obtenerDatosClienteComerciante = async (req: Request, res: Response) => {
+    try {
+        const { id } = req.params;
+        
+        if (!req.user || !req.user.id) {
+            return res.status(401).json({ error: 'Usuario no autenticado' });
+        }
+        
+        const comercianteId = Number(req.user.id);
+        const cliente = await obtenerDatosClienteComercianteUC.execute(Number(id), comercianteId);
+        
+        res.status(200).json(cliente.toPlainObject());
+    } catch (error) {
+        if (error instanceof Error) {
+            if (error.message.includes('no encontrado') || error.message.includes('no pertenece')) {
+                res.status(404).json({ error: error.message });
+            } else {
+                res.status(400).json({ error: error.message });
+            }
+        } else {
+            res.status(500).json({ error: 'Error interno del servidor' });
+        }
+    }
 };
 
