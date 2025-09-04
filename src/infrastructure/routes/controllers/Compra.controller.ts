@@ -33,7 +33,7 @@ const configuracionRepo = new ConfiguracionRepositoryAdapter();
 // Controlador para crear compra
 export const crearCompra = async (req: Request, res: Response) => {
     try {
-        const { solicitudFormalId, descripcion, cantidadCuotas, items } = req.body;
+        const { solicitudFormalId, descripcion, cantidadCuotas, montoTotal } = req.body;
         const usuarioId = req.user?.id;
         if (!usuarioId) {
             return res.status(401).json({ error: 'Usuario no autenticado' });
@@ -52,7 +52,7 @@ export const crearCompra = async (req: Request, res: Response) => {
             solicitudFormalId,
             descripcion,
             cantidadCuotas,
-            items,
+            montoTotal,
             Number(usuarioId)
         );
 
@@ -224,7 +224,7 @@ export const rechazarCompra = async (req: Request, res: Response) => {
 export const actualizarCompra = async (req: Request, res: Response) => {
     try {
         const id = parseInt(req.params.id, 10);
-        const { descripcion, cantidadCuotas, items } = req.body;
+        const { descripcion, cantidadCuotas, montoTotal } = req.body;
         const usuarioId = req.user?.id;
         if (!usuarioId) {
             return res.status(401).json({ error: 'Usuario no autenticado' });
@@ -241,7 +241,7 @@ export const actualizarCompra = async (req: Request, res: Response) => {
             id,
             descripcion,
             cantidadCuotas,
-            items,
+            montoTotal,
             Number(usuarioId)
         );
 

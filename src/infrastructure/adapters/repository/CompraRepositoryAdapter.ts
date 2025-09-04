@@ -1,7 +1,7 @@
 // src/infrastructure/adapters/repository/CompraRepositoryAdapter.ts
 import { Compra, EstadoCompra } from "../../../domain/entities/Compra";
 import { CompraRepositoryPort } from "../../../application/ports/CompraRepositoryPort";
-import { ItemCompra } from "../../../domain/entities/ItemCompra";
+//import { ItemCompra } from "../../../domain/entities/ItemCompra";
 import { pool } from "../../config/Database/DatabaseDonfig";
 
 export class CompraRepositoryAdapter implements CompraRepositoryPort {
@@ -15,6 +15,7 @@ export class CompraRepositoryAdapter implements CompraRepositoryPort {
             
             const compras: Compra[] = [];
             for (const row of res.rows) {
+                /*
                 const itemsRes = await client.query(
                     'SELECT * FROM items_compra WHERE compra_id = $1',
                     [row.id]
@@ -23,13 +24,13 @@ export class CompraRepositoryAdapter implements CompraRepositoryPort {
                 const items = itemsRes.rows.map(item => 
                     new ItemCompra(item.id, item.compra_id, item.nombre, item.precio, item.cantidad)
                 );
-                
+                */
                 compras.push(new Compra({
                     id: row.id,
                     solicitudFormalId: row.solicitud_formal_id,
                     descripcion: row.descripcion,
                     cantidadCuotas: row.cantidad_cuotas,
-                    items: items,
+                    //items: items,
                     estado: row.estado,
                     montoTotal: row.monto_total,
                     clienteId: row.cliente_id,
@@ -106,7 +107,7 @@ export class CompraRepositoryAdapter implements CompraRepositoryPort {
             const compraId = compraRes.rows[0].id;
             const fechaCreacion = compraRes.rows[0].fecha_creacion;
             const fechaActualizacion = compraRes.rows[0].fecha_actualizacion;
-
+            /*
             // Insertar items
             for (const item of compra.getItems()) { 
                 const itemQuery = `
@@ -124,7 +125,7 @@ export class CompraRepositoryAdapter implements CompraRepositoryPort {
                 // Asignar el ID generado al item
                 item.setId(itemRes.rows[0].id);
             }
-
+*/
             await client.query('COMMIT');
 
             // Devolver la compra con los IDs asignados
@@ -133,7 +134,7 @@ export class CompraRepositoryAdapter implements CompraRepositoryPort {
                 solicitudFormalId: compra.getSolicitudFormalId(),
                 descripcion: compra.getDescripcion(),
                 cantidadCuotas: compra.getCantidadCuotas(),
-                items: compra.getItems(),
+                //items: compra.getItems(),
                 estado: compra.getEstado(),
                 montoTotal: compra.getMontoTotal(),
                 clienteId: clienteId,
@@ -165,7 +166,7 @@ export class CompraRepositoryAdapter implements CompraRepositoryPort {
                 return null;
             }
             const compraData = compraRes.rows[0];
-
+            /*
             // Obtener items de la compra
             const itemsQuery = `
                 SELECT * FROM items_compra WHERE compra_id = $1
@@ -178,13 +179,13 @@ export class CompraRepositoryAdapter implements CompraRepositoryPort {
                 row.precio,
                 row.cantidad
             ));
-
+            */
             return new Compra({
                 id: compraData.id,
                 solicitudFormalId: compraData.solicitud_formal_id,
                 descripcion: compraData.descripcion,
                 cantidadCuotas: compraData.cantidad_cuotas,
-                items: items,
+                //items: items,
                 estado: compraData.estado,
                 montoTotal: compraData.monto_total,
                 clienteId: compraData.cliente_id,
@@ -244,6 +245,7 @@ export class CompraRepositoryAdapter implements CompraRepositoryPort {
             // Actualizar items: 
             // - Eliminar items que ya no están
             // - Actualizar o insertar los nuevos
+            /*
             const itemsActuales = compra.getItems();
             const itemsIds = itemsActuales.map(item => item.getId()).filter(id => id !== 0); // Filtrar nuevos (id=0)
 
@@ -291,7 +293,7 @@ export class CompraRepositoryAdapter implements CompraRepositoryPort {
                     item.setId(res.rows[0].id);
                 }
             }
-
+            */
             await client.query('COMMIT');
 
             // Devolver compra actualizada
@@ -309,10 +311,10 @@ export class CompraRepositoryAdapter implements CompraRepositoryPort {
         const client = await pool.connect();
         try {
             await client.query('BEGIN');
-
+            /*
             // Eliminar items primero
             await client.query('DELETE FROM items_compra WHERE compra_id = $1', [id]);
-
+            */
             // Eliminar compra
             await client.query('DELETE FROM compras WHERE id = $1', [id]);
 
@@ -341,7 +343,7 @@ export class CompraRepositoryAdapter implements CompraRepositoryPort {
 
         // Tomar la primera compra (asumiendo que solo hay una por solicitud)
         const compraData = comprasRes.rows[0];
-
+        /*
         // Obtener items de la compra
         const itemsQuery = `
             SELECT * FROM items_compra WHERE compra_id = $1
@@ -354,14 +356,14 @@ export class CompraRepositoryAdapter implements CompraRepositoryPort {
             row.precio,
             row.cantidad
         ));
-
+        */
         // Crear y retornar la instancia de Compra
         return new Compra({
             id: compraData.id,
             solicitudFormalId: compraData.solicitud_formal_id,
             descripcion: compraData.descripcion,
             cantidadCuotas: compraData.cantidad_cuotas,
-            items: items,
+            //items: items,
             estado: compraData.estado,
             montoTotal: compraData.monto_total,
             clienteId: compraData.cliente_id,
@@ -389,6 +391,7 @@ export class CompraRepositoryAdapter implements CompraRepositoryPort {
         
         const compras: Compra[] = [];
         for (const row of res.rows) {
+            /*
             // Obtener items para cada compra
             const itemsRes = await client.query(
                 'SELECT * FROM items_compra WHERE compra_id = $1',
@@ -398,13 +401,13 @@ export class CompraRepositoryAdapter implements CompraRepositoryPort {
             const items = itemsRes.rows.map(item => 
                 new ItemCompra(item.id, item.compra_id, item.nombre, item.precio, item.cantidad)
             );
-            
+            */
             compras.push(new Compra({
                     id: row.id,
                     solicitudFormalId: row.solicitud_formal_id,
                     descripcion: row.descripcion,
                     cantidadCuotas: row.cantidad_cuotas,
-                    items: items,
+                    //items: items,
                     estado: row.estado,
                     montoTotal: row.monto_total,
                     clienteId: row.cliente_id,
@@ -437,6 +440,7 @@ export class CompraRepositoryAdapter implements CompraRepositoryPort {
             
             const compras: Compra[] = [];
             for (const row of res.rows) {
+                /*
                 const itemsRes = await client.query(
                     'SELECT * FROM items_compra WHERE compra_id = $1',
                     [row.id]
@@ -445,12 +449,13 @@ export class CompraRepositoryAdapter implements CompraRepositoryPort {
                 const items = itemsRes.rows.map(item => 
                     new ItemCompra(item.id, item.compra_id, item.nombre, item.precio, item.cantidad)
                 );
+                */
                 compras.push(new Compra({
                     id: row.id,
                     solicitudFormalId: row.solicitud_formal_id,
                     descripcion: row.descripcion,
                     cantidadCuotas: row.cantidad_cuotas,
-                    items: items,
+                    //items: items,
                     estado: row.estado,
                     montoTotal: row.monto_total,
                     clienteId: row.cliente_id,

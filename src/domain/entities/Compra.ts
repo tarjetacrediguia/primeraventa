@@ -1,13 +1,13 @@
 // src/domain/entities/Compra.ts
 
-import { ItemCompra } from "./ItemCompra";
+//import { ItemCompra } from "./ItemCompra";
 
 export interface CompraParams {
     id: number;
     solicitudFormalId: number;
     descripcion: string;
     cantidadCuotas: number;
-    items?: ItemCompra[];
+    //items?: ItemCompra[];
     estado?: EstadoCompra;
     montoTotal: number;
     clienteId: number;
@@ -49,7 +49,7 @@ export class Compra {
     private cantidadCuotas: number;
     private fechaCreacion: Date;
     private fechaActualizacion: Date;
-    private items: ItemCompra[];
+    //private items: ItemCompra[];
     private estado: EstadoCompra;
     private valorCuota: number;
     private clienteId: number; // ID del cliente asociado a la compra
@@ -76,8 +76,8 @@ export class Compra {
         this.solicitudFormalId = params.solicitudFormalId;
         this.descripcion = params.descripcion;
         this.cantidadCuotas = params.cantidadCuotas;
-        this.items = params.items || [];
-        this.montoTotal = params.montoTotal || this.calcularMontoTotal();
+        //this.items = params.items || [];
+        this.montoTotal = params.montoTotal //|| this.calcularMontoTotal();
         this.fechaCreacion = params.fechaCreacion || new Date();
         this.fechaActualizacion = params.fechaActualizacion || new Date();
         this.estado = params.estado || EstadoCompra.PENDIENTE;
@@ -88,6 +88,12 @@ export class Compra {
         this.comercianteId = params.comercianteId;
         this.analistaAprobadorId = params.analistaAprobadorId;
     }
+    public setMontoTotal(montoTotal: number): void {
+        this.montoTotal = montoTotal;
+        this.valorCuota = this.cantidadCuotas > 0 ? montoTotal / this.cantidadCuotas : 0;
+        this.actualizarFechaActualizacion();
+    }
+    
 
     // Getters
     public getClienteId(): number {
@@ -120,11 +126,11 @@ export class Compra {
     public getFechaActualizacion(): Date {
         return this.fechaActualizacion;
     }
-
+/*
     public getItems(): ItemCompra[] {
         return this.items;
     }
-
+*/
      public getEstado(): EstadoCompra {
     return this.estado;
   }
@@ -181,7 +187,7 @@ export class Compra {
     public setCantidadCuotas(cantidadCuotas: number): void {
         this.cantidadCuotas = cantidadCuotas;
     }
-
+/*
     // Métodos de gestión de items
     public agregarItem(item: ItemCompra): void {
         this.items.push(item);
@@ -200,12 +206,13 @@ export class Compra {
             this.montoTotal = this.calcularMontoTotal();
         }
     }
+        
 
     // Cálculos internos
     private calcularMontoTotal(): number {
         return this.items.reduce((total, item) => total + item.getSubtotal(), 0);
     }
-
+*/
     private actualizarFechaActualizacion(): void {
         this.fechaActualizacion = new Date();
     }
@@ -224,7 +231,7 @@ export class Compra {
             cantidadCuotas: this.cantidadCuotas,
             fechaCreacion: this.fechaCreacion,
             fechaActualizacion: this.fechaActualizacion,
-            items: this.items.map(item => item.toPlainObject()),
+            //items: this.items.map(item => item.toPlainObject()),
             estado: this.estado,
             valorCuota: this.valorCuota,
             numeroAutorizacion: this.numeroAutorizacion,
@@ -241,7 +248,7 @@ export class Compra {
             solicitudFormalId: map.solicitudFormalId,
             descripcion: map.descripcion,
             cantidadCuotas: map.cantidadCuotas,
-            items: map.items ? map.items.map((i: any) => ItemCompra.fromMap(i)) : [],
+            //items: map.items ? map.items.map((i: any) => ItemCompra.fromMap(i)) : [],
             estado: map.estado || EstadoCompra.PENDIENTE,
             montoTotal: map.montoTotal,
             clienteId: map.clienteId,

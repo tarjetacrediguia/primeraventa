@@ -4,7 +4,7 @@
  * MÓDULO: Entidad ItemCompra
  * Representa un item individual dentro de una compra.
  */
-
+/*
 export class ItemCompra {
     private id: number;
     private compraId: number;
@@ -12,14 +12,7 @@ export class ItemCompra {
     private precio: number;
     private cantidad: number;
 
-    /**
-     * Constructor de ItemCompra
-     * @param id Identificador único
-     * @param compraId ID de la compra asociada
-     * @param nombre Nombre del item
-     * @param precio Precio unitario
-     * @param cantidad Cantidad (default: 1)
-     */
+
     constructor(
         id: number,
         compraId: number,
@@ -98,3 +91,4 @@ export class ItemCompra {
         );
     }
 }
+*/

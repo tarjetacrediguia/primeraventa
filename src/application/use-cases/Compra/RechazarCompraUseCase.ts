@@ -129,7 +129,7 @@ export class RechazarCompraUseCase {
                 detalles: {
                     motivo: motivo,
                     monto_total: compra.getMontoTotal(),
-                    cantidad_items: compra.getItems().length
+                    cantidad_cuotas: compra.getCantidadCuotas()
                 },
                 solicitudInicialId: solicitudInicialId
             });
