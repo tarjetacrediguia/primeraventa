@@ -22,14 +22,16 @@ import estadisticasRoutes from './estadisticas.routes';
 import historialRoutes from './historial.routes';
 import tasasRoutes from './tasas.routes';
 import compraRoutes from './compra.routes';
+import sistemaRoutes from './sistema.routes';
 
 
 const router = Router();
 
 
 
-
+// Rutas públicas sin autenticación
 router.use('/auth', authRoutes);
+router.use('/sistema', sistemaRoutes);
 // Aplica el middleware de autenticación a TODAS las rutas excepto las públicas
 router.use(authMiddleware);
 router.use('/administradores', administradoresRoutes);

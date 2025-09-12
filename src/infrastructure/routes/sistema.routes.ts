@@ -1,6 +1,10 @@
-/**
- * RUTAS: Sistema
- *
- * Este archivo está reservado para definir las rutas relacionadas con el sistema en general.
- * Actualmente no contiene rutas implementadas.
- */
+// src/infrastructure/routes/sistema.routes.ts
+import { Router } from 'express';
+import { getVersion } from './controllers/Sistema.controller';
+
+const router = Router();
+
+// Ruta pública sin autenticación
+router.get('/version', getVersion);
+
+export default router;

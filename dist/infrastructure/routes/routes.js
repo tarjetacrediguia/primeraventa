@@ -26,8 +26,11 @@ const estadisticas_routes_1 = __importDefault(require("./estadisticas.routes"));
 const historial_routes_1 = __importDefault(require("./historial.routes"));
 const tasas_routes_1 = __importDefault(require("./tasas.routes"));
 const compra_routes_1 = __importDefault(require("./compra.routes"));
+const sistema_routes_1 = __importDefault(require("./sistema.routes"));
 const router = (0, express_1.Router)();
+// Rutas públicas sin autenticación
 router.use('/auth', auth_routes_1.default);
+router.use('/sistema', sistema_routes_1.default);
 // Aplica el middleware de autenticación a TODAS las rutas excepto las públicas
 router.use(auth_middleware_1.authMiddleware);
 router.use('/administradores', administradores_routes_1.default);
