@@ -56,6 +56,7 @@ import { MockNosisAdapter } from '../../adapters/nosis/mockNosisAdapter';
 import { GetComercianteByIdUseCase } from '../../../application/use-cases/Comerciante/GetComercianteByIdUseCase';
 import { ComercianteRepositoryAdapter } from '../../adapters/repository/ComercianteRepositoryAdapter';
 import { ObtenerDatosClienteComercianteUseCase } from '../../../application/use-cases/Cliente/ObtenerDatosClienteComercianteUseCase';
+import { ArchivoAdjunto } from '../../../domain/entities/ArchivosAdjuntos';
 
 // Inyección de dependencias (deberían venir de un contenedor DI)
 const verazService: VerazPort = new VerazAdapter();
@@ -227,7 +228,7 @@ export const verificarEstadoCrediticio = async (req: Request, res: Response) => 
 export const crearSolicitudFormal = async (req: Request, res: Response) => {
   //TODO: cambiar nombre de cliente a DatosCliente para no generar confusión con el cliente de la API
   try {
-    const { idSolicitudInicial, cliente, referentes,importeNeto,solicitaAmpliacionDeCredito,comentarioInicial,datosEmpleador } = req.body;
+    const { idSolicitudInicial, cliente, referentes,importeNeto,solicitaAmpliacionDeCredito,comentarioInicial,datosEmpleador,archivosAdjuntos  } = req.body;
     // Validar que el recibo sea proporcionado
     
     if (!cliente.recibo) {
@@ -249,6 +250,34 @@ export const crearSolicitudFormal = async (req: Request, res: Response) => {
     
     // Reemplazar el string base64 con el Buffer
     cliente.recibo = reciboBuffer;
+
+    // Procesar archivos adjuntos
+    const archivosValidos: Array<{nombre: string, tipo: string, contenido: Buffer}> = [];
+    
+    if (archivosAdjuntos && Array.isArray(archivosAdjuntos)) {
+      for (const archivo of archivosAdjuntos) {
+        if (!archivo.nombre || !archivo.tipo || !archivo.contenido) {
+          return res.status(400).json({ error: 'Cada archivo adjunto debe tener: nombre, tipo y contenido' });
+        }
+        
+        const contenidoBuffer = Buffer.from(archivo.contenido, 'base64');
+        
+        // Validar tipo y tamaño (5MB máximo)
+        if (!validarArchivo(contenidoBuffer, archivo.tipo)) {
+          return res.status(400).json({ error: `Tipo de archivo no permitido: ${archivo.nombre}` });
+        }
+        
+        if (contenidoBuffer.length > 5 * 1024 * 1024) {
+          return res.status(400).json({ error: `El archivo ${archivo.nombre} excede el tamaño máximo de 5MB` });
+        }
+        
+        archivosValidos.push({
+          nombre: archivo.nombre,
+          tipo: archivo.tipo,
+          contenido: contenidoBuffer
+        });
+      }
+    }
 
     // Validar referentes (código existente)
     if (!referentes || !Array.isArray(referentes)) {
@@ -293,7 +322,8 @@ export const crearSolicitudFormal = async (req: Request, res: Response) => {
         codigoPostal: cliente.codigoPostal,
         localidad: cliente.localidad,
         provincia: cliente.provincia,
-        barrio: cliente.barrio
+        barrio: cliente.barrio,
+        archivosAdjuntos: archivosValidos
       },
       comentarioInicial,
       solicitaAmpliacionDeCredito,
@@ -611,6 +641,41 @@ export const actualizarSolicitudFormal = async (req: Request, res: Response) => 
       if (empleador.localidadEmpleador !== undefined) solicitudExistente.setLocalidadEmpleador(empleador.localidadEmpleador);
       if (empleador.provinciaEmpleador !== undefined) solicitudExistente.setProvinciaEmpleador(empleador.provinciaEmpleador);
       if (empleador.telefonoEmpleador !== undefined) solicitudExistente.setTelefonoEmpleador(empleador.telefonoEmpleador);
+    }
+
+    // Procesar archivos adjuntos si se proporcionan
+    if (updates.archivosAdjuntos) {
+      if (!Array.isArray(updates.archivosAdjuntos)) {
+        return res.status(400).json({ error: 'Archivos adjuntos debe ser un array' });
+      }
+      
+      const archivosValidos: ArchivoAdjunto[] = [];
+      
+      for (const archivo of updates.archivosAdjuntos) {
+        if (!archivo.nombre || !archivo.tipo || !archivo.contenido) {
+          return res.status(400).json({ error: 'Cada archivo adjunto debe tener: nombre, tipo y contenido' });
+        }
+        
+        const contenidoBuffer = Buffer.from(archivo.contenido, 'base64');
+        
+        // Validar tipo y tamaño
+        if (!validarArchivo(contenidoBuffer, archivo.tipo)) {
+          return res.status(400).json({ error: `Tipo de archivo no permitido: ${archivo.nombre}` });
+        }
+        
+        if (contenidoBuffer.length > 5 * 1024 * 1024) {
+          return res.status(400).json({ error: `El archivo ${archivo.nombre} excede el tamaño máximo de 5MB` });
+        }
+        
+        archivosValidos.push(new ArchivoAdjunto(
+          archivo.id || 0, // Si tiene ID, es un archivo existente
+          archivo.nombre,
+          archivo.tipo,
+          contenidoBuffer
+        ));
+      }
+      
+      solicitudExistente.setArchivosAdjuntos(archivosValidos);
     }
 
     console.log('Solicitud antes de actualizar:', solicitudExistente.toPlainObject());
@@ -995,4 +1060,68 @@ export const obtenerDatosClienteComerciante = async (req: Request, res: Response
         }
     }
 };
+// Función auxiliar para validar archivos
+const validarArchivo = (contenido: Buffer, tipo: string): boolean => {
+  // Validar tipo MIME
+  const tiposPermitidos = [
+    'image/jpeg', 'image/png', 'image/gif', 'application/pdf'
+  ];
+  
+  // Detectar tipo MIME
+  let mimeType = 'application/octet-stream';
+  if (contenido.length > 4) {
+    // Verificar firma PDF
+    if (contenido[0] === 0x25 && contenido[1] === 0x50 && contenido[2] === 0x44 && contenido[3] === 0x46) {
+      mimeType = 'application/pdf';
+    }
+    // Verificar firma JPG
+    else if (contenido[0] === 0xFF && contenido[1] === 0xD8 && contenido[2] === 0xFF) {
+      mimeType = 'image/jpeg';
+    }
+    // Verificar firma PNG
+    else if (contenido[0] === 0x89 && contenido[1] === 0x50 && contenido[2] === 0x4E && contenido[3] === 0x47) {
+      mimeType = 'image/png';
+    }
+  }
+  
+  return tiposPermitidos.includes(mimeType) && mimeType === tipo;
+};
 
+export const descargarArchivoAdjunto = async (req: Request, res: Response) => {
+  try {
+    const { id, archivoId } = req.params;
+    
+    // Obtener la solicitud para verificar permisos
+    const solicitud = await getSolicitudFormalByIdUC.execute(Number(id));
+    
+    if (!solicitud) {
+      return res.status(404).json({ error: 'Solicitud no encontrada' });
+    }
+    
+    // Verificar permisos (solo el comerciante dueño o analistas/administradores)
+    if (req.user?.rol === 'comerciante') {
+      const comercianteId = Number(req.user.id);
+      if (solicitud.getComercianteId() !== comercianteId) {
+        return res.status(403).json({ error: 'No tienes permisos para acceder a este archivo' });
+      }
+    }
+    
+    // Obtener el archivo
+    const archivo = solicitud.getArchivosAdjuntos().find(a => a.getId() === Number(archivoId));
+    
+    if (!archivo) {
+      return res.status(404).json({ error: 'Archivo no encontrado' });
+    }
+    
+    // Configurar headers
+    res.setHeader('Content-Type', archivo.getTipo());
+    res.setHeader('Content-Disposition', `attachment; filename="${archivo.getNombre()}"`);
+    res.setHeader('Content-Length', archivo.getContenido().length);
+    
+    // Enviar archivo
+    res.end(archivo.getContenido());
+    
+  } catch (error) {
+    res.status(500).json({ error: (error as Error).message });
+  }
+};

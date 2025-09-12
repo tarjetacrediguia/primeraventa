@@ -33,4 +33,5 @@ router.get('/solicitudes-formales-comerciante', rolesMiddleware_1.esComercianteO
 router.get('/solicitud-formal-comerciante/:idSolicitudInicial', rolesMiddleware_1.esComercianteOAnalista, Solicitudes_controller_1.obtenerSolicitudFormalPoridSolicitudInicial);
 router.get('/solicitud-formal-analista/:idSolicitudInicial', rolesMiddleware_1.esAnalistaOAdministrador, Solicitudes_controller_1.obtenerSolicitudFormalAnalista);
 router.get('/clientes/:id/comerciante', rolesMiddleware_1.esComerciante, Solicitudes_controller_1.obtenerDatosClienteComerciante);
+router.get('/solicitudes-formales/:id/archivos/:archivoId', rolesMiddleware_1.esComercianteOAnalista, Solicitudes_controller_1.descargarArchivoAdjunto);
 exports.default = router;

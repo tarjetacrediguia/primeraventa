@@ -46,6 +46,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.CrearSolicitudFormalUseCase = void 0;
 const SolicitudFormal_1 = require("../../../domain/entities/SolicitudFormal");
 const historialActions_1 = require("../../constants/historialActions");
+const ArchivosAdjuntos_1 = require("../../../domain/entities/ArchivosAdjuntos");
 /**
  * Caso de uso para crear una nueva solicitud formal de crédito.
  *
@@ -223,6 +224,14 @@ class CrearSolicitudFormalUseCase {
                 solicitudInicialId, comercianteId, datosSolicitud.nombreCompleto, datosSolicitud.apellido, datosSolicitud.telefono, datosSolicitud.email, new Date(), typeof datosSolicitud.recibo === "string"
                     ? Buffer.from(datosSolicitud.recibo, "base64")
                     : datosSolicitud.recibo, "pendiente", datosSolicitud.aceptaTarjeta, datosSolicitud.fechaNacimiento, datosSolicitud.domicilio, datosSolicitud.referentes, datosSolicitud.importeNeto, [comentarioInicial], ponderador, solicitaAmpliacionDeCredito, 0, datosEmpleador.razonSocialEmpleador, datosEmpleador.cuitEmpleador, datosEmpleador.cargoEmpleador, datosEmpleador.sectorEmpleador, datosEmpleador.codigoPostalEmpleador, datosEmpleador.localidadEmpleador, datosEmpleador.provinciaEmpleador, datosEmpleador.telefonoEmpleador, datosSolicitud.sexo, datosSolicitud.codigoPostal, datosSolicitud.localidad, datosSolicitud.provincia, datosSolicitud.numeroDomicilio, datosSolicitud.barrio);
+                // Agregar archivos adjuntos si existen
+                if (datosSolicitud.archivosAdjuntos && datosSolicitud.archivosAdjuntos.length > 0) {
+                    for (const archivoData of datosSolicitud.archivosAdjuntos) {
+                        const archivo = new ArchivosAdjuntos_1.ArchivoAdjunto(0, // ID temporal, se asignará al guardar
+                        archivoData.nombre, archivoData.tipo, archivoData.contenido);
+                        solicitudFormal.agregarArchivoAdjunto(archivo);
+                    }
+                }
                 console.log("Solicitud formal creada en memoria:", solicitudFormal);
                 // Validar completitud de datos
                 solicitudFormal.validarCompletitud();

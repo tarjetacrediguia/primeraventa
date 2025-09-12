@@ -19,6 +19,7 @@
 
 import { Readable } from "stream";
 import { Referente } from "./Referente";
+import { ArchivoAdjunto } from "./ArchivosAdjuntos";
 
 /**
  * Clase que representa una solicitud formal de préstamo en el sistema.
@@ -66,6 +67,7 @@ export class SolicitudFormal {
     private provincia: string | null;
     private numeroDomicilio: string | null;
     private barrio: string | null;  
+    private archivosAdjuntos: ArchivoAdjunto[] = [];
 
   /**
    * Constructor de la clase SolicitudFormal.
@@ -136,6 +138,7 @@ export class SolicitudFormal {
     administradorAprobadorId?: number,
     comercianteAprobadorId?: number,
     nuevoLimiteCompletoSolicitado?: number | null,
+    archivosAdjuntos?: ArchivoAdjunto[]
     
 
     
@@ -178,6 +181,23 @@ export class SolicitudFormal {
     this.provincia = provincia || null;
     this.numeroDomicilio = numeroDomicilio || null;
     this.barrio = barrio || null;
+    this.archivosAdjuntos = archivosAdjuntos || [];
+  }
+
+    public getArchivosAdjuntos(): ArchivoAdjunto[] {
+    return this.archivosAdjuntos;
+  }
+
+  public setArchivosAdjuntos(archivos: ArchivoAdjunto[]): void {
+    this.archivosAdjuntos = archivos;
+  }
+
+  public agregarArchivoAdjunto(archivo: ArchivoAdjunto): void {
+    this.archivosAdjuntos.push(archivo);
+  }
+
+  public eliminarArchivoAdjunto(id: number): void {
+    this.archivosAdjuntos = this.archivosAdjuntos.filter(a => a.getId() !== id);
   }
 
   setSexo(sexo: string) {
@@ -764,7 +784,8 @@ export class SolicitudFormal {
         localidad: this.localidad,
         provincia: this.provincia,
         numeroDomicilio: this.numeroDomicilio,
-        barrio: this.barrio
+        barrio: this.barrio,
+        archivosAdjuntos: this.archivosAdjuntos.map(a => a.toPlainObject())
     };
 }
 

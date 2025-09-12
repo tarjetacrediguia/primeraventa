@@ -99,7 +99,8 @@ class SolicitudFormal {
      * @param importeNeto - Importe neto del solicitante.
      * @param cuotasSolicitadas - Cantidad de cuotas solicitadas (entre 3 y 14).
      */
-    constructor(id, solicitudInicialId, comercianteId, nombreCompleto, apellido, telefono, email, fechaSolicitud, recibo, estado, aceptaTarjeta, fechaNacimiento, domicilio, referentes, importeNeto, comentarios = [], ponderador, solicitaAmpliacionDeCredito = false, clienteId, razonSocialEmpleador, cuitEmpleador, cargoEmpleador, sectorEmpleador, codigoPostalEmpleador, localidadEmpleador, provinciaEmpleador, telefonoEmpleador, sexo, codigoPostal, localidad, provincia, numeroDomicilio, barrio, fechaAprobacion, analistaAprobadorId, administradorAprobadorId, comercianteAprobadorId, nuevoLimiteCompletoSolicitado) {
+    constructor(id, solicitudInicialId, comercianteId, nombreCompleto, apellido, telefono, email, fechaSolicitud, recibo, estado, aceptaTarjeta, fechaNacimiento, domicilio, referentes, importeNeto, comentarios = [], ponderador, solicitaAmpliacionDeCredito = false, clienteId, razonSocialEmpleador, cuitEmpleador, cargoEmpleador, sectorEmpleador, codigoPostalEmpleador, localidadEmpleador, provinciaEmpleador, telefonoEmpleador, sexo, codigoPostal, localidad, provincia, numeroDomicilio, barrio, fechaAprobacion, analistaAprobadorId, administradorAprobadorId, comercianteAprobadorId, nuevoLimiteCompletoSolicitado, archivosAdjuntos) {
+        this.archivosAdjuntos = [];
         this.id = id;
         this.solicitudInicialId = solicitudInicialId;
         this.comercianteId = comercianteId;
@@ -138,6 +139,19 @@ class SolicitudFormal {
         this.provincia = provincia || null;
         this.numeroDomicilio = numeroDomicilio || null;
         this.barrio = barrio || null;
+        this.archivosAdjuntos = archivosAdjuntos || [];
+    }
+    getArchivosAdjuntos() {
+        return this.archivosAdjuntos;
+    }
+    setArchivosAdjuntos(archivos) {
+        this.archivosAdjuntos = archivos;
+    }
+    agregarArchivoAdjunto(archivo) {
+        this.archivosAdjuntos.push(archivo);
+    }
+    eliminarArchivoAdjunto(id) {
+        this.archivosAdjuntos = this.archivosAdjuntos.filter(a => a.getId() !== id);
     }
     setSexo(sexo) {
         this.sexo = sexo;
@@ -663,7 +677,8 @@ class SolicitudFormal {
             localidad: this.localidad,
             provincia: this.provincia,
             numeroDomicilio: this.numeroDomicilio,
-            barrio: this.barrio
+            barrio: this.barrio,
+            archivosAdjuntos: this.archivosAdjuntos.map(a => a.toPlainObject())
         };
     }
     /**

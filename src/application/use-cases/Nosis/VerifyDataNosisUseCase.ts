@@ -73,7 +73,7 @@ export type RuleConfig = {
 export class VerifyDataNosisUseCase {
 
   private rules: RuleConfig[];
-  private readonly MINIMO_APORTES = 1;
+  private readonly MINIMO_APORTES = 4;
 
   constructor(rules?: RuleConfig[]) {
     // Reglas por defecto si no se proporcionan

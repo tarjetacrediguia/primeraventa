@@ -27,6 +27,7 @@ import {
   obtenerSolicitudFormalPoridSolicitudInicial,
   obtenerSolicitudFormalAnalista,
   obtenerDatosClienteComerciante,
+  descargarArchivoAdjunto,
 } from './controllers/Solicitudes.controller';
 import { esComerciante, esAnalista, esComercianteOAnalista, esAdministrador, esAnalistaOAdministrador } from './middlewares/rolesMiddleware';
 
@@ -97,5 +98,11 @@ router.get(
     esComerciante,
     obtenerDatosClienteComerciante
 );
+
+router.get(
+  '/solicitudes-formales/:id/archivos/:archivoId',
+  esComercianteOAnalista,
+  descargarArchivoAdjunto
+)
 
 export default router;

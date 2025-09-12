@@ -11,6 +11,7 @@ import { SolicitudFormalRepositoryPort } from "../../../application/ports/Solici
 import { SolicitudFormal } from "../../../domain/entities/SolicitudFormal";
 import { Referente } from "../../../domain/entities/Referente";
 import { pool } from "../../config/Database/DatabaseDonfig";
+import { ArchivoAdjunto } from "../../../domain/entities/ArchivosAdjuntos";
 
 export class SolicitudFormalRepositoryAdapter
   implements SolicitudFormalRepositoryPort
@@ -235,6 +236,24 @@ export class SolicitudFormalRepositoryAdapter
         await client.query(relacionQuery, [solicitudId, referenteId, i + 1]);
       }
 
+      // Guardar archivos adjuntos
+      for (const archivo of solicitudFormal.getArchivosAdjuntos()) {
+        const archivoQuery = `
+          INSERT INTO archivos_adjuntos (solicitud_formal_id, nombre, tipo, contenido)
+          VALUES ($1, $2, $3, $4)
+          RETURNING id
+        `;
+        const archivoResult = await client.query(archivoQuery, [
+          solicitudId,
+          archivo.getNombre(),
+          archivo.getTipo(),
+          archivo.getContenido()
+        ]);
+        
+        // Asignar el ID generado
+        archivo.setId(archivoResult.rows[0].id);
+      }
+
       await client.query("COMMIT");
 
       // Retornar la solicitud creada
@@ -331,6 +350,25 @@ export class SolicitudFormalRepositoryAdapter
           refRow.telefono
         )
     );
+
+    // Obtener archivos adjuntos
+    const archivosQuery = `
+      SELECT id, nombre, tipo, contenido, fecha_creacion
+      FROM archivos_adjuntos
+      WHERE solicitud_formal_id = $1
+    `;
+    const archivosResult = await pool.query(archivosQuery, [id]);
+    const archivos = archivosResult.rows.map(row => 
+      new ArchivoAdjunto(
+        row.id,
+        row.nombre,
+        row.tipo,
+        row.contenido,
+        row.fecha_creacion
+      )
+    );
+
+    
     return new SolicitudFormal(
       Number(row.id), // Convertir a número
       row.solicitud_inicial_id,
@@ -371,7 +409,8 @@ export class SolicitudFormalRepositoryAdapter
       row.comerciante_aprobador_id,
       row.nuevo_limite_completo_solicitado !== null
         ? Number(row.nuevo_limite_completo_solicitado)
-        : null
+        : null,
+      archivos
     );
   }
 
@@ -507,6 +546,27 @@ export class SolicitudFormalRepositoryAdapter
         );
       }
 
+      // Manejar archivos adjuntos
+      // 1. Eliminar archivos existentes
+      await client.query(
+        "DELETE FROM archivos_adjuntos WHERE solicitud_formal_id = $1",
+        [solicitudFormal.getId()]
+      );
+      
+      // 2. Insertar nuevos archivos
+      for (const archivo of solicitudFormal.getArchivosAdjuntos()) {
+        const archivoQuery = `
+          INSERT INTO archivos_adjuntos (solicitud_formal_id, nombre, tipo, contenido)
+          VALUES ($1, $2, $3, $4)
+        `;
+        await client.query(archivoQuery, [
+          solicitudFormal.getId(),
+          archivo.getNombre(),
+          archivo.getTipo(),
+          archivo.getContenido()
+        ]);
+      }
+
       await client.query("COMMIT");
 
       return (await this.getSolicitudFormalById(
@@ -523,6 +583,24 @@ export class SolicitudFormalRepositoryAdapter
       client.release();
     }
   }
+
+  async agregarArchivoAdjunto(solicitudId: number, archivo: ArchivoAdjunto): Promise<void> {
+    const query = `
+      INSERT INTO archivos_adjuntos (solicitud_formal_id, nombre, tipo, contenido)
+      VALUES ($1, $2, $3, $4)
+    `;
+    await pool.query(query, [
+      solicitudId,
+      archivo.getNombre(),
+      archivo.getTipo(),
+      archivo.getContenido()
+    ]);
+  }
+  
+  async eliminarArchivoAdjunto(archivoId: number): Promise<void> {
+    await pool.query("DELETE FROM archivos_adjuntos WHERE id = $1", [archivoId]);
+  }
+
 
   /**
    * Actualiza el estado de aprobación de una solicitud formal.

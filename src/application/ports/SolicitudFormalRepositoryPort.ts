@@ -13,6 +13,7 @@
  * - Gestionar la vinculación con contratos
  */
 
+import { ArchivoAdjunto } from "../../domain/entities/ArchivosAdjuntos";
 import { SolicitudFormal } from "../../domain/entities/SolicitudFormal";
 
 /**
@@ -169,7 +170,8 @@ export interface SolicitudFormalRepositoryPort {
 
 
 
-
+    agregarArchivoAdjunto(solicitudId: number, archivo: ArchivoAdjunto): Promise<void>;
+    eliminarArchivoAdjunto(archivoId: number): Promise<void>;
 
 
 }

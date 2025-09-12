@@ -29,6 +29,7 @@ import { ClienteRepositoryPort } from "../../ports/ClienteRepositoryPort";
 import { HistorialRepositoryPort } from "../../ports/HistorialRepositoryPort";
 import { HISTORIAL_ACTIONS } from "../../constants/historialActions";
 import { ConfiguracionRepositoryPort } from "../../ports/ConfiguracionRepositoryPort";
+import { ArchivoAdjunto } from "../../../domain/entities/ArchivosAdjuntos";
 
 /**
  * Caso de uso para crear una nueva solicitud formal de crédito.
@@ -101,7 +102,7 @@ export class CrearSolicitudFormalUseCase {
             localidad: string;
             provincia: string;
             barrio: string;
-
+            archivosAdjuntos?: { nombre: string; tipo: string; contenido: Buffer }[];
         },
         comentarioInicial: string = "Solicitud creada por comerciante",
         solicitaAmpliacionDeCredito:boolean,
@@ -290,6 +291,21 @@ export class CrearSolicitudFormalUseCase {
                 datosSolicitud.numeroDomicilio,
                 datosSolicitud.barrio
             );
+            // Agregar archivos adjuntos si existen
+            if (datosSolicitud.archivosAdjuntos && datosSolicitud.archivosAdjuntos.length > 0) {
+            for (const archivoData of datosSolicitud.archivosAdjuntos) {
+                const archivo = new ArchivoAdjunto(
+                0, // ID temporal, se asignará al guardar
+                archivoData.nombre,
+                archivoData.tipo,
+                archivoData.contenido
+                );
+                solicitudFormal.agregarArchivoAdjunto(archivo);
+            }
+            }
+
+
+
             console.log("Solicitud formal creada en memoria:", solicitudFormal);
             // Validar completitud de datos
             solicitudFormal.validarCompletitud();

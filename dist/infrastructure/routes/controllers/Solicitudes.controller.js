@@ -10,7 +10,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.obtenerDatosClienteComerciante = exports.crearYAprobarSolicitudFormal = exports.rechazarSolicitudInicial = exports.aprobarSolicitudInicial = exports.listarSolicitudesFormalesByComerciante = exports.obtenerSolicitudFormalPorIdComerciante = exports.obtenerSolicitudFormalPoridSolicitudInicial = exports.obtenerSolicitudFormalAnalista = exports.listarSolicitudesFormalesByComercianteYEstado = exports.listarSolicitudesInicialesByComerciante = exports.obtenerDetalleSolicitudFormal = exports.actualizarSolicitudFormal = exports.listarSolicitudesFormales = exports.rechazarSolicitudFormal = exports.aprobarSolicitudFormal = exports.obtenerReciboSolicitudFormal = exports.crearSolicitudFormal = exports.verificarEstadoCrediticio = exports.listarSolicitudesIniciales = exports.crearSolicitudInicial = void 0;
+exports.descargarArchivoAdjunto = exports.obtenerDatosClienteComerciante = exports.crearYAprobarSolicitudFormal = exports.rechazarSolicitudInicial = exports.aprobarSolicitudInicial = exports.listarSolicitudesFormalesByComerciante = exports.obtenerSolicitudFormalPorIdComerciante = exports.obtenerSolicitudFormalPoridSolicitudInicial = exports.obtenerSolicitudFormalAnalista = exports.listarSolicitudesFormalesByComercianteYEstado = exports.listarSolicitudesInicialesByComerciante = exports.obtenerDetalleSolicitudFormal = exports.actualizarSolicitudFormal = exports.listarSolicitudesFormales = exports.rechazarSolicitudFormal = exports.aprobarSolicitudFormal = exports.obtenerReciboSolicitudFormal = exports.crearSolicitudFormal = exports.verificarEstadoCrediticio = exports.listarSolicitudesIniciales = exports.crearSolicitudInicial = void 0;
 const CrearSolicitudInicialUseCase_1 = require("../../../application/use-cases/SolicitudInicial/CrearSolicitudInicialUseCase");
 const GetSolicitudesInicialesByEstadoUseCase_1 = require("../../../application/use-cases/SolicitudInicial/GetSolicitudesInicialesByEstadoUseCase");
 const CrearSolicitudFormalUseCase_1 = require("../../../application/use-cases/SolicitudFormal/CrearSolicitudFormalUseCase");
@@ -43,6 +43,7 @@ const mockNosisAdapter_1 = require("../../adapters/nosis/mockNosisAdapter");
 const GetComercianteByIdUseCase_1 = require("../../../application/use-cases/Comerciante/GetComercianteByIdUseCase");
 const ComercianteRepositoryAdapter_1 = require("../../adapters/repository/ComercianteRepositoryAdapter");
 const ObtenerDatosClienteComercianteUseCase_1 = require("../../../application/use-cases/Cliente/ObtenerDatosClienteComercianteUseCase");
+const ArchivosAdjuntos_1 = require("../../../domain/entities/ArchivosAdjuntos");
 // Inyección de dependencias (deberían venir de un contenedor DI)
 const verazService = new VerazAdapter_1.VerazAdapter();
 const notificationService = new NotificationAdapter_1.NotificationAdapter();
@@ -162,7 +163,7 @@ exports.verificarEstadoCrediticio = verificarEstadoCrediticio;
 const crearSolicitudFormal = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     //TODO: cambiar nombre de cliente a DatosCliente para no generar confusión con el cliente de la API
     try {
-        const { idSolicitudInicial, cliente, referentes, importeNeto, solicitaAmpliacionDeCredito, comentarioInicial, datosEmpleador } = req.body;
+        const { idSolicitudInicial, cliente, referentes, importeNeto, solicitaAmpliacionDeCredito, comentarioInicial, datosEmpleador, archivosAdjuntos } = req.body;
         // Validar que el recibo sea proporcionado
         if (!cliente.recibo) {
             return res.status(400).json({ error: 'El recibo es obligatorio' });
@@ -180,6 +181,28 @@ const crearSolicitudFormal = (req, res) => __awaiter(void 0, void 0, void 0, fun
         }
         // Reemplazar el string base64 con el Buffer
         cliente.recibo = reciboBuffer;
+        // Procesar archivos adjuntos
+        const archivosValidos = [];
+        if (archivosAdjuntos && Array.isArray(archivosAdjuntos)) {
+            for (const archivo of archivosAdjuntos) {
+                if (!archivo.nombre || !archivo.tipo || !archivo.contenido) {
+                    return res.status(400).json({ error: 'Cada archivo adjunto debe tener: nombre, tipo y contenido' });
+                }
+                const contenidoBuffer = Buffer.from(archivo.contenido, 'base64');
+                // Validar tipo y tamaño (5MB máximo)
+                if (!validarArchivo(contenidoBuffer, archivo.tipo)) {
+                    return res.status(400).json({ error: `Tipo de archivo no permitido: ${archivo.nombre}` });
+                }
+                if (contenidoBuffer.length > 5 * 1024 * 1024) {
+                    return res.status(400).json({ error: `El archivo ${archivo.nombre} excede el tamaño máximo de 5MB` });
+                }
+                archivosValidos.push({
+                    nombre: archivo.nombre,
+                    tipo: archivo.tipo,
+                    contenido: contenidoBuffer
+                });
+            }
+        }
         // Validar referentes (código existente)
         if (!referentes || !Array.isArray(referentes)) {
             return res.status(400).json({ error: 'Se requiere un array de referentes' });
@@ -213,7 +236,8 @@ const crearSolicitudFormal = (req, res) => __awaiter(void 0, void 0, void 0, fun
             codigoPostal: cliente.codigoPostal,
             localidad: cliente.localidad,
             provincia: cliente.provincia,
-            barrio: cliente.barrio
+            barrio: cliente.barrio,
+            archivosAdjuntos: archivosValidos
         }, comentarioInicial, solicitaAmpliacionDeCredito, datosEmpleador);
         res.status(201).json(solicitudFormal);
     }
@@ -515,6 +539,29 @@ const actualizarSolicitudFormal = (req, res) => __awaiter(void 0, void 0, void 0
                 solicitudExistente.setProvinciaEmpleador(empleador.provinciaEmpleador);
             if (empleador.telefonoEmpleador !== undefined)
                 solicitudExistente.setTelefonoEmpleador(empleador.telefonoEmpleador);
+        }
+        // Procesar archivos adjuntos si se proporcionan
+        if (updates.archivosAdjuntos) {
+            if (!Array.isArray(updates.archivosAdjuntos)) {
+                return res.status(400).json({ error: 'Archivos adjuntos debe ser un array' });
+            }
+            const archivosValidos = [];
+            for (const archivo of updates.archivosAdjuntos) {
+                if (!archivo.nombre || !archivo.tipo || !archivo.contenido) {
+                    return res.status(400).json({ error: 'Cada archivo adjunto debe tener: nombre, tipo y contenido' });
+                }
+                const contenidoBuffer = Buffer.from(archivo.contenido, 'base64');
+                // Validar tipo y tamaño
+                if (!validarArchivo(contenidoBuffer, archivo.tipo)) {
+                    return res.status(400).json({ error: `Tipo de archivo no permitido: ${archivo.nombre}` });
+                }
+                if (contenidoBuffer.length > 5 * 1024 * 1024) {
+                    return res.status(400).json({ error: `El archivo ${archivo.nombre} excede el tamaño máximo de 5MB` });
+                }
+                archivosValidos.push(new ArchivosAdjuntos_1.ArchivoAdjunto(archivo.id || 0, // Si tiene ID, es un archivo existente
+                archivo.nombre, archivo.tipo, contenidoBuffer));
+            }
+            solicitudExistente.setArchivosAdjuntos(archivosValidos);
         }
         console.log('Solicitud antes de actualizar:', solicitudExistente.toPlainObject());
         const solicitudActualizada = yield updateSolicitudFormalUC.execute(solicitudExistente, userId);
@@ -875,3 +922,60 @@ const obtenerDatosClienteComerciante = (req, res) => __awaiter(void 0, void 0, v
     }
 });
 exports.obtenerDatosClienteComerciante = obtenerDatosClienteComerciante;
+// Función auxiliar para validar archivos
+const validarArchivo = (contenido, tipo) => {
+    // Validar tipo MIME
+    const tiposPermitidos = [
+        'image/jpeg', 'image/png', 'image/gif', 'application/pdf'
+    ];
+    // Detectar tipo MIME
+    let mimeType = 'application/octet-stream';
+    if (contenido.length > 4) {
+        // Verificar firma PDF
+        if (contenido[0] === 0x25 && contenido[1] === 0x50 && contenido[2] === 0x44 && contenido[3] === 0x46) {
+            mimeType = 'application/pdf';
+        }
+        // Verificar firma JPG
+        else if (contenido[0] === 0xFF && contenido[1] === 0xD8 && contenido[2] === 0xFF) {
+            mimeType = 'image/jpeg';
+        }
+        // Verificar firma PNG
+        else if (contenido[0] === 0x89 && contenido[1] === 0x50 && contenido[2] === 0x4E && contenido[3] === 0x47) {
+            mimeType = 'image/png';
+        }
+    }
+    return tiposPermitidos.includes(mimeType) && mimeType === tipo;
+};
+const descargarArchivoAdjunto = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    var _a;
+    try {
+        const { id, archivoId } = req.params;
+        // Obtener la solicitud para verificar permisos
+        const solicitud = yield getSolicitudFormalByIdUC.execute(Number(id));
+        if (!solicitud) {
+            return res.status(404).json({ error: 'Solicitud no encontrada' });
+        }
+        // Verificar permisos (solo el comerciante dueño o analistas/administradores)
+        if (((_a = req.user) === null || _a === void 0 ? void 0 : _a.rol) === 'comerciante') {
+            const comercianteId = Number(req.user.id);
+            if (solicitud.getComercianteId() !== comercianteId) {
+                return res.status(403).json({ error: 'No tienes permisos para acceder a este archivo' });
+            }
+        }
+        // Obtener el archivo
+        const archivo = solicitud.getArchivosAdjuntos().find(a => a.getId() === Number(archivoId));
+        if (!archivo) {
+            return res.status(404).json({ error: 'Archivo no encontrado' });
+        }
+        // Configurar headers
+        res.setHeader('Content-Type', archivo.getTipo());
+        res.setHeader('Content-Disposition', `attachment; filename="${archivo.getNombre()}"`);
+        res.setHeader('Content-Length', archivo.getContenido().length);
+        // Enviar archivo
+        res.end(archivo.getContenido());
+    }
+    catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+exports.descargarArchivoAdjunto = descargarArchivoAdjunto;

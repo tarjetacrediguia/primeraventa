@@ -21,6 +21,7 @@ exports.SolicitudFormalRepositoryAdapter = void 0;
 const SolicitudFormal_1 = require("../../../domain/entities/SolicitudFormal");
 const Referente_1 = require("../../../domain/entities/Referente");
 const DatabaseDonfig_1 = require("../../config/Database/DatabaseDonfig");
+const ArchivosAdjuntos_1 = require("../../../domain/entities/ArchivosAdjuntos");
 class SolicitudFormalRepositoryAdapter {
     getSolicitudFormalBySolicitudInicialId(solicitudInicialId) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -231,6 +232,22 @@ class SolicitudFormalRepositoryAdapter {
                 `;
                     yield client.query(relacionQuery, [solicitudId, referenteId, i + 1]);
                 }
+                // Guardar archivos adjuntos
+                for (const archivo of solicitudFormal.getArchivosAdjuntos()) {
+                    const archivoQuery = `
+          INSERT INTO archivos_adjuntos (solicitud_formal_id, nombre, tipo, contenido)
+          VALUES ($1, $2, $3, $4)
+          RETURNING id
+        `;
+                    const archivoResult = yield client.query(archivoQuery, [
+                        solicitudId,
+                        archivo.getNombre(),
+                        archivo.getTipo(),
+                        archivo.getContenido()
+                    ]);
+                    // Asignar el ID generado
+                    archivo.setId(archivoResult.rows[0].id);
+                }
                 yield client.query("COMMIT");
                 // Retornar la solicitud creada
                 return (yield this.getSolicitudFormalById(solicitudId));
@@ -311,10 +328,18 @@ class SolicitudFormalRepositoryAdapter {
         `;
             const referentesResult = yield DatabaseDonfig_1.pool.query(referentesQuery, [id]);
             const referentes = referentesResult.rows.map((refRow) => new Referente_1.Referente(refRow.nombre_completo, refRow.apellido, refRow.vinculo, refRow.telefono));
+            // Obtener archivos adjuntos
+            const archivosQuery = `
+      SELECT id, nombre, tipo, contenido, fecha_creacion
+      FROM archivos_adjuntos
+      WHERE solicitud_formal_id = $1
+    `;
+            const archivosResult = yield DatabaseDonfig_1.pool.query(archivosQuery, [id]);
+            const archivos = archivosResult.rows.map(row => new ArchivosAdjuntos_1.ArchivoAdjunto(row.id, row.nombre, row.tipo, row.contenido, row.fecha_creacion));
             return new SolicitudFormal_1.SolicitudFormal(Number(row.id), // Convertir a número
             row.solicitud_inicial_id, row.comerciante_id, row.nombre_completo, row.apellido, row.telefono, row.email, new Date(row.fecha_solicitud), row.recibo, row.estado, row.acepta_tarjeta, new Date(row.fecha_nacimiento), row.domicilio, referentes, row.importe_neto, row.comentarios || [], Number(row.ponderador) || 0, row.solicita_ampliacion_credito || false, row.cliente_id || 0, row.razon_social_empleador, row.cuit_empleador, row.cargo_funcion_empleador, row.sector_empleador, row.codigo_postal_empleador, row.localidad_empleador, row.provincia_empleador, row.telefono_empleador, row.sexo, row.codigo_postal, row.localidad, row.provincia, row.numero_domicilio, row.barrio, row.fecha_aprobacion ? new Date(row.fecha_aprobacion) : undefined, row.analista_aprobador_id, row.administrador_aprobador_id, row.comerciante_aprobador_id, row.nuevo_limite_completo_solicitado !== null
                 ? Number(row.nuevo_limite_completo_solicitado)
-                : null);
+                : null, archivos);
         });
     }
     /**
@@ -424,6 +449,22 @@ class SolicitudFormalRepositoryAdapter {
                     const referenteId = referenteResult.rows[0].id;
                     yield client.query("INSERT INTO solicitud_referente (solicitud_formal_id, referente_id, orden) VALUES ($1, $2, $3)", [solicitudId, referenteId, i + 1]);
                 }
+                // Manejar archivos adjuntos
+                // 1. Eliminar archivos existentes
+                yield client.query("DELETE FROM archivos_adjuntos WHERE solicitud_formal_id = $1", [solicitudFormal.getId()]);
+                // 2. Insertar nuevos archivos
+                for (const archivo of solicitudFormal.getArchivosAdjuntos()) {
+                    const archivoQuery = `
+          INSERT INTO archivos_adjuntos (solicitud_formal_id, nombre, tipo, contenido)
+          VALUES ($1, $2, $3, $4)
+        `;
+                    yield client.query(archivoQuery, [
+                        solicitudFormal.getId(),
+                        archivo.getNombre(),
+                        archivo.getTipo(),
+                        archivo.getContenido()
+                    ]);
+                }
                 yield client.query("COMMIT");
                 return (yield this.getSolicitudFormalById(solicitudId.toString()));
             }
@@ -434,6 +475,25 @@ class SolicitudFormalRepositoryAdapter {
             finally {
                 client.release();
             }
+        });
+    }
+    agregarArchivoAdjunto(solicitudId, archivo) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const query = `
+      INSERT INTO archivos_adjuntos (solicitud_formal_id, nombre, tipo, contenido)
+      VALUES ($1, $2, $3, $4)
+    `;
+            yield DatabaseDonfig_1.pool.query(query, [
+                solicitudId,
+                archivo.getNombre(),
+                archivo.getTipo(),
+                archivo.getContenido()
+            ]);
+        });
+    }
+    eliminarArchivoAdjunto(archivoId) {
+        return __awaiter(this, void 0, void 0, function* () {
+            yield DatabaseDonfig_1.pool.query("DELETE FROM archivos_adjuntos WHERE id = $1", [archivoId]);
         });
     }
     /**
