@@ -121,7 +121,7 @@ class UpdateSolicitudFormalUseCase {
             'ponderador', 'solicitaAmpliacionDeCredito', 'nuevoLimiteCompletoSolicitado',
             'razonSocialEmpleador', 'cuitEmpleador', 'cargoEmpleador', 'sectorEmpleador',
             'codigoPostalEmpleador', 'localidadEmpleador', 'provinciaEmpleador', 'telefonoEmpleador',
-            'sexo', 'codigoPostal', 'localidad', 'provincia', 'numeroDomicilio', 'barrio'
+            'sexo', 'codigoPostal', 'localidad', 'provincia', 'numeroDomicilio', 'barrio', 'recibo'
         ];
         for (const campo of campos) {
             try {
@@ -133,7 +133,17 @@ class UpdateSolicitudFormalUseCase {
                 }
                 const valorOriginal = original[getterName]();
                 const valorActual = actualizada[getterName]();
-                if (Array.isArray(valorOriginal)) {
+                // Comparación especial para el campo 'recibo' (Buffer)
+                if (campo === 'recibo') {
+                    if (!this.sonBuffersIguales(valorOriginal, valorActual)) {
+                        cambios.push({
+                            campo,
+                            anterior: 'Buffer (oculto por seguridad)',
+                            nuevo: 'Buffer (oculto por seguridad)'
+                        });
+                    }
+                }
+                else if (Array.isArray(valorOriginal)) {
                     if (!this.sonArraysIguales(valorOriginal, valorActual)) {
                         cambios.push({
                             campo,
@@ -191,6 +201,11 @@ class UpdateSolicitudFormalUseCase {
             }
         }
         return true;
+    }
+    sonBuffersIguales(buf1, buf2) {
+        if (buf1.length !== buf2.length)
+            return false;
+        return buf1.equals(buf2);
     }
 }
 exports.UpdateSolicitudFormalUseCase = UpdateSolicitudFormalUseCase;

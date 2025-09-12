@@ -266,6 +266,21 @@ function getImageMimeType(buffer) {
                 buffer[9] === 'F'.charCodeAt(0)) {
                 return 'image/jpeg';
             }
+            // PNG: 89 50 4E 47 0D 0A 1A 0A
+            if (buffer[0] === 0x89 && buffer[1] === 0x50 && buffer[2] === 0x4E && buffer[3] === 0x47 &&
+                buffer[4] === 0x0D && buffer[5] === 0x0A && buffer[6] === 0x1A && buffer[7] === 0x0A) {
+                return 'image/png';
+            }
+            // WEBP: 52 49 46 46 xx xx xx xx 57 45 42 50
+            if (buffer[0] === 0x52 && buffer[1] === 0x49 && buffer[2] === 0x46 && buffer[3] === 0x46 &&
+                buffer[8] === 0x57 && buffer[9] === 0x45 && buffer[10] === 0x42 && buffer[11] === 0x50) {
+                return 'image/webp';
+            }
+            // GIF: 47 49 46 38
+            if (buffer[0] === 0x47 && buffer[1] === 0x49 && buffer[2] === 0x46 &&
+                (buffer[3] === 0x37 || buffer[3] === 0x39) && buffer[4] === 0x61) {
+                return 'image/gif';
+            }
             return null;
         }
         catch (error) {

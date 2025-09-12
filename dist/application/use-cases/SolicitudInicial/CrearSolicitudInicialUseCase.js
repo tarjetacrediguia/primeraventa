@@ -180,24 +180,24 @@ class CrearSolicitudInicialUseCase {
                             ? `${nosisData.datosLaborales.empleador.domicilio.calle || ""} ${nosisData.datosLaborales.empleador.domicilio.numero || ""}`
                             : null);
                         clienteTemporal.setEmpleadorTelefono(nosisData.datosLaborales.empleador.telefono || null);
-                        clienteTemporal.setEmpleadorCodigoPostal(nosisData.datosLaborales.empleador.domicilio && nosisData.datosLaborales.empleador.domicilio.codigoPostal
+                        clienteTemporal.setEmpleadorCodigoPostal(nosisData.datosLaborales.empleador.domicilio &&
+                            nosisData.datosLaborales.empleador.domicilio.codigoPostal
                             ? nosisData.datosLaborales.empleador.domicilio.codigoPostal
                             : null);
-                        clienteTemporal.setEmpleadorLocalidad(nosisData.datosLaborales.empleador.domicilio && nosisData.datosLaborales.empleador.domicilio.localidad
+                        clienteTemporal.setEmpleadorLocalidad(nosisData.datosLaborales.empleador.domicilio &&
+                            nosisData.datosLaborales.empleador.domicilio.localidad
                             ? nosisData.datosLaborales.empleador.domicilio.localidad
                             : null);
-                        clienteTemporal.setEmpleadorProvincia(nosisData.datosLaborales.empleador.domicilio && nosisData.datosLaborales.empleador.domicilio.provincia
+                        clienteTemporal.setEmpleadorProvincia(nosisData.datosLaborales.empleador.domicilio &&
+                            nosisData.datosLaborales.empleador.domicilio.provincia
                             ? nosisData.datosLaborales.empleador.domicilio.provincia
                             : null);
                     }
                     yield this.clienteRepository.update(clienteTemporal);
                     //////////////////// FIN Actualizar datos del cliente con info de Nosis //////////////
                     console.log("Actualizando cliente con datos de Nosis:", clienteTemporal);
+                    console.log("Resultado de verificación de Nosis:", resultadoNosis);
                     if (this.nosisAutomatico) {
-                        const getNosisData = new GetDataNosisUseCase_1.GetDataNosisUseCase(this.nosisPort);
-                        const nosisData = yield getNosisData.execute(cuilCliente);
-                        const verifyNosis = new VerifyDataNosisUseCase_1.VerifyDataNosisUseCase();
-                        const resultadoNosis = yield verifyNosis.execute(nosisData);
                         if (resultadoNosis.status === "aprobado") {
                             solicitudCreada.setEstado("aprobada");
                             yield this.solicitudInicialRepository.updateSolicitudInicial(solicitudCreada, clienteTemporal);
@@ -205,6 +205,23 @@ class CrearSolicitudInicialUseCase {
                             yield this.historialRepository.registrarEvento({
                                 usuarioId: null,
                                 accion: historialActions_1.HISTORIAL_ACTIONS.APPROVE_SOLICITUD_INICIAL,
+                                entidadAfectada: "solicitudes_iniciales",
+                                entidadId: solicitudCreada.getId(),
+                                detalles: {
+                                    sistema: "Nosis",
+                                    score: resultadoNosis.score,
+                                    motivo: resultadoNosis.motivo,
+                                },
+                                solicitudInicialId,
+                            });
+                        }
+                        else if (resultadoNosis.status === "pendiente") {
+                            solicitudCreada.setEstado("pendiente");
+                            yield this.solicitudInicialRepository.updateSolicitudInicial(solicitudCreada, clienteTemporal);
+                            solicitud.agregarComentario(`Pendiente: ${resultadoNosis.motivo}`);
+                            yield this.historialRepository.registrarEvento({
+                                usuarioId: null,
+                                accion: historialActions_1.HISTORIAL_ACTIONS.PENDING_SOLICITUD_INICIAL,
                                 entidadAfectada: "solicitudes_iniciales",
                                 entidadId: solicitudCreada.getId(),
                                 detalles: {

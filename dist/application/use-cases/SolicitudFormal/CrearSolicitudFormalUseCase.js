@@ -197,54 +197,26 @@ class CrearSolicitudFormalUseCase {
                     });
                     throw new Error("Ya existe una solicitud formal para esta solicitud inicial");
                 }
-                const signature = datosSolicitud.recibo.subarray(0, 3);
-                if (!(signature[0] === 0xFF && signature[1] === 0xD8 && signature[2] === 0xFF)) {
-                    // Registrar evento de recibo inválido
+                if (typeof datosSolicitud.recibo === 'string') {
+                    datosSolicitud.recibo = Buffer.from(datosSolicitud.recibo, 'base64');
+                }
+                // Verificar que sea una imagen válida y de un tipo permitido
+                const fileType = yield Promise.resolve().then(() => __importStar(require('file-type')));
+                const type = yield fileType.fileTypeFromBuffer(datosSolicitud.recibo);
+                const allowedMimeTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
+                if (!type || !allowedMimeTypes.includes(type.mime)) {
+                    // Registrar evento de tipo de imagen no permitido
                     yield this.historialRepository.registrarEvento({
                         usuarioId: comercianteId,
                         accion: historialActions_1.HISTORIAL_ACTIONS.ERROR_PROCESO,
                         entidadAfectada: 'solicitudes_formales',
                         entidadId: 0,
                         detalles: {
-                            error: "Recibo no es JPG válido"
+                            error: "El recibo debe ser una imagen válida (JPG, PNG, WEBP o GIF)"
                         },
                         solicitudInicialId: solicitudInicialId
                     });
-                    throw new Error('El recibo no es una imagen JPG válida');
-                }
-                if (typeof datosSolicitud.recibo === 'string') {
-                    const buffer = Buffer.from(datosSolicitud.recibo, 'base64');
-                    const fileType = yield Promise.resolve().then(() => __importStar(require('file-type')));
-                    const type = yield fileType.fileTypeFromBuffer(buffer);
-                    if (!type || !type.mime.startsWith('image/')) {
-                        // Registrar evento de tipo inválido
-                        yield this.historialRepository.registrarEvento({
-                            usuarioId: comercianteId,
-                            accion: historialActions_1.HISTORIAL_ACTIONS.ERROR_PROCESO,
-                            entidadAfectada: 'solicitudes_formales',
-                            entidadId: 0,
-                            detalles: {
-                                error: "Recibo no es una imagen"
-                            },
-                            solicitudInicialId: solicitudInicialId
-                        });
-                        throw new Error('El recibo debe ser una imagen válida');
-                    }
-                    if (type.mime !== 'image/jpeg') {
-                        // Registrar evento de formato incorrecto
-                        yield this.historialRepository.registrarEvento({
-                            usuarioId: comercianteId,
-                            accion: historialActions_1.HISTORIAL_ACTIONS.ERROR_PROCESO,
-                            entidadAfectada: 'solicitudes_formales',
-                            entidadId: 0,
-                            detalles: {
-                                error: "Recibo no es JPG"
-                            },
-                            solicitudInicialId: solicitudInicialId
-                        });
-                        throw new Error('Solo se aceptan imágenes en formato JPG');
-                    }
-                    datosSolicitud.recibo = buffer;
+                    throw new Error('El recibo debe ser una imagen válida (JPG, PNG, WEBP o GIF)');
                 }
                 // 5. Crear la solicitud formal con comentario inicial
                 const solicitudFormal = new SolicitudFormal_1.SolicitudFormal(0, // ID se asignará automáticamente

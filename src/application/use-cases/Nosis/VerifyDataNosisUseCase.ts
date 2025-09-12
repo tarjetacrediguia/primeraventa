@@ -71,7 +71,9 @@ export type RuleConfig = {
 };
 
 export class VerifyDataNosisUseCase {
+
   private rules: RuleConfig[];
+  private readonly MINIMO_APORTES = 1;
 
   constructor(rules?: RuleConfig[]) {
     // Reglas por defecto si no se proporcionan
@@ -105,6 +107,12 @@ export class VerifyDataNosisUseCase {
     }
   }
 
+  private verificarAportes(variables: NosisVariable[]): boolean {
+    const aportes = parseInt(variables.find(v => v.Nombre === 'AP_12m_Empleado_Pagos_Cant')?.Valor || '0');
+    return aportes >= this.MINIMO_APORTES;
+}
+
+
   async execute(nosisData: NosisResponse): Promise<VerificationResult> {
     const variables = nosisData.Contenido.Datos.Variables.Variable;
     const reglasFallidas: string[] = [];
@@ -121,10 +129,15 @@ export class VerifyDataNosisUseCase {
       }
     }
 
+    // Nueva verificación: Aportes
+    if (!this.verificarAportes(variables)) {
+        reglasFallidas.push('Cliente no tiene aportes registrados en los últimos 12 meses');
+    }
+
     // Verificación específica para deudas en entidades (situación 3-4-5)
     const tieneDeudaEntidades = this.verificarDeudaEntidades(variables);
-    if (tieneDeudaEntidades) {
-      reglasFallidas.push('Tiene deuda en 3 o más entidades con situación 3, 4 o 5');
+    if (tieneDeudaEntidades.estado === 'rechazado') {
+      reglasFallidas.push(tieneDeudaEntidades.mensaje || 'Tiene deuda en 3 o más entidades con situación 3, 4 o 5');
     }
 
     // Verificación específica para monotributistas
@@ -148,45 +161,66 @@ export class VerifyDataNosisUseCase {
     const personalData = this.extraerDatosPersonales(variables);
 
     
-    const isApproved = reglasFallidas.length === 0;
-    
-    if (isApproved) {
-      return { 
-        status: 'aprobado',
-        approved: true,
+      // Determinar el estado overall
+      let status: 'aprobado' | 'rechazado' | 'pendiente' = 'aprobado';
+      if (reglasFallidas.length > 0) {
+        status = 'rechazado';
+      } else if (tieneDeudaEntidades.estado === 'pendiente') {
+        status = 'pendiente';
+      }
+
+      const approved = status === 'aprobado';
+
+      // Construir mensaje basado en el estado
+      let motivo: string;
+      if (status === 'aprobado') {
+        motivo = "Cumple con todos los criterios de aprobación";
+      } else if (status === 'pendiente') {
+        motivo = tieneDeudaEntidades.mensaje || 'Requiere revisión manual por deuda en entidades';
+      } else {
+        motivo = `Motivos: ${reglasFallidas.join('; ')}`;
+      }
+
+      return {
+        status,
+        approved,
         score,
-        motivo: "Cumple con todos los criterios de aprobación",
-        reglasFallidas: [],
+        motivo,
+        reglasFallidas: status === 'rechazado' ? reglasFallidas : [],
         personalData
       };
-    }
-    return {
-      status: 'rechazado',
-      approved: false,
-      score,
-      motivo: `Motivos: ${reglasFallidas.join('; ')}`,
-      reglasFallidas,
-      personalData
-    };
   }
 
-   private verificarDeudaEntidades(variables: NosisVariable[]): boolean {
+   // Modificar la verificación de deudas para manejar el nuevo criterio
+private verificarDeudaEntidades(variables: NosisVariable[]): { estado: 'aprobado' | 'pendiente' | 'rechazado', mensaje?: string } {
     const detalleDeudas = variables.find(v => v.Nombre === 'CI_24m_Detalle')?.Valor;
-    if (!detalleDeudas) return false;
+    if (!detalleDeudas) return { estado: 'aprobado' };
 
-    // Parsear el XML para obtener los registros
     const registros = this.parsearDetalleDeudas(detalleDeudas);
     
-    // Contar entidades únicas con situación 3, 4 o 5
     const entidadesConDeuda = new Set<string>();
     
     for (const registro of registros) {
-      if (registro.situacion >= 3 && registro.situacion <= 5) {
-        entidadesConDeuda.add(registro.entidad);
-      }
+        if (registro.situacion >= 3 && registro.situacion <= 5) {
+            entidadesConDeuda.add(registro.entidad);
+        }
     }
-    return entidadesConDeuda.size >= 3;
-  }
+
+    const cantidad = entidadesConDeuda.size;
+    if (cantidad >= 3) {
+        return {
+            estado: 'rechazado',
+            mensaje: 'Tiene deuda en 3 o más entidades con situación 3, 4 o 5'
+        };
+    } else if (cantidad >= 1) {
+        return {
+            estado: 'pendiente',
+            mensaje: 'Tiene deuda en 1 o 2 entidades con situación 3, 4 o 5'
+        };
+    }
+    
+    return { estado: 'aprobado' };
+}
 
   private parsearDetalleDeudas(detalleDeudas: string): Array<{entidad: string, periodo: number, situacion: number, monto: number}> {
     const resultados: Array<{entidad: string, periodo: number, situacion: number, monto: number}> = [];

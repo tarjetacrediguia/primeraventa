@@ -32,7 +32,6 @@ import {
   PersonalData,
   VerifyDataNosisUseCase,
 } from "../Nosis/VerifyDataNosisUseCase";
-import { PageEmbeddingMismatchedContextError } from "pdf-lib";
 
 export type CrearSolicitudInicialResponse = {
   solicitud: SolicitudInicial;
@@ -98,23 +97,21 @@ export class CrearSolicitudInicialUseCase {
       let cliente: Cliente;
       let clienteTemporal: Cliente;
       try {
-      cliente = await this.clienteRepository.findByCuil(cuilCliente);
+        cliente = await this.clienteRepository.findByCuil(cuilCliente);
       } catch (error) {
         // No se encontró el cliente, se creará uno nuevo
       } finally {
-          
-      // Crear con datos mínimos si no existe
+        // Crear con datos mínimos si no existe
         cliente = new Cliente(
-        0,
-        "Nombre temporal",
-        "Apellido temporal",
-        dniCliente,
-        cuilCliente
-      );
+          0,
+          "Nombre temporal",
+          "Apellido temporal",
+          dniCliente,
+          cuilCliente
+        );
         clienteTemporal = await this.clienteRepository.save(cliente);
       }
-      
-      
+
       // 1. Verificar si el cliente tiene crédito activo
       const tieneCreditoActivo = await this.tieneCreditoActivo(cuilCliente); // Usar CUIL en lugar de DNI
       if (tieneCreditoActivo) {
@@ -248,7 +245,6 @@ export class CrearSolicitudInicialUseCase {
             : null
         );
 
-
         //Datos laborales
         if (
           nosisData &&
@@ -272,33 +268,33 @@ export class CrearSolicitudInicialUseCase {
             nosisData.datosLaborales.empleador.telefono || null
           );
           clienteTemporal.setEmpleadorCodigoPostal(
-            nosisData.datosLaborales.empleador.domicilio && nosisData.datosLaborales.empleador.domicilio.codigoPostal 
+            nosisData.datosLaborales.empleador.domicilio &&
+              nosisData.datosLaborales.empleador.domicilio.codigoPostal
               ? nosisData.datosLaborales.empleador.domicilio.codigoPostal
               : null
           );
 
           clienteTemporal.setEmpleadorLocalidad(
-            nosisData.datosLaborales.empleador.domicilio && nosisData.datosLaborales.empleador.domicilio.localidad
+            nosisData.datosLaborales.empleador.domicilio &&
+              nosisData.datosLaborales.empleador.domicilio.localidad
               ? nosisData.datosLaborales.empleador.domicilio.localidad
               : null
           );
           clienteTemporal.setEmpleadorProvincia(
-            nosisData.datosLaborales.empleador.domicilio && nosisData.datosLaborales.empleador.domicilio.provincia
+            nosisData.datosLaborales.empleador.domicilio &&
+              nosisData.datosLaborales.empleador.domicilio.provincia
               ? nosisData.datosLaborales.empleador.domicilio.provincia
               : null
           );
-          
         }
         await this.clienteRepository.update(clienteTemporal);
         //////////////////// FIN Actualizar datos del cliente con info de Nosis //////////////
-        console.log("Actualizando cliente con datos de Nosis:", clienteTemporal);
+        console.log(
+          "Actualizando cliente con datos de Nosis:",
+          clienteTemporal
+        );
+        console.log("Resultado de verificación de Nosis:", resultadoNosis);
         if (this.nosisAutomatico) {
-          const getNosisData = new GetDataNosisUseCase(this.nosisPort);
-          const nosisData = await getNosisData.execute(cuilCliente);
-
-          const verifyNosis = new VerifyDataNosisUseCase();
-          const resultadoNosis = await verifyNosis.execute(nosisData);
-
           if (resultadoNosis.status === "aprobado") {
             solicitudCreada.setEstado("aprobada");
             await this.solicitudInicialRepository.updateSolicitudInicial(
@@ -309,6 +305,25 @@ export class CrearSolicitudInicialUseCase {
             await this.historialRepository.registrarEvento({
               usuarioId: null,
               accion: HISTORIAL_ACTIONS.APPROVE_SOLICITUD_INICIAL,
+              entidadAfectada: "solicitudes_iniciales",
+              entidadId: solicitudCreada.getId(),
+              detalles: {
+                sistema: "Nosis",
+                score: resultadoNosis.score,
+                motivo: resultadoNosis.motivo,
+              },
+              solicitudInicialId,
+            });
+          } else if (resultadoNosis.status === "pendiente") {
+            solicitudCreada.setEstado("pendiente");
+            await this.solicitudInicialRepository.updateSolicitudInicial(
+              solicitudCreada,
+              clienteTemporal
+            );
+            solicitud.agregarComentario(`Pendiente: ${resultadoNosis.motivo}`);
+            await this.historialRepository.registrarEvento({
+              usuarioId: null,
+              accion: HISTORIAL_ACTIONS.PENDING_SOLICITUD_INICIAL,
               entidadAfectada: "solicitudes_iniciales",
               entidadId: solicitudCreada.getId(),
               detalles: {

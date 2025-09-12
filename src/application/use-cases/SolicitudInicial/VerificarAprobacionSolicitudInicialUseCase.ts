@@ -18,7 +18,6 @@ import { SolicitudInicialRepositoryPort } from "../../ports/SolicitudInicialRepo
 import { VerazPort } from "../../ports/VerazPort";
 import { NotificationPort } from "../../ports/NotificationPort";
 import { SolicitudInicial } from "../../../domain/entities/SolicitudInicial";
-import { Cliente } from "../../../domain/entities/Cliente";
 import { ClienteRepositoryPort } from "../../ports/ClienteRepositoryPort";
 
 /**

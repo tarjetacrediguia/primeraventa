@@ -4,8 +4,8 @@
     "@xmlns": "http://schemas.nosis.com/sac/ws01/types",
     "Contenido": {
       "Pedido": {
-        "Usuario": "60965",
-        "Documento": "20187505020",
+        "Usuario": "445441",
+        "Documento": "20295158434",
         "VR": "1",
         "CDA": "10001",
         "Timeout": "300"
@@ -13,10 +13,10 @@
       "Resultado": {
         "Estado": "200",
         "Novedad": "OK",
-        "Tiempo": "2887",
-        "FechaRecepcion": "2025-08-21T10:13:06",
-        "Transaccion": "e5aa08ab-f9d4-4b41-8880-b6e29b8b15c7",
-        "Referencia": "20187505020",
+        "Tiempo": "3145",
+        "FechaRecepcion": "2025-09-10T15:52:05",
+        "Transaccion": "83f7f4db-e393-4c2d-9f4e-eea0cb14516b",
+        "Referencia": "20-29515843-4",
         "Servidor": "SACWEBZ11",
         "Version": "1.3.0"
       },
@@ -25,44 +25,45 @@
           "Variable": [
             {
               "Nombre": "VI_RazonSocial",
-              "Valor": "ROJAS VALENZUELA EDISON",
+              "Valor": "NIEVAS EMILIO REINALDO",
               "Descripcion": "Razón Social",
               "Tipo": "TEXTO",
-              "FechaAct": "2023-03-20"
+              "FechaAct": "2025-09-10"
             },
             {
               "Nombre": "VI_Apellido",
-              "Valor": "ROJAS VALENZUELA",
+              "Valor": "NIEVAS",
               "Descripcion": "Apellido",
               "Tipo": "TEXTO",
-              "FechaAct": "2023-03-20"
+              "FechaAct": "2025-09-10"
             },
             {
               "Nombre": "VI_Nombre",
-              "Valor": "EDISON",
+              "Valor": "EMILIO REINALDO",
               "Descripcion": "Nombre",
               "Tipo": "TEXTO",
-              "FechaAct": "2023-03-20"
+              "FechaAct": "2025-09-10"
             },
             {
               "Nombre": "VI_DNI",
-              "Valor": "18750502",
+              "Valor": "29515843",
               "Descripcion": "DNI",
               "Tipo": "DOCUMENTO",
-              "FechaAct": "2023-03-20"
+              "FechaAct": "2025-09-10"
             },
             {
               "Nombre": "VI_Identificacion",
-              "Valor": "20187505020",
+              "Valor": "20295158434",
               "Descripcion": "CUIT / CUIL / CDI",
               "Tipo": "DOCUMENTO",
-              "FechaAct": "2023-03-20"
+              "FechaAct": "2025-09-10"
             },
             {
               "Nombre": "VI_FecNacimiento",
-              "Valor": "1972-11-19",
+              "Valor": "1982-09-05",
               "Descripcion": "Fecha de Nacimiento",
-              "Tipo": "FECHA"
+              "Tipo": "FECHA",
+              "FechaAct": "2022-05-02"
             },
             {
               "Nombre": "VI_Sexo",
@@ -72,60 +73,60 @@
             },
             {
               "Nombre": "VI_DomAF_Calle",
-              "Valor": "TENIENTE IBANEZ",
+              "Valor": "ANIBAL TROILO",
               "Descripcion": "Calle",
               "Tipo": "TEXTO",
-              "FechaAct": "2023-03-20"
+              "FechaAct": "2025-09-10"
             },
             {
               "Nombre": "VI_DomAF_Nro",
-              "Valor": "172",
+              "Valor": "1845",
               "Descripcion": "Número",
               "Tipo": "TEXTO",
-              "FechaAct": "2023-03-20"
+              "FechaAct": "2025-09-10"
             },
             {
               "Nombre": "VI_DomAF_Loc",
-              "Valor": "NEUQUEN",
+              "Valor": "CIPOLLETTI",
               "Descripcion": "Localidad",
               "Tipo": "TEXTO",
-              "FechaAct": "2023-03-20"
+              "FechaAct": "2025-09-10"
             },
             {
               "Nombre": "VI_DomAF_CP",
-              "Valor": "8300",
+              "Valor": "8324",
               "Descripcion": "Código Postal",
               "Tipo": "TEXTO",
-              "FechaAct": "2023-03-20"
+              "FechaAct": "2025-09-10"
             },
             {
               "Nombre": "VI_DomAF_Prov",
-              "Valor": "Neuquen",
+              "Valor": "Rio Negro",
               "Descripcion": "Provincia",
               "Tipo": "TEXTO",
-              "FechaAct": "2023-03-20"
+              "FechaAct": "2025-09-10"
             },
             {
               "Nombre": "VI_Tel1_CodArea",
-              "Valor": "011",
+              "Valor": "299",
               "Descripcion": "Código de Área, del Teléfono Nº1",
               "Tipo": "TEL_AREA"
             },
             {
               "Nombre": "VI_Tel1_Nro",
-              "Valor": "49433865",
+              "Valor": "4793244",
               "Descripcion": "Número, del Teléfono Nº1",
               "Tipo": "TEL_NUMERO"
             },
             {
               "Nombre": "VI_Inscrip_Monotributo",
-              "Valor": "A",
+              "Valor": "",
               "Descripcion": "Categoría Monotributo",
               "Tipo": "TEXTO"
             },
             {
               "Nombre": "VI_Inscrip_Monotributo_Act",
-              "Valor": "Locaciones de Servicios",
+              "Valor": "",
               "Descripcion": "Actividad Monotributo",
               "Tipo": "TEXTO"
             },
@@ -134,7 +135,7 @@
               "Valor": "No",
               "Descripcion": "Es Empleador",
               "Tipo": "BOOLEANO",
-              "FechaAct": "2025-05-14"
+              "FechaAct": "2025-07-22"
             },
             {
               "Nombre": "VI_Jubilado_Es",
@@ -147,128 +148,129 @@
               "Valor": "Si",
               "Descripcion": "Es Empleado",
               "Tipo": "BOOLEANO",
-              "FechaAct": "2025-05-14"
+              "FechaAct": "2025-07-22"
             },
             {
               "Nombre": "VI_Empleador_RZ",
-              "Valor": "COOPERATIVA DE SERVICIOS DE ADMINISTRACION DE VENTAS A CREDITO GUIA LTDA",
+              "Valor": "GOBIERNO DE LA PROVINCIA DE RIO NEGRO",
               "Descripcion": "Razón Social / Nombre",
               "Tipo": "TEXTO",
-              "FechaAct": "2025-05-14"
+              "FechaAct": "2025-07-22"
             },
             {
               "Nombre": "VI_Empleador_CUIT",
-              "Valor": "30584012370",
+              "Valor": "30672846303",
               "Descripcion": "CUIT",
               "Tipo": "DOCUMENTO",
-              "FechaAct": "2025-05-14"
+              "FechaAct": "2025-07-22"
             },
             {
               "Nombre": "VI_Empleador_Domicilio",
-              "Valor": "CORRIENTES 231     (8300) - NEUQUEN Neuquen",
+              "Valor": "25 DE MAYO 99 PB     (8500) - VIEDMA Rio Negro",
               "Descripcion": "Domicilio Completo",
               "Tipo": "TEXTO",
-              "FechaAct": "2023-03-20"
+              "FechaAct": "2025-09-10"
             },
             {
               "Nombre": "VI_Empleador_TelCodArea",
-              "Valor": "299",
+              "Valor": "011",
               "Descripcion": "Código Área del Teléfono",
               "Tipo": "TEL_AREA",
-              "FechaAct": "2023-03-20"
+              "FechaAct": "2025-09-10"
             },
             {
               "Nombre": "VI_Empleador_TelNro",
-              "Valor": "4428531",
+              "Valor": "43931398",
               "Descripcion": "Número de Teléfono",
               "Tipo": "TEL_NUMERO",
-              "FechaAct": "2023-03-20"
+              "FechaAct": "2025-09-10"
             },
             {
               "Nombre": "AP_3m_Empleadores_Cant",
-              "Valor": "0",
+              "Valor": "1",
               "Descripcion": "Cantidad empleadores - Últimos 3 meses",
               "Tipo": "ENTERO",
-              "FechaAct": "2025-05-14"
+              "FechaAct": "2025-07-22"
             },
             {
               "Nombre": "AP_12m_Empleado_Impagos_Cant",
               "Valor": "0",
               "Descripcion": "Cantidad impagos - Últimos 12 meses",
               "Tipo": "ENTERO",
-              "FechaAct": "2025-05-14"
+              "FechaAct": "2025-07-22"
             },
             {
               "Nombre": "AP_12m_Empleado_Pagos_Cant",
-              "Valor": "10",
+              "Valor": "11",
               "Descripcion": "Cantidad pagos - Últimos 12 meses",
               "Tipo": "ENTERO",
-              "FechaAct": "2025-05-14"
+              "FechaAct": "2025-07-22"
             },
             {
               "Nombre": "AP_12m_Empleado_PagoParcial_Cant",
               "Valor": "0",
               "Descripcion": "Cantidad pago parcial - Últimos 12 meses",
               "Tipo": "ENTERO",
-              "FechaAct": "2025-05-14"
+              "FechaAct": "2025-07-22"
             },
             {
               "Nombre": "AP_12m_Empleador_Impagos_Cant",
               "Valor": "0",
               "Descripcion": "Cantidad impagos - Últimos 12 meses",
               "Tipo": "ENTERO",
-              "FechaAct": "2025-05-14"
+              "FechaAct": "2025-07-22"
             },
             {
               "Nombre": "AP_12m_Empleador_Pagos_Cant",
               "Valor": "0",
               "Descripcion": "Cantidad pagos - Últimos 12 meses",
               "Tipo": "ENTERO",
-              "FechaAct": "2025-05-14"
+              "FechaAct": "2025-07-22"
             },
             {
               "Nombre": "AP_12m_Empleador_PagoParcial_Cant",
               "Valor": "0",
               "Descripcion": "Cantidad pago parcial - Últimos 12 meses",
               "Tipo": "ENTERO",
-              "FechaAct": "2025-05-14"
+              "FechaAct": "2025-07-22"
             },
             {
               "Nombre": "SRT_Aseguradora",
               "Valor": "",
               "Descripcion": "Aseguradora",
-              "Tipo": "TEXTO"
+              "Tipo": "TEXTO",
+              "FechaAct": "2020-01-29"
             },
             {
               "Nombre": "SSS_OS_Nombre",
-              "Valor": "OBRA SOCIAL ACCION SOCIAL DE EMPRESARIOS",
+              "Valor": "",
               "Descripcion": "Obra Social",
               "Tipo": "TEXTO",
-              "FechaAct": "2023-03-20"
+              "FechaAct": "2025-09-10"
             },
             {
               "Nombre": "SSS_OS_FecDesde",
-              "Valor": "2021-02-01",
+              "Valor": "",
               "Descripcion": "Fecha alta",
               "Tipo": "FECHA",
-              "FechaAct": "2023-03-20"
+              "FechaAct": "2025-09-10"
             },
             {
               "Nombre": "SSS_OS_Titular_Condicion",
-              "Valor": "RELACION DE DEPENDENCIA",
+              "Valor": "",
               "Descripcion": "Condición titular",
               "Tipo": "TEXTO",
-              "FechaAct": "2023-03-20"
+              "FechaAct": "2025-09-10"
             },
             {
               "Nombre": "SSS_OS_Titular_Parentesco",
-              "Valor": "TITULAR",
+              "Valor": "",
               "Descripcion": "Parentesco con titular",
               "Tipo": "TEXTO",
-              "FechaAct": "2023-03-20"
+              "FechaAct": "2025-09-10"
             },
             {
-              "Nombre": "CI_Vig_Li_CC_Cant",
+              "Nombre": "CI_Vig_Li_CC_Cat",
               "Valor": "",
               "Descripcion": "Cantidad Líneas",
               "Tipo": "ENTERO"
@@ -281,13 +283,13 @@
             },
             {
               "Nombre": "CI_Vig_Li_OT_Cant",
-              "Valor": "0",
+              "Valor": "3",
               "Descripcion": "Cantidad líneas",
               "Tipo": "ENTERO"
             },
             {
               "Nombre": "CI_Vig_Li_OT_Monto",
-              "Valor": "0",
+              "Valor": "2595000",
               "Descripcion": "Monto total",
               "Tipo": "MONEDA"
             },
@@ -341,67 +343,67 @@
             },
             {
               "Nombre": "CI_Vig_Li_PP_Monto",
-              "Valor": "196000",
+              "Valor": "2047000",
               "Descripcion": "Saldo actual",
               "Tipo": "MONEDA"
             },
             {
               "Nombre": "CI_Vig_TC_Cant",
-              "Valor": "2",
+              "Valor": "1",
               "Descripcion": "Cantidad tarjetas de crédito",
               "Tipo": "ENTERO"
             },
             {
               "Nombre": "CI_Vig_TC_Monto",
-              "Valor": "6342551",
+              "Valor": "578202",
               "Descripcion": "Saldo actual",
               "Tipo": "MONEDA"
             },
             {
               "Nombre": "CI_Vig_CompMensual",
-              "Valor": "704870",
+              "Valor": "407892",
               "Descripcion": "Compromiso mensual",
               "Tipo": "MONEDA",
-              "FechaAct": "2025-06-30"
+              "FechaAct": "2025-07-31"
             },
             {
               "Nombre": "CI_Vig_Ratio_DeudaTotal",
-              "Valor": "0.47",
+              "Valor": "5.26",
               "Descripcion": "Deuda total / NSE",
               "Tipo": "DECIMAL",
-              "FechaAct": "2025-06-30"
+              "FechaAct": "2025-07-31"
             },
             {
               "Nombre": "CI_Vig_Ratio_CompMensual",
-              "Valor": "0.05",
+              "Valor": "0.34",
               "Descripcion": "Compromiso mensual / NSE",
               "Tipo": "DECIMAL",
-              "FechaAct": "2025-06-30"
+              "FechaAct": "2025-07-31"
             },
             {
               "Nombre": "CI_Vig_Ratio_DeudaTotal_a6m",
-              "Valor": "1.52",
+              "Valor": "2.52",
               "Descripcion": "Endeudamiento actual / endeudamiento promedio - Últ. 6 meses",
               "Tipo": "DECIMAL",
-              "FechaAct": "2025-06-30"
+              "FechaAct": "2025-07-31"
             },
             {
               "Nombre": "VR_12m_Cumplimiento",
-              "Valor": "1",
+              "Valor": "2",
               "Descripcion": "Perfil Cumplimiento del Deudor",
               "Tipo": "ENTERO",
-              "FechaAct": "2025-06-30"
+              "FechaAct": "2025-07-31"
             },
             {
               "Nombre": "VR_Vig_CapacidadEndeu_Deuda",
-              "Valor": "9003237",
+              "Valor": "438297",
               "Descripcion": "Disponibilidad mensual, para nuevo endeudamiento",
               "Tipo": "MONEDA",
-              "FechaAct": "2025-06-30"
+              "FechaAct": "2025-07-31"
             },
             {
               "Nombre": "VR_Vig_CapacidadEndeu_TC",
-              "Valor": "18006474",
+              "Valor": "876594",
               "Descripcion": "Capacidad endeudamiento T. Crédito",
               "Tipo": "MONEDA"
             },
@@ -425,25 +427,25 @@
             },
             {
               "Nombre": "RC_12m_Cant",
-              "Valor": "0",
+              "Valor": "2",
               "Descripcion": "Cantidad - Últ. 12 meses",
               "Tipo": "ENTERO"
             },
             {
               "Nombre": "RC_12m_Fuente",
-              "Valor": "",
+              "Valor": "Telecom Argentina SA/Telefónica de Argentina SA",
               "Descripcion": "Fuente - Últ. 12 meses",
               "Tipo": "TEXTO"
             },
             {
               "Nombre": "SCO_Vig",
-              "Valor": "602",
+              "Valor": "1",
               "Descripcion": "Score",
               "Tipo": "ENTERO"
             },
             {
               "Nombre": "NSE",
-              "Valor": "A",
+              "Valor": "C2",
               "Descripcion": "Nivel Socioeconómico",
               "Tipo": "TEXTO"
             },
@@ -456,13 +458,13 @@
             },
             {
               "Nombre": "CDA",
-              "Valor": "Aprobado",
+              "Valor": "Observado",
               "Descripcion": "Criterio de aceptación definido por el usuario",
               "Tipo": "TEXTO"
             },
             {
               "Nombre": "CDA_DICT",
-              "Valor": "APROBADO",
+              "Valor": "OBSERVADO",
               "Descripcion": "Dictamen",
               "Tipo": "TEXTO"
             },
@@ -498,7 +500,7 @@
             },
             {
               "Nombre": "CDA_CI",
-              "Valor": "Ok",
+              "Valor": "No",
               "Descripcion": "Bureau de Crédito del BCRA",
               "Tipo": "TEXTO"
             },
@@ -546,13 +548,13 @@
             },
             {
               "Nombre": "CDA_RC.P",
-              "Valor": "Ok",
+              "Valor": "No",
               "Descripcion": "Referencias Comerciales Propias",
               "Tipo": "TEXTO"
             },
             {
               "Nombre": "CDA_RC.T",
-              "Valor": "Ok",
+              "Valor": "No",
               "Descripcion": "Referencias Comerciales de Terceros",
               "Tipo": "TEXTO"
             },
@@ -588,13 +590,13 @@
             },
             {
               "Nombre": "CDA_SCO",
-              "Valor": "Ok",
+              "Valor": "No",
               "Descripcion": "Score",
               "Tipo": "TEXTO"
             },
             {
               "Nombre": "CDA_Valor.SCO",
-              "Valor": "602",
+              "Valor": "1",
               "Descripcion": "Score",
               "Tipo": "TEXTO"
             },
@@ -606,13 +608,13 @@
             },
             {
               "Nombre": "CDA_Valor.NSE",
-              "Valor": "A",
+              "Valor": "C2",
               "Descripcion": "Nivel Socioeconomico",
               "Tipo": "TEXTO"
             },
             {
               "Nombre": "CDA_COMPMENSUALES",
-              "Valor": "704870",
+              "Valor": "407892",
               "Descripcion": "Compromisos mensuales",
               "Tipo": "TEXTO"
             },
@@ -624,10 +626,10 @@
             },
             {
               "Nombre": "AP_12m_Empleado_FecAntigua",
-              "Valor": "202407",
+              "Valor": "202408",
               "Descripcion": "Fecha más antigua  - Últ. 12 meses",
               "Tipo": "PERIODO",
-              "FechaAct": "2025-05-14"
+              "FechaAct": "2025-07-22"
             },
             {
               "Nombre": "HC_24m_Cant",
@@ -640,38 +642,38 @@
               "Valor": "",
               "Descripcion": "Descripción de versión del documento cuestionado informado.",
               "Tipo": "TEXTO"
-            }, 
+            },
             {
               "Nombre": "CI_24m_Detalle",
-              "Valor": "<Detalle><D>17|202506|1|6390000</D><D>191|202506|1|162000</D><D>17|202505|1|5771000</D><D>191|202505|1|178000</D><D>17|202504|1|5814000</D><D>191|202504|1|192000</D><D>17|202503|1|3650000</D><D>17|202502|1|3452000</D><D>17|202501|1|3664000</D><D>17|202412|1|3084000</D><D>17|202411|1|2949000</D><D>17|202410|1|3342000</D><D>17|202409|1|3170000</D><D>17|202408|1|4117000</D><D>17|202407|1|3290000</D><D>17|202406|1|3254000</D><D>17|202405|1|2889000</D><D>17|202404|1|2368000</D><D>17|202403|1|1648000</D><D>17|202402|1|862000</D><D>17|202401|1|966000</D><D>17|202312|1|694000</D><D>17|202311|1|567000</D><D>17|202310|1|520000</D><D>17|202309|1|371000</D><D>17|202308|1|377000</D></Detalle>",
+              "Valor": "<Detalle><D>70603|202508|1|1721000</D><D>191|202507|1|2047000</D><D>55370|202507|2|642000</D><D>45056|202507|1|1059000</D><D>70603|202507|1|1547000</D><D>55340|202507|1|894000</D><D>191|202506|1|2122000</D><D>55370|202506|1|642000</D><D>45056|202506|1|1036000</D><D>191|202505|1|2012000</D><D>55370|202505|1|642000</D><D>45056|202505|1|993000</D><D>55041|202504|1|29000</D><D>55370|202504|1|642000</D><D>45056|202504|1|753000</D><D>55041|202503|1|36000</D><D>55041|202502|1|43000</D><D>55317|202501|5|26000</D><D>55041|202501|1|51000</D><D>55317|202412|5|26000</D><D>55041|202412|1|58000</D><D>55317|202411|5|26000</D><D>55041|202411|1|58000</D><D>55317|202410|5|26000</D><D>55041|202410|1|65000</D><D>55041|202409|1|72000</D><D>55041|202408|1|80000</D><D>55041|202407|1|101000</D><D>55109|202406|5|24000</D><D>55041|202406|1|115000</D><D>55109|202405|5|24000</D><D>55041|202405|1|42000</D><D>55109|202404|5|24000</D><D>55041|202404|1|56000</D><D>55109|202403|5|24000</D><D>55041|202403|1|70000</D><D>55109|202402|5|24000</D><D>55041|202402|1|84000</D><D>55109|202401|5|24000</D><D>55041|202401|1|98000</D><D>55109|202312|5|24000</D><D>55041|202312|1|112000</D><D>55109|202311|5|24000</D><D>55041|202311|1|126000</D><D>55109|202310|5|24000</D><D>55041|202310|1|140000</D><D>55109|202309|5|24000</D><D>55041|202309|1|154000</D></Detalle>",
               "Descripcion": "Detalle últimos 24 meses",
               "Tipo": "XML",
-              "FechaAct": "2025-06-30"
+              "FechaAct": "2025-07-31"
             },
             {
               "Nombre": "VI_Empleador_Act01_Cod",
-              "Valor": "649220",
+              "Valor": "841100",
               "Descripcion": "Código Actividad Principal del Empleador",
               "Tipo": "ENTERO",
-              "FechaAct": "2023-03-20"
+              "FechaAct": "2025-09-10"
             },
             {
               "Nombre": "VI_Empleador_Act01_Descrip",
-              "Valor": "Servicios de entidades de tarjeta de compra y/o crédito",
+              "Valor": "Servicios generales de la administración pública (incluye el desempeño de funciones ejecutivas y legislativas de administración por parte de las entidades de la administración central, regional y local, la administración y supervisión de asuntos fiscales, la aplicación del presupuesto y la gestión",
               "Descripcion": "Descripción Actividad Principal del Empleador",
               "Tipo": "TEXTO",
-              "FechaAct": "2023-03-20"
+              "FechaAct": "2025-09-10"
             },
             {
               "Nombre": "VI_AntiguedadLaboral",
-              "Valor": "41",
+              "Valor": "223",
               "Descripcion": "Antigüedad Laboral",
               "Tipo": "ENTERO",
-              "FechaAct": "2025-05-14"
+              "FechaAct": "2025-07-22"
             },
             {
               "Nombre": "VI_Inscrip_Monotributo_Es",
-              "Valor": "Si",
+              "Valor": "No",
               "Descripcion": "Es Monotributista",
               "Tipo": "BOOLEANO"
             },
@@ -686,14 +688,14 @@
               "Valor": "No",
               "Descripcion": "Es Autónomo",
               "Tipo": "BOOLEANO",
-              "FechaAct": "2023-03-20"
+              "FechaAct": "2025-09-10"
             },
             {
               "Nombre": "VI_EmpleadoDomestico_Es",
               "Valor": "No",
               "Descripcion": "Es Empleado Doméstico",
               "Tipo": "BOOLEANO",
-              "FechaAct": "2025-05-14"
+              "FechaAct": "2025-07-22"
             },
             {
               "Nombre": "DX_Cant",
@@ -709,90 +711,94 @@
             },
             {
               "Nombre": "CI_24m_Detalle_PorPeriodo",
-              "Valor": "<Detalle><D>202506|1|6552000</D><D>202505|1|5949000</D><D>202504|1|6006000</D><D>202503|1|3650000</D><D>202502|1|3452000</D><D>202501|1|3664000</D><D>202412|1|3084000</D><D>202411|1|2949000</D><D>202410|1|3342000</D><D>202409|1|3170000</D><D>202408|1|4117000</D><D>202407|1|3290000</D><D>202406|1|3254000</D><D>202405|1|2889000</D><D>202404|1|2368000</D><D>202403|1|1648000</D><D>202402|1|862000</D><D>202401|1|966000</D><D>202312|1|694000</D><D>202311|1|567000</D><D>202310|1|520000</D><D>202309|1|371000</D><D>202308|1|377000</D></Detalle>",
+              "Valor": "<Detalle><D>202508|1|1721000</D><D>202507|2|6189000</D><D>202506|1|3800000</D><D>202505|1|3647000</D><D>202504|1|1424000</D><D>202503|1|36000</D><D>202502|1|43000</D><D>202501|5|77000</D><D>202412|5|84000</D><D>202411|5|84000</D><D>202410|5|91000</D><D>202409|1|72000</D><D>202408|1|80000</D><D>202407|1|101000</D><D>202406|5|139000</D><D>202405|5|66000</D><D>202404|5|80000</D><D>202403|5|94000</D><D>202402|5|108000</D><D>202401|5|122000</D><D>202312|5|136000</D><D>202311|5|150000</D><D>202310|5|164000</D><D>202309|5|178000</D></Detalle>",
               "Descripcion": "Detalle últimos 24 meses - Por Periodo",
               "Tipo": "XML",
-              "FechaAct": "2025-06-30"
+              "FechaAct": "2025-07-31"
             },
             {
               "Nombre": "FEX_BCRA_FecAct",
-              "Valor": "2025-06-30",
+              "Valor": "2025-07-31",
               "Descripcion": "BCRA - Fecha Últ. Actualización",
               "Tipo": "FECHA",
-              "FechaAct": "2025-06-30"
+              "FechaAct": "2025-07-31"
             },
             {
               "Nombre": "FEX_BCRA_FecVenc",
-              "Valor": "2025-07-30",
+              "Valor": "2025-08-30",
               "Descripcion": "BCRA - Fecha Próxima Actualización",
               "Tipo": "FECHA",
-              "FechaAct": "2025-06-30"
+              "FechaAct": "2025-07-31"
             },
             {
               "Nombre": "FEX_RD_FecAct",
-              "Valor": "",
+              "Valor": "2022-05-02",
               "Descripcion": "Anses [RD] - Fecha Últ. Actualización",
-              "Tipo": "FECHA"
+              "Tipo": "FECHA",
+              "FechaAct": "2022-05-02"
             },
             {
               "Nombre": "FEX_RD_FecVenc",
-              "Valor": "2025-08-21",
+              "Valor": "2022-07-31",
               "Descripcion": "Anses [RD] - Fecha Próxima Actualización",
-              "Tipo": "FECHA"
+              "Tipo": "FECHA",
+              "FechaAct": "2022-05-02"
             },
             {
               "Nombre": "FEX_SRT_FecAct",
-              "Valor": "",
+              "Valor": "2020-01-29",
               "Descripcion": "SRT - Fecha Últ. Actualización",
-              "Tipo": "FECHA"
+              "Tipo": "FECHA",
+              "FechaAct": "2020-01-29"
             },
             {
               "Nombre": "FEX_SRT_FecVenc",
-              "Valor": "2025-08-21",
+              "Valor": "2020-04-28",
               "Descripcion": "SRT - Fecha Próxima Actualización",
-              "Tipo": "FECHA"
+              "Tipo": "FECHA",
+              "FechaAct": "2020-01-29"
             },
             {
               "Nombre": "FEX_AFInscrip_FecAct",
-              "Valor": "2023-03-20",
+              "Valor": "2025-09-10",
               "Descripcion": "AFIP Inscripciones - Fecha Últ. Actualización",
               "Tipo": "FECHA",
-              "FechaAct": "2023-03-20"
+              "FechaAct": "2025-09-10"
             },
             {
               "Nombre": "FEX_AFInscrip_FecVenc",
-              "Valor": "2023-04-19",
+              "Valor": "2025-10-10",
               "Descripcion": "AFIP Inscripciones - Fecha Próxima Actualización",
               "Tipo": "FECHA",
-              "FechaAct": "2023-03-20"
+              "FechaAct": "2025-09-10"
             },
             {
               "Nombre": "FEX_SSS_FecAct",
-              "Valor": "2023-03-20",
+              "Valor": "2025-09-10",
               "Descripcion": "SSSalud - Fecha Últ. Actualización",
-              "Tipo": "FECHA",
-              "FechaAct": "2023-03-20"
+              "Tipo": "FecHA",
+              "FechaAct": "2025-09-10"
             },
             {
               "Nombre": "FEX_SSS_FecVenc",
-              "Valor": "2023-06-18",
+              "Valor": "2025-12-09",
               "Descripcion": "SSSalud - Fecha Próxima Actualización",
               "Tipo": "FECHA",
-              "FechaAct": "2023-03-20"
+              "FechaAct": "2025-09-10"
             },
             {
               "Nombre": "FEX_AFAP_FecAct",
-              "Valor": "2025-05-14",
+              "Valor": "2025-07-22",
               "Descripcion": "AFIP Aportes Patronales - Fecha Últ. Actualización",
               "Tipo": "FECHA",
-              "FechaAct": "2025-05-14"
+              "FechaAct": "2025-07-22"
             },
             {
               "Nombre": "FEX_AFAP_FecVenc",
-              "Valor": "2025-06-13",
+              "Valor": "2025-08-21",
               "Descripcion": "AFIP Aportes Patronales - Fecha Próxima Actualización",
               "Tipo": "FECHA",
-              "FechaAct": "2025-05-14"
+              "FechaAct": "2025-07-22"
             },
             {
               "Nombre": "FEX_SIPA_FecAct",
@@ -802,49 +808,51 @@
             },
             {
               "Nombre": "FEX_SIPA_FecVenc",
-              "Valor": "2025-08-21",
+              "Valor": "2025-09-10",
               "Descripcion": "Anses Beneficios - Fecha Próxima Actualización",
               "Tipo": "FECHA"
             },
             {
               "Nombre": "FEX_AFOC_FecAct",
-              "Valor": "",
+              "Valor": "2018-08-08",
               "Descripcion": "AFIP Padrón - Fecha Últ. Actualización",
-              "Tipo": "FECHA"
+              "Tipo": "FECHA",
+              "FechaAct": "2018-08-08"
             },
             {
               "Nombre": "FEX_AFOC_FecVenc",
-              "Valor": "2025-08-21",
+              "Valor": "2019-08-08",
               "Descripcion": "AFIP Padrón - Fecha Próxima Actualización",
-              "Tipo": "FECHA"
+              "Tipo": "FECHA",
+              "FechaAct": "2018-08-08"
             },
             {
               "Nombre": "FEX_MNP_FecAct",
-              "Valor": "2023-03-20",
+              "Valor": "2025-09-10",
               "Descripcion": "SSS - Monotributo Pagos - Fecha Últ. Actualización",
               "Tipo": "FECHA",
-              "FechaAct": "2023-03-20"
+              "FechaAct": "2025-09-10"
             },
             {
               "Nombre": "FEX_MNP_FecVenc",
-              "Valor": "2023-06-18",
+              "Valor": "2025-12-09",
               "Descripcion": "SSS - Monotributo Pagos - Fecha Próxima Actualización",
               "Tipo": "FECHA",
-              "FechaAct": "2023-03-20"
+              "FechaAct": "2025-09-10"
             },
             {
               "Nombre": "FEX_MN_FecAct",
-              "Valor": "2023-03-20",
+              "Valor": "2025-09-10",
               "Descripcion": "SSS - Monotributo Padrón - Fecha Últ. Actualización",
               "Tipo": "FECHA",
-              "FechaAct": "2023-03-20"
+              "FechaAct": "2025-09-10"
             },
             {
               "Nombre": "FEX_MN_FecVenc",
-              "Valor": "2023-06-18",
+              "Valor": "2025-12-09",
               "Descripcion": "SSS - Monotributo Padrón - Fecha Próxima Actualización",
               "Tipo": "FECHA",
-              "FechaAct": "2023-03-20"
+              "FechaAct": "2025-09-10"
             },
             {
               "Nombre": "AS_Beneficios_Detalle",
@@ -857,7 +865,7 @@
               "Valor": "Si",
               "Descripcion": "Bancarizado - Últ. 24 Meses",
               "Tipo": "BOOLEANO",
-              "FechaAct": "2025-06-30"
+              "FechaAct": "2025-07-31"
             },
             {
               "Nombre": "FEX_CN_FecAct",
@@ -867,25 +875,25 @@
             },
             {
               "Nombre": "FEX_CN_FecVenc",
-              "Valor": "2025-08-21",
+              "Valor": "2025-09-10",
               "Descripcion": "Certificación Negativa [CN] - Fecha Próxima Actualización",
               "Tipo": "FECHA"
             },
             {
               "Nombre": "NSE_IngresoProm",
-              "Valor": "8320157",
+              "Valor": "1438856",
               "Descripcion": "Nivel Socioeconómico - Ingreso Promedio",
               "Tipo": "MONEDA"
             },
             {
               "Nombre": "RC_Vig_Cant",
-              "Valor": "0",
+              "Valor": "2",
               "Descripcion": "Cantidad - Vigente",
               "Tipo": "ENTERO"
             },
             {
               "Nombre": "RC_Vig_Fuente",
-              "Valor": "",
+              "Valor": "Telecom Argentina SA/Telefónica de Argentina SA",
               "Descripcion": "Fuente - Vigente",
               "Tipo": "TEXTO"
             },
@@ -894,60 +902,60 @@
               "Valor": "1",
               "Descripcion": "Cantidad Empleadores - Últimos 12 meses",
               "Tipo": "ENTERO",
-              "FechaAct": "2025-05-14"
+              "FechaAct": "2025-07-22"
             },
             {
               "Nombre": "MN_24m_Cant",
               "Valor": "0",
               "Descripcion": "Cantidad Periodos Pagos - Últ. 24 meses",
               "Tipo": "ENTERO",
-              "FechaAct": "2023-03-20"
+              "FechaAct": "2025-09-10"
             },
             {
               "Nombre": "MN_ObraSocial_Descrip",
-              "Valor": "OBRA SOCIAL DE LOS EMPLEADOS DE COMERCIO Y ACTIVIDADES CIVILES",
+              "Valor": "",
               "Descripcion": "Obra Social - Descripción",
               "Tipo": "TEXTO",
-              "FechaAct": "2023-03-20"
+              "FechaAct": "2025-09-10"
             },
             {
               "Nombre": "MN_ObraSocial_PeriodoMin",
-              "Valor": "201701",
+              "Valor": "",
               "Descripcion": "Obra Social - Periodo Inicio",
               "Tipo": "PERIODO",
-              "FechaAct": "2023-03-20"
+              "FechaAct": "2025-09-10"
             },
             {
               "Nombre": "MN_ObraSocial_PeriodoMax",
               "Valor": "",
               "Descripcion": "Obra Social - Periodo Fin",
               "Tipo": "PERIODO",
-              "FechaAct": "2023-03-20"
+              "FechaAct": "2025-09-10"
             },
             {
               "Nombre": "VI_AntiguedadLaboral_EmpleadorActual",
-              "Valor": "16",
+              "Valor": "181",
               "Descripcion": "Antigüedad Laboral - Empleador Actual",
               "Tipo": "ENTERO",
-              "FechaAct": "2025-05-14"
+              "FechaAct": "2025-07-22"
             },
             {
               "Nombre": "AP_Vig_Empleado_DeclaracionJurada",
               "Valor": "",
               "Descripcion": "Estado de la Declaración Jurada",
               "Tipo": "TEXTO",
-              "FechaAct": "2025-05-14"
+              "FechaAct": "2025-07-22"
             },
             {
               "Nombre": "AP_Vig_Empleado_Estado_Cod",
               "Valor": "1",
               "Descripcion": "Estado de los Aportes Patronales",
               "Tipo": "ENTERO",
-              "FechaAct": "2025-05-14"
+              "FechaAct": "2025-07-22"
             },
             {
               "Nombre": "VI_Empleado_Es_UltFecha",
-              "Valor": "202504",
+              "Valor": "202506",
               "Descripcion": "Última fecha registrada",
               "Tipo": "PERIODO"
             },
@@ -956,11 +964,11 @@
               "Valor": "0",
               "Descripcion": "Estado de los Aportes Patronales - Como Empleador",
               "Tipo": "ENTERO",
-              "FechaAct": "2025-05-14"
+              "FechaAct": "2025-07-22"
             },
             {
               "Nombre": "VI_HistoriaLaboral_Empleadores",
-              "Valor": "<Detalle><D>30554232902|ARAUCO SACIF|202203|202302</D><D>30584012370|COOPERATIVA DE SERVICIOS DE ADMINISTRACION DE VENTAS A CREDITO GUIA LTDA|202404|202504</D></Detalle>",
+              "Valor": "<Detalle><D>33709404739|SACATUC SRL|200802|200811</D><D>30672846303|GOBIERNO DE LA PROVINCIA DE RIO NEGRO|201008|202506</D></Detalle>",
               "Descripcion": "Historia Laboral - Empleadores",
               "Tipo": "XML"
             },
@@ -1008,19 +1016,19 @@
             },
             {
               "Nombre": "CI_Vig_CompMensual_BcoPropio",
-              "Valor": "0",
+              "Valor": "172100",
               "Descripcion": "Compromiso mensual - Banco Propio",
               "Tipo": "MONEDA"
             },
             {
               "Nombre": "CI_Vig_CompMensual_SinBcoPropio",
-              "Valor": "704870",
+              "Valor": "235792",
               "Descripcion": "Compromiso mensual - Banco Sin  Propio",
               "Tipo": "MONEDA"
             },
             {
               "Nombre": "RC_12m_Tiene",
-              "Valor": "No",
+              "Valor": "Si",
               "Descripcion": "Tiene Referencias - Últ. 12 Meses",
               "Tipo": "BOOLEANO"
             },
@@ -1032,37 +1040,37 @@
             },
             {
               "Nombre": "RC_Vig_FuentesCant",
-              "Valor": "0",
+              "Valor": "2",
               "Descripcion": "Referencias Vigentes - Cantidad de Fuentes",
               "Tipo": "ENTERO"
             },
             {
               "Nombre": "VI_Empleador_Dom_Calle",
-              "Valor": "CORRIENTES",
+              "Valor": "25 DE MAYO",
               "Descripcion": "Calle",
               "Tipo": "TEXTO"
             },
             {
               "Nombre": "VI_Empleador_Dom_Nro",
-              "Valor": "231",
+              "Valor": "99",
               "Descripcion": "Número",
               "Tipo": "TEXTO"
             },
             {
               "Nombre": "VI_Empleador_Dom_Loc",
-              "Valor": "NEUQUEN",
+              "Valor": "VIEDMA",
               "Descripcion": "Localidad",
               "Tipo": "TEXTO"
             },
             {
               "Nombre": "VI_Empleador_Dom_CP",
-              "Valor": "8300",
+              "Valor": "8500",
               "Descripcion": "Código postal",
               "Tipo": "TEXTO"
             },
             {
               "Nombre": "VI_Empleador_Dom_Prov",
-              "Valor": "Neuquen",
+              "Valor": "Rio Negro",
               "Descripcion": "Provincia",
               "Tipo": "TEXTO"
             },
@@ -1071,24 +1079,24 @@
               "Valor": "<Detalle></Detalle>",
               "Descripcion": "Detalle de Aportes últimos 12 meses - Empleador",
               "Tipo": "XML",
-              "FechaAct": "2025-05-14"
+              "FechaAct": "2025-07-22"
             },
             {
               "Nombre": "AP_12m_EmpleadoDomestico_Detalle",
               "Valor": "<Detalle></Detalle>",
               "Descripcion": "Detalle de Aportes últimos 12 meses - Empleado Doméstico",
               "Tipo": "XML",
-              "FechaAct": "2025-05-14"
+              "FechaAct": "2025-07-22"
             },
             {
               "Nombre": "RC_Vig_Detalle",
-              "Valor": "<Detalle></Detalle>",
+              "Valor": "<Detalle><D>Telecom Argentina SA|20250908|Servicios - Telecomunicaciones|(0800)444-0800 o desde cualquier celular *111||TELECOM|</D><D>Telefónica de Argentina SA|20250909|Servicios - Telecomunicaciones|(0800)321-0611||Telefónica de Argentina SA|</D></Detalle>",
               "Descripcion": "Detalle de Referencia Comerciales vigentes por rubro.",
               "Tipo": "XML"
             },
             {
               "Nombre": "VI_Mail",
-              "Valor": "",
+              "Valor": "nievasemilioreinaldo@yahoo.com",
               "Descripcion": "Email",
               "Tipo": "TEXTO"
             },
@@ -1100,7 +1108,7 @@
             },
             {
               "Nombre": "CI_Vig_Pago_TC",
-              "Valor": "645637",
+              "Valor": "175100",
               "Descripcion": "Pago de tarjetas de crédito",
               "Tipo": "MONEDA"
             },
@@ -1118,7 +1126,7 @@
             },
             {
               "Nombre": "CI_Vig_Li_PP_Monto_Total",
-              "Valor": "196000",
+              "Valor": "2047000",
               "Descripcion": "Saldo total actual",
               "Tipo": "MONEDA"
             },
@@ -1130,7 +1138,7 @@
             },
             {
               "Nombre": "CI_Vig_Li_PP_Monto_Total_SinBancoPropio",
-              "Valor": "196000",
+              "Valor": "2047000",
               "Descripcion": "Saldo total actual sin banco Propio",
               "Tipo": "MONEDA"
             },
@@ -1142,13 +1150,13 @@
             },
             {
               "Nombre": "CI_Vig_Total_MontoVencido",
-              "Valor": "0",
+              "Valor": "642000",
               "Descripcion": "Monto total vencido",
               "Tipo": "MONEDA"
             },
             {
               "Nombre": "VR_24m_Atraso_Cumplimiento",
-              "Valor": "No",
+              "Valor": "Si",
               "Descripcion": "Perfil Cumplimiento del Deudor",
               "Tipo": "BOOLEANO"
             },
@@ -1172,13 +1180,13 @@
             },
             {
               "Nombre": "COM_Homonimos_LAFT_Link",
-              "Valor": "https://compliance.nosis.com/baseLAFT/Resultado?q=ROJAS%20VALENZUELA%20EDISON",
+              "Valor": "https://compliance.nosis.com/baseLAFT/Resultado?q=NIEVAS%20EMILIO%20REINALDO",
               "Descripcion": "Enlace de homónimos en base LA/FT encontrados según Razón Social o Nombre y apellido",
               "Tipo": "TEXTO"
             },
             {
               "Nombre": "CI_Vig_PeorSit_BCRA",
-              "Valor": "1",
+              "Valor": "2",
               "Descripcion": "Peor situación en el BCRA",
               "Tipo": "TEXTO"
             },
@@ -1190,13 +1198,13 @@
             },
             {
               "Nombre": "CI_Vig_Li_PP_Monto_Total_v2",
-              "Valor": "196000",
+              "Valor": "2047000",
               "Descripcion": "Saldo total actual personales, más otras líneas.",
               "Tipo": "MONEDA"
             },
             {
               "Nombre": "CI_Vig_Li_PP_Monto_Total_SinBancoPropio_v2",
-              "Valor": "196000",
+              "Valor": "2047000",
               "Descripcion": "Saldo total actual personales, más otras líneas, sin banco Propio.",
               "Tipo": "MONEDA"
             },
@@ -1208,7 +1216,7 @@
             },
             {
               "Nombre": "FEX_CNE_FecAct",
-              "Valor": "",
+              "Valor": "2023-06-23",
               "Descripcion": "(CNE) Cumplimiento Censal - Fecha Últ. Actualización",
               "Tipo": "FECHA"
             },
@@ -1245,13 +1253,13 @@
             {
               "Nombre": "COM_PEP_Organismo",
               "Valor": "",
-              "Descripcion": "Organismo al que pertenece el CUIL con marca of PEP",
+              "Descripcion": "Organismo al que pertenece el CUIL con marca de PEP",
               "Tipo": "TEXTO"
             },
             {
               "Nombre": "COM_PEP_Estado",
               "Valor": "",
-              "Descripcion": "Tipo de Estado al que pertenece el CUIL con marca of PEP",
+              "Descripcion": "Tipo de Estado al que pertenece el CUIL con marca de PEP",
               "Tipo": "TEXTO"
             },
             {
@@ -1304,55 +1312,55 @@
             },
             {
               "Nombre": "CI_Vig_Li_OT_Es_v2",
-              "Valor": "No",
+              "Valor": "Si",
               "Descripcion": "Posee productos de otras líneas",
               "Tipo": "BOOLEANO"
             },
             {
               "Nombre": "CI_Vig_LineasActivas_Cant_Atraso",
-              "Valor": "0",
+              "Valor": "1",
               "Descripcion": "Cantidad productos con atrasos",
               "Tipo": "ENTERO"
             },
             {
               "Nombre": "FEX_AFWS_FecAct",
-              "Valor": "2023-03-20",
+              "Valor": "2025-09-10",
               "Descripcion": "AFIP - WS - Fecha Últ. Actualización",
               "Tipo": "FECHA"
             },
             {
               "Nombre": "FEX_AFWS_FecVenc",
-              "Valor": "2023-04-19",
+              "Valor": "2025-10-10",
               "Descripcion": "AFIP - WS - Fecha Próxima Actualización",
               "Tipo": "FECHA"
             },
             {
               "Nombre": "SSS_RD_OS_Cod",
-              "Valor": "400909",
+              "Valor": "0",
               "Descripcion": "Código Obra Social",
               "Tipo": "ENTERO"
             },
             {
               "Nombre": "SSS_RD_OS_Nombre",
-              "Valor": "Obra Social Accion Social De Empresarios",
+              "Valor": "",
               "Descripcion": "Obra Social",
               "Tipo": "TEXTO"
             },
             {
               "Nombre": "SSS_RD_OS_FecDesde",
-              "Valor": "2021-02-01",
+              "Valor": "",
               "Descripcion": "Fecha Alta",
               "Tipo": "FECHA"
             },
             {
               "Nombre": "SSS_RD_OS_Titular_Condicion",
-              "Valor": "Relacion De Dependencia",
+              "Valor": "",
               "Descripcion": "Condición Titular",
               "Tipo": "TEXTO"
             },
             {
               "Nombre": "SSS_RD_OS_Titular_Parentesco",
-              "Valor": "Titular",
+              "Valor": "",
               "Descripcion": "Parentesco con Titular",
               "Tipo": "TEXTO"
             },
@@ -1371,7 +1379,7 @@
             },
             {
               "Nombre": "VR_24m_Atraso_Cumplimiento_v2",
-              "Valor": "No",
+              "Valor": "Si",
               "Descripcion": "Perfil Cumplimiento del Deudor - Últimos 24 meses",
               "Tipo": "BOOLEANO"
             },

@@ -559,7 +559,7 @@ export class SolicitudInicialRepositoryAdapter implements SolicitudInicialReposi
         WHERE si.comerciante_id = $1
         ORDER BY si.fecha_creacion DESC
     `;
-    
+     
     const result = await pool.query(query, [comercianteId]);
     return result.rows.map(row => this.mapRowToSolicitudInicial(row));
 }

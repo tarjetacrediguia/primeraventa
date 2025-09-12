@@ -60,4 +60,5 @@ export const HISTORIAL_ACTIONS = {
     COMPRA_CON_AMPLIACION_APROBADA: 'compra_con_ampliacion_aprobada',
     AMPLIACION_CREDITO_APROBADA: 'ampliacion_credito_aprobada',
     AMPLIACION_CREDITO_RECHAZADA: 'ampliacion_credito_rechazada',
+    PENDING_SOLICITUD_INICIAL: 'pending_solicitud_inicial',
 } as const;
