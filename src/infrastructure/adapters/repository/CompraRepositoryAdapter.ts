@@ -9,7 +9,15 @@ export class CompraRepositoryAdapter implements CompraRepositoryPort {
         const client = await pool.connect();
         try {
             const query = `
-                SELECT * FROM compras
+                SELECT c.*, 
+                   cl.nombre_completo as cliente_nombre,
+                   cl.apellido as cliente_apellido,
+                   cl.cuil as cliente_cuil,
+                   co.nombre_comercio,
+                   co.id as comerciante_id
+            FROM compras c
+            LEFT JOIN clientes cl ON c.cliente_id = cl.id
+            LEFT JOIN comerciantes co ON c.comerciante_id = co.id
             `;
             const res = await client.query(query);
             
@@ -25,7 +33,7 @@ export class CompraRepositoryAdapter implements CompraRepositoryPort {
                     new ItemCompra(item.id, item.compra_id, item.nombre, item.precio, item.cantidad)
                 );
                 */
-                compras.push(new Compra({
+                const compra =new Compra({
                     id: row.id,
                     solicitudFormalId: row.solicitud_formal_id,
                     descripcion: row.descripcion,
@@ -41,7 +49,16 @@ export class CompraRepositoryAdapter implements CompraRepositoryPort {
                     numeroCuenta: row.numero_cuenta,
                     comercianteId: row.comerciante_id,
                     analistaAprobadorId: row.analista_aprobador_id
-                }));
+                });
+                // Agregar información adicional al objeto plano
+                const compraPlain = compra.toPlainObject();
+                compras.push({
+                    ...compraPlain,
+                    cliente_nombre: `${row.cliente_nombre} ${row.cliente_apellido}`,
+                    nombre_comercio: row.nombre_comercio,
+                    comerciante_id: row.comerciante_id,
+                    cliente_cuil: row.cliente_cuil
+                });
             }
             
             return compras;
@@ -159,7 +176,16 @@ export class CompraRepositoryAdapter implements CompraRepositoryPort {
         try {
             // Obtener compra
             const compraQuery = `
-                SELECT * FROM compras WHERE id = $1
+                    SELECT c.*, 
+                    cl.nombre_completo as cliente_nombre,
+                    cl.apellido as cliente_apellido,
+                    cl.cuil as cliente_cuil,
+                    co.nombre_comercio,
+                    co.id as comerciante_id
+                FROM compras c
+                LEFT JOIN clientes cl ON c.cliente_id = cl.id
+                LEFT JOIN comerciantes co ON c.comerciante_id = co.id
+                WHERE c.id = $1
             `;
             const compraRes = await client.query(compraQuery, [id]);
             if (compraRes.rows.length === 0) {
@@ -180,7 +206,7 @@ export class CompraRepositoryAdapter implements CompraRepositoryPort {
                 row.cantidad
             ));
             */
-            return new Compra({
+            const compra = new Compra({
                 id: compraData.id,
                 solicitudFormalId: compraData.solicitud_formal_id,
                 descripcion: compraData.descripcion,
@@ -197,6 +223,16 @@ export class CompraRepositoryAdapter implements CompraRepositoryPort {
                 comercianteId: compraData.comerciante_id,
                 analistaAprobadorId: compraData.analista_aprobador_id
             });
+
+            // Agregar información adicional al objeto plano
+            const compraPlain = compra.toPlainObject();
+            return {
+                ...compraPlain,
+                cliente_nombre: `${compraData.cliente_nombre} ${compraData.cliente_apellido}`,
+                nombre_comercio: compraData.nombre_comercio,
+                comerciante_id: compraData.comerciante_id,
+                cliente_cuil: compraData.cliente_cuil
+            };
         } finally {
             client.release();
         }
@@ -327,12 +363,21 @@ export class CompraRepositoryAdapter implements CompraRepositoryPort {
         }
     }
 
-    async getComprasBySolicitudFormalId(solicitudFormalId: number): Promise<Compra> {
+    async getComprasBySolicitudFormalId(solicitudFormalId: number): Promise<any> {
     const client = await pool.connect();
     try {
         // Obtener compras por solicitud formal
         const comprasQuery = `
-            SELECT * FROM compras WHERE solicitud_formal_id = $1
+            SELECT c.*, 
+                   cl.nombre_completo as cliente_nombre,
+                   cl.apellido as cliente_apellido,
+                   cl.cuil as cliente_cuil,
+                   co.nombre_comercio,
+                   co.usuario_id as comerciante_id
+            FROM compras c
+            LEFT JOIN clientes cl ON c.cliente_id = cl.id
+            LEFT JOIN comerciantes co ON c.comerciante_id = co.usuario_id
+            WHERE c.solicitud_formal_id = $1
         `;
         const comprasRes = await client.query(comprasQuery, [solicitudFormalId]);
 
@@ -358,7 +403,7 @@ export class CompraRepositoryAdapter implements CompraRepositoryPort {
         ));
         */
         // Crear y retornar la instancia de Compra
-        return new Compra({
+        const compra = new Compra({
             id: compraData.id,
             solicitudFormalId: compraData.solicitud_formal_id,
             descripcion: compraData.descripcion,
@@ -375,6 +420,15 @@ export class CompraRepositoryAdapter implements CompraRepositoryPort {
             comercianteId: compraData.comerciante_id,
             analistaAprobadorId: compraData.analista_aprobador_id
         });
+
+        const compraPlain = compra.toPlainObject();
+        return {
+            ...compraPlain,
+            cliente_nombre: `${compraData.cliente_nombre} ${compraData.cliente_apellido}`,
+            nombre_comercio: compraData.nombre_comercio,
+            comerciante_id: compraData.comerciante_id,
+            cliente_cuil: compraData.cliente_cuil
+        };
     } finally {
         client.release();
     }
@@ -384,8 +438,16 @@ export class CompraRepositoryAdapter implements CompraRepositoryPort {
     const client = await pool.connect();
     try {
         const query = `
-            SELECT * FROM compras 
-            WHERE estado = $1
+            SELECT c.*, 
+                   cl.nombre_completo as cliente_nombre,
+                   cl.apellido as cliente_apellido,
+                   cl.cuil as cliente_cuil,
+                   co.nombre_comercio,
+                   co.id as comerciante_id
+            FROM compras c
+            LEFT JOIN clientes cl ON c.cliente_id = cl.id
+            LEFT JOIN comerciantes co ON c.comerciante_id = co.id
+            WHERE c.estado = $1
         `;
         const res = await client.query(query, [estado]);
         
@@ -402,7 +464,7 @@ export class CompraRepositoryAdapter implements CompraRepositoryPort {
                 new ItemCompra(item.id, item.compra_id, item.nombre, item.precio, item.cantidad)
             );
             */
-            compras.push(new Compra({
+            const compra = new Compra({
                     id: row.id,
                     solicitudFormalId: row.solicitud_formal_id,
                     descripcion: row.descripcion,
@@ -418,7 +480,16 @@ export class CompraRepositoryAdapter implements CompraRepositoryPort {
                     numeroCuenta: row.numero_cuenta,
                     comercianteId: row.comerciante_id,
                     analistaAprobadorId: row.analista_aprobador_id
-                }));
+                });
+
+                const compraPlain = compra.toPlainObject();
+                compras.push({
+                    ...compraPlain,
+                    cliente_nombre: `${row.cliente_nombre} ${row.cliente_apellido}`,
+                    nombre_comercio: row.nombre_comercio,
+                    comerciante_id: row.comerciante_id,
+                    cliente_cuil: row.cliente_cuil
+                });
         }
         
         return compras;
@@ -433,8 +504,16 @@ export class CompraRepositoryAdapter implements CompraRepositoryPort {
         const client = await pool.connect();
         try {
             const query = `
-                SELECT * FROM compras 
-                WHERE comerciante_id = $1
+                SELECT c.*, 
+                   cl.nombre_completo as cliente_nombre,
+                   cl.apellido as cliente_apellido,
+                   cl.cuil as cliente_cuil,
+                   co.nombre_comercio,
+                   co.id as comerciante_id
+            FROM compras c
+            INNER JOIN clientes cl ON c.cliente_id = cl.id
+            INNER JOIN comerciantes co ON c.comerciante_id = co.id
+            WHERE c.comerciante_id = $1
             `;
             const res = await client.query(query, [comercianteId]);
             
@@ -450,7 +529,7 @@ export class CompraRepositoryAdapter implements CompraRepositoryPort {
                     new ItemCompra(item.id, item.compra_id, item.nombre, item.precio, item.cantidad)
                 );
                 */
-                compras.push(new Compra({
+                const compra = new Compra({
                     id: row.id,
                     solicitudFormalId: row.solicitud_formal_id,
                     descripcion: row.descripcion,
@@ -466,7 +545,16 @@ export class CompraRepositoryAdapter implements CompraRepositoryPort {
                     numeroCuenta: row.numero_cuenta,
                     comercianteId: row.comerciante_id,
                     analistaAprobadorId: row.analista_aprobador_id
-                }));
+                });
+
+                const compraPlain = compra.toPlainObject();
+                compras.push({
+                    ...compraPlain,
+                    cliente_nombre: `${row.cliente_nombre} ${row.cliente_apellido}`,
+                    nombre_comercio: row.nombre_comercio,
+                    comerciante_id: row.comerciante_id,
+                    cliente_cuil: row.cliente_cuil
+                });
             }
             return compras;
         } finally {

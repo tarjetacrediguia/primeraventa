@@ -109,11 +109,11 @@ export const obtenerCompraPorSolicitudFormal = async (req: Request, res: Respons
         const idSolicitudFormal = parseInt(req.params.idSolicitudFormal, 10);
         const usuarioId = req.user?.id ? Number(req.user.id) : undefined;
         const usuarioRol = req.user?.rol;
-
+        console.log('Usuario ID:', usuarioId, 'Rol:', usuarioRol);
         const useCase = new ObtenerCompraPorSolicitudFormalUseCase(compraRepository);
         const compra = await useCase.execute(idSolicitudFormal, usuarioId, usuarioRol);
-
-        res.status(200).json(compra.toPlainObject());
+        console.log('Compra obtenida:', compra);
+        res.status(200).json(compra);
     } catch (error: any) {
         if (error.message.includes('No se encontraron compras')) {
             res.status(404).json({ error: error.message });
@@ -133,7 +133,7 @@ export const obtenerCompraPorSolicitudFormalAnalista = async (req: Request, res:
         const useCase = new ObtenerCompraPorSolicitudFormalUseCase(compraRepository);
         const compra = await useCase.execute(idSolicitudFormal);
         
-        res.status(200).json(compra.toPlainObject());
+        res.status(200).json(compra);
     } catch (error: any) {
         if (error.message.includes('No se encontraron compras')) {
             res.status(404).json({ error: error.message });
