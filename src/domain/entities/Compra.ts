@@ -18,6 +18,7 @@ export interface CompraParams {
     numeroCuenta?: string;
     comercianteId?: number;
     analistaAprobadorId?: number;
+    motivoRechazo?: string;
 }
 
 export enum EstadoCompra {
@@ -57,7 +58,7 @@ export class Compra {
     private numeroCuenta?: string;
     private comercianteId?: number;
     private analistaAprobadorId?: number;
-
+    private motivoRechazo?: string;
  
 
     /**
@@ -87,7 +88,19 @@ export class Compra {
         this.numeroCuenta = params.numeroCuenta;
         this.comercianteId = params.comercianteId;
         this.analistaAprobadorId = params.analistaAprobadorId;
+        this.motivoRechazo = params.motivoRechazo;
     }
+
+    // Getter y Setter para motivoRechazo
+    public getMotivoRechazo(): string | undefined {
+        return this.motivoRechazo;
+    }
+
+    public setMotivoRechazo(motivo: string | undefined): void {
+        this.motivoRechazo = motivo;
+    }
+
+
     public setMontoTotal(montoTotal: number): void {
         this.montoTotal = montoTotal;
         this.valorCuota = this.cantidadCuotas > 0 ? montoTotal / this.cantidadCuotas : 0;
@@ -238,7 +251,8 @@ export class Compra {
             numeroCuenta: this.numeroCuenta,
             clienteId: this.clienteId,
             comercianteId: this.comercianteId,
-            analistaAprobadorId: this.analistaAprobadorId
+            analistaAprobadorId: this.analistaAprobadorId,
+            motivoRechazo: this.motivoRechazo
         };
     }
 

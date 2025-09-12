@@ -14,10 +14,10 @@ export class CompraRepositoryAdapter implements CompraRepositoryPort {
                    cl.apellido as cliente_apellido,
                    cl.cuil as cliente_cuil,
                    co.nombre_comercio,
-                   co.id as comerciante_id
+                   co.usuario_id as comerciante_id
             FROM compras c
             LEFT JOIN clientes cl ON c.cliente_id = cl.id
-            LEFT JOIN comerciantes co ON c.comerciante_id = co.id
+            LEFT JOIN comerciantes co ON c.comerciante_id = co.usuario_id
             `;
             const res = await client.query(query);
             
@@ -48,17 +48,16 @@ export class CompraRepositoryAdapter implements CompraRepositoryPort {
                     numeroAutorizacion: row.numero_autorizacion,
                     numeroCuenta: row.numero_cuenta,
                     comercianteId: row.comerciante_id,
-                    analistaAprobadorId: row.analista_aprobador_id
+                    analistaAprobadorId: row.analista_aprobador_id,
+                    motivoRechazo: row.motivo_rechazo
                 });
-                // Agregar información adicional al objeto plano
-                const compraPlain = compra.toPlainObject();
-                compras.push({
-                    ...compraPlain,
-                    cliente_nombre: `${row.cliente_nombre} ${row.cliente_apellido}`,
-                    nombre_comercio: row.nombre_comercio,
-                    comerciante_id: row.comerciante_id,
-                    cliente_cuil: row.cliente_cuil
-                });
+                // Agregar propiedades adicionales
+            (compra as any).cliente_nombre = `${row.cliente_nombre} ${row.cliente_apellido}`;
+            (compra as any).nombre_comercio = row.nombre_comercio;
+            (compra as any).comerciante_id = row.comerciante_id;
+            (compra as any).cliente_cuil = row.cliente_cuil;
+
+            compras.push(compra);
             }
             
             return compras;
@@ -101,9 +100,10 @@ export class CompraRepositoryAdapter implements CompraRepositoryPort {
                 numero_autorizacion,
                 numero_cuenta,
                 comerciante_id,
-                analista_aprobador_id
+                analista_aprobador_id,
+                motivo_rechazo
                 )
-                VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+                VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
                 RETURNING id, fecha_creacion, fecha_actualizacion
             `;
             const compraValues = [
@@ -118,7 +118,8 @@ export class CompraRepositoryAdapter implements CompraRepositoryPort {
                 compra.getNumeroAutorizacion(),
                 compra.getNumeroCuenta(),
                 compra.getComercianteId(),
-                compra.getAnalistaAprobadorId()
+                compra.getAnalistaAprobadorId(),
+                compra.getMotivoRechazo() || null
             ];
             const compraRes = await client.query(compraQuery, compraValues);
             const compraId = compraRes.rows[0].id;
@@ -181,10 +182,10 @@ export class CompraRepositoryAdapter implements CompraRepositoryPort {
                     cl.apellido as cliente_apellido,
                     cl.cuil as cliente_cuil,
                     co.nombre_comercio,
-                    co.id as comerciante_id
+                    co.usuario_id as comerciante_id
                 FROM compras c
                 LEFT JOIN clientes cl ON c.cliente_id = cl.id
-                LEFT JOIN comerciantes co ON c.comerciante_id = co.id
+                LEFT JOIN comerciantes co ON c.comerciante_id = co.usuario_id
                 WHERE c.id = $1
             `;
             const compraRes = await client.query(compraQuery, [id]);
@@ -221,18 +222,17 @@ export class CompraRepositoryAdapter implements CompraRepositoryPort {
                 numeroAutorizacion: compraData.numero_autorizacion,
                 numeroCuenta: compraData.numero_cuenta,
                 comercianteId: compraData.comerciante_id,
-                analistaAprobadorId: compraData.analista_aprobador_id
+                analistaAprobadorId: compraData.analista_aprobador_id,
+                motivoRechazo: compraData.motivo_rechazo
             });
 
             // Agregar información adicional al objeto plano
-            const compraPlain = compra.toPlainObject();
-            return {
-                ...compraPlain,
-                cliente_nombre: `${compraData.cliente_nombre} ${compraData.cliente_apellido}`,
-                nombre_comercio: compraData.nombre_comercio,
-                comerciante_id: compraData.comerciante_id,
-                cliente_cuil: compraData.cliente_cuil
-            };
+            (compra as any).cliente_nombre = `${compraData.cliente_nombre} ${compraData.cliente_apellido}`;
+        (compra as any).nombre_comercio = compraData.nombre_comercio;
+        (compra as any).comerciante_id = compraData.comerciante_id;
+        (compra as any).cliente_cuil = compraData.cliente_cuil;
+
+        return compra;
         } finally {
             client.release();
         }
@@ -257,7 +257,8 @@ export class CompraRepositoryAdapter implements CompraRepositoryPort {
                 cliente_id = $9,
                 fecha_actualizacion = CURRENT_TIMESTAMP,
                 comerciante_id = $11,
-                analista_aprobador_id = $12
+                analista_aprobador_id = $12,
+                motivo_rechazo = $13
                 WHERE id = $10
                 RETURNING fecha_actualizacion
             `;
@@ -273,7 +274,8 @@ export class CompraRepositoryAdapter implements CompraRepositoryPort {
                 clienteId,
                 compra.getId(),
                 compra.getComercianteId(),
-                compra.getAnalistaAprobadorId()
+                compra.getAnalistaAprobadorId(),
+                compra.getMotivoRechazo() || null
             ];
             const compraRes = await client.query(compraQuery, compraValues);
             const fechaActualizacion = compraRes.rows[0].fecha_actualizacion;
@@ -418,17 +420,16 @@ export class CompraRepositoryAdapter implements CompraRepositoryPort {
             numeroAutorizacion: compraData.numero_autorizacion,
             numeroCuenta: compraData.numero_cuenta,
             comercianteId: compraData.comerciante_id,
-            analistaAprobadorId: compraData.analista_aprobador_id
+            analistaAprobadorId: compraData.analista_aprobador_id,
+            motivoRechazo: compraData.motivo_rechazo
         });
 
-        const compraPlain = compra.toPlainObject();
-        return {
-            ...compraPlain,
-            cliente_nombre: `${compraData.cliente_nombre} ${compraData.cliente_apellido}`,
-            nombre_comercio: compraData.nombre_comercio,
-            comerciante_id: compraData.comerciante_id,
-            cliente_cuil: compraData.cliente_cuil
-        };
+        (compra as any).cliente_nombre = `${compraData.cliente_nombre} ${compraData.cliente_apellido}`;
+        (compra as any).nombre_comercio = compraData.nombre_comercio;
+        (compra as any).comerciante_id = compraData.comerciante_id;
+        (compra as any).cliente_cuil = compraData.cliente_cuil;
+
+        return compra;
     } finally {
         client.release();
     }
@@ -443,10 +444,10 @@ export class CompraRepositoryAdapter implements CompraRepositoryPort {
                    cl.apellido as cliente_apellido,
                    cl.cuil as cliente_cuil,
                    co.nombre_comercio,
-                   co.id as comerciante_id
+                   co.usuario_id as comerciante_id
             FROM compras c
             LEFT JOIN clientes cl ON c.cliente_id = cl.id
-            LEFT JOIN comerciantes co ON c.comerciante_id = co.id
+            LEFT JOIN comerciantes co ON c.comerciante_id = co.usuario_id
             WHERE c.estado = $1
         `;
         const res = await client.query(query, [estado]);
@@ -479,17 +480,16 @@ export class CompraRepositoryAdapter implements CompraRepositoryPort {
                     numeroAutorizacion: row.numero_autorizacion,
                     numeroCuenta: row.numero_cuenta,
                     comercianteId: row.comerciante_id,
-                    analistaAprobadorId: row.analista_aprobador_id
+                    analistaAprobadorId: row.analista_aprobador_id,
+                    motivoRechazo: row.motivo_rechazo
                 });
 
-                const compraPlain = compra.toPlainObject();
-                compras.push({
-                    ...compraPlain,
-                    cliente_nombre: `${row.cliente_nombre} ${row.cliente_apellido}`,
-                    nombre_comercio: row.nombre_comercio,
-                    comerciante_id: row.comerciante_id,
-                    cliente_cuil: row.cliente_cuil
-                });
+                (compra as any).cliente_nombre = `${row.cliente_nombre} ${row.cliente_apellido}`;
+        (compra as any).nombre_comercio = row.nombre_comercio;
+        (compra as any).comerciante_id = row.comerciante_id;
+        (compra as any).cliente_cuil = row.cliente_cuil;
+
+            compras.push(compra);
         }
         
         return compras;
@@ -509,10 +509,10 @@ export class CompraRepositoryAdapter implements CompraRepositoryPort {
                    cl.apellido as cliente_apellido,
                    cl.cuil as cliente_cuil,
                    co.nombre_comercio,
-                   co.id as comerciante_id
+                   co.usuario_id as comerciante_id
             FROM compras c
             INNER JOIN clientes cl ON c.cliente_id = cl.id
-            INNER JOIN comerciantes co ON c.comerciante_id = co.id
+            INNER JOIN comerciantes co ON c.comerciante_id = co.usuario_id
             WHERE c.comerciante_id = $1
             `;
             const res = await client.query(query, [comercianteId]);
@@ -544,17 +544,16 @@ export class CompraRepositoryAdapter implements CompraRepositoryPort {
                     numeroAutorizacion: row.numero_autorizacion,
                     numeroCuenta: row.numero_cuenta,
                     comercianteId: row.comerciante_id,
-                    analistaAprobadorId: row.analista_aprobador_id
+                    analistaAprobadorId: row.analista_aprobador_id,
+                    motivoRechazo: row.motivo_rechazo
                 });
 
-                const compraPlain = compra.toPlainObject();
-                compras.push({
-                    ...compraPlain,
-                    cliente_nombre: `${row.cliente_nombre} ${row.cliente_apellido}`,
-                    nombre_comercio: row.nombre_comercio,
-                    comerciante_id: row.comerciante_id,
-                    cliente_cuil: row.cliente_cuil
-                });
+                (compra as any).cliente_nombre = `${row.cliente_nombre} ${row.cliente_apellido}`;
+        (compra as any).nombre_comercio = row.nombre_comercio;
+        (compra as any).comerciante_id = row.comerciante_id;
+        (compra as any).cliente_cuil = row.cliente_cuil;
+
+                compras.push(compra);
             }
             return compras;
         } finally {
