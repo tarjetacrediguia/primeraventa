@@ -4,16 +4,28 @@
  * MÓDULO: Caso de Uso - Crear Solicitud Inicial
  *
  * Este módulo implementa la lógica de negocio para crear una nueva solicitud inicial de crédito.
- * Maneja la validación de clientes, verificación de créditos activos, creación de solicitudes
- * y notificaciones correspondientes.
+ * Maneja la validación de clientes, verificación de créditos activos, integración con Nosis,
+ * creación de solicitudes y notificaciones correspondientes.
  *
  * RESPONSABILIDADES:
  * - Validar que el cliente no tenga créditos activos
  * - Crear o recuperar información del cliente
- * - Crear la solicitud inicial con estado pendiente
+ * - Integrar con servicio Nosis para validación automática
+ * - Actualizar datos del cliente con información de Nosis
+ * - Crear la solicitud inicial con estado apropiado
+ * - Manejar aprobación/rechazo automático basado en Nosis
  * - Registrar eventos en el historial del sistema
- * - Enviar notificaciones al comerciante
+ * - Enviar notificaciones al comerciante y analistas
  * - Manejar errores y excepciones
+ * 
+ * FLUJO PRINCIPAL:
+ * 1. Crear o recuperar cliente por CUIL
+ * 2. Validar que no tenga créditos activos
+ * 3. Crear solicitud inicial pendiente
+ * 4. Integrar con Nosis para validación
+ * 5. Actualizar datos del cliente con info de Nosis
+ * 6. Aplicar reglas de aprobación automática (si está habilitado)
+ * 7. Registrar eventos y enviar notificaciones
  */
 
 import { SolicitudInicialRepositoryPort } from "../../ports/SolicitudInicialRepositoryPort";
@@ -47,17 +59,17 @@ export type CrearSolicitudInicialResponse = {
  */
 export class CrearSolicitudInicialUseCase {
   /**
-   * Constructor del caso de uso.
+   * Constructor del caso de uso para crear solicitudes iniciales.
    *
    * @param solicitudInicialRepository - Puerto para operaciones de solicitudes iniciales
    * @param contratoRepository - Puerto para operaciones de contratos
    * @param solicitudFormalRepository - Puerto para operaciones de solicitudes formales
-   * @param verazService - Puerto para servicios de Veraz (actualmente deshabilitado)
    * @param notificationService - Puerto para servicios de notificación
    * @param clienteRepository - Puerto para operaciones de clientes
    * @param historialRepository - Puerto para registro de eventos en historial
    * @param analistaRepository - Puerto para operaciones de analistas
-   * @param verazAutomatico - Booleano para activar modo automático de Veraz
+   * @param nosisPort - Puerto para servicios de Nosis
+   * @param nosisAutomatico - Booleano para activar modo automático de Nosis
    */
   constructor(
     private readonly solicitudInicialRepository: SolicitudInicialRepositoryPort,
@@ -75,17 +87,30 @@ export class CrearSolicitudInicialUseCase {
    * Ejecuta la creación de una solicitud inicial de crédito.
    *
    * Este método implementa el flujo completo de creación de solicitud inicial:
-   * 1. Busca o crea el cliente según el DNI proporcionado
+   * 1. Busca o crea el cliente según el CUIL proporcionado
    * 2. Verifica que el cliente no tenga créditos activos
    * 3. Crea la solicitud inicial con estado pendiente
-   * 4. Registra el evento en el historial
-   * 5. Envía notificaciones al comerciante
+   * 4. Integra con Nosis para validación automática
+   * 5. Actualiza datos del cliente con información de Nosis
+   * 6. Aplica reglas de aprobación automática (si está habilitado)
+   * 7. Registra eventos en el historial
+   * 8. Envía notificaciones al comerciante y analistas
+   *
+   * INTEGRACIÓN CON NOSIS:
+   * - Obtiene datos personales y laborales del cliente
+   * - Actualiza información del cliente con datos de Nosis
+   * - Aplica reglas de aprobación automática si nosisAutomatico está habilitado
+   * - Maneja estados: aprobado, pendiente, rechazado
+   *
+   * VALIDACIONES REALIZADAS:
+   * - Cliente no debe tener créditos activos
+   * - CUIL debe ser válido
+   * - Datos de Nosis deben ser procesables
    *
    * @param dniCliente - DNI del cliente para la solicitud
    * @param cuilCliente - CUIL del cliente para la solicitud
    * @param comercianteId - ID del comerciante que crea la solicitud
-   * @param reciboSueldo - Buffer opcional con el recibo de sueldo del cliente
-   * @returns Promise<SolicitudInicial> - La solicitud inicial creada
+   * @returns Promise<CrearSolicitudInicialResponse> - Respuesta con solicitud y datos de Nosis
    * @throws Error - Si el cliente ya tiene un crédito activo o si ocurre un error en el proceso
    */
   async execute(
@@ -94,6 +119,8 @@ export class CrearSolicitudInicialUseCase {
     comercianteId: number
   ): Promise<CrearSolicitudInicialResponse> {
     try {
+      // ===== PASO 1: CREAR O RECUPERAR CLIENTE =====
+      // Buscar cliente existente por CUIL o crear uno nuevo
       let cliente: Cliente;
       let clienteTemporal: Cliente;
       try {
@@ -101,7 +128,7 @@ export class CrearSolicitudInicialUseCase {
       } catch (error) {
         // No se encontró el cliente, se creará uno nuevo
       } finally {
-        // Crear con datos mínimos si no existe
+        // Crear cliente con datos mínimos si no existe
         cliente = new Cliente(
           0,
           "Nombre temporal",
@@ -112,8 +139,9 @@ export class CrearSolicitudInicialUseCase {
         clienteTemporal = await this.clienteRepository.save(cliente);
       }
 
-      // 1. Verificar si el cliente tiene crédito activo
-      const tieneCreditoActivo = await this.tieneCreditoActivo(cuilCliente); // Usar CUIL en lugar de DNI
+      // ===== PASO 2: VALIDAR CRÉDITO ACTIVO =====
+      // Verificar que el cliente no tenga créditos activos
+      const tieneCreditoActivo = await this.tieneCreditoActivo(cuilCliente);
       if (tieneCreditoActivo) {
         // Notificar al comerciante que no puede crear solicitud
         await this.notificationService.emitNotification({
@@ -138,7 +166,8 @@ export class CrearSolicitudInicialUseCase {
         throw new Error("El cliente ya tiene un crédito activo");
       }
 
-      // Crear solicitud vinculada al cliente
+      // ===== PASO 3: CREAR SOLICITUD INICIAL =====
+      // Crear solicitud inicial vinculada al cliente
       const solicitud = new SolicitudInicial(
         0,
         new Date(),
@@ -147,7 +176,8 @@ export class CrearSolicitudInicialUseCase {
         comercianteId
       );
 
-      // 3. Guardar solicitud inicial
+      // ===== PASO 4: PERSISTIR SOLICITUD =====
+      // Guardar solicitud inicial en la base de datos
       const solicitudCreada =
         await this.solicitudInicialRepository.createSolicitudInicial(
           solicitud,
@@ -156,7 +186,8 @@ export class CrearSolicitudInicialUseCase {
 
       const solicitudInicialId = solicitudCreada.getId();
 
-      // Registrar evento de creación
+      // ===== PASO 5: REGISTRAR EVENTO EN HISTORIAL =====
+      // Registrar evento de creación exitosa en historial
       await this.historialRepository.registrarEvento({
         usuarioId: comercianteId,
         accion: HISTORIAL_ACTIONS.CREATE_SOLICITUD_INICIAL,
@@ -170,17 +201,24 @@ export class CrearSolicitudInicialUseCase {
         solicitudInicialId: solicitudInicialId,
       });
 
+      // ===== PASO 6: INTEGRACIÓN CON NOSIS =====
+      // Variables para almacenar datos de Nosis y resultados
       let nosisData: PersonalData | undefined;
       let motivoRechazo: string | undefined;
       let reglasFallidas: string[] | undefined;
 
       try {
+        // Obtener datos del cliente desde Nosis
         const getNosisData = new GetDataNosisUseCase(this.nosisPort);
         const nosisResponse = await getNosisData.execute(cuilCliente);
+        
+        // Verificar y validar datos de Nosis
         const verifyNosis = new VerifyDataNosisUseCase();
         const resultadoNosis = await verifyNosis.execute(nosisResponse);
         nosisData = resultadoNosis.personalData;
-        ///////////////////// Actualizar datos del cliente con info de Nosis //////////////
+        
+        // ===== PASO 7: ACTUALIZAR DATOS DEL CLIENTE CON NOSIS =====
+        // Actualizar información personal del cliente con datos de Nosis
         clienteTemporal.setNombreCompleto(
           nosisData && nosisData.nombreCompleto?.nombre
             ? nosisData.nombreCompleto.nombre
@@ -245,7 +283,7 @@ export class CrearSolicitudInicialUseCase {
             : null
         );
 
-        //Datos laborales
+        // Actualizar datos laborales del cliente con información de Nosis
         if (
           nosisData &&
           nosisData.datosLaborales &&
@@ -287,15 +325,14 @@ export class CrearSolicitudInicialUseCase {
               : null
           );
         }
+        
+        // Persistir actualizaciones del cliente en la base de datos
         await this.clienteRepository.update(clienteTemporal);
-        //////////////////// FIN Actualizar datos del cliente con info de Nosis //////////////
-        console.log(
-          "Actualizando cliente con datos de Nosis:",
-          clienteTemporal
-        );
-        console.log("Resultado de verificación de Nosis:", resultadoNosis);
+        // ===== PASO 8: APLICAR REGLAS DE APROBACIÓN AUTOMÁTICA =====
+        // Aplicar reglas de aprobación automática si está habilitado
         if (this.nosisAutomatico) {
           if (resultadoNosis.status === "aprobado") {
+            // Aprobar automáticamente la solicitud
             solicitudCreada.setEstado("aprobada");
             await this.solicitudInicialRepository.updateSolicitudInicial(
               solicitudCreada,
@@ -315,6 +352,7 @@ export class CrearSolicitudInicialUseCase {
               solicitudInicialId,
             });
           } else if (resultadoNosis.status === "pendiente") {
+            // Mantener estado pendiente para revisión manual
             solicitudCreada.setEstado("pendiente");
             await this.solicitudInicialRepository.updateSolicitudInicial(
               solicitudCreada,
@@ -334,12 +372,14 @@ export class CrearSolicitudInicialUseCase {
               solicitudInicialId,
             });
           } else if (resultadoNosis.status === "rechazado") {
+            // Rechazar automáticamente la solicitud
             motivoRechazo = resultadoNosis.motivo;
             reglasFallidas = resultadoNosis.reglasFallidas;
             solicitudCreada.setEstado("rechazada");
             solicitud.setMotivoRechazo(motivoRechazo ?? "");
             solicitud.agregarComentario(`Rechazo: ${motivoRechazo}`);
-            //se guarda el motivo de rechazo en la solicitud
+            
+            // Guardar el motivo de rechazo en la solicitud
             await this.solicitudInicialRepository.updateSolicitudInicial(
               solicitudCreada,
               clienteTemporal
@@ -359,6 +399,7 @@ export class CrearSolicitudInicialUseCase {
               solicitudInicialId,
             });
           } else {
+            // Estado desconocido, mantener pendiente para revisión
             solicitudCreada.setEstado("pendiente");
             await this.solicitudInicialRepository.updateSolicitudInicial(
               solicitudCreada,
@@ -367,20 +408,26 @@ export class CrearSolicitudInicialUseCase {
             await this.notificarAnalistas(solicitudCreada, clienteTemporal);
           }
         } else {
-          // Modo manual
+          // ===== MODO MANUAL =====
+          // Modo manual: notificar a analistas para revisión
           await this.notificarAnalistas(solicitudCreada, clienteTemporal);
         }
       } catch (error) {
+        // ===== MANEJO DE ERRORES DE NOSIS =====
+        // Registrar error de integración con Nosis pero continuar el proceso
         console.error("Error obteniendo datos de Nosis:", error);
       }
 
-      // Notificación al comerciante (existente)
+      // ===== PASO 9: NOTIFICAR AL COMERCIANTE =====
+      // Enviar notificación al comerciante sobre la creación exitosa
       await this.notificationService.emitNotification({
         userId: Number(comercianteId),
         type: "solicitud_inicial",
         message: "Solicitud inicial creada exitosamente",
       });
 
+      // ===== PASO 10: RETORNAR RESPUESTA =====
+      // Retornar respuesta con solicitud y datos de Nosis
       return {
         solicitud: solicitudCreada,
         nosisData,
@@ -388,18 +435,21 @@ export class CrearSolicitudInicialUseCase {
         reglasFallidas,
       };
     } catch (error) {
-      // Notificar error al comerciante
+      // ===== MANEJO DE ERRORES GENERALES =====
+      // Determinar mensaje de error apropiado
       let errorMessage = "Error desconocido";
       if (error instanceof Error) {
         errorMessage = error.message;
       }
+      
+      // Notificar error al comerciante
       await this.notificationService.emitNotification({
         userId: Number(comercianteId),
         type: "error",
         message: `Error al crear solicitud: ${errorMessage}`,
       });
 
-      // Registrar evento de error
+      // Registrar evento de error en historial
       await this.historialRepository.registrarEvento({
         usuarioId: comercianteId,
         accion: HISTORIAL_ACTIONS.ERROR_PROCESO,
@@ -413,6 +463,7 @@ export class CrearSolicitudInicialUseCase {
         solicitudInicialId: undefined, // No hay solicitud por error
       });
 
+      // Re-lanzar el error para que sea manejado por el controlador
       throw error;
     }
   }

@@ -1,6 +1,33 @@
 import { NosisResponse, NosisVariable } from "../../../domain/entities/NosisData";
 
+/**
+ * MÓDULO: Caso de Uso - Verificación de Datos Nosis
+ *
+ * Este módulo implementa la lógica de negocio para verificar y validar datos obtenidos del servicio Nosis.
+ * Aplica reglas de negocio específicas para determinar la aprobación automática de solicitudes de crédito.
+ *
+ * RESPONSABILIDADES:
+ * - Definir estructura de datos personales extraídos de Nosis
+ * - Configurar y aplicar reglas de validación personalizables
+ * - Evaluar condiciones específicas de negocio (aportes, deudas, situación laboral)
+ * - Extraer y estructurar datos personales del cliente
+ * - Determinar estado de aprobación (aprobado/rechazado/pendiente)
+ * - Calcular score crediticio basado en variables de Nosis
+ * 
+ * FLUJO PRINCIPAL:
+ * 1. Recibir respuesta cruda de Nosis
+ * 2. Extraer y estructurar datos personales
+ * 3. Aplicar reglas de validación configuradas
+ * 4. Verificar condiciones específicas de negocio
+ * 5. Determinar estado final de aprobación
+ * 6. Retornar resultado estructurado con metadata
+ */
 
+/**
+ * Estructura de datos personales extraídos de la respuesta de Nosis
+ * Contiene información personal, documentación, domicilio, contactos,
+ * situación laboral y referencias del cliente
+ */
 export type PersonalData = {
   nombreCompleto: {
     nombre?: string;
@@ -53,7 +80,11 @@ export type PersonalData = {
     relacion?: string;
   }>;
 };
-
+/**
+ * Resultado del proceso de verificación de datos Nosis
+ * Contiene el estado de aprobación, score crediticio, motivos de rechazo
+ * y datos personales estructurados
+ */
 export type VerificationResult = {
   status: 'aprobado' | 'rechazado' | 'pendiente';
   approved: boolean;
@@ -62,19 +93,35 @@ export type VerificationResult = {
   reglasFallidas?: string[];
   personalData?: PersonalData;
 };
-
+/**
+ * Configuración de reglas de validación para variables de Nosis
+ * Define las condiciones que deben cumplirse para la aprobación automática
+ */
 export type RuleConfig = {
   variable: string;
   operacion: '>' | '<' | '>=' | '<=' | '==' | '!=' | 'in' | 'not-in';
   valor: any;
   mensaje: string;
 };
-
+/**
+ * Caso de uso para verificación y validación de datos de Nosis
+ * 
+ * Implementa el proceso completo de evaluación de datos crediticios:
+ * - Aplica reglas configurables de validación
+ * - Verifica condiciones específicas de negocio
+ * - Extrae y estructura información personal
+ * - Calcula score crediticio
+ * - Determina estado de aprobación final
+ */
 export class VerifyDataNosisUseCase {
-
+  // Reglas de validación configuradas
   private rules: RuleConfig[];
+  // Mínimo requerido de aportes para aprobación
   private readonly MINIMO_APORTES = 4;
-
+  /**
+   * Constructor del caso de uso de verificación Nosis
+   * @param rules - Reglas personalizadas de validación (opcional)
+   */
   constructor(rules?: RuleConfig[]) {
     // Reglas por defecto si no se proporcionan
     this.rules = rules || [
@@ -86,14 +133,19 @@ export class VerifyDataNosisUseCase {
       }
     ];
   }
-
+  /**
+   * Evalúa una regla de validación contra una variable de Nosis
+   * @param variable - Variable de Nosis a evaluar
+   * @param regla - Configuración de la regla a aplicar
+   * @returns Boolean indicando si la regla se cumple
+   */
   private evaluarRegla(variable: NosisVariable | undefined, regla: RuleConfig): boolean {
     if (!variable) return false;
-    
+    // Convertir valor según el tipo de variable
     const valorReal = variable.Tipo === 'ENTERO' ? parseInt(variable.Valor) : 
                      variable.Tipo === 'DECIMAL' ? parseFloat(variable.Valor) : 
                      variable.Valor;
-
+    // Aplicar operación de comparación
     switch (regla.operacion) {
       case '>': return valorReal > regla.valor;
       case '<': return valorReal < regla.valor;
@@ -106,13 +158,21 @@ export class VerifyDataNosisUseCase {
       default: return false;
     }
   }
-
+  /**
+   * Verifica si el cliente tiene suficientes aportes registrados
+   * @param variables - Lista de variables de Nosis
+   * @returns Boolean indicando si cumple con el mínimo requerido
+   */
   private verificarAportes(variables: NosisVariable[]): boolean {
     const aportes = parseInt(variables.find(v => v.Nombre === 'AP_12m_Empleado_Pagos_Cant')?.Valor || '0');
     return aportes >= this.MINIMO_APORTES;
 }
 
-
+  /**
+   * Ejecuta el proceso completo de verificación de datos Nosis
+   * @param nosisData - Respuesta cruda del servicio Nosis
+   * @returns Promise<VerificationResult> - Resultado estructurado de la verificación
+   */
   async execute(nosisData: NosisResponse): Promise<VerificationResult> {
     const variables = nosisData.Contenido.Datos.Variables.Variable;
     const reglasFallidas: string[] = [];
@@ -191,7 +251,11 @@ export class VerifyDataNosisUseCase {
       };
   }
 
-   // Modificar la verificación de deudas para manejar el nuevo criterio
+   /**
+   * Verifica el estado de deudas en entidades financieras
+   * @param variables - Lista de variables de Nosis
+   * @returns Objeto con estado y mensaje de la verificación
+   */
 private verificarDeudaEntidades(variables: NosisVariable[]): { estado: 'aprobado' | 'pendiente' | 'rechazado', mensaje?: string } {
     const detalleDeudas = variables.find(v => v.Nombre === 'CI_24m_Detalle')?.Valor;
     if (!detalleDeudas) return { estado: 'aprobado' };
@@ -221,7 +285,11 @@ private verificarDeudaEntidades(variables: NosisVariable[]): { estado: 'aprobado
     
     return { estado: 'aprobado' };
 }
-
+  /**
+   * Parsea el string de detalle de deudas en estructura manejable
+   * @param detalleDeudas - String crudo con información de deudas
+   * @returns Array de objetos con información estructurada de deudas
+   */
   private parsearDetalleDeudas(detalleDeudas: string): Array<{entidad: string, periodo: number, situacion: number, monto: number}> {
     const resultados: Array<{entidad: string, periodo: number, situacion: number, monto: number}> = [];
     
@@ -243,13 +311,22 @@ private verificarDeudaEntidades(variables: NosisVariable[]): { estado: 'aprobado
     
     return resultados;
   }
-
+  /**
+   * Verifica si el cliente tiene empleo registrado
+   * @param variables - Lista de variables de Nosis
+   * @returns Boolean indicando si tiene empleo registrado
+   */
   private tieneEmpleoRegistrado(variables: NosisVariable[]): boolean {
     const esEmpleado = variables.find(v => v.Nombre === 'VI_Empleado_Es')?.Valor === 'Si';
     const tieneAportes = parseInt(variables.find(v => v.Nombre === 'AP_12m_Empleado_Pagos_Cant')?.Valor || '0') > 0;
     
     return esEmpleado || tieneAportes;
   }
+  /**
+   * Verifica la situación laboral del cliente
+   * @param variables - Lista de variables de Nosis
+   * @returns Boolean indicando si tiene situación laboral válida
+   */
     private verificarSituacionLaboral(variables: NosisVariable[]): boolean {
     const esEmpleado = variables.find(v => v.Nombre === 'VI_Empleado_Es')?.Valor === 'Si';
     //const esAutonomo = variables.find(v => v.Nombre === 'VI_Inscrip_Autonomo_Es')?.Valor === 'Si';
@@ -258,6 +335,11 @@ private verificarDeudaEntidades(variables: NosisVariable[]): { estado: 'aprobado
     
     return esEmpleado || parseInt(aportes) > 0;
     }
+    /**
+   * Extrae y estructura datos personales de las variables de Nosis
+   * @param variables - Lista de variables de Nosis
+   * @returns Objeto PersonalData con información estructurada
+   */
     private extraerDatosPersonales(variables: NosisVariable[]): PersonalData {
     const getValor = (nombre: string): string | undefined => {
       const variable = variables.find(v => v.Nombre === nombre);

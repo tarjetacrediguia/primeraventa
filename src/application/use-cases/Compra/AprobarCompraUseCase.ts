@@ -8,13 +8,25 @@
  * en historial y notificaciones a los usuarios involucrados.
  *
  * RESPONSABILIDADES:
- * - Validar que la compra existe y está pendiente
+ * - Validar que la compra existe y está en estado PENDIENTE
  * - Verificar que la solicitud formal asociada está aprobada
  * - Confirmar que el monto no excede el límite de crédito
- * - Actualizar estado de la compra a "aprobada"
+ * - Manejar ampliaciones de crédito automáticamente si es necesario
+ * - Asignar número de autorización y cuenta bancaria
+ * - Actualizar estado de la compra a "APROBADA"
  * - Registrar evento en el historial del sistema
- * - Notificar al comerciante y al cliente sobre la aprobación
+ * - Notificar al comerciante sobre la aprobación
  * - Manejar errores y excepciones del proceso
+ * 
+ * FLUJO PRINCIPAL:
+ * 1. Validación de existencia y estado de compra
+ * 2. Validación de solicitud formal asociada
+ * 3. Verificación de límites de crédito y ampliaciones
+ * 4. Asignación de datos bancarios
+ * 5. Actualización de estado a APROBADA
+ * 6. Persistencia de cambios
+ * 7. Registro en historial
+ * 8. Notificación a comerciante
  */
 
 import { CompraRepositoryPort } from "../../ports/CompraRepositoryPort";
@@ -26,6 +38,15 @@ import { ClienteRepositoryPort } from "../../ports/ClienteRepositoryPort";
 import { HISTORIAL_ACTIONS } from "../../constants/historialActions";
 
 export class AprobarCompraUseCase {
+  /**
+   * Constructor del caso de uso para aprobar compras
+   * 
+   * @param compraRepository - Repositorio para operaciones de compra
+   * @param solicitudFormalRepository - Repositorio para operaciones de solicitud formal
+   * @param historialRepository - Repositorio para registro de eventos en historial
+   * @param notificationService - Servicio para envío de notificaciones
+   * @param clienteRepository - Repositorio para operaciones de cliente
+   */
   constructor(
     private readonly compraRepository: CompraRepositoryPort,
     private readonly solicitudFormalRepository: SolicitudFormalRepositoryPort,
@@ -41,14 +62,23 @@ export class AprobarCompraUseCase {
    * 1. Obtiene la compra por ID
    * 2. Valida estado pendiente
    * 3. Verifica solicitud formal asociada
-   * 4. Confirma límite de crédito
-   * 5. Actualiza estado a aprobada
-   * 6. Registra evento en historial
-   * 7. Notifica a comerciante y cliente
+   * 4. Confirma límite de crédito y maneja ampliaciones
+   * 5. Asigna número de autorización y cuenta bancaria
+   * 6. Actualiza estado a aprobada
+   * 7. Registra evento en historial
+   * 8. Notifica a comerciante
+   *
+   * VALIDACIONES REALIZADAS:
+   * - Compra debe existir y estar en estado PENDIENTE
+   * - Solicitud formal debe existir y estar aprobada
+   * - Monto no debe exceder límite de crédito (a menos que tenga ampliación)
+   * - Número de autorización y cuenta deben ser proporcionados
    *
    * @param id - ID de la compra a aprobar
    * @param usuarioId - ID del usuario que realiza la aprobación
-   * @returns Promise<Compra> - Compra actualizada
+   * @param numeroAutorizacion - Número de autorización bancaria
+   * @param numeroCuenta - Número de cuenta bancaria
+   * @returns Promise<Compra> - Compra actualizada con estado APROBADA
    * @throws Error - Si no se cumplen las validaciones o ocurre un error
    */
   async execute(
@@ -58,9 +88,13 @@ export class AprobarCompraUseCase {
     numeroCuenta: string
     ): Promise<Compra> {
     try {
-      // 1. Obtener compra por ID
+      // ===== PASO 1: OBTENER Y VALIDAR COMPRA =====
+      // Buscar la compra por ID
       const compra = await this.compraRepository.getCompraById(id);
+      
+      // Verificar que la compra existe
       if (!compra) {
+        // Obtener ID de solicitud formal para el historial de errores
         const solicitudFormalIdSinCompra =
           await this.compraRepository.getSolicitudFormalIdByCompraId(id);
         let solicitudInicialIdSinCompra: number | undefined;
@@ -73,7 +107,8 @@ export class AprobarCompraUseCase {
           solicitudInicialIdSinCompra =
             solicitudFormalSinCompra?.getSolicitudInicialId();
         }
-        // Registrar evento de error
+        
+        // Registrar evento de error en historial
         await this.historialRepository.registrarEvento({
           usuarioId: usuarioId,
           accion: HISTORIAL_ACTIONS.ERROR_PROCESO,
@@ -87,20 +122,25 @@ export class AprobarCompraUseCase {
         });
         throw new Error(`No existe una compra con ID: ${id}`);
       }
+      
+      // Obtener solicitud formal asociada
       const solicitudFormalId = compra.getSolicitudFormalId();
       const solicitudFormal =
         await this.solicitudFormalRepository.getSolicitudFormalById(
           solicitudFormalId
         );
       const solicitudInicialId = solicitudFormal?.getSolicitudInicialId();
-        // Registrar número de tarjeta y cuenta
+      
+      // ===== PASO 2: ASIGNAR DATOS BANCARIOS =====
+      // Asignar número de autorización y cuenta bancaria a la compra
       compra.setNumeroAutorizacion(numeroAutorizacion);
       compra.setNumeroCuenta(numeroCuenta);
 
 
-      // 2. Validar estado actual
+      // ===== PASO 3: VALIDAR ESTADO DE LA COMPRA =====
+      // Verificar que la compra esté en estado PENDIENTE para poder aprobarla
       if (compra.getEstado() !== EstadoCompra.PENDIENTE) {
-        // Registrar evento de estado inválido
+        // Registrar evento de estado inválido en historial
         await this.historialRepository.registrarEvento({
           usuarioId: usuarioId,
           accion: HISTORIAL_ACTIONS.ERROR_PROCESO,
@@ -117,10 +157,10 @@ export class AprobarCompraUseCase {
         );
       }
 
-      // 3. Verificar solicitud formal asociada
-
+      // ===== PASO 4: VALIDAR SOLICITUD FORMAL ASOCIADA =====
+      // Verificar que la solicitud formal existe
       if (!solicitudFormal) {
-        // Registrar evento de solicitud no encontrada
+        // Registrar evento de solicitud no encontrada en historial
         await this.historialRepository.registrarEvento({
           usuarioId: usuarioId,
           accion: HISTORIAL_ACTIONS.ERROR_PROCESO,
@@ -137,8 +177,9 @@ export class AprobarCompraUseCase {
         );
       }
 
+      // Verificar que la solicitud formal esté en estado "aprobada"
       if (solicitudFormal.getEstado() !== "aprobada") {
-        // Registrar evento de estado inválido
+        // Registrar evento de estado inválido en historial
         await this.historialRepository.registrarEvento({
           usuarioId: usuarioId,
           accion: HISTORIAL_ACTIONS.ERROR_PROCESO,
@@ -154,14 +195,17 @@ export class AprobarCompraUseCase {
           `La solicitud formal asociada no está aprobada: ${solicitudFormal.getEstado()}`
         );
       }
-      // 4. Validar monto ponderado vs límite de crédito
+      // ===== PASO 5: VALIDAR LÍMITES DE CRÉDITO Y MANEJAR AMPLIACIONES =====
+      // Obtener datos para validación de límites
       const montoCompra = compra.getMontoTotal();
       const limiteActual = solicitudFormal.getLimiteCompleto();
       const tieneAmpliacion = solicitudFormal.getSolicitaAmpliacionDeCredito();
 
+      // Verificar si el monto excede el límite actual
       if (montoCompra > limiteActual) {
+        // CASO 1: No tiene ampliación de crédito solicitada -> ERROR
         if (!tieneAmpliacion) {
-          // Registrar evento de límite excedido sin ampliación
+          // Registrar evento de límite excedido sin ampliación en historial
           await this.historialRepository.registrarEvento({
             usuarioId: usuarioId,
             accion: HISTORIAL_ACTIONS.ERROR_PROCESO,
@@ -178,10 +222,11 @@ export class AprobarCompraUseCase {
           throw new Error(`El monto de la compra (${montoCompra}) excede el límite de crédito (${limiteActual}) y no se solicitó ampliación.`);
         }
 
-        // Aprobar nuevo límite automáticamente con el monto ponderado
+        // CASO 2: Tiene ampliación de crédito solicitada -> APROBAR AUTOMÁTICAMENTE
+        // Aprobar nuevo límite automáticamente con el monto de la compra
         solicitudFormal.setNuevoLimiteCompletoSolicitado(montoCompra);
 
-        // Registrar evento de ampliación aprobada automáticamente
+        // Registrar evento de ampliación aprobada automáticamente en historial
         await this.historialRepository.registrarEvento({
           usuarioId: usuarioId,
           accion: HISTORIAL_ACTIONS.AMPLIACION_CREDITO_APROBADA,
@@ -196,18 +241,24 @@ export class AprobarCompraUseCase {
         });
       }
 
-      // 5. Actualizar estado
+      // ===== PASO 6: ACTUALIZAR ESTADO DE LA COMPRA =====
+      // Cambiar estado de la compra a APROBADA
       compra.setEstado(EstadoCompra.APROBADA);
-
+      
+      // Asignar ID del analista que aprueba la compra
       compra.setAnalistaAprobadorId(usuarioId);
 
-      // 6. Guardar cambios
+      // ===== PASO 7: PERSISTIR CAMBIOS =====
+      // Actualizar solicitud formal (en caso de ampliación de crédito)
       await this.solicitudFormalRepository.updateSolicitudFormal(solicitudFormal);
+      
+      // Actualizar compra en base de datos
       const compraActualizada = await this.compraRepository.updateCompra(
         compra, compra.getClienteId()
       );
 
-      // 7. Registrar aprobación en historial
+      // ===== PASO 8: REGISTRAR APROBACIÓN EN HISTORIAL =====
+      // Registrar evento de aprobación exitosa en historial
       await this.historialRepository.registrarEvento({
         usuarioId: usuarioId,
         accion: HISTORIAL_ACTIONS.APROBAR_COMPRA,
@@ -220,12 +271,8 @@ export class AprobarCompraUseCase {
         solicitudInicialId: solicitudInicialId,
       });
 
-      // 8. Obtener cliente para notificación
-      const cliente = await this.clienteRepository.findById(
-        solicitudFormal.getClienteId()
-      );
-
-      // 9. Notificar al comerciante
+      // ===== PASO 9: NOTIFICAR AL COMERCIANTE =====
+      // Enviar notificación al comerciante sobre la aprobación
       await this.notificationService.emitNotification({
         userId: solicitudFormal.getComercianteId(),
         type: "compra",
@@ -237,9 +284,11 @@ export class AprobarCompraUseCase {
         },
       });
 
+      // Retornar la compra actualizada exitosamente
       return compraActualizada;
     } catch (error) {
-      // Registrar evento de error
+      // ===== MANEJO DE ERRORES =====
+      // Obtener ID de solicitud inicial para el historial de errores
       let solicitudInicialIdError: number | undefined;
       try {
         const solicitudFormalId =
@@ -252,12 +301,14 @@ export class AprobarCompraUseCase {
           solicitudInicialIdError = solicitudFormal?.getSolicitudInicialId();
         }
       } catch (e) {
+        // Log del error pero no interrumpir el flujo principal
         console.error(
           "Error obteniendo solicitudInicialId para historial de error",
           e
         );
       }
 
+      // Registrar evento de error en historial
       await this.historialRepository.registrarEvento({
         usuarioId: usuarioId,
         accion: HISTORIAL_ACTIONS.ERROR_PROCESO,
@@ -270,7 +321,7 @@ export class AprobarCompraUseCase {
         solicitudInicialId: solicitudInicialIdError,
       });
 
-      // Notificar error
+      // Enviar notificación de error al usuario
       await this.notificationService.emitNotification({
         userId: usuarioId,
         type: "error",
@@ -279,6 +330,7 @@ export class AprobarCompraUseCase {
         }`,
       });
 
+      // Re-lanzar el error para que sea manejado por el controlador
       throw error;
     }
   }
