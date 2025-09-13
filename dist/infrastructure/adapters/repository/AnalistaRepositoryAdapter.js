@@ -93,7 +93,15 @@ class AnalistaRepositoryAdapter {
                 }
                 yield client.query('COMMIT');
                 // Retornar el analista creado con su ID
-                return new Analista_1.Analista(usuarioId, analista.getNombre(), analista.getApellido(), analista.getEmail(), analista.getPassword(), analista.getTelefono(), analista.getPermisos());
+                return new Analista_1.Analista({
+                    id: usuarioId,
+                    nombre: analista.getNombre(),
+                    apellido: analista.getApellido(),
+                    email: analista.getEmail(),
+                    password: analista.getPassword(),
+                    telefono: analista.getTelefono(),
+                    permisos: analista.getPermisos()
+                });
             }
             catch (error) {
                 yield client.query('ROLLBACK');
@@ -227,8 +235,15 @@ class AnalistaRepositoryAdapter {
         });
     }
     mapRowToAnalista(row) {
-        return new Analista_1.Analista(Number(row.id), row.nombre, row.apellido, row.email, '', // La contraseña no se retorna en las consultas
-        row.telefono, row.permisos.filter((p) => p !== null));
+        return new Analista_1.Analista({
+            id: Number(row.id),
+            nombre: row.nombre,
+            apellido: row.apellido,
+            email: row.email,
+            password: '', // La contraseña no se retorna en las consultas
+            telefono: row.telefono,
+            permisos: row.permisos.filter((p) => p !== null)
+        });
     }
 }
 exports.AnalistaRepositoryAdapter = AnalistaRepositoryAdapter;

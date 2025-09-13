@@ -57,15 +57,15 @@ export class UpdateAdminUseCase {
         }
 
         // Crear instancia actualizada
-        const administradorActualizado = new Administrador(
-            Number(id),
+        const administradorActualizado = new Administrador({
+            id: Number(id),
             nombre,
             apellido,
-            existe.getEmail(), // Mantener email existente
-            existe.getPassword(), // Mantener password existente
+            email: existe.getEmail(),
+            password: existe.getPassword(),
             telefono,
-            existe.getPermisos() // Mantener permisos existentes
-        );
+            permisos: existe.getPermisos()
+        });
 
         // Guardar cambios
         return this.repository.updateAdministrador(administradorActualizado);

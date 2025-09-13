@@ -75,17 +75,17 @@ export class CreateComercianteUseCase {
         }
 
         // Crear instancia de Comerciante
-        const comerciante = new Comerciante(
-            0, // ID temporal
+        const comerciante = new Comerciante({
+            id: 0, // ID temporal
             nombre,
             apellido,
             email,
-            passwordHash,
+            password: passwordHash,
             telefono,
             nombreComercio,
             cuil,
             direccionComercio
-        );
+        });
 
         // Guardar en el repositorio
         return this.repository.saveComerciante(comerciante);

@@ -56,14 +56,14 @@ export class CreateAdminUseCase {
         const saltRounds = 10;
         const passwordHash = await bcrypt.hash(password, saltRounds);
         // Crear instancia de Administrador (el id se generará en el repositorio)
-        const administrador = new Administrador(
-            0, // ID temporal (se asignará al guardar)
+        const administrador = new Administrador({
+            id: 0, // ID temporal (se asignará al guardar)
             nombre,
             apellido,
             email,
-            passwordHash,
+            password: passwordHash,
             telefono
-        );
+        });
 
         // Guardar en el repositorio
         return this.repository.saveAdministrador(administrador);

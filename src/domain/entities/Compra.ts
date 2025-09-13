@@ -139,11 +139,6 @@ export class Compra {
     public getFechaActualizacion(): Date {
         return this.fechaActualizacion;
     }
-/*
-    public getItems(): ItemCompra[] {
-        return this.items;
-    }
-*/
      public getEstado(): EstadoCompra {
     return this.estado;
   }
@@ -200,32 +195,6 @@ export class Compra {
     public setCantidadCuotas(cantidadCuotas: number): void {
         this.cantidadCuotas = cantidadCuotas;
     }
-/*
-    // Métodos de gestión de items
-    public agregarItem(item: ItemCompra): void {
-        this.items.push(item);
-        this.montoTotal = this.calcularMontoTotal();
-    }
-
-    public eliminarItem(itemId: number): void {
-        this.items = this.items.filter(item => item.getId() !== itemId);
-        this.montoTotal = this.calcularMontoTotal();
-    }
-
-    public actualizarItem(itemId: number, nuevoItem: ItemCompra): void {
-        const index = this.items.findIndex(item => item.getId() === itemId);
-        if (index !== -1) {
-            this.items[index] = nuevoItem;
-            this.montoTotal = this.calcularMontoTotal();
-        }
-    }
-        
-
-    // Cálculos internos
-    private calcularMontoTotal(): number {
-        return this.items.reduce((total, item) => total + item.getSubtotal(), 0);
-    }
-*/
     private actualizarFechaActualizacion(): void {
         this.fechaActualizacion = new Date();
     }

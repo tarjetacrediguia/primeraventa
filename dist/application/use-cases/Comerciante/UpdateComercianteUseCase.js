@@ -59,8 +59,18 @@ class UpdateComercianteUseCase {
                 throw new Error("Comerciante no encontrado");
             }
             // Crear objeto con datos actualizados
-            const comercianteActualizado = new Comerciante_1.Comerciante(id, nombre || existe.getNombre(), apellido || existe.getApellido(), existe.getEmail(), existe.getPassword(), // No permitimos actualizar la contraseña aquí
-            telefono || existe.getTelefono(), nombreComercio || existe.getNombreComercio(), cuil || existe.getCuil(), direccionComercio || existe.getDireccionComercio(), existe.getPermisos());
+            const comercianteActualizado = new Comerciante_1.Comerciante({
+                id: id,
+                nombre: nombre || existe.getNombre(),
+                apellido: apellido || existe.getApellido(),
+                email: existe.getEmail(),
+                password: existe.getPassword(), // No permitimos actualizar la contraseña aquí
+                telefono: telefono || existe.getTelefono(),
+                nombreComercio: nombreComercio || existe.getNombreComercio(),
+                cuil: cuil || existe.getCuil(),
+                direccionComercio: direccionComercio || existe.getDireccionComercio(),
+                permisos: existe.getPermisos()
+            });
             return this.repository.updateComerciante(comercianteActualizado);
         });
     }

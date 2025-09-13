@@ -14,6 +14,17 @@
  * @author Sistema de Gestión
  * @version 1.0.0
  */
+var __rest = (this && this.__rest) || function (s, e) {
+    var t = {};
+    for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p) && e.indexOf(p) < 0)
+        t[p] = s[p];
+    if (s != null && typeof Object.getOwnPropertySymbols === "function")
+        for (var i = 0, p = Object.getOwnPropertySymbols(s); i < p.length; i++) {
+            if (e.indexOf(p[i]) < 0 && Object.prototype.propertyIsEnumerable.call(s, p[i]))
+                t[p[i]] = s[p[i]];
+        }
+    return t;
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.Comerciante = void 0;
 const Usuario_1 = require("./Usuario");
@@ -38,8 +49,12 @@ class Comerciante extends Usuario_1.Usuario {
      * @param direccionComercio - Dirección del comercio.
      * @param permisos - Array de permisos del comerciante (opcional).
      */
-    constructor(id, nombre, apellido, email, password, telefono, nombreComercio, cuil, direccionComercio, permisos) {
-        super(id, nombre, apellido, email, password, telefono);
+    constructor(params) {
+        // Extraemos los parámetros específicos de Comerciante
+        const { nombreComercio, cuil, direccionComercio, permisos } = params, usuarioParams = __rest(params, ["nombreComercio", "cuil", "direccionComercio", "permisos"]);
+        // Llamamos al constructor padre con el objeto de parámetros de usuario
+        super(usuarioParams);
+        // Inicializamos los parámetros específicos de Comerciante
         this.nombreComercio = nombreComercio;
         this.cuil = cuil;
         this.direccionComercio = direccionComercio;
@@ -135,7 +150,18 @@ class Comerciante extends Usuario_1.Usuario {
      * @returns Comerciante - Nueva instancia de Comerciante.
      */
     static fromMap(map) {
-        return new Comerciante(map.id, map.nombre, map.apellido, map.email, map.password, map.telefono, map.nombreComercio, map.cuil, map.direccionComercio, map.permisos);
+        return new Comerciante({
+            id: map.id,
+            nombre: map.nombre,
+            apellido: map.apellido,
+            email: map.email,
+            password: map.password,
+            telefono: map.telefono,
+            nombreComercio: map.nombreComercio,
+            cuil: map.cuil,
+            direccionComercio: map.direccionComercio,
+            permisos: map.permisos
+        });
     }
     /**
      * Autentica al comerciante comparando la contraseña proporcionada.

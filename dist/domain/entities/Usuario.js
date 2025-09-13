@@ -35,13 +35,13 @@ class Usuario {
      * @param password - Contraseña del usuario (hash).
      * @param telefono - Número de teléfono del usuario.
      */
-    constructor(id, nombre, apellido, email, password, telefono) {
-        this.id = id;
-        this.nombre = nombre;
-        this.apellido = apellido;
-        this.email = email;
-        this.password = password;
-        this.telefono = telefono;
+    constructor(params) {
+        this.id = params.id;
+        this.nombre = params.nombre;
+        this.apellido = params.apellido;
+        this.email = params.email;
+        this.password = params.password;
+        this.telefono = params.telefono;
     }
     /**
      * Obtiene los permisos del usuario.

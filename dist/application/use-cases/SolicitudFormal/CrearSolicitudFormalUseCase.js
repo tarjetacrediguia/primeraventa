@@ -56,7 +56,7 @@ const ArchivosAdjuntos_1 = require("../../../domain/entities/ArchivosAdjuntos");
  */
 class CrearSolicitudFormalUseCase {
     /**
-     * Constructor del caso de uso.
+     * Constructor del caso de uso para crear solicitudes formales.
      *
      * @param solicitudInicialRepo - Puerto para operaciones de solicitudes iniciales
      * @param solicitudFormalRepo - Puerto para operaciones de solicitudes formales
@@ -66,6 +66,7 @@ class CrearSolicitudFormalUseCase {
      * @param contratoRepository - Puerto para operaciones de contratos
      * @param clienteRepository - Puerto para operaciones de clientes
      * @param historialRepository - Puerto para registro de eventos en historial
+     * @param configuracionRepo - Puerto para operaciones de configuración del sistema
      */
     constructor(solicitudInicialRepo, solicitudFormalRepo, permisoRepo, notificationService, analistaRepo, contratoRepository, clienteRepository, historialRepository, configuracionRepo) {
         this.solicitudInicialRepo = solicitudInicialRepo;
@@ -85,24 +86,38 @@ class CrearSolicitudFormalUseCase {
      * 1. Verifica que el cliente no tenga créditos activos
      * 2. Valida permisos del comerciante
      * 3. Verifica que la solicitud inicial esté aprobada
-     * 4. Valida que no exista una solicitud formal previa
-     * 5. Verifica formato y validez del recibo de sueldo
-     * 6. Crea la solicitud formal con todos los datos
-     * 7. Registra eventos y envía notificaciones
+     * 4. Obtiene configuración de ponderador del sistema
+     * 5. Valida que no exista una solicitud formal previa
+     * 6. Verifica formato y validez del recibo de sueldo
+     * 7. Crea la solicitud formal con todos los datos
+     * 8. Maneja archivos adjuntos opcionales
+     * 9. Registra eventos y envía notificaciones
+     *
+     * VALIDACIONES REALIZADAS:
+     * - Cliente no debe tener créditos activos
+     * - Comerciante debe tener permisos de creación
+     * - Solicitud inicial debe existir y estar aprobada
+     * - No debe existir solicitud formal previa
+     * - Recibo debe ser una imagen válida (JPG, PNG, WEBP, GIF)
+     * - Configuración de ponderador debe existir y ser válida
      *
      * @param solicitudInicialId - ID de la solicitud inicial aprobada
      * @param comercianteId - ID del comerciante que crea la solicitud
      * @param datosSolicitud - Objeto con todos los datos del cliente y la solicitud
      * @param comentarioInicial - Comentario opcional para la solicitud (por defecto: "Solicitud creada por comerciante")
+     * @param solicitaAmpliacionDeCredito - Indica si se solicita ampliación de crédito
+     * @param datosEmpleador - Datos del empleador del cliente
      * @returns Promise<SolicitudFormal> - La solicitud formal creada
      * @throws Error - Si no se cumplen las validaciones o ocurre un error en el proceso
      */
     execute(solicitudInicialId_1, comercianteId_1, datosSolicitud_1) {
         return __awaiter(this, arguments, void 0, function* (solicitudInicialId, comercianteId, datosSolicitud, comentarioInicial = "Solicitud creada por comerciante", solicitaAmpliacionDeCredito, datosEmpleador) {
             try {
-                // Verificar crédito activo
+                // ===== PASO 1: VALIDAR CRÉDITO ACTIVO =====
+                // Verificar que el cliente no tenga créditos activos
                 const tieneCredito = yield this.tieneCreditoActivo(solicitudInicialId);
-                // 1. Verificar permisos del comerciante
+                // ===== PASO 2: VALIDAR PERMISOS DEL COMERCIANTE =====
+                // Verificar que el comerciante tenga permisos para crear solicitudes formales
                 const tienePermiso = yield this.permisoRepo.usuarioTienePermiso(comercianteId, "create_solicitudFormal" // Permiso necesario
                 );
                 if (!tienePermiso) {
@@ -120,7 +135,8 @@ class CrearSolicitudFormalUseCase {
                     });
                     throw new Error("No tiene permisos para enviar solicitudes formales");
                 }
-                // 2. Obtener solicitud inicial
+                // ===== PASO 3: OBTENER Y VALIDAR SOLICITUD INICIAL =====
+                // Obtener la solicitud inicial asociada
                 const solicitudInicial = yield this.solicitudInicialRepo.getSolicitudInicialById(solicitudInicialId);
                 if (!solicitudInicial) {
                     // Registrar evento de solicitud inicial no encontrada
@@ -137,7 +153,8 @@ class CrearSolicitudFormalUseCase {
                     });
                     throw new Error("Solicitud inicial no encontrada");
                 }
-                //Obtener ponderador de la configuración
+                // ===== PASO 4: OBTENER CONFIGURACIÓN DE PONDERADOR =====
+                // Obtener configuración del sistema para el ponderador
                 const configs = yield this.configuracionRepo.obtenerConfiguracion();
                 const ponderadorConfig = configs.find(c => c.getClave() === 'ponderador');
                 if (!ponderadorConfig) {
@@ -151,6 +168,7 @@ class CrearSolicitudFormalUseCase {
                     });
                     throw new Error("Configuración de ponderador no encontrada");
                 }
+                // Validar que el ponderador sea un número válido
                 const ponderador = parseFloat(ponderadorConfig.getValor());
                 if (isNaN(ponderador)) {
                     yield this.historialRepository.registrarEvento({
@@ -163,7 +181,8 @@ class CrearSolicitudFormalUseCase {
                     });
                     throw new Error("Ponderador no es un número válido");
                 }
-                // 3. Verificar estado de la solicitud inicial
+                // ===== PASO 5: VALIDAR ESTADO DE SOLICITUD INICIAL =====
+                // Verificar que la solicitud inicial esté en estado "aprobada"
                 if (solicitudInicial.getEstado() !== "aprobada") {
                     // Registrar evento de estado no aprobado
                     yield this.historialRepository.registrarEvento({
@@ -180,7 +199,8 @@ class CrearSolicitudFormalUseCase {
                     });
                     throw new Error("La solicitud inicial no está aprobada");
                 }
-                // 4. Verificar que no exista ya una solicitud formal para esta inicial
+                // ===== PASO 6: VALIDAR DUPLICADOS =====
+                // Verificar que no exista ya una solicitud formal para esta solicitud inicial
                 const existentes = yield this.solicitudFormalRepo.getSolicitudesFormalesBySolicitudInicialId(solicitudInicialId);
                 if (existentes.length > 0) {
                     // Registrar evento de solicitud duplicada
@@ -198,10 +218,12 @@ class CrearSolicitudFormalUseCase {
                     });
                     throw new Error("Ya existe una solicitud formal para esta solicitud inicial");
                 }
+                // ===== PASO 7: VALIDAR FORMATO DE RECIBO DE SUELDO =====
+                // Convertir recibo de string base64 a Buffer si es necesario
                 if (typeof datosSolicitud.recibo === 'string') {
                     datosSolicitud.recibo = Buffer.from(datosSolicitud.recibo, 'base64');
                 }
-                // Verificar que sea una imagen válida y de un tipo permitido
+                // Verificar que el recibo sea una imagen válida y de un tipo permitido
                 const fileType = yield Promise.resolve().then(() => __importStar(require('file-type')));
                 const type = yield fileType.fileTypeFromBuffer(datosSolicitud.recibo);
                 const allowedMimeTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
@@ -219,12 +241,22 @@ class CrearSolicitudFormalUseCase {
                     });
                     throw new Error('El recibo debe ser una imagen válida (JPG, PNG, WEBP o GIF)');
                 }
-                // 5. Crear la solicitud formal con comentario inicial
-                const solicitudFormal = new SolicitudFormal_1.SolicitudFormal(0, // ID se asignará automáticamente
-                solicitudInicialId, comercianteId, datosSolicitud.nombreCompleto, datosSolicitud.apellido, datosSolicitud.telefono, datosSolicitud.email, new Date(), typeof datosSolicitud.recibo === "string"
+                // ===== PASO 8: CREAR SOLICITUD FORMAL =====
+                // Crear la solicitud formal con todos los datos del cliente y empleador
+                const solicitudFormal = new SolicitudFormal_1.SolicitudFormal(0, // ID se asignará automáticamente al guardar
+                solicitudInicialId, comercianteId, datosSolicitud.nombreCompleto, datosSolicitud.apellido, datosSolicitud.telefono, datosSolicitud.email, new Date(), // Fecha de creación
+                typeof datosSolicitud.recibo === "string"
                     ? Buffer.from(datosSolicitud.recibo, "base64")
-                    : datosSolicitud.recibo, "pendiente", datosSolicitud.aceptaTarjeta, datosSolicitud.fechaNacimiento, datosSolicitud.domicilio, datosSolicitud.referentes, datosSolicitud.importeNeto, [comentarioInicial], ponderador, solicitaAmpliacionDeCredito, 0, datosEmpleador.razonSocialEmpleador, datosEmpleador.cuitEmpleador, datosEmpleador.cargoEmpleador, datosEmpleador.sectorEmpleador, datosEmpleador.codigoPostalEmpleador, datosEmpleador.localidadEmpleador, datosEmpleador.provinciaEmpleador, datosEmpleador.telefonoEmpleador, datosSolicitud.sexo, datosSolicitud.codigoPostal, datosSolicitud.localidad, datosSolicitud.provincia, datosSolicitud.numeroDomicilio, datosSolicitud.barrio);
-                // Agregar archivos adjuntos si existen
+                    : datosSolicitud.recibo, "pendiente", // Estado inicial
+                datosSolicitud.aceptaTarjeta, datosSolicitud.fechaNacimiento, datosSolicitud.domicilio, datosSolicitud.referentes, datosSolicitud.importeNeto, [comentarioInicial], // Comentarios iniciales
+                ponderador, // Ponderador obtenido de configuración
+                solicitaAmpliacionDeCredito, 0, // Límite completo inicial
+                // Datos del empleador
+                datosEmpleador.razonSocialEmpleador, datosEmpleador.cuitEmpleador, datosEmpleador.cargoEmpleador, datosEmpleador.sectorEmpleador, datosEmpleador.codigoPostalEmpleador, datosEmpleador.localidadEmpleador, datosEmpleador.provinciaEmpleador, datosEmpleador.telefonoEmpleador, 
+                // Datos personales adicionales
+                datosSolicitud.sexo, datosSolicitud.codigoPostal, datosSolicitud.localidad, datosSolicitud.provincia, datosSolicitud.numeroDomicilio, datosSolicitud.barrio);
+                // ===== PASO 9: AGREGAR ARCHIVOS ADJUNTOS =====
+                // Agregar archivos adjuntos opcionales si existen
                 if (datosSolicitud.archivosAdjuntos && datosSolicitud.archivosAdjuntos.length > 0) {
                     for (const archivoData of datosSolicitud.archivosAdjuntos) {
                         const archivo = new ArchivosAdjuntos_1.ArchivoAdjunto(0, // ID temporal, se asignará al guardar
@@ -232,14 +264,16 @@ class CrearSolicitudFormalUseCase {
                         solicitudFormal.agregarArchivoAdjunto(archivo);
                     }
                 }
-                console.log("Solicitud formal creada en memoria:", solicitudFormal);
-                // Validar completitud de datos
+                // ===== PASO 10: VALIDAR COMPLETITUD DE DATOS =====
+                // Validar que todos los datos requeridos estén presentes
                 solicitudFormal.validarCompletitud();
-                // 6. Vincular con solicitud inicial (propiedad adicional necesaria)
+                // ===== PASO 11: PERSISTIR EN BASE DE DATOS =====
+                // Vincular con solicitud inicial (propiedad adicional necesaria)
                 solicitudFormal.solicitudInicialId = solicitudInicialId;
-                // 7. Guardar en la base de datos
+                // Guardar la solicitud formal en la base de datos
                 const solicitudCreada = yield this.solicitudFormalRepo.createSolicitudFormal(solicitudFormal);
-                // Registrar evento de creación de solicitud formal
+                // ===== PASO 12: REGISTRAR EVENTO EN HISTORIAL =====
+                // Registrar evento de creación exitosa en historial
                 yield this.historialRepository.registrarEvento({
                     usuarioId: comercianteId,
                     accion: historialActions_1.HISTORIAL_ACTIONS.CREATE_SOLICITUD_FORMAL,
@@ -252,28 +286,33 @@ class CrearSolicitudFormalUseCase {
                     },
                     solicitudInicialId: solicitudInicialId
                 });
-                // 8. Notificar al cliente
+                // ===== PASO 13: NOTIFICAR AL COMERCIANTE =====
+                // Enviar notificación al comerciante sobre la creación exitosa
                 yield this.notificationService.emitNotification({
                     userId: solicitudCreada.getComercianteId(),
                     type: "solicitud_formal",
                     message: "Solicitud formal creada exitosamente"
                 });
-                // 9. Notificar a los analistas
+                // ===== PASO 14: NOTIFICAR A ANALISTAS =====
+                // Notificar a analistas sobre la nueva solicitud que requiere revisión
                 yield this.notificarAnalistas(solicitudCreada);
+                // Retornar la solicitud formal creada exitosamente
                 return solicitudCreada;
             }
             catch (error) {
-                // Notificar error al comerciante
+                // ===== MANEJO DE ERRORES =====
+                // Determinar mensaje de error apropiado
                 let errorMessage = "Error desconocido";
                 if (error instanceof Error) {
                     errorMessage = error.message;
                 }
+                // Notificar error al comerciante
                 yield this.notificationService.emitNotification({
                     userId: Number(comercianteId),
                     type: "error",
                     message: `Error al crear solicitud formal: ${errorMessage}`
                 });
-                // Registrar evento de error
+                // Registrar evento de error en historial
                 yield this.historialRepository.registrarEvento({
                     usuarioId: comercianteId,
                     accion: historialActions_1.HISTORIAL_ACTIONS.ERROR_PROCESO,
@@ -286,6 +325,7 @@ class CrearSolicitudFormalUseCase {
                     },
                     solicitudInicialId: solicitudInicialId
                 });
+                // Re-lanzar el error para que sea manejado por el controlador
                 throw error;
             }
         });

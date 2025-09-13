@@ -100,11 +100,26 @@ class AuthAdapter {
                      JOIN permisos p ON up.permiso_id = p.id
                      WHERE up.usuario_id = $1`, [userRow.id]);
                     const permisos = permisosResult.rows.map(row => row.nombre);
-                    usuario = new Administrador_1.Administrador(userRow.id.toString(), userRow.nombre, userRow.apellido, userRow.email, userRow.password_hash, userRow.telefono, permisos);
+                    usuario = new Administrador_1.Administrador({
+                        id: userRow.id.toString(),
+                        nombre: userRow.nombre,
+                        apellido: userRow.apellido,
+                        email: userRow.email,
+                        password: userRow.password_hash,
+                        telefono: userRow.telefono,
+                        permisos: permisos
+                    });
                     break;
                 case 'analista':
-                    usuario = new Analista_1.Analista(userRow.id.toString(), userRow.nombre, userRow.apellido, userRow.email, userRow.password_hash, userRow.telefono, [] // permisos vacío o ajusta según tu lógica
-                    );
+                    usuario = new Analista_1.Analista({
+                        id: userRow.id.toString(),
+                        nombre: userRow.nombre,
+                        apellido: userRow.apellido,
+                        email: userRow.email,
+                        password: userRow.password_hash,
+                        telefono: userRow.telefono,
+                        permisos: [] // permisos vacío o ajusta según tu lógica
+                    });
                     break;
                 case 'comerciante':
                     // Obtener datos adicionales del comerciante
@@ -113,8 +128,18 @@ class AuthAdapter {
                         throw new Error('Datos de comerciante no encontrados');
                     }
                     const comercianteRow = comercianteResult.rows[0];
-                    usuario = new Comerciante_1.Comerciante(userRow.id.toString(), userRow.nombre, userRow.apellido, userRow.email, userRow.password_hash, userRow.telefono, comercianteRow.nombre_comercio, comercianteRow.cuil, comercianteRow.direccion_comercio, [] // permisos vacío o ajusta según tu lógica
-                    );
+                    usuario = new Comerciante_1.Comerciante({
+                        id: userRow.id.toString(),
+                        nombre: userRow.nombre,
+                        apellido: userRow.apellido,
+                        email: userRow.email,
+                        password: userRow.password_hash,
+                        telefono: userRow.telefono,
+                        nombreComercio: comercianteRow.nombre_comercio,
+                        cuil: comercianteRow.cuil,
+                        direccionComercio: comercianteRow.direccion_comercio,
+                        permisos: [] // permisos vacío o ajusta según tu lógica
+                    });
                     break;
                 default:
                     throw new Error('Rol no reconocido');

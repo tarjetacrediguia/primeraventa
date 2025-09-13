@@ -18,6 +18,15 @@
 
 import { Permiso } from "./Permiso";
 
+export interface UsuarioParams {
+    id: number;
+    nombre: string;
+    apellido: string;
+    email: string;
+    password: string;
+    telefono: string;
+}
+
 /**
  * Clase abstracta que representa la entidad base de usuario en el sistema.
  * Define la estructura común para todos los tipos de usuarios (Administrador, Analista, Comerciante).
@@ -43,21 +52,14 @@ export abstract class Usuario {
      * @param password - Contraseña del usuario (hash).
      * @param telefono - Número de teléfono del usuario.
      */
-  constructor(
-    id: number,
-    nombre: string,
-    apellido: string,
-    email: string,
-    password: string,
-    telefono: string
-  ) {
-    this.id = id;
-    this.nombre = nombre;
-    this.apellido = apellido;
-    this.email = email;
-    this.password = password;
-    this.telefono = telefono;
-  }
+  constructor(params: UsuarioParams) {
+        this.id = params.id;
+        this.nombre = params.nombre;
+        this.apellido = params.apellido;
+        this.email = params.email;
+        this.password = params.password;
+        this.telefono = params.telefono;
+    }
 
   /**
    * Obtiene el rol específico del usuario.

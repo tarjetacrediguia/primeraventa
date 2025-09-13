@@ -117,18 +117,18 @@ export class ComercianteRepositoryAdapter implements ComercianteRepositoryPort {
             await client.query('COMMIT');
             
             // Retornar el comerciante creado con su ID
-            return new Comerciante(
-                usuarioId,
-                comerciante.getNombre(),
-                comerciante.getApellido(),
-                comerciante.getEmail(),
-                comerciante.getPassword(),
-                comerciante.getTelefono(),
-                comerciante.getNombreComercio(),
-                comerciante.getCuil(),
-                comerciante.getDireccionComercio(),
-                comerciante.getPermisos()
-            );
+            return new Comerciante({
+                id: usuarioId,
+                nombre: comerciante.getNombre(),
+                apellido: comerciante.getApellido(),
+                email: comerciante.getEmail(),
+                password: comerciante.getPassword(),
+                telefono: comerciante.getTelefono(),
+                nombreComercio: comerciante.getNombreComercio(),
+                cuil: comerciante.getCuil(),
+                direccionComercio: comerciante.getDireccionComercio(),
+                permisos: comerciante.getPermisos()
+            });
         } catch (error) {
             await client.query('ROLLBACK');
             throw error;
@@ -289,17 +289,17 @@ export class ComercianteRepositoryAdapter implements ComercianteRepositoryPort {
     }
 
     private mapRowToComerciante(row: any): Comerciante {
-        return new Comerciante(
-            Number(row.id),
-            row.nombre,
-            row.apellido,
-            row.email,
-            '', // La contraseña no se retorna en las consultas
-            row.telefono,
-            row.nombre_comercio,
-            row.cuil,
-            row.direccion_comercio,
-            row.permisos.filter((p: string | null) => p !== null)
-        );
+        return new Comerciante({
+            id: Number(row.id),
+            nombre: row.nombre,
+            apellido: row.apellido,
+            email: row.email,
+            password: '', // La contraseña no se retorna en las consultas
+            telefono: row.telefono,
+            nombreComercio: row.nombre_comercio,
+            cuil: row.cuil,
+            direccionComercio: row.direccion_comercio,
+            permisos: row.permisos.filter((p: string | null) => p !== null)
+        });
     }
 }

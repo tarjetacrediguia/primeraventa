@@ -24,17 +24,17 @@ const VerifyDataNosisUseCase_1 = require("../Nosis/VerifyDataNosisUseCase");
  */
 class CrearSolicitudInicialUseCase {
     /**
-     * Constructor del caso de uso.
+     * Constructor del caso de uso para crear solicitudes iniciales.
      *
      * @param solicitudInicialRepository - Puerto para operaciones de solicitudes iniciales
      * @param contratoRepository - Puerto para operaciones de contratos
      * @param solicitudFormalRepository - Puerto para operaciones de solicitudes formales
-     * @param verazService - Puerto para servicios de Veraz (actualmente deshabilitado)
      * @param notificationService - Puerto para servicios de notificación
      * @param clienteRepository - Puerto para operaciones de clientes
      * @param historialRepository - Puerto para registro de eventos en historial
      * @param analistaRepository - Puerto para operaciones de analistas
-     * @param verazAutomatico - Booleano para activar modo automático de Veraz
+     * @param nosisPort - Puerto para servicios de Nosis
+     * @param nosisAutomatico - Booleano para activar modo automático de Nosis
      */
     constructor(solicitudInicialRepository, contratoRepository, solicitudFormalRepository, notificationService, clienteRepository, historialRepository, analistaRepository, nosisPort, nosisAutomatico) {
         this.solicitudInicialRepository = solicitudInicialRepository;
@@ -51,23 +51,38 @@ class CrearSolicitudInicialUseCase {
      * Ejecuta la creación de una solicitud inicial de crédito.
      *
      * Este método implementa el flujo completo de creación de solicitud inicial:
-     * 1. Busca o crea el cliente según el DNI proporcionado
+     * 1. Busca o crea el cliente según el CUIL proporcionado
      * 2. Verifica que el cliente no tenga créditos activos
      * 3. Crea la solicitud inicial con estado pendiente
-     * 4. Registra el evento en el historial
-     * 5. Envía notificaciones al comerciante
+     * 4. Integra con Nosis para validación automática
+     * 5. Actualiza datos del cliente con información de Nosis
+     * 6. Aplica reglas de aprobación automática (si está habilitado)
+     * 7. Registra eventos en el historial
+     * 8. Envía notificaciones al comerciante y analistas
+     *
+     * INTEGRACIÓN CON NOSIS:
+     * - Obtiene datos personales y laborales del cliente
+     * - Actualiza información del cliente con datos de Nosis
+     * - Aplica reglas de aprobación automática si nosisAutomatico está habilitado
+     * - Maneja estados: aprobado, pendiente, rechazado
+     *
+     * VALIDACIONES REALIZADAS:
+     * - Cliente no debe tener créditos activos
+     * - CUIL debe ser válido
+     * - Datos de Nosis deben ser procesables
      *
      * @param dniCliente - DNI del cliente para la solicitud
      * @param cuilCliente - CUIL del cliente para la solicitud
      * @param comercianteId - ID del comerciante que crea la solicitud
-     * @param reciboSueldo - Buffer opcional con el recibo de sueldo del cliente
-     * @returns Promise<SolicitudInicial> - La solicitud inicial creada
+     * @returns Promise<CrearSolicitudInicialResponse> - Respuesta con solicitud y datos de Nosis
      * @throws Error - Si el cliente ya tiene un crédito activo o si ocurre un error en el proceso
      */
     execute(dniCliente, cuilCliente, comercianteId) {
         return __awaiter(this, void 0, void 0, function* () {
             var _a, _b, _c, _d, _e, _f, _g;
             try {
+                // ===== PASO 1: CREAR O RECUPERAR CLIENTE =====
+                // Buscar cliente existente por CUIL o crear uno nuevo
                 let cliente;
                 let clienteTemporal;
                 try {
@@ -77,12 +92,13 @@ class CrearSolicitudInicialUseCase {
                     // No se encontró el cliente, se creará uno nuevo
                 }
                 finally {
-                    // Crear con datos mínimos si no existe
+                    // Crear cliente con datos mínimos si no existe
                     cliente = new Cliente_1.Cliente(0, "Nombre temporal", "Apellido temporal", dniCliente, cuilCliente);
                     clienteTemporal = yield this.clienteRepository.save(cliente);
                 }
-                // 1. Verificar si el cliente tiene crédito activo
-                const tieneCreditoActivo = yield this.tieneCreditoActivo(cuilCliente); // Usar CUIL en lugar de DNI
+                // ===== PASO 2: VALIDAR CRÉDITO ACTIVO =====
+                // Verificar que el cliente no tenga créditos activos
+                const tieneCreditoActivo = yield this.tieneCreditoActivo(cuilCliente);
                 if (tieneCreditoActivo) {
                     // Notificar al comerciante que no puede crear solicitud
                     yield this.notificationService.emitNotification({
@@ -104,12 +120,15 @@ class CrearSolicitudInicialUseCase {
                     });
                     throw new Error("El cliente ya tiene un crédito activo");
                 }
-                // Crear solicitud vinculada al cliente
+                // ===== PASO 3: CREAR SOLICITUD INICIAL =====
+                // Crear solicitud inicial vinculada al cliente
                 const solicitud = new SolicitudInicial_1.SolicitudInicial(0, new Date(), "pendiente", clienteTemporal.getId(), comercianteId);
-                // 3. Guardar solicitud inicial
+                // ===== PASO 4: PERSISTIR SOLICITUD =====
+                // Guardar solicitud inicial en la base de datos
                 const solicitudCreada = yield this.solicitudInicialRepository.createSolicitudInicial(solicitud, clienteTemporal);
                 const solicitudInicialId = solicitudCreada.getId();
-                // Registrar evento de creación
+                // ===== PASO 5: REGISTRAR EVENTO EN HISTORIAL =====
+                // Registrar evento de creación exitosa en historial
                 yield this.historialRepository.registrarEvento({
                     usuarioId: comercianteId,
                     accion: historialActions_1.HISTORIAL_ACTIONS.CREATE_SOLICITUD_INICIAL,
@@ -122,16 +141,21 @@ class CrearSolicitudInicialUseCase {
                     },
                     solicitudInicialId: solicitudInicialId,
                 });
+                // ===== PASO 6: INTEGRACIÓN CON NOSIS =====
+                // Variables para almacenar datos de Nosis y resultados
                 let nosisData;
                 let motivoRechazo;
                 let reglasFallidas;
                 try {
+                    // Obtener datos del cliente desde Nosis
                     const getNosisData = new GetDataNosisUseCase_1.GetDataNosisUseCase(this.nosisPort);
                     const nosisResponse = yield getNosisData.execute(cuilCliente);
+                    // Verificar y validar datos de Nosis
                     const verifyNosis = new VerifyDataNosisUseCase_1.VerifyDataNosisUseCase();
                     const resultadoNosis = yield verifyNosis.execute(nosisResponse);
                     nosisData = resultadoNosis.personalData;
-                    ///////////////////// Actualizar datos del cliente con info de Nosis //////////////
+                    // ===== PASO 7: ACTUALIZAR DATOS DEL CLIENTE CON NOSIS =====
+                    // Actualizar información personal del cliente con datos de Nosis
                     clienteTemporal.setNombreCompleto(nosisData && ((_a = nosisData.nombreCompleto) === null || _a === void 0 ? void 0 : _a.nombre)
                         ? nosisData.nombreCompleto.nombre
                         : "");
@@ -170,7 +194,7 @@ class CrearSolicitudInicialUseCase {
                     clienteTemporal.setEstadoCivil(nosisData && ((_g = nosisData.documentacion) === null || _g === void 0 ? void 0 : _g.estadoCivil)
                         ? nosisData.documentacion.estadoCivil
                         : null);
-                    //Datos laborales
+                    // Actualizar datos laborales del cliente con información de Nosis
                     if (nosisData &&
                         nosisData.datosLaborales &&
                         nosisData.datosLaborales.empleador) {
@@ -193,12 +217,13 @@ class CrearSolicitudInicialUseCase {
                             ? nosisData.datosLaborales.empleador.domicilio.provincia
                             : null);
                     }
+                    // Persistir actualizaciones del cliente en la base de datos
                     yield this.clienteRepository.update(clienteTemporal);
-                    //////////////////// FIN Actualizar datos del cliente con info de Nosis //////////////
-                    console.log("Actualizando cliente con datos de Nosis:", clienteTemporal);
-                    console.log("Resultado de verificación de Nosis:", resultadoNosis);
+                    // ===== PASO 8: APLICAR REGLAS DE APROBACIÓN AUTOMÁTICA =====
+                    // Aplicar reglas de aprobación automática si está habilitado
                     if (this.nosisAutomatico) {
                         if (resultadoNosis.status === "aprobado") {
+                            // Aprobar automáticamente la solicitud
                             solicitudCreada.setEstado("aprobada");
                             yield this.solicitudInicialRepository.updateSolicitudInicial(solicitudCreada, clienteTemporal);
                             solicitud.agregarComentario(`Aprobado: Nosis automático`);
@@ -216,6 +241,7 @@ class CrearSolicitudInicialUseCase {
                             });
                         }
                         else if (resultadoNosis.status === "pendiente") {
+                            // Mantener estado pendiente para revisión manual
                             solicitudCreada.setEstado("pendiente");
                             yield this.solicitudInicialRepository.updateSolicitudInicial(solicitudCreada, clienteTemporal);
                             solicitud.agregarComentario(`Pendiente: ${resultadoNosis.motivo}`);
@@ -233,12 +259,13 @@ class CrearSolicitudInicialUseCase {
                             });
                         }
                         else if (resultadoNosis.status === "rechazado") {
+                            // Rechazar automáticamente la solicitud
                             motivoRechazo = resultadoNosis.motivo;
                             reglasFallidas = resultadoNosis.reglasFallidas;
                             solicitudCreada.setEstado("rechazada");
                             solicitud.setMotivoRechazo(motivoRechazo !== null && motivoRechazo !== void 0 ? motivoRechazo : "");
                             solicitud.agregarComentario(`Rechazo: ${motivoRechazo}`);
-                            //se guarda el motivo de rechazo en la solicitud
+                            // Guardar el motivo de rechazo en la solicitud
                             yield this.solicitudInicialRepository.updateSolicitudInicial(solicitudCreada, clienteTemporal);
                             yield this.historialRepository.registrarEvento({
                                 usuarioId: null,
@@ -255,25 +282,32 @@ class CrearSolicitudInicialUseCase {
                             });
                         }
                         else {
+                            // Estado desconocido, mantener pendiente para revisión
                             solicitudCreada.setEstado("pendiente");
                             yield this.solicitudInicialRepository.updateSolicitudInicial(solicitudCreada, clienteTemporal);
                             yield this.notificarAnalistas(solicitudCreada, clienteTemporal);
                         }
                     }
                     else {
-                        // Modo manual
+                        // ===== MODO MANUAL =====
+                        // Modo manual: notificar a analistas para revisión
                         yield this.notificarAnalistas(solicitudCreada, clienteTemporal);
                     }
                 }
                 catch (error) {
+                    // ===== MANEJO DE ERRORES DE NOSIS =====
+                    // Registrar error de integración con Nosis pero continuar el proceso
                     console.error("Error obteniendo datos de Nosis:", error);
                 }
-                // Notificación al comerciante (existente)
+                // ===== PASO 9: NOTIFICAR AL COMERCIANTE =====
+                // Enviar notificación al comerciante sobre la creación exitosa
                 yield this.notificationService.emitNotification({
                     userId: Number(comercianteId),
                     type: "solicitud_inicial",
                     message: "Solicitud inicial creada exitosamente",
                 });
+                // ===== PASO 10: RETORNAR RESPUESTA =====
+                // Retornar respuesta con solicitud y datos de Nosis
                 return {
                     solicitud: solicitudCreada,
                     nosisData,
@@ -282,17 +316,19 @@ class CrearSolicitudInicialUseCase {
                 };
             }
             catch (error) {
-                // Notificar error al comerciante
+                // ===== MANEJO DE ERRORES GENERALES =====
+                // Determinar mensaje de error apropiado
                 let errorMessage = "Error desconocido";
                 if (error instanceof Error) {
                     errorMessage = error.message;
                 }
+                // Notificar error al comerciante
                 yield this.notificationService.emitNotification({
                     userId: Number(comercianteId),
                     type: "error",
                     message: `Error al crear solicitud: ${errorMessage}`,
                 });
-                // Registrar evento de error
+                // Registrar evento de error en historial
                 yield this.historialRepository.registrarEvento({
                     usuarioId: comercianteId,
                     accion: historialActions_1.HISTORIAL_ACTIONS.ERROR_PROCESO,
@@ -305,6 +341,7 @@ class CrearSolicitudInicialUseCase {
                     },
                     solicitudInicialId: undefined, // No hay solicitud por error
                 });
+                // Re-lanzar el error para que sea manejado por el controlador
                 throw error;
             }
         });

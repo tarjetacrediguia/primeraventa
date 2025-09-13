@@ -56,15 +56,15 @@ export class UpdateAnalistaUseCase {
         }
 
         // Crear objeto con datos actualizados
-        const analistaActualizado = new Analista(
-            id,
-            nombre || existe.getNombre(),
-            apellido || existe.getApellido(),
-            existe.getEmail(),
-            existe.getPassword(), // No permitimos actualizar la contraseña aquí
-            telefono || existe.getTelefono(),
-            existe.getPermisos()
-        );
+        const analistaActualizado = new Analista({
+            id: id,
+            nombre: nombre || existe.getNombre(),
+            apellido: apellido || existe.getApellido(),
+            email: existe.getEmail(),
+            password: existe.getPassword(), // No permitimos actualizar la contraseña aquí
+            telefono: telefono || existe.getTelefono(),
+            permisos: existe.getPermisos()
+        });
 
         return this.repository.updateAnalista(analistaActualizado);
     }

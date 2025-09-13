@@ -12,9 +12,18 @@
  * - Proporcionar funcionalidades de gestión del sistema
  * - Extender la funcionalidad base de Usuario
  *
- * @author Sistema de Gestión
- * @version 1.0.0
  */
+var __rest = (this && this.__rest) || function (s, e) {
+    var t = {};
+    for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p) && e.indexOf(p) < 0)
+        t[p] = s[p];
+    if (s != null && typeof Object.getOwnPropertySymbols === "function")
+        for (var i = 0, p = Object.getOwnPropertySymbols(s); i < p.length; i++) {
+            if (e.indexOf(p[i]) < 0 && Object.prototype.propertyIsEnumerable.call(s, p[i]))
+                t[p[i]] = s[p[i]];
+        }
+    return t;
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.Administrador = void 0;
 const Usuario_1 = require("./Usuario");
@@ -36,8 +45,12 @@ class Administrador extends Usuario_1.Usuario {
      * @param telefono - Número de teléfono del administrador.
      * @param permisos - Array de permisos del administrador (opcional).
      */
-    constructor(id, nombre, apellido, email, password, telefono, permisos) {
-        super(id, nombre, apellido, email, password, telefono);
+    constructor(params) {
+        // Extraemos los parámetros específicos de Administrador
+        const { permisos } = params, usuarioParams = __rest(params, ["permisos"]);
+        // Llamamos al constructor padre con el objeto de parámetros de usuario
+        super(usuarioParams);
+        // Inicializamos los parámetros específicos de Administrador
         this.permisos = permisos !== null && permisos !== void 0 ? permisos : [];
     }
     /**
@@ -82,7 +95,15 @@ class Administrador extends Usuario_1.Usuario {
      * @returns Administrador - Nueva instancia de Administrador.
      */
     static fromMap(map) {
-        return new Administrador(map.id, map.nombre, map.apellido, map.email, map.password, map.telefono, map.permisos);
+        return new Administrador({
+            id: map.id,
+            nombre: map.nombre,
+            apellido: map.apellido,
+            email: map.email,
+            password: map.password,
+            telefono: map.telefono,
+            permisos: map.permisos
+        });
     }
     /**
      * Autentica al administrador comparando la contraseña proporcionada.

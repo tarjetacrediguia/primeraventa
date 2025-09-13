@@ -60,10 +60,15 @@ class UpdateAdminUseCase {
                 throw new Error("Administrador no encontrado");
             }
             // Crear instancia actualizada
-            const administradorActualizado = new Administrador_1.Administrador(Number(id), nombre, apellido, existe.getEmail(), // Mantener email existente
-            existe.getPassword(), // Mantener password existente
-            telefono, existe.getPermisos() // Mantener permisos existentes
-            );
+            const administradorActualizado = new Administrador_1.Administrador({
+                id: Number(id),
+                nombre,
+                apellido,
+                email: existe.getEmail(),
+                password: existe.getPassword(),
+                telefono,
+                permisos: existe.getPermisos()
+            });
             // Guardar cambios
             return this.repository.updateAdministrador(administradorActualizado);
         });

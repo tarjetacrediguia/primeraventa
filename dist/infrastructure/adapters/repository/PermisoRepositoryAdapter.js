@@ -256,14 +256,38 @@ class PermisoRepositoryAdapter {
         };
         switch (row.rol) {
             case 'administrador':
-                return new Administrador_1.Administrador(baseUsuario.id, baseUsuario.nombre, baseUsuario.apellido, baseUsuario.email, '', // Password no disponible
-                baseUsuario.telefono, baseUsuario.permisos);
+                return new Administrador_1.Administrador({
+                    id: baseUsuario.id,
+                    nombre: baseUsuario.nombre,
+                    apellido: baseUsuario.apellido,
+                    email: baseUsuario.email,
+                    password: '', // Password no disponible
+                    telefono: baseUsuario.telefono,
+                    permisos: baseUsuario.permisos
+                });
             case 'analista':
-                return new Analista_1.Analista(baseUsuario.id, baseUsuario.nombre, baseUsuario.apellido, baseUsuario.email, '', // Password no disponible
-                baseUsuario.telefono, baseUsuario.permisos);
+                return new Analista_1.Analista({
+                    id: baseUsuario.id,
+                    nombre: baseUsuario.nombre,
+                    apellido: baseUsuario.apellido,
+                    email: baseUsuario.email,
+                    password: '', // Password no disponible
+                    telefono: baseUsuario.telefono,
+                    permisos: baseUsuario.permisos
+                });
             case 'comerciante':
-                return new Comerciante_1.Comerciante(baseUsuario.id, baseUsuario.nombre, baseUsuario.apellido, baseUsuario.email, '', // Password no disponible
-                baseUsuario.telefono, row.cuil, row.nombre_comercio, row.direccion_comercio, baseUsuario.permisos);
+                return new Comerciante_1.Comerciante({
+                    id: baseUsuario.id,
+                    nombre: baseUsuario.nombre,
+                    apellido: baseUsuario.apellido,
+                    email: baseUsuario.email,
+                    password: '', // Password no disponible
+                    telefono: baseUsuario.telefono,
+                    cuil: row.cuil,
+                    nombreComercio: row.nombre_comercio,
+                    direccionComercio: row.direccion_comercio,
+                    permisos: baseUsuario.permisos
+                });
             default:
                 throw new Error(`Rol desconocido: ${row.rol}`);
         }

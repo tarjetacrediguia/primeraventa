@@ -16,7 +16,16 @@
 
 // src/domain/entities/Comerciante.ts
 import { Permiso } from "./Permiso";
-import { Usuario } from "./Usuario";
+import { Usuario, UsuarioParams } from "./Usuario";
+
+
+export interface ComercianteParams extends UsuarioParams {
+    nombreComercio: string;
+    cuil: string;
+    direccionComercio: string;
+    permisos?: Permiso[];
+}
+
 
 /**
  * Clase que representa un usuario comerciante en el sistema.
@@ -45,23 +54,18 @@ export class Comerciante extends Usuario {
    * @param direccionComercio - Dirección del comercio.
    * @param permisos - Array de permisos del comerciante (opcional).
    */
-  constructor(
-    id: number,
-    nombre: string,
-    apellido: string,
-    email: string,
-    password: string,
-    telefono: string,
-    nombreComercio: string,
-    cuil: string,
-    direccionComercio: string,
-    permisos?:Permiso[]
-  ) {
-    super(id, nombre, apellido, email, password, telefono);
-    this.nombreComercio = nombreComercio;
-    this.cuil = cuil;
-    this.direccionComercio = direccionComercio;
-    this.permisos = permisos ?? [];
+  constructor(params: ComercianteParams) {
+    // Extraemos los parámetros específicos de Comerciante
+        const { nombreComercio, cuil, direccionComercio, permisos, ...usuarioParams } = params;
+        
+        // Llamamos al constructor padre con el objeto de parámetros de usuario
+        super(usuarioParams);
+        
+        // Inicializamos los parámetros específicos de Comerciante
+        this.nombreComercio = nombreComercio;
+        this.cuil = cuil;
+        this.direccionComercio = direccionComercio;
+        this.permisos = permisos ?? [];
   }
 
   /**
@@ -169,18 +173,18 @@ export class Comerciante extends Usuario {
    * @returns Comerciante - Nueva instancia de Comerciante.
    */
   public static fromMap(map: any): Comerciante {
-    return new Comerciante(
-      map.id,
-      map.nombre,
-      map.apellido,
-      map.email,
-      map.password,
-      map.telefono,
-      map.nombreComercio,
-      map.cuil,
-      map.direccionComercio,
-      map.permisos
-    );
+    return new Comerciante({
+            id: map.id,
+            nombre: map.nombre,
+            apellido: map.apellido,
+            email: map.email,
+            password: map.password,
+            telefono: map.telefono,
+            nombreComercio: map.nombreComercio,
+            cuil: map.cuil,
+            direccionComercio: map.direccionComercio,
+            permisos: map.permisos
+        });
   }
 
   /**

@@ -75,15 +75,15 @@ export class AdministradorRepositoryAdapter implements AdministradorRepositoryPo
             await client.query('COMMIT');
             
             // Retornar el administrador creado con su ID
-            return new Administrador(
-                usuarioId,
-                administrador.getNombre(),
-                administrador.getApellido(),
-                administrador.getEmail(),
-                administrador.getPassword(),
-                administrador.getTelefono(),
-                administrador.getPermisos()
-            );
+            return new Administrador({
+                id: usuarioId,
+                nombre: administrador.getNombre(),
+                apellido: administrador.getApellido(),
+                email: administrador.getEmail(),
+                password: administrador.getPassword(),
+                telefono: administrador.getTelefono(),
+                permisos: administrador.getPermisos()
+            });
         } catch (error) {
             await client.query('ROLLBACK');
             throw error;
@@ -202,15 +202,15 @@ export class AdministradorRepositoryAdapter implements AdministradorRepositoryPo
     }
 
     private mapRowToAdministrador(row: any): Administrador {
-        return new Administrador(
-            row.id.toString(),
-            row.nombre,
-            row.apellido,
-            row.email,
-            '', // La contraseña no se retorna en las consultas
-            row.telefono,
-            row.permisos.filter((p: string | null) => p !== null)
-        );
+        return new Administrador({
+            id: row.id,
+            nombre: row.nombre,
+            apellido: row.apellido,
+            email: row.email,
+            password: '', // La contraseña no se retorna en las consultas
+            telefono: row.telefono,
+            permisos: row.permisos.filter((p: string | null) => p !== null)
+        });
     }
     
 }

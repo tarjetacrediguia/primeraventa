@@ -11,13 +11,15 @@
  * - Proporcionar funcionalidades de gestión del sistema
  * - Extender la funcionalidad base de Usuario
  * 
- * @author Sistema de Gestión
- * @version 1.0.0
  */
 
 // src/domain/entities/Administrador.ts
 import { Permiso } from "./Permiso";
-import { Usuario } from "./Usuario";
+import { Usuario, UsuarioParams } from "./Usuario";
+
+export interface AdministradorParams extends UsuarioParams {
+    permisos?: Permiso[];
+}
 
 /**
  * Clase que representa un usuario administrador en el sistema.
@@ -40,16 +42,16 @@ export class Administrador extends Usuario {
    * @param permisos - Array de permisos del administrador (opcional).
    */
   constructor(
-    id: number,
-    nombre: string,
-    apellido: string,
-    email: string,
-    password: string,
-    telefono: string,
-    permisos?: Permiso[]
+    params: AdministradorParams
   ) {
-    super(id, nombre, apellido, email, password, telefono);
-    this.permisos = permisos ?? [];
+    // Extraemos los parámetros específicos de Administrador
+        const { permisos, ...usuarioParams } = params;
+        
+        // Llamamos al constructor padre con el objeto de parámetros de usuario
+        super(usuarioParams);
+        
+        // Inicializamos los parámetros específicos de Administrador
+        this.permisos = permisos ?? [];
   }
 
   /**
@@ -102,13 +104,15 @@ export class Administrador extends Usuario {
    */
   public static fromMap(map: any): Administrador {
     return new Administrador(
-      map.id,
-      map.nombre,
-      map.apellido,
-      map.email,
-      map.password,
-      map.telefono,
-      map.permisos
+      {
+        id: map.id,
+        nombre: map.nombre,
+        apellido: map.apellido,
+        email: map.email,
+        password: map.password,
+        telefono: map.telefono,
+        permisos: map.permisos
+      }
     );
   }
 

@@ -95,16 +95,16 @@ export class AnalistaRepositoryAdapter implements AnalistaRepositoryPort {
             
             await client.query('COMMIT');
             
-            // Retornar el analista creado con su ID
-            return new Analista(
-                usuarioId,
-                analista.getNombre(),
-                analista.getApellido(),
-                analista.getEmail(),
-                analista.getPassword(),
-                analista.getTelefono(),
-                analista.getPermisos()
-            );
+        // Retornar el analista creado con su ID
+        return new Analista({
+            id: usuarioId,
+            nombre: analista.getNombre(),
+            apellido: analista.getApellido(),
+            email: analista.getEmail(),
+            password: analista.getPassword(),
+            telefono: analista.getTelefono(),
+            permisos: analista.getPermisos()
+        });
         } catch (error) {
             await client.query('ROLLBACK');
             throw error;
@@ -246,14 +246,14 @@ export class AnalistaRepositoryAdapter implements AnalistaRepositoryPort {
     }
 
     private mapRowToAnalista(row: any): Analista {
-        return new Analista(
-            Number(row.id),
-            row.nombre,
-            row.apellido,
-            row.email,
-            '', // La contraseña no se retorna en las consultas
-            row.telefono,
-            row.permisos.filter((p: string | null) => p !== null)
-        );
+        return new Analista({
+            id: Number(row.id),
+            nombre: row.nombre,
+            apellido: row.apellido,
+            email: row.email,
+            password: '', // La contraseña no se retorna en las consultas
+            telefono: row.telefono,
+            permisos: row.permisos.filter((p: string | null) => p !== null)
+        });
     }
 }

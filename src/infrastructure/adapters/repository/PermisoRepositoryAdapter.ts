@@ -270,40 +270,40 @@ export class PermisoRepositoryAdapter implements PermisoRepositoryPort {
 
         switch(row.rol) {
             case 'administrador':
-                return new Administrador(
-                    baseUsuario.id,
-                    baseUsuario.nombre,
-                    baseUsuario.apellido,
-                    baseUsuario.email,
-                    '', // Password no disponible
-                    baseUsuario.telefono,
-                    baseUsuario.permisos
-                );
+                return new Administrador({
+                    id: baseUsuario.id,
+                    nombre: baseUsuario.nombre,
+                    apellido: baseUsuario.apellido,
+                    email: baseUsuario.email,
+                    password: '', // Password no disponible
+                    telefono: baseUsuario.telefono,
+                    permisos: baseUsuario.permisos
+                });
                 
             case 'analista':
-                return new Analista(
-                    baseUsuario.id,
-                    baseUsuario.nombre,
-                    baseUsuario.apellido,
-                    baseUsuario.email,
-                    '', // Password no disponible
-                    baseUsuario.telefono,
-                    baseUsuario.permisos
-                );
+                return new Analista({
+                    id: baseUsuario.id,
+                    nombre: baseUsuario.nombre,
+                    apellido: baseUsuario.apellido,
+                    email: baseUsuario.email,
+                    password: '', // Password no disponible
+                    telefono: baseUsuario.telefono,
+                    permisos: baseUsuario.permisos
+                });
                 
             case 'comerciante':
-                return new Comerciante(
-                    baseUsuario.id,
-                    baseUsuario.nombre,
-                    baseUsuario.apellido,
-                    baseUsuario.email,
-                    '', // Password no disponible
-                    baseUsuario.telefono,
-                    row.cuil,
-                    row.nombre_comercio,
-                    row.direccion_comercio,
-                    baseUsuario.permisos
-                );
+                return new Comerciante({
+                    id: baseUsuario.id,
+                    nombre: baseUsuario.nombre,
+                    apellido: baseUsuario.apellido,
+                    email: baseUsuario.email,
+                    password: '', // Password no disponible
+                    telefono: baseUsuario.telefono,
+                    cuil: row.cuil,
+                    nombreComercio: row.nombre_comercio,
+                    direccionComercio: row.direccion_comercio,
+                    permisos: baseUsuario.permisos
+                });
                 
             default:
                 throw new Error(`Rol desconocido: ${row.rol}`);

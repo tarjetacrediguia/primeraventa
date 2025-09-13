@@ -63,8 +63,14 @@ class CreateAnalistaUseCase {
             const saltRounds = 10;
             const passwordHash = yield bcrypt_1.default.hash(password, saltRounds);
             // Crear instancia de Analista (el id se generará en el repositorio)
-            const analista = new Analista_1.Analista(0, // ID temporal (se asignará al guardar)
-            nombre, apellido, email, passwordHash, telefono);
+            const analista = new Analista_1.Analista({
+                id: 0, // ID temporal (se asignará al guardar)
+                nombre,
+                apellido,
+                email,
+                password: passwordHash,
+                telefono
+            });
             // Guardar en el repositorio
             return this.repository.saveAnalista(analista);
         });
