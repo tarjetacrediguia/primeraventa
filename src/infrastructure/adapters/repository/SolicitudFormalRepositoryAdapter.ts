@@ -135,7 +135,7 @@ export class SolicitudFormalRepositoryAdapter
         solicitudFormal.getLocalidad(),
         solicitudFormal.getProvincia(),
         solicitudFormal.getNumeroDomicilio(),
-        solicitudFormal.getBarrio()
+        solicitudFormal.getBarrio(),
       ]);
 
       // 3. Crear solicitud formal usando el mismo cliente_id
@@ -247,9 +247,9 @@ export class SolicitudFormalRepositoryAdapter
           solicitudId,
           archivo.getNombre(),
           archivo.getTipo(),
-          archivo.getContenido()
+          archivo.getContenido(),
         ]);
-        
+
         // Asignar el ID generado
         archivo.setId(archivoResult.rows[0].id);
       }
@@ -358,60 +358,63 @@ export class SolicitudFormalRepositoryAdapter
       WHERE solicitud_formal_id = $1
     `;
     const archivosResult = await pool.query(archivosQuery, [id]);
-    const archivos = archivosResult.rows.map(row => 
-      new ArchivoAdjunto(
-        row.id,
-        row.nombre,
-        row.tipo,
-        row.contenido,
-        row.fecha_creacion
-      )
+    const archivos = archivosResult.rows.map(
+      (row) =>
+        new ArchivoAdjunto(
+          row.id,
+          row.nombre,
+          row.tipo,
+          row.contenido,
+          row.fecha_creacion
+        )
     );
 
-    
-    return new SolicitudFormal(
-      Number(row.id), // Convertir a número
-      row.solicitud_inicial_id,
-      row.comerciante_id,
-      row.nombre_completo,
-      row.apellido,
-      row.telefono,
-      row.email,
-      new Date(row.fecha_solicitud),
-      row.recibo,
-      row.estado,
-      row.acepta_tarjeta,
-      new Date(row.fecha_nacimiento),
-      row.domicilio,
-      referentes,
-      row.importe_neto,
-      row.comentarios || [],
-      Number(row.ponderador) || 0,
-      row.solicita_ampliacion_credito || false,
-      row.cliente_id || 0,
-      row.razon_social_empleador,
-      row.cuit_empleador,
-      row.cargo_funcion_empleador,
-      row.sector_empleador,
-      row.codigo_postal_empleador,
-      row.localidad_empleador,
-      row.provincia_empleador,
-      row.telefono_empleador,
-      row.sexo,
-      row.codigo_postal,
-      row.localidad,
-      row.provincia,
-      row.numero_domicilio,
-      row.barrio,
-      row.fecha_aprobacion ? new Date(row.fecha_aprobacion) : undefined,
-      row.analista_aprobador_id,
-      row.administrador_aprobador_id,
-      row.comerciante_aprobador_id,
-      row.nuevo_limite_completo_solicitado !== null
-        ? Number(row.nuevo_limite_completo_solicitado)
-        : null,
-      archivos
-    );
+    return new SolicitudFormal({
+      id: Number(row.id),
+      solicitudInicialId: row.solicitud_inicial_id,
+      comercianteId: row.comerciante_id,
+      nombreCompleto: row.nombre_completo,
+      apellido: row.apellido,
+      telefono: row.telefono,
+      email: row.email,
+      fechaSolicitud: new Date(row.fecha_solicitud),
+      recibo: row.recibo,
+      estado: row.estado,
+      aceptaTarjeta: row.acepta_tarjeta,
+      fechaNacimiento: new Date(row.fecha_nacimiento),
+      domicilio: row.domicilio,
+      referentes: referentes,
+      importeNeto: row.importe_neto,
+      comentarios: row.comentarios || [],
+      ponderador: Number(row.ponderador) || 0,
+      solicitaAmpliacionDeCredito: row.solicita_ampliacion_credito || false,
+      clienteId: row.cliente_id || 0,
+      razonSocialEmpleador: row.razon_social_empleador,
+      cuitEmpleador: row.cuit_empleador,
+      cargoEmpleador: row.cargo_funcion_empleador,
+      sectorEmpleador: row.sector_empleador,
+      codigoPostalEmpleador: row.codigo_postal_empleador,
+      localidadEmpleador: row.localidad_empleador,
+      provinciaEmpleador: row.provincia_empleador,
+      telefonoEmpleador: row.telefono_empleador,
+      sexo: row.sexo,
+      codigoPostal: row.codigo_postal,
+      localidad: row.localidad,
+      provincia: row.provincia,
+      numeroDomicilio: row.numero_domicilio,
+      barrio: row.barrio,
+      fechaAprobacion: row.fecha_aprobacion
+        ? new Date(row.fecha_aprobacion)
+        : undefined,
+      analistaAprobadorId: row.analista_aprobador_id,
+      administradorAprobadorId: row.administrador_aprobador_id,
+      comercianteAprobadorId: row.comerciante_aprobador_id,
+      nuevoLimiteCompletoSolicitado:
+        row.nuevo_limite_completo_solicitado !== null
+          ? Number(row.nuevo_limite_completo_solicitado)
+          : null,
+      archivosAdjuntos: archivos,
+    });
   }
 
   /**
@@ -502,7 +505,7 @@ export class SolicitudFormalRepositoryAdapter
         solicitudFormal.getCodigoPostalEmpleador(),
         solicitudFormal.getLocalidadEmpleador(),
         solicitudFormal.getProvinciaEmpleador(),
-        solicitudFormal.getTelefonoEmpleador()
+        solicitudFormal.getTelefonoEmpleador(),
       ]);
 
       // Eliminar referentes existentes
@@ -552,7 +555,7 @@ export class SolicitudFormalRepositoryAdapter
         "DELETE FROM archivos_adjuntos WHERE solicitud_formal_id = $1",
         [solicitudFormal.getId()]
       );
-      
+
       // 2. Insertar nuevos archivos
       for (const archivo of solicitudFormal.getArchivosAdjuntos()) {
         const archivoQuery = `
@@ -563,7 +566,7 @@ export class SolicitudFormalRepositoryAdapter
           solicitudFormal.getId(),
           archivo.getNombre(),
           archivo.getTipo(),
-          archivo.getContenido()
+          archivo.getContenido(),
         ]);
       }
 
@@ -584,7 +587,10 @@ export class SolicitudFormalRepositoryAdapter
     }
   }
 
-  async agregarArchivoAdjunto(solicitudId: number, archivo: ArchivoAdjunto): Promise<void> {
+  async agregarArchivoAdjunto(
+    solicitudId: number,
+    archivo: ArchivoAdjunto
+  ): Promise<void> {
     const query = `
       INSERT INTO archivos_adjuntos (solicitud_formal_id, nombre, tipo, contenido)
       VALUES ($1, $2, $3, $4)
@@ -593,14 +599,15 @@ export class SolicitudFormalRepositoryAdapter
       solicitudId,
       archivo.getNombre(),
       archivo.getTipo(),
-      archivo.getContenido()
+      archivo.getContenido(),
     ]);
   }
-  
-  async eliminarArchivoAdjunto(archivoId: number): Promise<void> {
-    await pool.query("DELETE FROM archivos_adjuntos WHERE id = $1", [archivoId]);
-  }
 
+  async eliminarArchivoAdjunto(archivoId: number): Promise<void> {
+    await pool.query("DELETE FROM archivos_adjuntos WHERE id = $1", [
+      archivoId,
+    ]);
+  }
 
   /**
    * Actualiza el estado de aprobación de una solicitud formal.
@@ -651,7 +658,7 @@ export class SolicitudFormalRepositoryAdapter
         solicitudFormal.getLocalidad(),
         solicitudFormal.getProvincia(),
         solicitudFormal.getNumeroDomicilio(),
-        solicitudFormal.getBarrio()
+        solicitudFormal.getBarrio(),
       ]);
 
       // Actualizar solicitud formal
@@ -935,34 +942,35 @@ export class SolicitudFormalRepositoryAdapter
       );
 
       solicitudes.push(
-        new SolicitudFormal(
-          row.id.toString(),
-          row.solicitud_inicial_id,
-          row.comerciante_id,
-          row.nombre_completo,
-          row.apellido,
-          row.telefono,
-          row.email,
-          new Date(row.fecha_solicitud),
-          Buffer.alloc(0),
-          row.estado,
-          row.acepta_tarjeta,
-          new Date(row.fecha_nacimiento),
-          row.domicilio,
-          referentes,
-          row.importe_neto,
-          row.cuotas_solicitadas,
-          row.comentarios || [],
-          row.ponderador,
-          row.razon_social_empleador,
-          row.cuit_empleador,
-          row.cargo_funcion_empleador,
-          row.sector_empleador,
-          row.codigo_postal_empleador,
-          row.localidad_empleador,
-          row.provincia_empleador,
-          row.telefono_empleador
-        )
+        new SolicitudFormal({
+          id: Number(row.id), // Convertir a número en lugar de string
+          solicitudInicialId: row.solicitud_inicial_id,
+          comercianteId: row.comerciante_id,
+          nombreCompleto: row.nombre_completo,
+          apellido: row.apellido,
+          telefono: row.telefono,
+          email: row.email,
+          fechaSolicitud: new Date(row.fecha_solicitud),
+          recibo: Buffer.alloc(0), // Buffer vacío
+          estado: row.estado,
+          aceptaTarjeta: row.acepta_tarjeta,
+          fechaNacimiento: new Date(row.fecha_nacimiento),
+          domicilio: row.domicilio,
+          referentes: referentes,
+          importeNeto: row.importe_neto,
+          comentarios: row.comentarios || [],
+          ponderador: row.ponderador,
+          razonSocialEmpleador: row.razon_social_empleador,
+          cuitEmpleador: row.cuit_empleador,
+          cargoEmpleador: row.cargo_funcion_empleador,
+          sectorEmpleador: row.sector_empleador,
+          codigoPostalEmpleador: row.codigo_postal_empleador,
+          localidadEmpleador: row.localidad_empleador,
+          provinciaEmpleador: row.provincia_empleador,
+          telefonoEmpleador: row.telefono_empleador,
+          // Asignar valores por defecto para propiedades faltantes
+          solicitaAmpliacionDeCredito: false, // Valor por defecto
+        })
       );
     }
 
@@ -1396,48 +1404,51 @@ export class SolicitudFormalRepositoryAdapter
       );
 
       solicitudes.push(
-        new SolicitudFormal(
-          Number(row.id),
-                row.solicitud_inicial_id,
-                row.comerciante_id,
-                row.nombre_completo,
-                row.apellido,
-                row.telefono,
-                row.email,
-                new Date(row.fecha_solicitud),
-                row.recibo,
-                row.estado,
-                row.acepta_tarjeta,
-                new Date(row.fecha_nacimiento),
-                row.domicilio,
-                referentes,
-                row.importe_neto,
-                row.comentarios || [],
-                row.ponderador ?? 0,
-                row.solicita_ampliacion_credito || false, // Campo booleano correcto
-                row.cliente_id,
-                row.razon_social_empleador,
-                row.cuit_empleador,
-                row.cargo_funcion_empleador,
-                row.sector_empleador,
-                row.codigo_postal_empleador,
-                row.localidad_empleador,
-                row.provincia_empleador,
-                row.telefono_empleador,
-                row.sexo,
-                row.codigo_postal,
-                row.localidad,
-                row.provincia,
-                row.numero_domicilio,
-                row.barrio,
-                row.fecha_aprobacion ? new Date(row.fecha_aprobacion) : undefined,
-                row.analista_aprobador_id,
-                row.administrador_aprobador_id,
-                row.comerciante_aprobador_id,
-                row.nuevo_limite_completo_solicitado !== null 
-                    ? Number(row.nuevo_limite_completo_solicitado) 
-                    : null
-        )
+        new SolicitudFormal({
+          id: Number(row.id),
+          solicitudInicialId: row.solicitud_inicial_id,
+          comercianteId: row.comerciante_id,
+          nombreCompleto: row.nombre_completo,
+          apellido: row.apellido,
+          telefono: row.telefono,
+          email: row.email,
+          fechaSolicitud: new Date(row.fecha_solicitud),
+          recibo: row.recibo,
+          estado: row.estado,
+          aceptaTarjeta: row.acepta_tarjeta,
+          fechaNacimiento: new Date(row.fecha_nacimiento),
+          domicilio: row.domicilio,
+          referentes: referentes,
+          importeNeto: row.importe_neto,
+          comentarios: row.comentarios || [],
+          ponderador: row.ponderador ?? 0,
+          solicitaAmpliacionDeCredito: row.solicita_ampliacion_credito || false,
+          clienteId: row.cliente_id,
+          razonSocialEmpleador: row.razon_social_empleador,
+          cuitEmpleador: row.cuit_empleador,
+          cargoEmpleador: row.cargo_funcion_empleador,
+          sectorEmpleador: row.sector_empleador,
+          codigoPostalEmpleador: row.codigo_postal_empleador,
+          localidadEmpleador: row.localidad_empleador,
+          provinciaEmpleador: row.provincia_empleador,
+          telefonoEmpleador: row.telefono_empleador,
+          sexo: row.sexo,
+          codigoPostal: row.codigo_postal,
+          localidad: row.localidad,
+          provincia: row.provincia,
+          numeroDomicilio: row.numero_domicilio,
+          barrio: row.barrio,
+          fechaAprobacion: row.fecha_aprobacion
+            ? new Date(row.fecha_aprobacion)
+            : undefined,
+          analistaAprobadorId: row.analista_aprobador_id,
+          administradorAprobadorId: row.administrador_aprobador_id,
+          comercianteAprobadorId: row.comerciante_aprobador_id,
+          nuevoLimiteCompletoSolicitado:
+            row.nuevo_limite_completo_solicitado !== null
+              ? Number(row.nuevo_limite_completo_solicitado)
+              : null,
+        })
       );
     }
 

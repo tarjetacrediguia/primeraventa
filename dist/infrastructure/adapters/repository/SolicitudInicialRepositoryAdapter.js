@@ -39,9 +39,14 @@ class SolicitudInicialRepositoryAdapter {
             )
         `;
             const result = yield DatabaseDonfig_1.pool.query(query, [diasExpiracion]);
-            return result.rows.map(row => new SolicitudInicial_1.SolicitudInicial(row.id, new Date(row.fechaCreacion), 'aprobada', row.clienteId, undefined, // comercianteId (no se necesita para esta operación)
-            [] // comentarios (inicializar como array vacío)
-            ));
+            return result.rows.map((row) => new SolicitudInicial_1.SolicitudInicial({
+                id: row.id,
+                fechaCreacion: new Date(row.fechaCreacion),
+                estado: "aprobada",
+                clienteId: row.clienteId,
+                comercianteId: undefined, // comercianteId (no se necesita para esta operación)
+                comentarios: [], // comentarios (inicializar como array vacío)
+            }));
         });
     }
     /**
@@ -53,7 +58,7 @@ class SolicitudInicialRepositoryAdapter {
         return __awaiter(this, void 0, void 0, function* () {
             const client = yield DatabaseDonfig_1.pool.connect();
             try {
-                yield client.query('BEGIN');
+                yield client.query("BEGIN");
                 // Actualizar estado de la solicitud
                 yield client.query(`
                 UPDATE solicitudes_iniciales
@@ -65,14 +70,11 @@ class SolicitudInicialRepositoryAdapter {
                 yield client.query(`
                 INSERT INTO historial (accion, entidad_afectada, entidad_id, detalles)
                 VALUES ('expiracion_automatica', 'solicitud_inicial', $1, $2)
-            `, [
-                    solicitudId,
-                    JSON.stringify({ accion: "expiracion_automatica" })
-                ]);
-                yield client.query('COMMIT');
+            `, [solicitudId, JSON.stringify({ accion: "expiracion_automatica" })]);
+                yield client.query("COMMIT");
             }
             catch (error) {
-                yield client.query('ROLLBACK');
+                yield client.query("ROLLBACK");
                 throw error;
             }
             finally {
@@ -89,11 +91,13 @@ class SolicitudInicialRepositoryAdapter {
         return __awaiter(this, void 0, void 0, function* () {
             const client = yield DatabaseDonfig_1.pool.connect();
             try {
-                yield client.query('BEGIN');
+                yield client.query("BEGIN");
                 // Buscar cliente por DNI o crear uno nuevo
                 let clienteId;
                 const clienteQuery = `SELECT id FROM clientes WHERE cuil = $1`;
-                const clienteResult = yield client.query(clienteQuery, [cliente.getCuil()]);
+                const clienteResult = yield client.query(clienteQuery, [
+                    cliente.getCuil(),
+                ]);
                 if (clienteResult.rows.length === 0) {
                     // Crear nuevo cliente con datos mínimos
                     const insertClienteQuery = `
@@ -106,8 +110,8 @@ class SolicitudInicialRepositoryAdapter {
                     RETURNING id
                 `;
                     const insertClienteValues = [
-                        'Nombre por definir', // nombre_completo
-                        'Apellido por definir', // apellido
+                        "Nombre por definir", // nombre_completo
+                        "Apellido por definir", // apellido
                         cliente.getDni(),
                         cliente.getCuil(),
                         null, // telefono
@@ -115,7 +119,7 @@ class SolicitudInicialRepositoryAdapter {
                         null, // fecha_nacimiento
                         null, // domicilio
                         null, // datos_empleador
-                        false // acepta_tarjeta
+                        false, // acepta_tarjeta
                     ];
                     const insertResult = yield client.query(insertClienteQuery, insertClienteValues);
                     clienteId = insertResult.rows[0].id;
@@ -139,18 +143,28 @@ class SolicitudInicialRepositoryAdapter {
                     solicitudInicial.getEstado(),
                     solicitudInicial.getReciboSueldo() || null,
                     solicitudInicial.getComentarios(),
-                    solicitudInicial.getMotivoRechazo() || null
+                    solicitudInicial.getMotivoRechazo() || null,
                 ];
                 const result = yield client.query(query, values);
                 const createdRow = result.rows[0];
-                yield client.query('COMMIT');
+                yield client.query("COMMIT");
                 // Retornar la solicitud creada con su ID
-                return new SolicitudInicial_1.SolicitudInicial(createdRow.id.toString(), createdRow.fecha_creacion, solicitudInicial.getEstado(), clienteId, solicitudInicial.getComercianteId(), solicitudInicial.getComentarios(), undefined, // analistaAprobadorId
-                undefined, // administradorAprobadorId
-                cliente.getDni(), cliente.getCuil());
+                return new SolicitudInicial_1.SolicitudInicial({
+                    id: createdRow.id.toString(),
+                    fechaCreacion: new Date(createdRow.fecha_creacion),
+                    estado: solicitudInicial.getEstado(),
+                    clienteId: clienteId,
+                    comercianteId: solicitudInicial.getComercianteId(),
+                    comentarios: solicitudInicial.getComentarios(),
+                    analistaAprobadorId: undefined,
+                    administradorAprobadorId: undefined,
+                    dniCliente: cliente.getDni(),
+                    cuilCliente: cliente.getCuil(),
+                    // motivoRechazo se omite ya que no estaba en el original
+                });
             }
             catch (error) {
-                yield client.query('ROLLBACK');
+                yield client.query("ROLLBACK");
                 throw error;
             }
             finally {
@@ -199,10 +213,12 @@ class SolicitudInicialRepositoryAdapter {
         return __awaiter(this, void 0, void 0, function* () {
             const client = yield DatabaseDonfig_1.pool.connect();
             try {
-                yield client.query('BEGIN');
+                yield client.query("BEGIN");
                 // Verificar que el cliente existe y obtener su ID
                 const clienteQuery = `SELECT id FROM clientes WHERE cuil = $1`;
-                const clienteResult = yield client.query(clienteQuery, [cliente.getCuil()]);
+                const clienteResult = yield client.query(clienteQuery, [
+                    cliente.getCuil(),
+                ]);
                 if (clienteResult.rows.length === 0) {
                     throw new Error(`Cliente con CUIL ${cliente.getCuil()} no encontrado`);
                 }
@@ -228,24 +244,26 @@ class SolicitudInicialRepositoryAdapter {
                     solicitudInicial.getEstado(),
                     solicitudInicial.getReciboSueldo() || null,
                     solicitudInicial.getComentarios(),
-                    solicitudInicial.getAnalistaAprobadorId() === undefined ?
-                        null : Number(solicitudInicial.getAnalistaAprobadorId()),
-                    solicitudInicial.getAdministradorAprobadorId() === undefined ?
-                        null : Number(solicitudInicial.getAdministradorAprobadorId()),
+                    solicitudInicial.getAnalistaAprobadorId() === undefined
+                        ? null
+                        : Number(solicitudInicial.getAnalistaAprobadorId()),
+                    solicitudInicial.getAdministradorAprobadorId() === undefined
+                        ? null
+                        : Number(solicitudInicial.getAdministradorAprobadorId()),
                     solicitudInicial.getId(),
-                    solicitudInicial.getMotivoRechazo() || null
+                    solicitudInicial.getMotivoRechazo() || null,
                 ];
                 const result = yield client.query(query, values);
                 if (result.rows.length === 0) {
                     throw new Error(`Solicitud inicial con ID ${solicitudInicial.getId()} no encontrada`);
                 }
-                yield client.query('COMMIT');
+                yield client.query("COMMIT");
                 // Obtener los datos completos para retornar
                 const solicitudActualizada = yield this.getSolicitudInicialById(solicitudInicial.getId());
                 return solicitudActualizada;
             }
             catch (error) {
-                yield client.query('ROLLBACK');
+                yield client.query("ROLLBACK");
                 throw error;
             }
             finally {
@@ -262,10 +280,12 @@ class SolicitudInicialRepositoryAdapter {
         return __awaiter(this, void 0, void 0, function* () {
             const client = yield DatabaseDonfig_1.pool.connect();
             try {
-                yield client.query('BEGIN');
+                yield client.query("BEGIN");
                 // Verificar que el cliente existe y obtener su ID
                 const clienteQuery = `SELECT id FROM clientes WHERE cuil = $1`;
-                const clienteResult = yield client.query(clienteQuery, [cliente.getCuil()]);
+                const clienteResult = yield client.query(clienteQuery, [
+                    cliente.getCuil(),
+                ]);
                 if (clienteResult.rows.length === 0) {
                     throw new Error(`Cliente con CUIL ${cliente.getCuil()} no encontrado`);
                 }
@@ -291,24 +311,26 @@ class SolicitudInicialRepositoryAdapter {
                     solicitudInicial.getEstado(),
                     solicitudInicial.getReciboSueldo() || null,
                     solicitudInicial.getComentarios(),
-                    solicitudInicial.getAnalistaAprobadorId() === undefined ?
-                        null : Number(solicitudInicial.getAnalistaAprobadorId()),
-                    solicitudInicial.getAdministradorAprobadorId() === undefined ?
-                        null : Number(solicitudInicial.getAdministradorAprobadorId()),
+                    solicitudInicial.getAnalistaAprobadorId() === undefined
+                        ? null
+                        : Number(solicitudInicial.getAnalistaAprobadorId()),
+                    solicitudInicial.getAdministradorAprobadorId() === undefined
+                        ? null
+                        : Number(solicitudInicial.getAdministradorAprobadorId()),
                     solicitudInicial.getId(),
-                    solicitudInicial.getMotivoRechazo() || null
+                    solicitudInicial.getMotivoRechazo() || null,
                 ];
                 const result = yield client.query(query, values);
                 if (result.rows.length === 0) {
                     throw new Error(`Solicitud inicial con ID ${solicitudInicial.getId()} no encontrada`);
                 }
-                yield client.query('COMMIT');
+                yield client.query("COMMIT");
                 // Obtener los datos completos para retornar
                 const solicitudActualizada = yield this.getSolicitudInicialById(solicitudInicial.getId());
                 return solicitudActualizada;
             }
             catch (error) {
-                yield client.query('ROLLBACK');
+                yield client.query("ROLLBACK");
                 throw error;
             }
             finally {
@@ -343,7 +365,7 @@ class SolicitudInicialRepositoryAdapter {
         ORDER BY si.fecha_creacion DESC
         `;
             const result = yield DatabaseDonfig_1.pool.query(query);
-            return result.rows.map(row => this.mapRowToSolicitudInicial(row));
+            return result.rows.map((row) => this.mapRowToSolicitudInicial(row));
         });
     }
     /**
@@ -364,7 +386,7 @@ class SolicitudInicialRepositoryAdapter {
             ORDER BY si.fecha_creacion DESC
         `;
             const result = yield DatabaseDonfig_1.pool.query(query, [dni]);
-            return result.rows.map(row => this.mapRowToSolicitudInicial(row));
+            return result.rows.map((row) => this.mapRowToSolicitudInicial(row));
         });
     }
     /**
@@ -396,7 +418,7 @@ class SolicitudInicialRepositoryAdapter {
             ORDER BY si.fecha_creacion DESC
         `;
             const result = yield DatabaseDonfig_1.pool.query(query, [estado]);
-            return result.rows.map(row => this.mapRowToSolicitudInicial(row));
+            return result.rows.map((row) => this.mapRowToSolicitudInicial(row));
         });
     }
     /**
@@ -428,7 +450,7 @@ class SolicitudInicialRepositoryAdapter {
             ORDER BY si.fecha_creacion DESC
         `;
             const result = yield DatabaseDonfig_1.pool.query(query, [fecha]);
-            return result.rows.map(row => this.mapRowToSolicitudInicial(row));
+            return result.rows.map((row) => this.mapRowToSolicitudInicial(row));
         });
     }
     /**
@@ -460,7 +482,7 @@ class SolicitudInicialRepositoryAdapter {
             ORDER BY si.fecha_creacion DESC
         `;
             const result = yield DatabaseDonfig_1.pool.query(query, [comercianteId]);
-            return result.rows.map(row => this.mapRowToSolicitudInicial(row));
+            return result.rows.map((row) => this.mapRowToSolicitudInicial(row));
         });
     }
     /**
@@ -481,11 +503,29 @@ class SolicitudInicialRepositoryAdapter {
             ORDER BY si.fecha_creacion DESC
         `;
             const result = yield DatabaseDonfig_1.pool.query(query, [clienteId]);
-            return result.rows.map(row => this.mapRowToSolicitudInicial(row));
+            return result.rows.map((row) => this.mapRowToSolicitudInicial(row));
         });
     }
     mapRowToSolicitudInicial(row) {
-        const solicitud = new SolicitudInicial_1.SolicitudInicial(Number(row.id), new Date(row.fecha_creacion), row.estado, Number(row.cliente_id), row.comerciante_id ? Number(row.comerciante_id) : undefined, row.comentarios || [], row.analista_aprobador_id ? Number(row.analista_aprobador_id) : undefined, row.administrador_aprobador_id ? Number(row.administrador_aprobador_id) : undefined, row.dni_cliente, row.cuil_cliente, row.motivo_rechazo);
+        const solicitud = new SolicitudInicial_1.SolicitudInicial({
+            id: Number(row.id),
+            fechaCreacion: new Date(row.fecha_creacion),
+            estado: row.estado,
+            clienteId: Number(row.cliente_id),
+            comercianteId: row.comerciante_id
+                ? Number(row.comerciante_id)
+                : undefined,
+            comentarios: row.comentarios || [],
+            analistaAprobadorId: row.analista_aprobador_id
+                ? Number(row.analista_aprobador_id)
+                : undefined,
+            administradorAprobadorId: row.administrador_aprobador_id
+                ? Number(row.administrador_aprobador_id)
+                : undefined,
+            dniCliente: row.dni_cliente,
+            cuilCliente: row.cuil_cliente,
+            motivoRechazo: row.motivo_rechazo,
+        });
         // Agregar datos del comerciante a la solicitud
         if (row.comerciante_nombre && row.comerciante_apellido) {
             solicitud.setComercianteNombre(`${row.comerciante_nombre} ${row.comerciante_apellido}`);
@@ -514,7 +554,7 @@ class SolicitudInicialRepositoryAdapter {
         ORDER BY si.fecha_creacion DESC
     `;
             const result = yield DatabaseDonfig_1.pool.query(query, [comercianteId]);
-            return result.rows.map(row => this.mapRowToSolicitudInicial(row));
+            return result.rows.map((row) => this.mapRowToSolicitudInicial(row));
         });
     }
 }

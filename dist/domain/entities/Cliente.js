@@ -13,9 +13,7 @@
  * - Calcular edad y elegibilidad para productos
  * - Manejar datos de empleo y domicilio
  * - Validar documentos argentinos (DNI, CUIL)
- *
- * @author Sistema de Gestión
- * @version 1.0.0
+ 
  */
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.Cliente = void 0;
@@ -50,34 +48,35 @@ class Cliente {
      * @param numeroDomicilio - Número del domicilio del cliente (opcional).
      * @param barrio - Barrio del cliente (opcional).
      */
-    constructor(id, nombreCompleto, apellido, dni, cuil, telefono = null, email = null, fechaNacimiento = null, domicilio = null, aceptaTarjeta = false, fechaCreacion = null, comercianteId = 0, sexo = null, codigoPostal = null, localidad = null, provincia = null, numeroDomicilio = null, barrio = null, empleadorRazonSocial = null, empleadorCuit = null, empleadorDomicilio = null, empleadorTelefono = null, empleadorCodigoPostal = null, empleadorLocalidad = null, empleadorProvincia = null, nacionalidad = null, estadoCivil = null) {
-        this.id = id;
-        this.nombreCompleto = nombreCompleto;
-        this.apellido = apellido;
-        this.dni = dni;
-        this.cuil = cuil;
-        this.telefono = telefono;
-        this.email = email;
-        this.fechaNacimiento = fechaNacimiento;
-        this.domicilio = domicilio;
-        this.aceptaTarjeta = aceptaTarjeta;
-        this.fechaCreacion = fechaCreacion || new Date();
-        this.comercianteId = comercianteId;
-        this.sexo = sexo;
-        this.codigoPostal = codigoPostal;
-        this.localidad = localidad;
-        this.provincia = provincia;
-        this.numeroDomicilio = numeroDomicilio;
-        this.barrio = barrio;
-        this.empleadorRazonSocial = empleadorRazonSocial;
-        this.empleadorCuit = empleadorCuit;
-        this.empleadorDomicilio = empleadorDomicilio;
-        this.empleadorTelefono = empleadorTelefono;
-        this.empleadorCodigoPostal = empleadorCodigoPostal;
-        this.empleadorLocalidad = empleadorLocalidad;
-        this.empleadorProvincia = empleadorProvincia;
-        this.nacionalidad = nacionalidad;
-        this.estadoCivil = estadoCivil;
+    constructor(params) {
+        var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k, _l, _m, _o, _p, _q, _r, _s, _t, _u, _v, _w, _x;
+        this.id = params.id;
+        this.nombreCompleto = params.nombreCompleto;
+        this.apellido = params.apellido;
+        this.dni = params.dni;
+        this.cuil = params.cuil;
+        this.telefono = (_a = params.telefono) !== null && _a !== void 0 ? _a : null;
+        this.email = (_b = params.email) !== null && _b !== void 0 ? _b : null;
+        this.fechaNacimiento = (_c = params.fechaNacimiento) !== null && _c !== void 0 ? _c : null;
+        this.domicilio = (_d = params.domicilio) !== null && _d !== void 0 ? _d : null;
+        this.aceptaTarjeta = (_e = params.aceptaTarjeta) !== null && _e !== void 0 ? _e : false;
+        this.fechaCreacion = (_f = params.fechaCreacion) !== null && _f !== void 0 ? _f : new Date();
+        this.comercianteId = (_g = params.comercianteId) !== null && _g !== void 0 ? _g : 0;
+        this.sexo = (_h = params.sexo) !== null && _h !== void 0 ? _h : null;
+        this.codigoPostal = (_j = params.codigoPostal) !== null && _j !== void 0 ? _j : null;
+        this.localidad = (_k = params.localidad) !== null && _k !== void 0 ? _k : null;
+        this.provincia = (_l = params.provincia) !== null && _l !== void 0 ? _l : null;
+        this.numeroDomicilio = (_m = params.numeroDomicilio) !== null && _m !== void 0 ? _m : null;
+        this.barrio = (_o = params.barrio) !== null && _o !== void 0 ? _o : null;
+        this.empleadorRazonSocial = (_p = params.empleadorRazonSocial) !== null && _p !== void 0 ? _p : null;
+        this.empleadorCuit = (_q = params.empleadorCuit) !== null && _q !== void 0 ? _q : null;
+        this.empleadorDomicilio = (_r = params.empleadorDomicilio) !== null && _r !== void 0 ? _r : null;
+        this.empleadorTelefono = (_s = params.empleadorTelefono) !== null && _s !== void 0 ? _s : null;
+        this.empleadorCodigoPostal = (_t = params.empleadorCodigoPostal) !== null && _t !== void 0 ? _t : null;
+        this.empleadorLocalidad = (_u = params.empleadorLocalidad) !== null && _u !== void 0 ? _u : null;
+        this.empleadorProvincia = (_v = params.empleadorProvincia) !== null && _v !== void 0 ? _v : null;
+        this.nacionalidad = (_w = params.nacionalidad) !== null && _w !== void 0 ? _w : null;
+        this.estadoCivil = (_x = params.estadoCivil) !== null && _x !== void 0 ? _x : null;
     }
     /*
         * Obtiene la razón social del empleador del cliente.
@@ -656,9 +655,22 @@ class Cliente {
      */
     static fromMap(map) {
         var _a, _b, _c, _d;
-        return new Cliente((_a = map.id) === null || _a === void 0 ? void 0 : _a.toString(), map.nombreCompleto || map.nombre_completo, map.apellido, map.dni, map.cuil, map.telefono, map.email, map.fechaNacimiento ? new Date(map.fechaNacimiento) :
-            map.fecha_nacimiento ? new Date(map.fecha_nacimiento) : null, map.domicilio, (_c = (_b = map.aceptaTarjeta) !== null && _b !== void 0 ? _b : map.acepta_tarjeta) !== null && _c !== void 0 ? _c : false, map.fechaCreacion ? new Date(map.fechaCreacion) :
-            map.fecha_creacion ? new Date(map.fecha_creacion) : new Date(), (_d = map.comercianteId) !== null && _d !== void 0 ? _d : 0);
+        return new Cliente({
+            id: (_a = map.id) === null || _a === void 0 ? void 0 : _a.toString(),
+            nombreCompleto: map.nombreCompleto || map.nombre_completo,
+            apellido: map.apellido,
+            dni: map.dni,
+            cuil: map.cuil,
+            telefono: map.telefono,
+            email: map.email,
+            fechaNacimiento: map.fechaNacimiento ? new Date(map.fechaNacimiento) :
+                map.fecha_nacimiento ? new Date(map.fecha_nacimiento) : null,
+            domicilio: map.domicilio,
+            aceptaTarjeta: (_c = (_b = map.aceptaTarjeta) !== null && _b !== void 0 ? _b : map.acepta_tarjeta) !== null && _c !== void 0 ? _c : false,
+            fechaCreacion: map.fechaCreacion ? new Date(map.fechaCreacion) :
+                map.fecha_creacion ? new Date(map.fecha_creacion) : new Date(),
+            comercianteId: (_d = map.comercianteId) !== null && _d !== void 0 ? _d : 0
+        });
     }
     /**
      * Crea una copia exacta del cliente.
@@ -666,7 +678,20 @@ class Cliente {
      * @returns Cliente - Nueva instancia con los mismos datos.
      */
     clone() {
-        return new Cliente(this.id, this.nombreCompleto, this.apellido, this.dni, this.cuil, this.telefono, this.email, this.fechaNacimiento, this.domicilio, this.aceptaTarjeta, this.fechaCreacion, this.comercianteId);
+        return new Cliente({
+            id: this.id,
+            nombreCompleto: this.nombreCompleto,
+            apellido: this.apellido,
+            dni: this.dni,
+            cuil: this.cuil,
+            telefono: this.telefono,
+            email: this.email,
+            fechaNacimiento: this.fechaNacimiento,
+            domicilio: this.domicilio,
+            aceptaTarjeta: this.aceptaTarjeta,
+            fechaCreacion: this.fechaCreacion,
+            comercianteId: this.comercianteId
+        });
     }
     /**
      * Actualiza los datos del cliente con la información proporcionada.

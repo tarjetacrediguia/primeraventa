@@ -13,8 +13,6 @@
  * - Facilitar auditorías y seguimiento de actividades
  * - Gestionar detalles específicos de cada acción
  * 
- * @author Sistema de Gestión
- * @version 1.0.0
  */
 
 /**

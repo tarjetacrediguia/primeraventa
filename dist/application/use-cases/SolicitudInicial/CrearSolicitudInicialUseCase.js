@@ -93,7 +93,13 @@ class CrearSolicitudInicialUseCase {
                 }
                 finally {
                     // Crear cliente con datos mínimos si no existe
-                    cliente = new Cliente_1.Cliente(0, "Nombre temporal", "Apellido temporal", dniCliente, cuilCliente);
+                    cliente = new Cliente_1.Cliente({
+                        id: 0,
+                        nombreCompleto: "Nombre temporal",
+                        apellido: "Apellido temporal",
+                        dni: dniCliente,
+                        cuil: cuilCliente
+                    });
                     clienteTemporal = yield this.clienteRepository.save(cliente);
                 }
                 // ===== PASO 2: VALIDAR CRÉDITO ACTIVO =====
@@ -122,7 +128,13 @@ class CrearSolicitudInicialUseCase {
                 }
                 // ===== PASO 3: CREAR SOLICITUD INICIAL =====
                 // Crear solicitud inicial vinculada al cliente
-                const solicitud = new SolicitudInicial_1.SolicitudInicial(0, new Date(), "pendiente", clienteTemporal.getId(), comercianteId);
+                const solicitud = new SolicitudInicial_1.SolicitudInicial({
+                    id: 0,
+                    fechaCreacion: new Date(),
+                    estado: "pendiente",
+                    clienteId: clienteTemporal.getId(),
+                    comercianteId: comercianteId
+                });
                 // ===== PASO 4: PERSISTIR SOLICITUD =====
                 // Guardar solicitud inicial en la base de datos
                 const solicitudCreada = yield this.solicitudInicialRepository.createSolicitudInicial(solicitud, clienteTemporal);

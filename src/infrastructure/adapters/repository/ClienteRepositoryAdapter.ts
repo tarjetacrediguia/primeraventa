@@ -16,35 +16,35 @@ export class ClienteRepositoryAdapter implements ClienteRepositoryPort {
   constructor() {}
 
   private mapRowToCliente(row: any): Cliente {
-    return new Cliente(
-      row.id,
-      row.nombre_completo,
-      row.apellido,
-      row.dni,
-      row.cuil || "",
-      row.telefono,
-      row.email,
-      row.fecha_nacimiento ? new Date(row.fecha_nacimiento) : null,
-      row.domicilio,
-      row.acepta_tarjeta,
-      row.fecha_creacion ? new Date(row.fecha_creacion) : new Date(),
-      row.comerciante_id || 0,
-      row.sexo || null,
-      row.codigo_postal || null,
-      row.localidad || null,
-      row.provincia || null,
-      row.numero_domicilio || null,
-      row.barrio || null,
-      row.empleador_razon_social || null,
-      row.empleador_cuit || null,
-      row.empleador_domicilio || null,
-      row.empleador_telefono || null,
-      row.empleador_codigo_postal || null,
-      row.empleador_localidad || null,
-      row.empleador_provincia || null,
-      row.nacionalidad || null,
-      row.estado_civil || null
-    );
+    return new Cliente({
+      id: row.id,
+      nombreCompleto: row.nombre_completo,
+      apellido: row.apellido,
+      dni: row.dni,
+      cuil: row.cuil || "",
+      telefono: row.telefono,
+      email: row.email,
+      fechaNacimiento: row.fecha_nacimiento ? new Date(row.fecha_nacimiento) : null,
+      domicilio: row.domicilio,
+      aceptaTarjeta: row.acepta_tarjeta,
+      fechaCreacion: row.fecha_creacion ? new Date(row.fecha_creacion) : new Date(),
+      comercianteId: row.comerciante_id || 0,
+      sexo: row.sexo || null,
+      codigoPostal: row.codigo_postal || null,
+      localidad: row.localidad || null,
+      provincia: row.provincia || null,
+      numeroDomicilio: row.numero_domicilio || null,
+      barrio: row.barrio || null,
+      empleadorRazonSocial: row.empleador_razon_social || null,
+      empleadorCuit: row.empleador_cuit || null,
+      empleadorDomicilio: row.empleador_domicilio || null,
+      empleadorTelefono: row.empleador_telefono || null,
+      empleadorCodigoPostal: row.empleador_codigo_postal || null,
+      empleadorLocalidad: row.empleador_localidad || null,
+      empleadorProvincia: row.empleador_provincia || null,
+      nacionalidad: row.nacionalidad || null,
+      estadoCivil: row.estado_civil || null
+    });
   }
 
   /**

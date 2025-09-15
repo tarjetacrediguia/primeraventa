@@ -13,9 +13,6 @@
  * - Proporcionar funcionalidades de aprobación y gestión
  * - Gestionar números de cuenta y tarjeta asignados
  * - Validar y procesar datos de la solicitud formal
- *
- * @author Sistema de Gestión
- * @version 1.0.0
  */
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
     if (k2 === undefined) k2 = k;
@@ -99,47 +96,49 @@ class SolicitudFormal {
      * @param importeNeto - Importe neto del solicitante.
      * @param cuotasSolicitadas - Cantidad de cuotas solicitadas (entre 3 y 14).
      */
-    constructor(id, solicitudInicialId, comercianteId, nombreCompleto, apellido, telefono, email, fechaSolicitud, recibo, estado, aceptaTarjeta, fechaNacimiento, domicilio, referentes, importeNeto, comentarios = [], ponderador, solicitaAmpliacionDeCredito = false, clienteId, razonSocialEmpleador, cuitEmpleador, cargoEmpleador, sectorEmpleador, codigoPostalEmpleador, localidadEmpleador, provinciaEmpleador, telefonoEmpleador, sexo, codigoPostal, localidad, provincia, numeroDomicilio, barrio, fechaAprobacion, analistaAprobadorId, administradorAprobadorId, comercianteAprobadorId, nuevoLimiteCompletoSolicitado, archivosAdjuntos) {
+    constructor(params) {
+        var _a;
         this.archivosAdjuntos = [];
-        this.id = id;
-        this.solicitudInicialId = solicitudInicialId;
-        this.comercianteId = comercianteId;
-        this.nombreCompleto = nombreCompleto;
-        this.apellido = apellido;
-        this.telefono = telefono;
-        this.email = email;
-        this.fechaSolicitud = fechaSolicitud;
-        this.recibo = recibo;
-        this.estado = estado;
-        this.aceptaTarjeta = aceptaTarjeta;
-        this.fechaNacimiento = fechaNacimiento;
-        this.domicilio = domicilio;
-        this.referentes = referentes || [];
-        this.comentarios = comentarios;
-        this.clienteId = clienteId;
-        this.fechaAprobacion = fechaAprobacion;
-        this.analistaAprobadorId = analistaAprobadorId;
-        this.administradorAprobadorId = administradorAprobadorId;
-        this.importeNeto = importeNeto;
-        this.ponderador = ponderador;
-        this.nuevoLimiteCompletoSolicitado = nuevoLimiteCompletoSolicitado !== null && nuevoLimiteCompletoSolicitado !== void 0 ? nuevoLimiteCompletoSolicitado : null;
-        this.solicitaAmpliacionDeCredito = solicitaAmpliacionDeCredito;
+        this.id = params.id;
+        this.solicitudInicialId = params.solicitudInicialId;
+        this.comercianteId = params.comercianteId;
+        this.nombreCompleto = params.nombreCompleto;
+        this.apellido = params.apellido;
+        this.telefono = params.telefono;
+        this.email = params.email;
+        this.fechaSolicitud = params.fechaSolicitud;
+        this.recibo = params.recibo;
+        this.estado = params.estado;
+        this.aceptaTarjeta = params.aceptaTarjeta;
+        this.fechaNacimiento = params.fechaNacimiento;
+        this.domicilio = params.domicilio;
+        this.referentes = params.referentes || [];
+        this.comentarios = params.comentarios || [];
+        this.clienteId = params.clienteId;
+        this.fechaAprobacion = params.fechaAprobacion;
+        this.analistaAprobadorId = params.analistaAprobadorId;
+        this.administradorAprobadorId = params.administradorAprobadorId;
+        this.importeNeto = params.importeNeto;
+        this.ponderador = params.ponderador;
+        this.nuevoLimiteCompletoSolicitado = (_a = params.nuevoLimiteCompletoSolicitado) !== null && _a !== void 0 ? _a : null;
+        this.solicitaAmpliacionDeCredito = params.solicitaAmpliacionDeCredito || false;
+        this.razonSocialEmpleador = params.razonSocialEmpleador || "";
+        this.cuitEmpleador = params.cuitEmpleador || "";
+        this.cargoEmpleador = params.cargoEmpleador || "";
+        this.sectorEmpleador = params.sectorEmpleador || "";
+        this.codigoPostalEmpleador = params.codigoPostalEmpleador || "";
+        this.localidadEmpleador = params.localidadEmpleador || "";
+        this.provinciaEmpleador = params.provinciaEmpleador || "";
+        this.telefonoEmpleador = params.telefonoEmpleador || "";
+        this.sexo = params.sexo || null;
+        this.codigoPostal = params.codigoPostal || null;
+        this.localidad = params.localidad || null;
+        this.provincia = params.provincia || null;
+        this.numeroDomicilio = params.numeroDomicilio || null;
+        this.barrio = params.barrio || null;
+        this.archivosAdjuntos = params.archivosAdjuntos || [];
+        this.comercianteAprobadorId = params.comercianteAprobadorId;
         this.calcularLimites();
-        this.razonSocialEmpleador = razonSocialEmpleador || "";
-        this.cuitEmpleador = cuitEmpleador || "";
-        this.cargoEmpleador = cargoEmpleador || "";
-        this.sectorEmpleador = sectorEmpleador || "";
-        this.codigoPostalEmpleador = codigoPostalEmpleador || "";
-        this.localidadEmpleador = localidadEmpleador || "";
-        this.provinciaEmpleador = provinciaEmpleador || "";
-        this.telefonoEmpleador = telefonoEmpleador || "";
-        this.sexo = sexo || null;
-        this.codigoPostal = codigoPostal || null;
-        this.localidad = localidad || null;
-        this.provincia = provincia || null;
-        this.numeroDomicilio = numeroDomicilio || null;
-        this.barrio = barrio || null;
-        this.archivosAdjuntos = archivosAdjuntos || [];
     }
     getArchivosAdjuntos() {
         return this.archivosAdjuntos;
@@ -689,7 +688,47 @@ class SolicitudFormal {
      * @returns SolicitudFormal - Nueva instancia de SolicitudFormal.
      */
     static fromMap(map) {
-        return new SolicitudFormal(map.id, map.solicitudInicialId, map.comercianteId, map.nombreCompleto, map.apellido, map.telefono, map.email, map.fechaSolicitud, map.recibo, map.estado, map.aceptaTarjeta, map.fechaNacimiento, map.domicilio, map.referentes.map((r) => Referente_1.Referente.fromMap(r)), map.importeNeto, map.comentarios || [], map.ponderador || 0, map.solicitaAmpliacionDeCredito || false, map.clienteId, map.razonSocialEmpleador, map.cuitEmpleador, map.cargoEmpleador, map.sectorEmpleador, map.codigoPostalEmpleador, map.localidadEmpleador, map.provinciaEmpleador, map.telefonoEmpleador, map.sexo, map.codigoPostal, map.localidad, map.provincia, map.numeroDomicilio, map.barrio, map.fechaAprobacion, map.analistaAprobadorId, map.administradorAprobadorId, map.comercianteAprobadorId, map.nuevoLimiteCompletoSolicitado);
+        return new SolicitudFormal({
+            id: map.id,
+            solicitudInicialId: map.solicitudInicialId,
+            comercianteId: map.comercianteId,
+            nombreCompleto: map.nombreCompleto,
+            apellido: map.apellido,
+            telefono: map.telefono,
+            email: map.email,
+            fechaSolicitud: map.fechaSolicitud,
+            recibo: map.recibo,
+            estado: map.estado,
+            aceptaTarjeta: map.aceptaTarjeta,
+            fechaNacimiento: map.fechaNacimiento,
+            domicilio: map.domicilio,
+            referentes: map.referentes ? map.referentes.map((r) => Referente_1.Referente.fromMap(r)) : [],
+            importeNeto: map.importeNeto,
+            comentarios: map.comentarios || [],
+            ponderador: map.ponderador || 0,
+            solicitaAmpliacionDeCredito: map.solicitaAmpliacionDeCredito || false,
+            clienteId: map.clienteId,
+            razonSocialEmpleador: map.razonSocialEmpleador,
+            cuitEmpleador: map.cuitEmpleador,
+            cargoEmpleador: map.cargoEmpleador,
+            sectorEmpleador: map.sectorEmpleador,
+            codigoPostalEmpleador: map.codigoPostalEmpleador,
+            localidadEmpleador: map.localidadEmpleador,
+            provinciaEmpleador: map.provinciaEmpleador,
+            telefonoEmpleador: map.telefonoEmpleador,
+            sexo: map.sexo,
+            codigoPostal: map.codigoPostal,
+            localidad: map.localidad,
+            provincia: map.provincia,
+            numeroDomicilio: map.numeroDomicilio,
+            barrio: map.barrio,
+            fechaAprobacion: map.fechaAprobacion,
+            analistaAprobadorId: map.analistaAprobadorId,
+            administradorAprobadorId: map.administradorAprobadorId,
+            comercianteAprobadorId: map.comercianteAprobadorId,
+            nuevoLimiteCompletoSolicitado: map.nuevoLimiteCompletoSolicitado,
+            archivosAdjuntos: map.archivosAdjuntos || []
+        });
     }
     // Métodos para cálculos financieros
     calcularLimites() {

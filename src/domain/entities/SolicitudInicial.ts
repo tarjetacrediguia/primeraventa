@@ -11,10 +11,25 @@
  * - Manejar información básica del cliente y documentos
  * - Proporcionar funcionalidades de aprobación y comentarios
  * - Validar datos de la solicitud inicial
- * 
- * @author Sistema de Gestión
- * @version 1.0.0
  */
+
+
+export interface SolicitudInicialParams {
+  id: number;
+  fechaCreacion: Date;
+  estado: "pendiente" | "aprobada" | "rechazada" | "expirada";
+  clienteId: number;
+  comercianteId?: number;
+  comentarios?: string[];
+  analistaAprobadorId?: number;
+  administradorAprobadorId?: number;
+  dniCliente?: string;
+  cuilCliente?: string;
+  motivoRechazo?: string;
+  reciboSueldo?: Buffer;
+  comercianteNombre?: string;
+  nombreComercio?: string;
+}
 
 /**
  * Clase que representa una solicitud inicial de préstamo en el sistema.
@@ -53,30 +68,21 @@ export class SolicitudInicial {
    * @param analistaAprobadorId - ID del analista que aprobó (opcional).
    * @param administradorAprobadorId - ID del administrador que aprobó (opcional).
    */
-  constructor(
-    id: number,
-    fechaCreacion: Date,
-    estado: "pendiente" | "aprobada" | "rechazada" | "expirada",
-    clienteId: number,
-    comercianteId?: number,
-    comentarios: string[] = [],
-    analistaAprobadorId?: number,
-    administradorAprobadorId?: number,
-    dniCliente?: string,
-    cuilCliente?: string,
-    motivoRechazo?: string
-  ) {
-    this.id = id;
-    this.fechaCreacion = fechaCreacion;
-    this.estado = estado;
-    this.dniCliente = dniCliente;
-    this.cuilCliente = cuilCliente;
-    this.comercianteId = comercianteId;
-    this.comentarios = comentarios;
-    this.clienteId = clienteId;
-    this.analistaAprobadorId = analistaAprobadorId;
-    this.administradorAprobadorId = administradorAprobadorId;
-    this.motivoRechazo = motivoRechazo;
+  constructor(params: SolicitudInicialParams) {
+    this.id = params.id;
+    this.fechaCreacion = params.fechaCreacion;
+    this.estado = params.estado;
+    this.dniCliente = params.dniCliente;
+    this.cuilCliente = params.cuilCliente;
+    this.comercianteId = params.comercianteId;
+    this.comentarios = params.comentarios || [];
+    this.clienteId = params.clienteId;
+    this.analistaAprobadorId = params.analistaAprobadorId;
+    this.administradorAprobadorId = params.administradorAprobadorId;
+    this.motivoRechazo = params.motivoRechazo;
+    this.comercianteNombre = params.comercianteNombre;
+    this.nombreComercio = params.nombreComercio;
+    this.reciboSueldo = params.reciboSueldo;
   }
 
   public setComercianteNombre(nombre: string): void {
@@ -358,19 +364,22 @@ public getAdministradorAprobadorId(): number | undefined {
    * @returns SolicitudInicial - Nueva instancia de SolicitudInicial.
    */
   public static fromMap(map: any): SolicitudInicial {
-    return new SolicitudInicial(
-      map.id,
-      map.fechaCreacion,
-      map.estado,
-      map.clienteId || 0,
-      map.comercianteId,
-      map.comentarios || [],
-      map.analista_aprobador_id ? Number(map.analista_aprobador_id) : undefined,
-      map.administrador_aprobador_id ? Number(map.administrador_aprobador_id) : undefined,
-      map.dniCliente,
-      map.cuilCliente,
-      map.motivoRechazo
-    );
+    return new SolicitudInicial({
+      id: map.id,
+      fechaCreacion: map.fechaCreacion,
+      estado: map.estado,
+      clienteId: map.clienteId || 0,
+      comercianteId: map.comercianteId,
+      comentarios: map.comentarios || [],
+      analistaAprobadorId: map.analista_aprobador_id ? Number(map.analista_aprobador_id) : undefined,
+      administradorAprobadorId: map.administrador_aprobador_id ? Number(map.administrador_aprobador_id) : undefined,
+      dniCliente: map.dniCliente,
+      cuilCliente: map.cuilCliente,
+      motivoRechazo: map.motivoRechazo,
+      reciboSueldo: map.reciboSueldo,
+      comercianteNombre: map.comercianteNombre,
+      nombreComercio: map.nombreComercio
+    });
   }
 
   /**

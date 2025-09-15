@@ -243,18 +243,44 @@ class CrearSolicitudFormalUseCase {
                 }
                 // ===== PASO 8: CREAR SOLICITUD FORMAL =====
                 // Crear la solicitud formal con todos los datos del cliente y empleador
-                const solicitudFormal = new SolicitudFormal_1.SolicitudFormal(0, // ID se asignará automáticamente al guardar
-                solicitudInicialId, comercianteId, datosSolicitud.nombreCompleto, datosSolicitud.apellido, datosSolicitud.telefono, datosSolicitud.email, new Date(), // Fecha de creación
-                typeof datosSolicitud.recibo === "string"
-                    ? Buffer.from(datosSolicitud.recibo, "base64")
-                    : datosSolicitud.recibo, "pendiente", // Estado inicial
-                datosSolicitud.aceptaTarjeta, datosSolicitud.fechaNacimiento, datosSolicitud.domicilio, datosSolicitud.referentes, datosSolicitud.importeNeto, [comentarioInicial], // Comentarios iniciales
-                ponderador, // Ponderador obtenido de configuración
-                solicitaAmpliacionDeCredito, 0, // Límite completo inicial
-                // Datos del empleador
-                datosEmpleador.razonSocialEmpleador, datosEmpleador.cuitEmpleador, datosEmpleador.cargoEmpleador, datosEmpleador.sectorEmpleador, datosEmpleador.codigoPostalEmpleador, datosEmpleador.localidadEmpleador, datosEmpleador.provinciaEmpleador, datosEmpleador.telefonoEmpleador, 
-                // Datos personales adicionales
-                datosSolicitud.sexo, datosSolicitud.codigoPostal, datosSolicitud.localidad, datosSolicitud.provincia, datosSolicitud.numeroDomicilio, datosSolicitud.barrio);
+                const solicitudFormal = new SolicitudFormal_1.SolicitudFormal({
+                    id: 0, // ID se asignará automáticamente al guardar
+                    solicitudInicialId: solicitudInicialId,
+                    comercianteId: comercianteId,
+                    nombreCompleto: datosSolicitud.nombreCompleto,
+                    apellido: datosSolicitud.apellido,
+                    telefono: datosSolicitud.telefono,
+                    email: datosSolicitud.email,
+                    fechaSolicitud: new Date(), // Fecha de creación
+                    recibo: typeof datosSolicitud.recibo === "string"
+                        ? Buffer.from(datosSolicitud.recibo, "base64")
+                        : datosSolicitud.recibo,
+                    estado: "pendiente", // Estado inicial
+                    aceptaTarjeta: datosSolicitud.aceptaTarjeta,
+                    fechaNacimiento: datosSolicitud.fechaNacimiento,
+                    domicilio: datosSolicitud.domicilio,
+                    referentes: datosSolicitud.referentes,
+                    importeNeto: datosSolicitud.importeNeto,
+                    comentarios: [comentarioInicial], // Comentarios iniciales
+                    ponderador: ponderador, // Ponderador obtenido de configuración
+                    solicitaAmpliacionDeCredito: solicitaAmpliacionDeCredito,
+                    // Datos del empleador
+                    razonSocialEmpleador: datosEmpleador.razonSocialEmpleador,
+                    cuitEmpleador: datosEmpleador.cuitEmpleador,
+                    cargoEmpleador: datosEmpleador.cargoEmpleador,
+                    sectorEmpleador: datosEmpleador.sectorEmpleador,
+                    codigoPostalEmpleador: datosEmpleador.codigoPostalEmpleador,
+                    localidadEmpleador: datosEmpleador.localidadEmpleador,
+                    provinciaEmpleador: datosEmpleador.provinciaEmpleador,
+                    telefonoEmpleador: datosEmpleador.telefonoEmpleador,
+                    // Datos personales adicionales
+                    sexo: datosSolicitud.sexo,
+                    codigoPostal: datosSolicitud.codigoPostal,
+                    localidad: datosSolicitud.localidad,
+                    provincia: datosSolicitud.provincia,
+                    numeroDomicilio: datosSolicitud.numeroDomicilio,
+                    barrio: datosSolicitud.barrio
+                });
                 // ===== PASO 9: AGREGAR ARCHIVOS ADJUNTOS =====
                 // Agregar archivos adjuntos opcionales si existen
                 if (datosSolicitud.archivosAdjuntos && datosSolicitud.archivosAdjuntos.length > 0) {
