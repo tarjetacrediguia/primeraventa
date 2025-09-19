@@ -125,13 +125,13 @@ class CrearSolicitudFormalUseCase {
                     yield this.historialRepository.registrarEvento({
                         usuarioId: comercianteId,
                         accion: historialActions_1.HISTORIAL_ACTIONS.ERROR_PROCESO,
-                        entidadAfectada: 'solicitudes_formales',
+                        entidadAfectada: "solicitudes_formales",
                         entidadId: 0,
                         detalles: {
                             motivo: "Falta de permisos",
-                            permiso_requerido: "create_solicitudFormal"
+                            permiso_requerido: "create_solicitudFormal",
                         },
-                        solicitudInicialId: solicitudInicialId
+                        solicitudInicialId: solicitudInicialId,
                     });
                     throw new Error("No tiene permisos para enviar solicitudes formales");
                 }
@@ -143,28 +143,28 @@ class CrearSolicitudFormalUseCase {
                     yield this.historialRepository.registrarEvento({
                         usuarioId: comercianteId,
                         accion: historialActions_1.HISTORIAL_ACTIONS.ERROR_PROCESO,
-                        entidadAfectada: 'solicitudes_formales',
+                        entidadAfectada: "solicitudes_formales",
                         entidadId: 0,
                         detalles: {
                             error: "Solicitud inicial no encontrada",
-                            solicitud_inicial_id: solicitudInicialId
+                            solicitud_inicial_id: solicitudInicialId,
                         },
-                        solicitudInicialId: solicitudInicialId
+                        solicitudInicialId: solicitudInicialId,
                     });
                     throw new Error("Solicitud inicial no encontrada");
                 }
                 // ===== PASO 4: OBTENER CONFIGURACIÓN DE PONDERADOR =====
                 // Obtener configuración del sistema para el ponderador
                 const configs = yield this.configuracionRepo.obtenerConfiguracion();
-                const ponderadorConfig = configs.find(c => c.getClave() === 'ponderador');
+                const ponderadorConfig = configs.find((c) => c.getClave() === "ponderador");
                 if (!ponderadorConfig) {
                     yield this.historialRepository.registrarEvento({
                         usuarioId: comercianteId,
                         accion: historialActions_1.HISTORIAL_ACTIONS.ERROR_PROCESO,
-                        entidadAfectada: 'solicitudes_formales',
+                        entidadAfectada: "solicitudes_formales",
                         entidadId: 0,
                         detalles: { error: "Configuración de ponderador no encontrada" },
-                        solicitudInicialId: solicitudInicialId
+                        solicitudInicialId: solicitudInicialId,
                     });
                     throw new Error("Configuración de ponderador no encontrada");
                 }
@@ -174,10 +174,10 @@ class CrearSolicitudFormalUseCase {
                     yield this.historialRepository.registrarEvento({
                         usuarioId: comercianteId,
                         accion: historialActions_1.HISTORIAL_ACTIONS.ERROR_PROCESO,
-                        entidadAfectada: 'solicitudes_formales',
+                        entidadAfectada: "solicitudes_formales",
                         entidadId: 0,
                         detalles: { error: "Ponderador no es un número válido" },
-                        solicitudInicialId: solicitudInicialId
+                        solicitudInicialId: solicitudInicialId,
                     });
                     throw new Error("Ponderador no es un número válido");
                 }
@@ -188,14 +188,14 @@ class CrearSolicitudFormalUseCase {
                     yield this.historialRepository.registrarEvento({
                         usuarioId: comercianteId,
                         accion: historialActions_1.HISTORIAL_ACTIONS.ERROR_PROCESO,
-                        entidadAfectada: 'solicitudes_formales',
+                        entidadAfectada: "solicitudes_formales",
                         entidadId: 0,
                         detalles: {
                             error: "Solicitud inicial no aprobada",
                             estado_actual: solicitudInicial.getEstado(),
-                            solicitud_inicial_id: solicitudInicialId
+                            solicitud_inicial_id: solicitudInicialId,
                         },
-                        solicitudInicialId: solicitudInicialId
+                        solicitudInicialId: solicitudInicialId,
                     });
                     throw new Error("La solicitud inicial no está aprobada");
                 }
@@ -207,39 +207,44 @@ class CrearSolicitudFormalUseCase {
                     yield this.historialRepository.registrarEvento({
                         usuarioId: comercianteId,
                         accion: historialActions_1.HISTORIAL_ACTIONS.ERROR_PROCESO,
-                        entidadAfectada: 'solicitudes_formales',
+                        entidadAfectada: "solicitudes_formales",
                         entidadId: 0,
                         detalles: {
                             error: "Solicitud formal ya existe",
                             solicitud_inicial_id: solicitudInicialId,
-                            solicitud_formal_id: existentes[0].getId()
+                            solicitud_formal_id: existentes[0].getId(),
                         },
-                        solicitudInicialId: solicitudInicialId
+                        solicitudInicialId: solicitudInicialId,
                     });
                     throw new Error("Ya existe una solicitud formal para esta solicitud inicial");
                 }
                 // ===== PASO 7: VALIDAR FORMATO DE RECIBO DE SUELDO =====
                 // Convertir recibo de string base64 a Buffer si es necesario
-                if (typeof datosSolicitud.recibo === 'string') {
-                    datosSolicitud.recibo = Buffer.from(datosSolicitud.recibo, 'base64');
+                if (typeof datosSolicitud.recibo === "string") {
+                    datosSolicitud.recibo = Buffer.from(datosSolicitud.recibo, "base64");
                 }
                 // Verificar que el recibo sea una imagen válida y de un tipo permitido
-                const fileType = yield Promise.resolve().then(() => __importStar(require('file-type')));
+                const fileType = yield Promise.resolve().then(() => __importStar(require("file-type")));
                 const type = yield fileType.fileTypeFromBuffer(datosSolicitud.recibo);
-                const allowedMimeTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
+                const allowedMimeTypes = [
+                    "image/jpeg",
+                    "image/png",
+                    "image/webp",
+                    "image/gif",
+                ];
                 if (!type || !allowedMimeTypes.includes(type.mime)) {
                     // Registrar evento de tipo de imagen no permitido
                     yield this.historialRepository.registrarEvento({
                         usuarioId: comercianteId,
                         accion: historialActions_1.HISTORIAL_ACTIONS.ERROR_PROCESO,
-                        entidadAfectada: 'solicitudes_formales',
+                        entidadAfectada: "solicitudes_formales",
                         entidadId: 0,
                         detalles: {
-                            error: "El recibo debe ser una imagen válida (JPG, PNG, WEBP o GIF)"
+                            error: "El recibo debe ser una imagen válida (JPG, PNG, WEBP o GIF)",
                         },
-                        solicitudInicialId: solicitudInicialId
+                        solicitudInicialId: solicitudInicialId,
                     });
-                    throw new Error('El recibo debe ser una imagen válida (JPG, PNG, WEBP o GIF)');
+                    throw new Error("El recibo debe ser una imagen válida (JPG, PNG, WEBP o GIF)");
                 }
                 // ===== PASO 8: CREAR SOLICITUD FORMAL =====
                 // Crear la solicitud formal con todos los datos del cliente y empleador
@@ -279,11 +284,12 @@ class CrearSolicitudFormalUseCase {
                     localidad: datosSolicitud.localidad,
                     provincia: datosSolicitud.provincia,
                     numeroDomicilio: datosSolicitud.numeroDomicilio,
-                    barrio: datosSolicitud.barrio
+                    barrio: datosSolicitud.barrio,
                 });
                 // ===== PASO 9: AGREGAR ARCHIVOS ADJUNTOS =====
                 // Agregar archivos adjuntos opcionales si existen
-                if (datosSolicitud.archivosAdjuntos && datosSolicitud.archivosAdjuntos.length > 0) {
+                if (datosSolicitud.archivosAdjuntos &&
+                    datosSolicitud.archivosAdjuntos.length > 0) {
                     for (const archivoData of datosSolicitud.archivosAdjuntos) {
                         const archivo = new ArchivosAdjuntos_1.ArchivoAdjunto(0, // ID temporal, se asignará al guardar
                         archivoData.nombre, archivoData.tipo, archivoData.contenido);
@@ -303,21 +309,21 @@ class CrearSolicitudFormalUseCase {
                 yield this.historialRepository.registrarEvento({
                     usuarioId: comercianteId,
                     accion: historialActions_1.HISTORIAL_ACTIONS.CREATE_SOLICITUD_FORMAL,
-                    entidadAfectada: 'solicitudes_formales',
+                    entidadAfectada: "solicitudes_formales",
                     entidadId: solicitudCreada.getId(),
                     detalles: {
                         solicitud_inicial_id: solicitudInicialId,
                         estado: "pendiente",
-                        cliente: `${datosSolicitud.nombreCompleto} ${datosSolicitud.apellido}`
+                        cliente: `${datosSolicitud.nombreCompleto} ${datosSolicitud.apellido}`,
                     },
-                    solicitudInicialId: solicitudInicialId
+                    solicitudInicialId: solicitudInicialId,
                 });
                 // ===== PASO 13: NOTIFICAR AL COMERCIANTE =====
                 // Enviar notificación al comerciante sobre la creación exitosa
                 yield this.notificationService.emitNotification({
                     userId: solicitudCreada.getComercianteId(),
                     type: "solicitud_formal",
-                    message: "Solicitud formal creada exitosamente"
+                    message: "Solicitud formal creada exitosamente",
                 });
                 // ===== PASO 14: NOTIFICAR A ANALISTAS =====
                 // Notificar a analistas sobre la nueva solicitud que requiere revisión
@@ -336,20 +342,20 @@ class CrearSolicitudFormalUseCase {
                 yield this.notificationService.emitNotification({
                     userId: Number(comercianteId),
                     type: "error",
-                    message: `Error al crear solicitud formal: ${errorMessage}`
+                    message: `Error al crear solicitud formal: ${errorMessage}`,
                 });
                 // Registrar evento de error en historial
                 yield this.historialRepository.registrarEvento({
                     usuarioId: comercianteId,
                     accion: historialActions_1.HISTORIAL_ACTIONS.ERROR_PROCESO,
-                    entidadAfectada: 'solicitudes_formales',
+                    entidadAfectada: "solicitudes_formales",
                     entidadId: 0,
                     detalles: {
                         error: error instanceof Error ? error.message : String(error),
                         etapa: "creacion_solicitud_formal",
-                        solicitud_inicial_id: solicitudInicialId
+                        solicitud_inicial_id: solicitudInicialId,
                     },
-                    solicitudInicialId: solicitudInicialId
+                    solicitudInicialId: solicitudInicialId,
                 });
                 // Re-lanzar el error para que sea manejado por el controlador
                 throw error;
@@ -371,7 +377,7 @@ class CrearSolicitudFormalUseCase {
                 // 1. Obtener todos los IDs de analistas usando el repositorio
                 const analistaIds = yield this.analistaRepo.obtenerIdsAnalistasActivos();
                 // 2. Enviar notificación individual a cada analista
-                const notificaciones = analistaIds.map(analistaId => this.notificationService.emitNotification({
+                const notificaciones = analistaIds.map((analistaId) => this.notificationService.emitNotification({
                     userId: analistaId,
                     type: "solicitud_formal",
                     message: "Nueva solicitud formal requiere revisión",
@@ -379,8 +385,8 @@ class CrearSolicitudFormalUseCase {
                         solicitudId: solicitud.getId(),
                         cliente: `${solicitud.getNombreCompleto()} ${solicitud.getApellido()}`,
                         comercianteId: solicitud.getComercianteId(),
-                        prioridad: "alta"
-                    }
+                        prioridad: "alta",
+                    },
                 }));
                 yield Promise.all(notificaciones);
             }
@@ -390,13 +396,13 @@ class CrearSolicitudFormalUseCase {
                 yield this.historialRepository.registrarEvento({
                     usuarioId: solicitud.getComercianteId(),
                     accion: historialActions_1.HISTORIAL_ACTIONS.ERROR_PROCESO,
-                    entidadAfectada: 'solicitudes_formales',
+                    entidadAfectada: "solicitudes_formales",
                     entidadId: solicitud.getId(),
                     detalles: {
                         error: "Error notificando a analistas",
-                        etapa: "notificacion_analistas"
+                        etapa: "notificacion_analistas",
                     },
-                    solicitudInicialId: solicitud.getSolicitudInicialId()
+                    solicitudInicialId: solicitud.getSolicitudInicialId(),
                 });
                 // Opcional: Notificar a administradores sobre fallo
             }
@@ -430,13 +436,13 @@ class CrearSolicitudFormalUseCase {
                     yield this.historialRepository.registrarEvento({
                         usuarioId: solicitudInicial.getComercianteId() || null,
                         accion: historialActions_1.HISTORIAL_ACTIONS.REJECT_SOLICITUD_FORMAL,
-                        entidadAfectada: 'solicitudes_formales',
+                        entidadAfectada: "solicitudes_formales",
                         entidadId: 0,
                         detalles: {
                             motivo: "Cliente con crédito activo",
                             Cuil_cliente: cliente.getCuil(),
                         },
-                        solicitudInicialId: solicitudInicialId
+                        solicitudInicialId: solicitudInicialId,
                     });
                     throw new Error("El cliente ya tiene un crédito activo");
                     return true;

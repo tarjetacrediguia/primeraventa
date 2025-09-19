@@ -53,6 +53,18 @@ class SolicitudInicial {
         this.nombreComercio = params.nombreComercio;
         this.reciboSueldo = params.reciboSueldo;
     }
+    getEstadoSolicitudFormal() {
+        return this.estadoSolicitudFormal;
+    }
+    setEstadoSolicitudFormal(estado) {
+        this.estadoSolicitudFormal = estado;
+    }
+    getEstadoCompra() {
+        return this.estadoCompra;
+    }
+    setEstadoCompra(estado) {
+        this.estadoCompra = estado;
+    }
     setComercianteNombre(nombre) {
         this.comercianteNombre = nombre;
     }
@@ -286,7 +298,9 @@ class SolicitudInicial {
             administradorAprobadorId: this.administradorAprobadorId,
             motivoRechazo: this.motivoRechazo,
             comercianteNombre: this.comercianteNombre,
-            nombreComercio: this.nombreComercio
+            nombreComercio: this.nombreComercio,
+            estadoSolicitudFormal: this.estadoSolicitudFormal,
+            estadoCompra: this.estadoCompra
         };
     }
     /**

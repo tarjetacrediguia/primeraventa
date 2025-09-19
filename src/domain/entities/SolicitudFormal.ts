@@ -783,7 +783,12 @@ export class SolicitudFormal {
         provincia: this.provincia,
         numeroDomicilio: this.numeroDomicilio,
         barrio: this.barrio,
-        archivosAdjuntos: this.archivosAdjuntos.map(a => a.toPlainObject())
+        archivosAdjuntos: this.archivosAdjuntos.map(a => ({
+            id: a.getId(),
+            nombre: a.getNombre(),
+            tipo: a.getTipo(),
+            fechaCreacion: a.getFechaCreacion()
+        }))
     };
 }
 

@@ -29,6 +29,8 @@ export interface SolicitudInicialParams {
   reciboSueldo?: Buffer;
   comercianteNombre?: string;
   nombreComercio?: string;
+  estadoSolicitudFormal?: string | null;
+  estadoCompra?: string | null;
 }
 
 /**
@@ -51,6 +53,8 @@ export class SolicitudInicial {
   private motivoRechazo?: string;
   private comercianteNombre?: string;
   private nombreComercio?: string;
+  private estadoSolicitudFormal?: string | null;
+  private estadoCompra?: string | null;
 
   /**
    * Constructor de la clase SolicitudInicial.
@@ -83,6 +87,22 @@ export class SolicitudInicial {
     this.comercianteNombre = params.comercianteNombre;
     this.nombreComercio = params.nombreComercio;
     this.reciboSueldo = params.reciboSueldo;
+  }
+
+    getEstadoSolicitudFormal(): string | null | undefined {
+    return this.estadoSolicitudFormal;
+  }
+
+  setEstadoSolicitudFormal(estado: string | null): void {
+    this.estadoSolicitudFormal = estado;
+  }
+
+  getEstadoCompra(): string | null | undefined {
+    return this.estadoCompra;
+  }
+
+  setEstadoCompra(estado: string | null): void {
+    this.estadoCompra = estado;
   }
 
   public setComercianteNombre(nombre: string): void {
@@ -352,7 +372,9 @@ public getAdministradorAprobadorId(): number | undefined {
       administradorAprobadorId: this.administradorAprobadorId,
       motivoRechazo: this.motivoRechazo,
       comercianteNombre: this.comercianteNombre,
-      nombreComercio: this.nombreComercio
+      nombreComercio: this.nombreComercio,
+      estadoSolicitudFormal: this.estadoSolicitudFormal,
+      estadoCompra: this.estadoCompra
     };
 }
 

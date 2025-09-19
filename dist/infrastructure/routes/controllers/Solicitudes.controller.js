@@ -130,7 +130,14 @@ const listarSolicitudesIniciales = (req, res) => __awaiter(void 0, void 0, void 
             // Obtener todas las solicitudes si no hay filtro
             solicitudes = yield listSolicitudesInicialesUC.execute();
         }
-        res.status(200).json(solicitudes);
+        const solicitudesResponse = solicitudes.map(solicitud => {
+            const obj = solicitud.toPlainObject();
+            // Asegurar que los campos nuevos se muestren como null si no existen
+            obj.estadoSolicitudFormal = obj.estadoSolicitudFormal || null;
+            obj.estadoCompra = obj.estadoCompra || null;
+            return obj;
+        });
+        res.status(200).json(solicitudesResponse);
     }
     catch (error) {
         res.status(400).json({ error: error.message });
@@ -172,9 +179,11 @@ const crearSolicitudFormal = (req, res) => __awaiter(void 0, void 0, void 0, fun
         const reciboBuffer = Buffer.from(cliente.recibo, 'base64');
         // Validar que sea una imagen JPG
         const mimeType = yield getImageMimeType(reciboBuffer);
+        /*
         if (mimeType !== 'image/jpeg') {
-            return res.status(400).json({ error: 'El recibo debe ser una imagen JPG' });
+          return res.status(400).json({ error: 'El recibo debe ser una imagen JPG' });
         }
+        */
         // Validar tamaño máximo (5MB)
         if (reciboBuffer.length > 5 * 1024 * 1024) {
             return res.status(400).json({ error: 'El recibo no puede exceder los 5MB' });
@@ -666,6 +675,12 @@ const obtenerSolicitudFormalAnalista = (req, res) => __awaiter(void 0, void 0, v
         }
         // Para analistas, devolvemos todos los datos incluyendo el recibo
         const obj = solicitud.toPlainObject();
+        obj.archivosAdjuntos = obj.archivosAdjuntos.map((archivo) => ({
+            id: archivo.id,
+            nombre: archivo.nombre,
+            tipo: archivo.tipo,
+            fechaCreacion: archivo.fechaCreacion
+        }));
         res.status(200).json(obj);
     }
     catch (error) {
@@ -690,6 +705,13 @@ const obtenerSolicitudFormalPoridSolicitudInicial = (req, res) => __awaiter(void
         }
         const obj = solicitud.toPlainObject();
         delete obj.recibo; // Elimina el recibo del objeto para no enviarlo al cliente
+        obj.archivosAdjuntos = obj.archivosAdjuntos.map((archivo) => ({
+            id: archivo.id,
+            nombre: archivo.nombre,
+            tipo: archivo.tipo,
+            fechaCreacion: archivo.fechaCreacion
+        }));
+        console.log('Solicitud formal obtenida por ID de solicitud inicial:', obj);
         res.status(200).json(obj);
     }
     catch (error) {
@@ -827,9 +849,11 @@ const crearYAprobarSolicitudFormal = (req, res) => __awaiter(void 0, void 0, voi
         const reciboBuffer = Buffer.from(cliente.recibo, 'base64');
         // Validar que sea una imagen JPG
         const mimeType = yield getImageMimeType(reciboBuffer);
+        /*
         if (mimeType !== 'image/jpeg') {
-            return res.status(400).json({ error: 'El recibo debe ser una imagen JPG' });
+          return res.status(400).json({ error: 'El recibo debe ser una imagen JPG' });
         }
+        */
         // Validar tamaño máximo (5MB)
         if (reciboBuffer.length > 5 * 1024 * 1024) {
             return res.status(400).json({ error: 'El recibo no puede exceder los 5MB' });
@@ -1002,3 +1026,73 @@ const descargarArchivoAdjunto = (req, res) => __awaiter(void 0, void 0, void 0, 
     }
 });
 exports.descargarArchivoAdjunto = descargarArchivoAdjunto;
+/*
+
+{
+  "idSolicitudInicial": 1,
+  "importeNeto":1500000,
+  "comentarioInicial":"Solicitud creada por comerciante",
+  "solicitaAmpliacionDeCredito":false,
+  "datosEmpleador":{
+    "razonSocialEmpleador":"Acme S.A",
+    "cuitEmpleador":"123456",
+    "cargoEmpleador":"cargo en la empresa",
+    "sectorEmpleador": "sector en la empresa",
+    "codigoPostalEmpleador":"8300",
+    "localidadEmpleador":"NEUQUEN",
+    "provinciaEmpleador":"NEUQUEN",
+    "telefonoEmpleador":"299456789"
+  },
+  "cliente": {
+    "nombreCompleto": "Benito",
+    "apellido": "Dongato",
+    "telefono": "+549555222669",
+    "email": "Benito.Dongato@example.com",
+    "aceptaTarjeta": true,
+    "fechaNacimiento": "1985-05-15",
+    "domicilio": "Calle Falsa 123, Buenos Aires",
+    "sexo":"M",
+    "codigoPostal":"8300",
+    "localidad":"NEUQUEN",
+    "provincia":"NEUQUEN",
+    "numeroDomicilio":"1234",
+    "barrio":"Barrio Falso",
+    "recibo":"/9joA//9k="
+  },
+  "referentes": [
+    {
+      "nombreCompleto": "María Gómez",
+      "apellido": "Gómez",
+      "vinculo": "Familiar",
+      "telefono": "+5491134567890"
+    },
+    {
+      "nombreCompleto": "Pedro Gómez",
+      "apellido": "Gómez",
+      "vinculo": "Familiar",
+      "telefono": "+5491134525870"
+    }
+  ],
+  "archivosAdjuntos":[
+        {
+            "nombre": "pdf libre de deuda",
+            "tipo": "application/pdf",
+            "contenido": "JVBERi0xLjQKJ3NzkKJSVFT0YK"
+        },
+        {
+            "nombre": "libre de deuda",
+            "tipo": "image/png",
+            "contenido": "iVBORwFTkSuQmCC"
+        },
+        {
+            "nombre": "recibo alternativo",
+            "tipo": "image/png",
+            "contenido": "iVBORw0KGgkSuQmCC"
+        }
+    ]
+}
+
+
+
+
+*/ 

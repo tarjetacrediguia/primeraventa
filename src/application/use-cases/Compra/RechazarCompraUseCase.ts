@@ -114,7 +114,7 @@ export class RechazarCompraUseCase {
 
             // ===== PASO 2: VALIDAR ESTADO PENDIENTE =====
             // Verificar que la compra esté en estado pendiente
-            if (compra.getEstado() !== EstadoCompra.PENDIENTE) {
+            if ((compra.getEstado() !== EstadoCompra.PENDIENTE) && (compra.getEstado() !== EstadoCompra.APROBADA)) {
                 // Registrar evento de estado inválido
                 await this.historialRepository.registrarEvento({
                     usuarioId: usuarioId,
@@ -127,11 +127,12 @@ export class RechazarCompraUseCase {
                     },
                     solicitudInicialId: solicitudInicialId
                 });
-                throw new Error(`Solo se pueden rechazar compras pendientes. Estado actual: ${compra.getEstado()}`);
+                throw new Error(`Solo se pueden rechazar compras pendientes y aprobadas. Estado actual: ${compra.getEstado()}`);
             }
 
             // ===== PASO 3: VALIDAR MOTIVO DE RECHAZO =====
             // Validar que el motivo tenga al menos 10 caracteres
+            console.log(motivo)
             if (!motivo || motivo.trim().length < 10) {
                 // Registrar evento de motivo inválido
                 await this.historialRepository.registrarEvento({

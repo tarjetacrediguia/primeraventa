@@ -346,23 +346,27 @@ class SolicitudInicialRepositoryAdapter {
         return __awaiter(this, void 0, void 0, function* () {
             const query = `
             SELECT 
-            si.id, 
-            si.fecha_creacion, 
-            si.estado, 
-            si.reciboSueldo, 
-            si.comentarios, 
-            si.comerciante_id,
-            c.dni as dni_cliente, 
-            c.cuil as cuil_cliente,
-            si.motivo_rechazo,
-            u.nombre as comerciante_nombre,
-            u.apellido as comerciante_apellido,
-            com.nombre_comercio
-        FROM solicitudes_iniciales si
-        INNER JOIN clientes c ON si.cliente_id = c.id
-        LEFT JOIN comerciantes com ON si.comerciante_id = com.usuario_id
-        LEFT JOIN usuarios u ON com.usuario_id = u.id
-        ORDER BY si.fecha_creacion DESC
+      si.id, 
+      si.fecha_creacion, 
+      si.estado, 
+      si.reciboSueldo, 
+      si.comentarios, 
+      si.comerciante_id,
+      c.dni as dni_cliente, 
+      c.cuil as cuil_cliente,
+      si.motivo_rechazo,
+      u.nombre as comerciante_nombre,
+      u.apellido as comerciante_apellido,
+      com.nombre_comercio,
+      sf.estado as estado_solicitud_formal,
+      comp.estado as estado_compra
+    FROM solicitudes_iniciales si
+    INNER JOIN clientes c ON si.cliente_id = c.id
+    LEFT JOIN comerciantes com ON si.comerciante_id = com.usuario_id
+    LEFT JOIN usuarios u ON com.usuario_id = u.id
+    LEFT JOIN solicitudes_formales sf ON si.id = sf.solicitud_inicial_id
+    LEFT JOIN compras comp ON sf.id = comp.solicitud_formal_id
+    ORDER BY si.fecha_creacion DESC
         `;
             const result = yield DatabaseDonfig_1.pool.query(query);
             return result.rows.map((row) => this.mapRowToSolicitudInicial(row));
@@ -462,24 +466,25 @@ class SolicitudInicialRepositoryAdapter {
         return __awaiter(this, void 0, void 0, function* () {
             const query = `
             SELECT 
-                si.id, 
-                si.fecha_creacion, 
-                si.estado, 
-                si.reciboSueldo, 
-                si.comentarios, 
-                si.comerciante_id,
-                c.dni as dni_cliente, 
-                c.cuil as cuil_cliente,
-                si.motivo_rechazo,
-                u.nombre as comerciante_nombre,
-                u.apellido as comerciante_apellido,
-                com.nombre_comercio
-            FROM solicitudes_iniciales si
-            INNER JOIN clientes c ON si.cliente_id = c.id
-            LEFT JOIN comerciantes com ON si.comerciante_id = com.usuario_id
-            LEFT JOIN usuarios u ON com.usuario_id = u.id
-            WHERE si.comerciante_id = $1
-            ORDER BY si.fecha_creacion DESC
+            si.id, 
+            si.fecha_creacion, 
+            si.estado, 
+            si.reciboSueldo, 
+            si.comentarios, 
+            si.comerciante_id,
+            c.dni as dni_cliente, 
+            c.cuil as cuil_cliente,
+            si.motivo_rechazo,
+            sf.estado as estado_solicitud_formal,
+            comp.estado as estado_compra
+        FROM solicitudes_iniciales si
+        INNER JOIN clientes c ON si.cliente_id = c.id
+        LEFT JOIN comerciantes com ON si.comerciante_id = com.usuario_id
+        LEFT JOIN usuarios u ON com.usuario_id = u.id
+        LEFT JOIN solicitudes_formales sf ON si.id = sf.solicitud_inicial_id
+        LEFT JOIN compras comp ON sf.id = comp.solicitud_formal_id
+        WHERE si.comerciante_id = $1
+        ORDER BY si.fecha_creacion DESC
         `;
             const result = yield DatabaseDonfig_1.pool.query(query, [comercianteId]);
             return result.rows.map((row) => this.mapRowToSolicitudInicial(row));
@@ -533,6 +538,8 @@ class SolicitudInicialRepositoryAdapter {
         if (row.nombre_comercio) {
             solicitud.setNombreComercio(row.nombre_comercio);
         }
+        solicitud.setEstadoSolicitudFormal(row.estado_solicitud_formal);
+        solicitud.setEstadoCompra(row.estado_compra);
         return solicitud;
     }
     /**
@@ -545,11 +552,24 @@ class SolicitudInicialRepositoryAdapter {
         return __awaiter(this, void 0, void 0, function* () {
             const query = `
         SELECT 
-            si.id, si.fecha_creacion, si.estado, si.reciboSueldo, 
-            si.comentarios, si.comerciante_id,
-            c.dni as dni_cliente, c.cuil as cuil_cliente, si.motivo_rechazo, c.id as cliente_id
+            si.id, 
+            si.fecha_creacion, 
+            si.estado, 
+            si.reciboSueldo, 
+            si.comentarios, 
+            si.comerciante_id,
+            si.cliente_id,
+            c.dni as dni_cliente, 
+            c.cuil as cuil_cliente,
+            si.motivo_rechazo,
+            sf.estado as estado_solicitud_formal,
+            comp.estado as estado_compra
         FROM solicitudes_iniciales si
         INNER JOIN clientes c ON si.cliente_id = c.id
+        LEFT JOIN comerciantes com ON si.comerciante_id = com.usuario_id
+        LEFT JOIN usuarios u ON com.usuario_id = u.id
+        LEFT JOIN solicitudes_formales sf ON si.id = sf.solicitud_inicial_id
+        LEFT JOIN compras comp ON sf.id = comp.solicitud_formal_id
         WHERE si.comerciante_id = $1
         ORDER BY si.fecha_creacion DESC
     `;

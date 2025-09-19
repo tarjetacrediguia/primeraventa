@@ -1226,6 +1226,14 @@ class SolicitudFormalRepositoryAdapter {
             `;
                 const referentesResult = yield DatabaseDonfig_1.pool.query(referentesQuery, [row.id]);
                 const referentes = referentesResult.rows.map((refRow) => new Referente_1.Referente(refRow.nombre_completo, refRow.apellido, refRow.vinculo, refRow.telefono));
+                // Obtener archivos adjuntos para cada solicitud
+                const archivosQuery = `
+            SELECT id, nombre, tipo, contenido, fecha_creacion
+            FROM archivos_adjuntos
+            WHERE solicitud_formal_id = $1
+        `;
+                const archivosResult = yield DatabaseDonfig_1.pool.query(archivosQuery, [row.id]);
+                const archivos = archivosResult.rows.map((archivoRow) => new ArchivosAdjuntos_1.ArchivoAdjunto(archivoRow.id, archivoRow.nombre, archivoRow.tipo, archivoRow.contenido, archivoRow.fecha_creacion));
                 solicitudes.push(new SolicitudFormal_1.SolicitudFormal({
                     id: Number(row.id),
                     solicitudInicialId: row.solicitud_inicial_id,
@@ -1269,6 +1277,7 @@ class SolicitudFormalRepositoryAdapter {
                     nuevoLimiteCompletoSolicitado: row.nuevo_limite_completo_solicitado !== null
                         ? Number(row.nuevo_limite_completo_solicitado)
                         : null,
+                    archivosAdjuntos: archivos
                 }));
             }
             return solicitudes;
