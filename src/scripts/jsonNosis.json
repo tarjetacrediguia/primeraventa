@@ -1150,6 +1150,12 @@
               "Tipo": "BOOLEANO"
             },
             {
+              "Nombre": "CI_Vig_TC_Detalle",
+              "Valor": "<Detalle><D>Bco Pcia Neuquen | 97 | 20250228 | Confiable | 20220214 | Si | 23350 | 33 | 0 | 12394 | 22813 | 33 | </D><D>Bco Pcia Neuquen | 97 | 20250531 | Mastercard | 20220214 | Si | 23500 | 39 | 39 | 6387 | 22798 | 37 | </D><D>Coop Guia Ltda | 70603 | 20250901 | Tarjeta Guía | 20230606 | Si | 813700 | 652316 | 0 | 270724 | 652316 | 100423 | </D></Detalle>",
+              "Descripcion": "Detalle de todas las tarjetas de crédito del convenio, vigentes.",
+              "Tipo": "XML"
+            },
+            {
               "Nombre": "COM_SO_Es",
               "Valor": "No",
               "Descripcion": "CUIL/CUIT consultado es Sujeto Obligado",

@@ -254,7 +254,11 @@ class CrearSolicitudInicialUseCase {
                         }
                         else if (resultadoNosis.status === "pendiente") {
                             // Mantener estado pendiente para revisión manual
+                            motivoRechazo = resultadoNosis.motivo;
+                            reglasFallidas = resultadoNosis.reglasFallidas;
                             solicitudCreada.setEstado("pendiente");
+                            solicitud.setMotivoRechazo(motivoRechazo !== null && motivoRechazo !== void 0 ? motivoRechazo : "");
+                            solicitud.agregarComentario(`Pendiente: ${motivoRechazo}`);
                             yield this.solicitudInicialRepository.updateSolicitudInicial(solicitudCreada, clienteTemporal);
                             solicitud.agregarComentario(`Pendiente: ${resultadoNosis.motivo}`);
                             yield this.historialRepository.registrarEvento({

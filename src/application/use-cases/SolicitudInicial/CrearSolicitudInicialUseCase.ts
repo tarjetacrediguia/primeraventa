@@ -353,7 +353,11 @@ export class CrearSolicitudInicialUseCase {
             });
           } else if (resultadoNosis.status === "pendiente") {
             // Mantener estado pendiente para revisión manual
+            motivoRechazo = resultadoNosis.motivo;
+            reglasFallidas = resultadoNosis.reglasFallidas;
             solicitudCreada.setEstado("pendiente");
+            solicitud.setMotivoRechazo(motivoRechazo ?? "");
+            solicitud.agregarComentario(`Pendiente: ${motivoRechazo}`);
             await this.solicitudInicialRepository.updateSolicitudInicial(
               solicitudCreada,
               clienteTemporal

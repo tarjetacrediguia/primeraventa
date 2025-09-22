@@ -164,9 +164,89 @@ export class VerifyDataNosisUseCase {
    * @returns Boolean indicando si cumple con el mínimo requerido
    */
   private verificarAportes(variables: NosisVariable[]): boolean {
-    const aportes = parseInt(variables.find(v => v.Nombre === 'AP_12m_Empleado_Pagos_Cant')?.Valor || '0');
-    return aportes >= this.MINIMO_APORTES;
-}
+      const pagos = parseInt(variables.find(v => v.Nombre === 'AP_12m_Empleado_Pagos_Cant')?.Valor || '0');
+      const impagos = parseInt(variables.find(v => v.Nombre === 'AP_12m_Empleado_Impagos_Cant')?.Valor || '0');
+      const parciales = parseInt(variables.find(v => v.Nombre === 'AP_12m_Empleado_PagoParcial_Cant')?.Valor || '0');
+      const totalAportes = pagos + impagos + parciales;
+      return totalAportes >= this.MINIMO_APORTES;
+  }
+
+  /**
+   * Verifica si el cliente tiene tarjetas Crediguía activas
+   * @param variables - Lista de variables de Nosis
+   * @returns Boolean indicando si tiene tarjetas Crediguía
+   */
+  private tieneTarjetaCrediguia(variables: NosisVariable[]): boolean {
+    const detalleTarjetas = variables.find(v => v.Nombre === 'CI_Vig_TC_Detalle')?.Valor;
+    
+    if (!detalleTarjetas) {
+      return false;
+    }
+
+    try {
+      // Parsear el XML para extraer las líneas de tarjetas
+      const lineas = this.parsearDetalleTarjetas(detalleTarjetas);
+      
+      // Buscar tarjetas Crediguía en las marcas de tarjeta
+      for (const tarjeta of lineas) {
+        const marca = tarjeta.marcaTarjeta.toLowerCase();
+        // Verificar diferentes variaciones del nombre Crediguía
+        if (marca.includes('crediguía') || marca.includes('crediguia') || 
+            marca.includes('guía') || marca.includes('guia')) {
+          return true;
+        }
+      }
+    } catch (error) {
+      console.error('Error al parsear detalle de tarjetas:', error);
+    }
+    
+    return false;
+  }
+
+  /**
+   * Parsea el string de detalle de tarjetas de crédito
+   * @param detalleTarjetas - String XML con información de tarjetas
+   * @returns Array de objetos con información estructurada de tarjetas
+   */
+  private parsearDetalleTarjetas(detalleTarjetas: string): Array<{
+    entidadEmisora: string;
+    codigoEntidad: string;
+    fechaUltimaInfo: string;
+    marcaTarjeta: string;
+    fechaAlta: string;
+    activa: string;
+    limiteCompra: string;
+    saldoTotal: string;
+    pagoMinimo: string;
+    saldo12Meses: string;
+  }> {
+    const resultados = [];
+    
+    // Expresión regular para extraer cada registro <D>
+    const regex = /<D>(.*?)<\/D>/g;
+    let match;
+    
+    while ((match = regex.exec(detalleTarjetas)) !== null) {
+      const partes = match[1].split('|').map(part => part.trim());
+      
+      if (partes.length >= 10) {
+        resultados.push({
+          entidadEmisora: partes[0],
+          codigoEntidad: partes[1],
+          fechaUltimaInfo: partes[2],
+          marcaTarjeta: partes[3],
+          fechaAlta: partes[4],
+          activa: partes[5],
+          limiteCompra: partes[6],
+          saldoTotal: partes[7],
+          pagoMinimo: partes[8],
+          saldo12Meses: partes[9]
+        });
+      }
+    }
+    
+    return resultados;
+  }
 
   /**
    * Ejecuta el proceso completo de verificación de datos Nosis
@@ -189,9 +269,9 @@ export class VerifyDataNosisUseCase {
       }
     }
 
-    // Nueva verificación: Aportes
+    // Aportes
     if (!this.verificarAportes(variables)) {
-        reglasFallidas.push('Cliente no tiene aportes registrados en los últimos 12 meses');
+        reglasFallidas.push('Cliente no cumple con el mínimo de aportes registrados en los últimos 12 meses');
     }
 
     // Verificación específica para deudas en entidades (situación 3-4-5)
@@ -217,6 +297,13 @@ export class VerifyDataNosisUseCase {
         reglasFallidas.push('Cliente no tiene situación laboral registrada');
       }
     }
+
+    //Tarjetas Crediguía
+    if (this.tieneTarjetaCrediguia(variables)) {
+      reglasFallidas.push('Cliente tiene tarjeta Crediguía activa');
+    }
+
+
     // Extraer datos personales
     const personalData = this.extraerDatosPersonales(variables);
 

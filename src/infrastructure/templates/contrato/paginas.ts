@@ -334,38 +334,6 @@ export const paginas = {
         <!-- Tabla convertida a flex -->
         <div class="flex-table data-table">
             <div class="flex-row">
-                <div class="flex-cell gray-header-small" style="flex-grow: 1;">MZ</div>
-                <div class="flex-cell gray-header-small" style="flex-grow: 1;">LT</div>
-                <div class="flex-cell gray-header-small" style="flex-grow: 1;">CS</div>
-                <div class="flex-cell gray-header-small" style="flex-grow: 1;">DX</div>
-                <div class="flex-cell gray-header-small" style="flex-grow: 1;">PL</div>
-                <div class="flex-cell gray-header-small" style="flex-grow: 1;">ENT</div>
-                <div class="flex-cell gray-header-small" style="flex-grow: 1;">ACC</div>
-                <div class="flex-cell gray-header-small" style="flex-grow: 1;">ESC</div>
-                <div class="flex-cell gray-header-small" style="flex-grow: 1;">SECC</div>
-                <div class="flex-cell gray-header-small" style="flex-grow: 1;">SECT</div>
-                <div class="flex-cell gray-header-small" style="flex-grow: 1;">MK</div>
-                <div class="flex-cell gray-header-small" style="flex-grow: 1;">MOD</div>
-            </div>
-        </div>
-        
-        <!-- Tabla convertida a flex -->
-        <div class="flex-table data-table">
-            <div class="flex-row">
-                <div class="flex-cell gray-header-small" style="flex-grow: 1;">TR</div>
-                <div class="flex-cell gray-header-small" style="flex-grow: 1;">TRR</div>
-                <div class="flex-cell gray-header-small" style="flex-grow: 1;">LC</div>
-                <div class="flex-cell gray-header-small" style="flex-grow: 1;">OF</div>
-                <div class="flex-cell gray-header-small" style="flex-grow: 1;">PS</div>
-                <div class="flex-cell gray-header-small" style="flex-grow: 3;">DPTO</div>
-                <div class="flex-cell gray-header-small" style="flex-grow: 1;">JM</div>
-                <div class="flex-cell gray-header-small" style="flex-grow: 3;">CHACRA</div>
-            </div>
-        </div>
-        
-        <!-- Tabla convertida a flex -->
-        <div class="flex-table data-table">
-            <div class="flex-row">
                 <div class="flex-cell white-header-small" style="flex-grow: 1;">COD POSTAL: <span class="fuente-dato">{{CODIGO_POSTAL}}</span></div>
                 <div class="flex-cell white-header-small" style="flex-grow: 1;">LOCALIDAD: <span class="fuente-dato">{{LOCALIDAD}}</span></div>
                 <div class="flex-cell white-header-small" style="flex-grow: 1;">PROVINCIA: <span class="fuente-dato">{{PROVINCIA}}</span></div>
@@ -2315,3 +2283,40 @@ export const paginas = {
 </body>
 </html>`,
 };
+
+
+/*
+
+        <!-- Tabla convertida a flex -->
+        <div class="flex-table data-table">
+            <div class="flex-row">
+                <div class="flex-cell gray-header-small" style="flex-grow: 1;">MZ</div>
+                <div class="flex-cell gray-header-small" style="flex-grow: 1;">LT</div>
+                <div class="flex-cell gray-header-small" style="flex-grow: 1;">CS</div>
+                <div class="flex-cell gray-header-small" style="flex-grow: 1;">DX</div>
+                <div class="flex-cell gray-header-small" style="flex-grow: 1;">PL</div>
+                <div class="flex-cell gray-header-small" style="flex-grow: 1;">ENT</div>
+                <div class="flex-cell gray-header-small" style="flex-grow: 1;">ACC</div>
+                <div class="flex-cell gray-header-small" style="flex-grow: 1;">ESC</div>
+                <div class="flex-cell gray-header-small" style="flex-grow: 1;">SECC</div>
+                <div class="flex-cell gray-header-small" style="flex-grow: 1;">SECT</div>
+                <div class="flex-cell gray-header-small" style="flex-grow: 1;">MK</div>
+                <div class="flex-cell gray-header-small" style="flex-grow: 1;">MOD</div>
+            </div>
+        </div>
+        
+        <!-- Tabla convertida a flex -->
+        <div class="flex-table data-table">
+            <div class="flex-row">
+                <div class="flex-cell gray-header-small" style="flex-grow: 1;">TR</div>
+                <div class="flex-cell gray-header-small" style="flex-grow: 1;">TRR</div>
+                <div class="flex-cell gray-header-small" style="flex-grow: 1;">LC</div>
+                <div class="flex-cell gray-header-small" style="flex-grow: 1;">OF</div>
+                <div class="flex-cell gray-header-small" style="flex-grow: 1;">PS</div>
+                <div class="flex-cell gray-header-small" style="flex-grow: 3;">DPTO</div>
+                <div class="flex-cell gray-header-small" style="flex-grow: 1;">JM</div>
+                <div class="flex-cell gray-header-small" style="flex-grow: 3;">CHACRA</div>
+            </div>
+        </div>
+
+        */
