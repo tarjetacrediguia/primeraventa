@@ -1,4 +1,7 @@
-import { NosisResponse, NosisVariable } from "../../../domain/entities/NosisData";
+import {
+  NosisResponse,
+  NosisVariable,
+} from "../../../domain/entities/NosisData";
 
 /**
  * MÓDULO: Caso de Uso - Verificación de Datos Nosis
@@ -13,7 +16,7 @@ import { NosisResponse, NosisVariable } from "../../../domain/entities/NosisData
  * - Extraer y estructurar datos personales del cliente
  * - Determinar estado de aprobación (aprobado/rechazado/pendiente)
  * - Calcular score crediticio basado en variables de Nosis
- * 
+ *
  * FLUJO PRINCIPAL:
  * 1. Recibir respuesta cruda de Nosis
  * 2. Extraer y estructurar datos personales
@@ -60,13 +63,13 @@ export type PersonalData = {
       razonSocial?: string;
       cuit?: string;
       telefono?: string;
-        domicilio?: {
-          calle?: string;
-          numero?: string;
-          localidad?: string;
-          codigoPostal?: string;
-          provincia?: string;
-        };
+      domicilio?: {
+        calle?: string;
+        numero?: string;
+        localidad?: string;
+        codigoPostal?: string;
+        provincia?: string;
+      };
     };
     monotributo?: {
       esMonotributista?: string;
@@ -86,7 +89,7 @@ export type PersonalData = {
  * y datos personales estructurados
  */
 export type VerificationResult = {
-  status: 'aprobado' | 'rechazado' | 'pendiente';
+  status: "aprobado" | "rechazado" | "pendiente";
   approved: boolean;
   score?: number;
   motivo?: string;
@@ -99,13 +102,13 @@ export type VerificationResult = {
  */
 export type RuleConfig = {
   variable: string;
-  operacion: '>' | '<' | '>=' | '<=' | '==' | '!=' | 'in' | 'not-in';
+  operacion: ">" | "<" | ">=" | "<=" | "==" | "!=" | "in" | "not-in";
   valor: any;
   mensaje: string;
 };
 /**
  * Caso de uso para verificación y validación de datos de Nosis
- * 
+ *
  * Implementa el proceso completo de evaluación de datos crediticios:
  * - Aplica reglas configurables de validación
  * - Verifica condiciones específicas de negocio
@@ -126,11 +129,11 @@ export class VerifyDataNosisUseCase {
     // Reglas por defecto si no se proporcionan
     this.rules = rules || [
       {
-        variable: 'VI_Jubilado_Es',
-        operacion: '==',
-        valor: 'No',
-        mensaje: 'Cliente es jubilado'
-      }
+        variable: "VI_Jubilado_Es",
+        operacion: "==",
+        valor: "No",
+        mensaje: "Cliente es jubilado",
+      },
     ];
   }
   /**
@@ -139,23 +142,38 @@ export class VerifyDataNosisUseCase {
    * @param regla - Configuración de la regla a aplicar
    * @returns Boolean indicando si la regla se cumple
    */
-  private evaluarRegla(variable: NosisVariable | undefined, regla: RuleConfig): boolean {
+  private evaluarRegla(
+    variable: NosisVariable | undefined,
+    regla: RuleConfig
+  ): boolean {
     if (!variable) return false;
     // Convertir valor según el tipo de variable
-    const valorReal = variable.Tipo === 'ENTERO' ? parseInt(variable.Valor) : 
-                     variable.Tipo === 'DECIMAL' ? parseFloat(variable.Valor) : 
-                     variable.Valor;
+    const valorReal =
+      variable.Tipo === "ENTERO"
+        ? parseInt(variable.Valor)
+        : variable.Tipo === "DECIMAL"
+        ? parseFloat(variable.Valor)
+        : variable.Valor;
     // Aplicar operación de comparación
     switch (regla.operacion) {
-      case '>': return valorReal > regla.valor;
-      case '<': return valorReal < regla.valor;
-      case '>=': return valorReal >= regla.valor;
-      case '<=': return valorReal <= regla.valor;
-      case '==': return valorReal === regla.valor;
-      case '!=': return valorReal !== regla.valor;
-      case 'in': return Array.isArray(regla.valor) && regla.valor.includes(valorReal);
-      case 'not-in': return Array.isArray(regla.valor) && !regla.valor.includes(valorReal);
-      default: return false;
+      case ">":
+        return valorReal > regla.valor;
+      case "<":
+        return valorReal < regla.valor;
+      case ">=":
+        return valorReal >= regla.valor;
+      case "<=":
+        return valorReal <= regla.valor;
+      case "==":
+        return valorReal === regla.valor;
+      case "!=":
+        return valorReal !== regla.valor;
+      case "in":
+        return Array.isArray(regla.valor) && regla.valor.includes(valorReal);
+      case "not-in":
+        return Array.isArray(regla.valor) && !regla.valor.includes(valorReal);
+      default:
+        return false;
     }
   }
   /**
@@ -164,11 +182,20 @@ export class VerifyDataNosisUseCase {
    * @returns Boolean indicando si cumple con el mínimo requerido
    */
   private verificarAportes(variables: NosisVariable[]): boolean {
-      const pagos = parseInt(variables.find(v => v.Nombre === 'AP_12m_Empleado_Pagos_Cant')?.Valor || '0');
-      const impagos = parseInt(variables.find(v => v.Nombre === 'AP_12m_Empleado_Impagos_Cant')?.Valor || '0');
-      const parciales = parseInt(variables.find(v => v.Nombre === 'AP_12m_Empleado_PagoParcial_Cant')?.Valor || '0');
-      const totalAportes = pagos + impagos + parciales;
-      return totalAportes >= this.MINIMO_APORTES;
+    const pagos = parseInt(
+      variables.find((v) => v.Nombre === "AP_12m_Empleado_Pagos_Cant")?.Valor ||
+        "0"
+    );
+    const impagos = parseInt(
+      variables.find((v) => v.Nombre === "AP_12m_Empleado_Impagos_Cant")
+        ?.Valor || "0"
+    );
+    const parciales = parseInt(
+      variables.find((v) => v.Nombre === "AP_12m_Empleado_PagoParcial_Cant")
+        ?.Valor || "0"
+    );
+    const totalAportes = pagos + impagos + parciales;
+    return totalAportes >= this.MINIMO_APORTES;
   }
 
   /**
@@ -177,8 +204,10 @@ export class VerifyDataNosisUseCase {
    * @returns Boolean indicando si tiene tarjetas Crediguía
    */
   private tieneTarjetaCrediguia(variables: NosisVariable[]): boolean {
-    const detalleTarjetas = variables.find(v => v.Nombre === 'CI_Vig_TC_Detalle')?.Valor;
-    
+    const detalleTarjetas = variables.find(
+      (v) => v.Nombre === "CI_Vig_TC_Detalle"
+    )?.Valor;
+
     if (!detalleTarjetas) {
       return false;
     }
@@ -186,20 +215,24 @@ export class VerifyDataNosisUseCase {
     try {
       // Parsear el XML para extraer las líneas de tarjetas
       const lineas = this.parsearDetalleTarjetas(detalleTarjetas);
-      
+
       // Buscar tarjetas Crediguía en las marcas de tarjeta
       for (const tarjeta of lineas) {
         const marca = tarjeta.marcaTarjeta.toLowerCase();
         // Verificar diferentes variaciones del nombre Crediguía
-        if (marca.includes('crediguía') || marca.includes('crediguia') || 
-            marca.includes('guía') || marca.includes('guia')) {
+        if (
+          marca.includes("crediguía") ||
+          marca.includes("crediguia") ||
+          marca.includes("guía") ||
+          marca.includes("guia")
+        ) {
           return true;
         }
       }
     } catch (error) {
-      console.error('Error al parsear detalle de tarjetas:', error);
+      console.error("Error al parsear detalle de tarjetas:", error);
     }
-    
+
     return false;
   }
 
@@ -221,14 +254,14 @@ export class VerifyDataNosisUseCase {
     saldo12Meses: string;
   }> {
     const resultados = [];
-    
+
     // Expresión regular para extraer cada registro <D>
     const regex = /<D>(.*?)<\/D>/g;
     let match;
-    
+
     while ((match = regex.exec(detalleTarjetas)) !== null) {
-      const partes = match[1].split('|').map(part => part.trim());
-      
+      const partes = match[1].split("|").map((part) => part.trim());
+
       if (partes.length >= 10) {
         resultados.push({
           entidadEmisora: partes[0],
@@ -240,11 +273,11 @@ export class VerifyDataNosisUseCase {
           limiteCompra: partes[6],
           saldoTotal: partes[7],
           pagoMinimo: partes[8],
-          saldo12Meses: partes[9]
+          saldo12Meses: partes[9],
         });
       }
     }
-    
+
     return resultados;
   }
 
@@ -256,14 +289,14 @@ export class VerifyDataNosisUseCase {
   async execute(nosisData: NosisResponse): Promise<VerificationResult> {
     const variables = nosisData.Contenido.Datos.Variables.Variable;
     const reglasFallidas: string[] = [];
-    
+
     // Buscar el score para incluirlo en el resultado
-    const scoreVar = variables.find(v => v.Nombre === 'SCO_Vig');
+    const scoreVar = variables.find((v) => v.Nombre === "SCO_Vig");
     const score = scoreVar ? parseInt(scoreVar.Valor) : 0;
 
     // Evaluar reglas estándar
     for (const regla of this.rules) {
-      const variable = variables.find(v => v.Nombre === regla.variable);
+      const variable = variables.find((v) => v.Nombre === regla.variable);
       if (!this.evaluarRegla(variable, regla)) {
         reglasFallidas.push(regla.mensaje);
       }
@@ -271,22 +304,38 @@ export class VerifyDataNosisUseCase {
 
     // Aportes
     if (!this.verificarAportes(variables)) {
-        reglasFallidas.push('Cliente no cumple con el mínimo de aportes registrados en los últimos 12 meses');
+      reglasFallidas.push(
+        "Cliente no cumple con el mínimo de aportes registrados en los últimos 12 meses"
+      );
+    }
+
+    // ===== ENTIDADES EN SITUACIÓN 2 =====
+    const resultadoSituacion2 = this.verificarEntidadesSituacion2(variables);
+    if (resultadoSituacion2.estado === "rechazado") {
+      reglasFallidas.push(
+        resultadoSituacion2.mensaje ||
+          "Tiene 2 o más entidades en situación 2 en los últimos 2 meses"
+      );
     }
 
     // Verificación específica para deudas en entidades (situación 3-4-5)
     const tieneDeudaEntidades = this.verificarDeudaEntidades(variables);
-    if (tieneDeudaEntidades.estado === 'rechazado') {
-      reglasFallidas.push(tieneDeudaEntidades.mensaje || 'Tiene deuda en 3 o más entidades con situación 3, 4 o 5');
+    if (tieneDeudaEntidades.estado === "rechazado") {
+      reglasFallidas.push(
+        tieneDeudaEntidades.mensaje ||
+          "Tiene deuda en 3 o más entidades con situación 3, 4 o 5"
+      );
     }
 
     // Verificación específica para monotributistas
-    const esMonotributista = variables.find(v => v.Nombre === 'VI_Inscrip_Monotributo_Es')?.Valor === 'Si';
+    const esMonotributista =
+      variables.find((v) => v.Nombre === "VI_Inscrip_Monotributo_Es")?.Valor ===
+      "Si";
     if (esMonotributista) {
       // Solo rechazamos si es monotributista Y NO tiene empleo registrado
       const tieneEmpleoRegistrado = this.tieneEmpleoRegistrado(variables);
       if (!tieneEmpleoRegistrado) {
-        reglasFallidas.push('Cliente es monotributista sin empleo registrado');
+        reglasFallidas.push("Cliente es monotributista sin empleo registrado");
       }
     }
 
@@ -294,108 +343,197 @@ export class VerifyDataNosisUseCase {
     if (!esMonotributista) {
       const tieneLaboral = this.verificarSituacionLaboral(variables);
       if (!tieneLaboral) {
-        reglasFallidas.push('Cliente no tiene situación laboral registrada');
+        reglasFallidas.push("Cliente no tiene situación laboral registrada");
       }
     }
 
     //Tarjetas Crediguía
     if (this.tieneTarjetaCrediguia(variables)) {
-      reglasFallidas.push('Cliente tiene tarjeta Crediguía activa');
+      reglasFallidas.push("Cliente tiene tarjeta Crediguía activa");
     }
-
 
     // Extraer datos personales
     const personalData = this.extraerDatosPersonales(variables);
 
-    
-      // Determinar el estado overall
-      let status: 'aprobado' | 'rechazado' | 'pendiente' = 'aprobado';
-      if (reglasFallidas.length > 0) {
-        status = 'rechazado';
-      } else if (tieneDeudaEntidades.estado === 'pendiente') {
-        status = 'pendiente';
+    // Determinar el estado overall
+    let status: "aprobado" | "rechazado" | "pendiente" = "aprobado";
+    // Prioridad: Rechazo > Pendiente > Aprobado
+    if (reglasFallidas.length > 0) {
+      status = "rechazado";
+    } else if (
+      resultadoSituacion2.estado === "pendiente" ||
+      tieneDeudaEntidades.estado === "pendiente"
+    ) {
+      status = "pendiente";
+    }
+
+    const approved = status === "aprobado";
+
+    // Construir mensaje basado en el estado
+    let motivo: string;
+    if (status === "aprobado") {
+      motivo = "Cumple con todos los criterios de aprobación";
+    } else if (status === "pendiente") {
+      // Combinar mensajes de pendiente de situación 2 y deudas
+      const mensajesPendiente = [];
+      if (resultadoSituacion2.estado === "pendiente") {
+        mensajesPendiente.push(resultadoSituacion2.mensaje);
       }
-
-      const approved = status === 'aprobado';
-
-      // Construir mensaje basado en el estado
-      let motivo: string;
-      if (status === 'aprobado') {
-        motivo = "Cumple con todos los criterios de aprobación";
-      } else if (status === 'pendiente') {
-        motivo = tieneDeudaEntidades.mensaje || 'Requiere revisión manual por deuda en entidades';
-      } else {
-        motivo = `Motivos: ${reglasFallidas.join('; ')}`;
+      if (tieneDeudaEntidades.estado === "pendiente") {
+        mensajesPendiente.push(tieneDeudaEntidades.mensaje);
       }
+      motivo = `Requiere revisión manual: ${mensajesPendiente.join("; ")}`;
+    } else {
+      motivo = `Motivos: ${reglasFallidas.join("; ")}`;
+    }
 
-      return {
-        status,
-        approved,
-        score,
-        motivo,
-        reglasFallidas: status === 'rechazado' ? reglasFallidas : [],
-        personalData
-      };
+    return {
+      status,
+      approved,
+      score,
+      motivo,
+      reglasFallidas: status === "rechazado" ? reglasFallidas : [],
+      personalData,
+    };
   }
 
-   /**
+  /**
+   * Verifica las entidades en situación 2 según los nuevos criterios
+   * - 1 entidad en situación 2 en últimos 2 meses → Pendiente
+   * - 2+ entidades en situación 2 en últimos 2 meses → Rechazo
+   */
+  private verificarEntidadesSituacion2(variables: NosisVariable[]): {
+    estado: "aprobado" | "pendiente" | "rechazado";
+    mensaje?: string;
+  } {
+    const detalleDeudas = variables.find(
+      (v) => v.Nombre === "CI_24m_Detalle"
+    )?.Valor;
+    if (!detalleDeudas) {
+      return { estado: "aprobado" };
+    }
+
+    const registros = this.parsearDetalleDeudas(detalleDeudas);
+
+    // Calcular fecha límite (últimos 2 meses)
+    const dosMesesAtras = new Date();
+    dosMesesAtras.setMonth(dosMesesAtras.getMonth() - 2);
+
+    const entidadesSituacion2 = new Set<string>();
+
+    for (const registro of registros) {
+      // Filtrar por situación 2 y que sea de los últimos 2 meses
+      const fechaRegistro = this.convertirPeriodoAFecha(registro.periodo);
+      if (registro.situacion === 2 && fechaRegistro >= dosMesesAtras) {
+        entidadesSituacion2.add(registro.entidad);
+      }
+    }
+
+    const cantidadEntidades = entidadesSituacion2.size;
+
+    if (cantidadEntidades >= 2) {
+      return {
+        estado: "rechazado",
+        mensaje: `Tiene ${cantidadEntidades} entidades en situación 2 en los últimos 2 meses`,
+      };
+    } else if (cantidadEntidades === 1) {
+      return {
+        estado: "pendiente",
+        mensaje: `Tiene 1 entidad en situación 2 en los últimos 2 meses`,
+      };
+    }
+
+    return { estado: "aprobado" };
+  }
+
+  /**
+   * Convierte un período en formato AAAAMM a Date
+   * @param periodo - Período en formato AAAAMM (ej: 202401)
+   * @returns Date correspondiente al primer día del mes
+   */
+  private convertirPeriodoAFecha(periodo: number): Date {
+    const periodoStr = periodo.toString();
+    const año = parseInt(periodoStr.substring(0, 4));
+    const mes = parseInt(periodoStr.substring(4, 6)) - 1; // Meses en Date son 0-based
+
+    return new Date(año, mes, 1);
+  }
+
+  /**
    * Verifica el estado de deudas en entidades financieras
    * @param variables - Lista de variables de Nosis
    * @returns Objeto con estado y mensaje de la verificación
    */
-private verificarDeudaEntidades(variables: NosisVariable[]): { estado: 'aprobado' | 'pendiente' | 'rechazado', mensaje?: string } {
-    const detalleDeudas = variables.find(v => v.Nombre === 'CI_24m_Detalle')?.Valor;
-    if (!detalleDeudas) return { estado: 'aprobado' };
+  private verificarDeudaEntidades(variables: NosisVariable[]): {
+    estado: "aprobado" | "pendiente" | "rechazado";
+    mensaje?: string;
+  } {
+    const detalleDeudas = variables.find(
+      (v) => v.Nombre === "CI_24m_Detalle"
+    )?.Valor;
+    if (!detalleDeudas) return { estado: "aprobado" };
 
     const registros = this.parsearDetalleDeudas(detalleDeudas);
-    
+
     const entidadesConDeuda = new Set<string>();
-    
+
     for (const registro of registros) {
-        if (registro.situacion >= 3 && registro.situacion <= 5) {
-            entidadesConDeuda.add(registro.entidad);
-        }
+      if (registro.situacion >= 3 && registro.situacion <= 5) {
+        entidadesConDeuda.add(registro.entidad);
+      }
     }
 
     const cantidad = entidadesConDeuda.size;
     if (cantidad >= 3) {
-        return {
-            estado: 'rechazado',
-            mensaje: 'Tiene deuda en 3 o más entidades con situación 3, 4 o 5'
-        };
+      return {
+        estado: "rechazado",
+        mensaje: "Tiene deuda en 3 o más entidades con situación 3, 4 o 5",
+      };
     } else if (cantidad >= 1) {
-        return {
-            estado: 'pendiente',
-            mensaje: 'Tiene deuda en 1 o 2 entidades con situación 3, 4 o 5'
-        };
+      return {
+        estado: "pendiente",
+        mensaje: "Tiene deuda en 1 o 2 entidades con situación 3, 4 o 5",
+      };
     }
-    
-    return { estado: 'aprobado' };
-}
+
+    return { estado: "aprobado" };
+  }
   /**
    * Parsea el string de detalle de deudas en estructura manejable
    * @param detalleDeudas - String crudo con información de deudas
    * @returns Array de objetos con información estructurada de deudas
    */
-  private parsearDetalleDeudas(detalleDeudas: string): Array<{entidad: string, periodo: number, situacion: number, monto: number}> {
-    const resultados: Array<{entidad: string, periodo: number, situacion: number, monto: number}> = [];
-    
+  private parsearDetalleDeudas(
+    detalleDeudas: string
+  ): Array<{
+    entidad: string;
+    periodo: number;
+    situacion: number;
+    monto: number;
+  }> {
+    const resultados: Array<{
+      entidad: string;
+      periodo: number;
+      situacion: number;
+      monto: number;
+    }> = [];
+
     // Usar una expresión regular para extraer cada registro <D>
     const regex = /<D>(.*?)<\/D>/g;
     let match;
-    
+
     while ((match = regex.exec(detalleDeudas)) !== null) {
-      const partes = match[1].split('|');
+      const partes = match[1].split("|");
       if (partes.length === 4) {
         resultados.push({
           entidad: partes[0],
           periodo: parseInt(partes[1]),
           situacion: parseInt(partes[2]),
-          monto: parseInt(partes[3])
+          monto: parseInt(partes[3]),
         });
       }
     }
-    
+
     return resultados;
   }
   /**
@@ -404,9 +542,14 @@ private verificarDeudaEntidades(variables: NosisVariable[]): { estado: 'aprobado
    * @returns Boolean indicando si tiene empleo registrado
    */
   private tieneEmpleoRegistrado(variables: NosisVariable[]): boolean {
-    const esEmpleado = variables.find(v => v.Nombre === 'VI_Empleado_Es')?.Valor === 'Si';
-    const tieneAportes = parseInt(variables.find(v => v.Nombre === 'AP_12m_Empleado_Pagos_Cant')?.Valor || '0') > 0;
-    
+    const esEmpleado =
+      variables.find((v) => v.Nombre === "VI_Empleado_Es")?.Valor === "Si";
+    const tieneAportes =
+      parseInt(
+        variables.find((v) => v.Nombre === "AP_12m_Empleado_Pagos_Cant")
+          ?.Valor || "0"
+      ) > 0;
+
     return esEmpleado || tieneAportes;
   }
   /**
@@ -414,44 +557,47 @@ private verificarDeudaEntidades(variables: NosisVariable[]): { estado: 'aprobado
    * @param variables - Lista de variables de Nosis
    * @returns Boolean indicando si tiene situación laboral válida
    */
-    private verificarSituacionLaboral(variables: NosisVariable[]): boolean {
-    const esEmpleado = variables.find(v => v.Nombre === 'VI_Empleado_Es')?.Valor === 'Si';
+  private verificarSituacionLaboral(variables: NosisVariable[]): boolean {
+    const esEmpleado =
+      variables.find((v) => v.Nombre === "VI_Empleado_Es")?.Valor === "Si";
     //const esAutonomo = variables.find(v => v.Nombre === 'VI_Inscrip_Autonomo_Es')?.Valor === 'Si';
     //const esDomestico = variables.find(v => v.Nombre === 'VI_EmpleadoDomestico_Es')?.Valor === 'Si';
-    const aportes = variables.find(v => v.Nombre === 'AP_12m_Empleado_Pagos_Cant')?.Valor || '0';
-    
+    const aportes =
+      variables.find((v) => v.Nombre === "AP_12m_Empleado_Pagos_Cant")?.Valor ||
+      "0";
+
     return esEmpleado || parseInt(aportes) > 0;
-    }
-    /**
+  }
+  /**
    * Extrae y estructura datos personales de las variables de Nosis
    * @param variables - Lista de variables de Nosis
    * @returns Objeto PersonalData con información estructurada
    */
-    private extraerDatosPersonales(variables: NosisVariable[]): PersonalData {
+  private extraerDatosPersonales(variables: NosisVariable[]): PersonalData {
     const getValor = (nombre: string): string | undefined => {
-      const variable = variables.find(v => v.Nombre === nombre);
+      const variable = variables.find((v) => v.Nombre === nombre);
       return variable?.Valor;
     };
 
     // Nombre completo
-    const nombre = getValor('VI_Nombre');
-    const apellido = getValor('VI_Apellido');
+    const nombre = getValor("VI_Nombre");
+    const apellido = getValor("VI_Apellido");
 
     // Documentación
-    const dni = getValor('VI_DNI');
-    const cuil = getValor('VI_Identificacion');
-    const fechaNacimiento = getValor('VI_FecNacimiento');
-    const sexo = getValor('VI_Sexo');
-    const nacionalidad = getValor('VI_Nacionalidad'); // Variable hipotética
-    const estadoCivil = getValor('VI_EstadoCivil'); // Variable hipotética
+    const dni = getValor("VI_DNI");
+    const cuil = getValor("VI_Identificacion");
+    const fechaNacimiento = getValor("VI_FecNacimiento");
+    const sexo = getValor("VI_Sexo");
+    const nacionalidad = getValor("VI_Nacionalidad"); // Variable hipotética
+    const estadoCivil = getValor("VI_EstadoCivil"); // Variable hipotética
     const tipoDocumento = "DNI"; // En Nosis generalmente es DNI
 
     // Domicilio
-    const calle = getValor('VI_DomAF_Calle');
-    const numero = getValor('VI_DomAF_Nro');
-    const localidad = getValor('VI_DomAF_Loc');
-    const codigoPostal = getValor('VI_DomAF_CP');
-    const provincia = getValor('VI_DomAF_Prov');
+    const calle = getValor("VI_DomAF_Calle");
+    const numero = getValor("VI_DomAF_Nro");
+    const localidad = getValor("VI_DomAF_Loc");
+    const codigoPostal = getValor("VI_DomAF_CP");
+    const provincia = getValor("VI_DomAF_Prov");
 
     // Teléfonos
     const telefonos = [];
@@ -459,54 +605,62 @@ private verificarDeudaEntidades(variables: NosisVariable[]): { estado: 'aprobado
       const codArea = getValor(`VI_Tel${i}_CodArea`);
       const numeroTel = getValor(`VI_Tel${i}_Nro`);
       if (codArea || numeroTel) {
-        telefonos.push({ 
-          codArea, 
+        telefonos.push({
+          codArea,
           numero: numeroTel,
-          tipo: i === 1 ? "Principal" : `Alternativo ${i-1}`
+          tipo: i === 1 ? "Principal" : `Alternativo ${i - 1}`,
         });
       }
     }
 
     // Datos laborales
-    const situacionLaboral = 
-      getValor('VI_Empleado_Es') === 'Si' ? 'Empleado' :
-      getValor('VI_Empleador_Es') === 'Si' ? 'Empleador' :
-      getValor('VI_Jubilado_Es') === 'Si' ? 'Jubilado' :
-      getValor('VI_Pensionado_Es') === 'Si' ? 'Pensionado' :
-      'Otro';
+    const situacionLaboral =
+      getValor("VI_Empleado_Es") === "Si"
+        ? "Empleado"
+        : getValor("VI_Empleador_Es") === "Si"
+        ? "Empleador"
+        : getValor("VI_Jubilado_Es") === "Si"
+        ? "Jubilado"
+        : getValor("VI_Pensionado_Es") === "Si"
+        ? "Pensionado"
+        : "Otro";
 
-    const esMonotributista = getValor('VI_Inscrip_Monotributo_Es');
-    const categoriaMonotributo = getValor('VI_Inscrip_Monotributo');
-    const actividadMonotributo = getValor('VI_Inscrip_Monotributo_Act');
+    const esMonotributista = getValor("VI_Inscrip_Monotributo_Es");
+    const categoriaMonotributo = getValor("VI_Inscrip_Monotributo");
+    const actividadMonotributo = getValor("VI_Inscrip_Monotributo_Act");
 
     // Obtener datos del empleador
-    const razonSocialEmpleador = getValor('VI_Empleador_RZ');
-    const cuitEmpleador = getValor('VI_Empleador_CUIT');
-    const telCodAreaEmpleador = getValor('VI_Empleador_TelCodArea');
-    const telNroEmpleador = getValor('VI_Empleador_TelNro');
-    const telefonoEmpleador = telCodAreaEmpleador && telNroEmpleador ? 
-      `${telCodAreaEmpleador}${telNroEmpleador}` : undefined;
+    const razonSocialEmpleador = getValor("VI_Empleador_RZ");
+    const cuitEmpleador = getValor("VI_Empleador_CUIT");
+    const telCodAreaEmpleador = getValor("VI_Empleador_TelCodArea");
+    const telNroEmpleador = getValor("VI_Empleador_TelNro");
+    const telefonoEmpleador =
+      telCodAreaEmpleador && telNroEmpleador
+        ? `${telCodAreaEmpleador}${telNroEmpleador}`
+        : undefined;
 
     // Domicilio del empleador
-    const calleEmpleador = getValor('VI_Empleador_Dom_Calle');
-    const numeroEmpleador = getValor('VI_Empleador_Dom_Nro');
-    const localidadEmpleador = getValor('VI_Empleador_Dom_Loc');
-    const codigoPostalEmpleador = getValor('VI_Empleador_Dom_CP');
-    const provinciaEmpleador = getValor('VI_Empleador_Dom_Prov');
+    const calleEmpleador = getValor("VI_Empleador_Dom_Calle");
+    const numeroEmpleador = getValor("VI_Empleador_Dom_Nro");
+    const localidadEmpleador = getValor("VI_Empleador_Dom_Loc");
+    const codigoPostalEmpleador = getValor("VI_Empleador_Dom_CP");
+    const provinciaEmpleador = getValor("VI_Empleador_Dom_Prov");
 
     // Construir objeto empleador solo si existe razón social
-    const empleador = razonSocialEmpleador ? {
-      razonSocial: razonSocialEmpleador,
-      cuit: cuitEmpleador,
-      telefono: telefonoEmpleador,
-      domicilio: {
-        calle: calleEmpleador,
-        numero: numeroEmpleador,
-        localidad: localidadEmpleador,
-        codigoPostal: codigoPostalEmpleador,
-        provincia: provinciaEmpleador
-      }
-    } : undefined;
+    const empleador = razonSocialEmpleador
+      ? {
+          razonSocial: razonSocialEmpleador,
+          cuit: cuitEmpleador,
+          telefono: telefonoEmpleador,
+          domicilio: {
+            calle: calleEmpleador,
+            numero: numeroEmpleador,
+            localidad: localidadEmpleador,
+            codigoPostal: codigoPostalEmpleador,
+            provincia: provinciaEmpleador,
+          },
+        }
+      : undefined;
 
     // Referencias personales
     const referenciasPersonales = [];
@@ -514,26 +668,26 @@ private verificarDeudaEntidades(variables: NosisVariable[]): { estado: 'aprobado
       const nombreRef = getValor(`VI_Ref${i}_Nombre`);
       const telefonoRef = getValor(`VI_Ref${i}_Telefono`);
       const relacionRef = getValor(`VI_Ref${i}_Relacion`);
-      
+
       if (nombreRef || telefonoRef || relacionRef) {
         referenciasPersonales.push({
           nombre: nombreRef,
           telefono: telefonoRef,
-          relacion: relacionRef
+          relacion: relacionRef,
         });
       }
     }
 
     return {
       nombreCompleto: { nombre, apellido },
-      documentacion: { 
-        tipoDocumento, 
-        dni, 
-        cuil, 
-        fechaNacimiento, 
-        sexo, 
-        nacionalidad, 
-        estadoCivil 
+      documentacion: {
+        tipoDocumento,
+        dni,
+        cuil,
+        fechaNacimiento,
+        sexo,
+        nacionalidad,
+        estadoCivil,
       },
       domicilio: { calle, numero, localidad, codigoPostal, provincia },
       telefonos,
@@ -543,10 +697,10 @@ private verificarDeudaEntidades(variables: NosisVariable[]): { estado: 'aprobado
         monotributo: {
           esMonotributista,
           categoria: categoriaMonotributo,
-          actividad: actividadMonotributo
-        }
+          actividad: actividadMonotributo,
+        },
       },
-      referenciasPersonales
+      referenciasPersonales,
     };
   }
 }
