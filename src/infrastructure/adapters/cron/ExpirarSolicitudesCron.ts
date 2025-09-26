@@ -15,8 +15,6 @@
  * 
  * Programación: Se ejecuta todos los días a la 1:00 AM
  * 
- * @author Sistema de Gestión
- * @version 1.0.0
  */
 
 import cron from 'node-cron';

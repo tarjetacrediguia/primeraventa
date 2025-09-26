@@ -86,6 +86,8 @@ export const HISTORIAL_ACTIONS = {
     REJECT_SOLICITUD_INICIAL: 'reject_solicitud_inicial',
     /** Solicitud inicial pendiente de revisión */
     PENDING_SOLICITUD_INICIAL: 'pending_solicitud_inicial',
+    /** Aprobación de una solicitud inicial de crédito (alias en español) */
+    APROBAR_SOLICITUD_INICIAL: 'aprobacion_solicitud_inicial',
 
     // ===== SOLICITUDES FORMALES =====
     /** Creación de una nueva solicitud formal de crédito */

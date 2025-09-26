@@ -13,8 +13,44 @@ import { Comerciante } from "../../../domain/entities/Comerciante";
 import { pool } from "../../config/Database/DatabaseDonfig";
 
 export class ComercianteRepositoryAdapter implements ComercianteRepositoryPort {
-    findById(id: number): Promise<Comerciante | null> {
-        throw new Error("Method not implemented.");
+    async findById(id: number): Promise<Comerciante> {
+        const query = `
+            SELECT 
+                c.usuario_id as id,
+                c.nombre_comercio,
+                c.cuil,
+                c.direccion_comercio,
+                u.nombre,
+                u.apellido,
+                u.email,
+                u.password_hash as password,
+                u.telefono,
+                u.activo
+            FROM comerciantes c
+            INNER JOIN usuarios u ON c.usuario_id = u.id
+            WHERE c.usuario_id = $1 AND u.activo = true
+        `;
+        
+        const result = await pool.query(query, [id]);
+
+        if (result.rows.length === 0) {
+            throw new Error("Comerciante no encontrado");
+        }
+
+        const row = result.rows[0];
+        
+        return new Comerciante({
+            id: row.id,
+            nombre: row.nombre,
+            apellido: row.apellido,
+            email: row.email,
+            password: row.password,
+            telefono: row.telefono,
+            nombreComercio: row.nombre_comercio,
+            cuil: row.cuil,
+            direccionComercio: row.direccion_comercio,
+            activo: row.activo
+        });
     }
     /**
      * Busca un comerciante por su email.

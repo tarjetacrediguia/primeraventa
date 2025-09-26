@@ -1,0 +1,2592 @@
+{
+  "data": [
+    {
+      "codigo": 7,
+      "entidad": "BANCO DE GALICIA Y BUENOS AIRES S.A."
+    },
+    {
+      "codigo": 11,
+      "entidad": "BANCO DE LA NACION ARGENTINA"
+    },
+    {
+      "codigo": 14,
+      "entidad": "BANCO DE LA PROVINCIA DE BUENOS AIRES"
+    },
+    {
+      "codigo": 15,
+      "entidad": "INDUSTRIAL AND COMMERCIAL BANK OF CHINA (ARGENTINA) S.A.U."
+    },
+    {
+      "codigo": 17,
+      "entidad": "BANCO BBVA ARGENTINA S.A."
+    },
+    {
+      "codigo": 20,
+      "entidad": "BANCO DE LA PROVINCIA DE CORDOBA S.A."
+    },
+    {
+      "codigo": 27,
+      "entidad": "BANCO SUPERVIELLE S.A."
+    },
+    {
+      "codigo": 29,
+      "entidad": "BANCO DE LA CIUDAD DE BUENOS AIRES"
+    },
+    {
+      "codigo": 34,
+      "entidad": "BANCO PATAGONIA S.A."
+    },
+    {
+      "codigo": 44,
+      "entidad": "BANCO HIPOTECARIO S.A."
+    },
+    {
+      "codigo": 45,
+      "entidad": "BANCO DE SAN JUAN S.A."
+    },
+    {
+      "codigo": 65,
+      "entidad": "BANCO MUNICIPAL DE ROSARIO"
+    },
+    {
+      "codigo": 72,
+      "entidad": "BANCO SANTANDER ARGENTINA S.A."
+    },
+    {
+      "codigo": 83,
+      "entidad": "BANCO DEL CHUBUT S.A."
+    },
+    {
+      "codigo": 86,
+      "entidad": "BANCO DE SANTA CRUZ S.A."
+    },
+    {
+      "codigo": 93,
+      "entidad": "BANCO DE LA PAMPA SOCIEDAD DE ECONOMÍA MIXTA"
+    },
+    {
+      "codigo": 94,
+      "entidad": "BANCO DE CORRIENTES S.A."
+    },
+    {
+      "codigo": 97,
+      "entidad": "BANCO PROVINCIA DEL NEUQUÉN SOCIEDAD ANÓNIMA"
+    },
+    {
+      "codigo": 16,
+      "entidad": "CITIBANK N.A."
+    },
+    {
+      "codigo": 131,
+      "entidad": "BANK OF CHINA LIMITED SUCURSAL BUENOS AI"
+    },
+    {
+      "codigo": 147,
+      "entidad": "BIBANK S.A."
+    },
+    {
+      "codigo": 150,
+      "entidad": "BANCO GALICIA Ex: HSBC BANK ARGENTINA S.A."
+    },
+    {
+      "codigo": 165,
+      "entidad": "JPMORGAN CHASE BANK, NATIONAL ASSOCIATIO"
+    },
+    {
+      "codigo": 198,
+      "entidad": "BANCO DE VALORES S.A."
+    },
+    {
+      "codigo": 254,
+      "entidad": "BANCO MARIVA S.A."
+    },
+    {
+      "codigo": 266,
+      "entidad": "BNP PARIBAS"
+    },
+    {
+      "codigo": 300,
+      "entidad": "BANCO DE INVERSION Y COMERCIO EXTERIOR S"
+    },
+    {
+      "codigo": 301,
+      "entidad": "BANCO PIANO S.A."
+    },
+    {
+      "codigo": 305,
+      "entidad": "BANCO JULIO SOCIEDAD ANONIMA"
+    },
+    {
+      "codigo": 312,
+      "entidad": "BANCO VOII S.A."
+    },
+    {
+      "codigo": 319,
+      "entidad": "BANCO CMF S.A."
+    },
+    {
+      "codigo": 331,
+      "entidad": "BANCO CETELEM ARGENTINA S.A."
+    },
+    {
+      "codigo": 333,
+      "entidad": "BANCO DE SERVICIOS Y TRANSACCIONES S.A."
+    },
+    {
+      "codigo": 339,
+      "entidad": "RCI BANQUE S.A."
+    },
+    {
+      "codigo": 340,
+      "entidad": "BACS BANCO DE CREDITO Y SECURITIZACION S"
+    },
+    {
+      "codigo": 435,
+      "entidad": "BANCO SUCREDITO REGIONAL S.A.U."
+    },
+    {
+      "codigo": 44088,
+      "entidad": "VOLKSWAGEN FINANCIAL SERVICES COMPAÑIA F"
+    },
+    {
+      "codigo": 44092,
+      "entidad": "FCA COMPAÑIA FINANCIERA S.A."
+    },
+    {
+      "codigo": 44093,
+      "entidad": "GPAT COMPAÑIA FINANCIERA S.A.U."
+    },
+    {
+      "codigo": 44094,
+      "entidad": "MERCEDES-BENZ COMPAÑÍA FINANCIERA ARGENT"
+    },
+    {
+      "codigo": 44095,
+      "entidad": "ROMBO COMPAÑÍA FINANCIERA S.A."
+    },
+    {
+      "codigo": 44096,
+      "entidad": "JOHN DEERE CREDIT COMPAÑÍA FINANCIERA S."
+    },
+    {
+      "codigo": 44098,
+      "entidad": "PSA FINANCE ARGENTINA COMPAÑÍA FINANCIER"
+    },
+    {
+      "codigo": 44099,
+      "entidad": "TOYOTA COMPAÑÍA FINANCIERA DE ARGENTINA"
+    },
+    {
+      "codigo": 45030,
+      "entidad": "NARANJA DIGITAL COMPAÑÍA FINANCIERA S.A."
+    },
+    {
+      "codigo": 45072,
+      "entidad": "REBA COMPAÑIA FINANCIERA S.A."
+    },
+    {
+      "codigo": 143,
+      "entidad": "BRUBANK S.A.U."
+    },
+    {
+      "codigo": 191,
+      "entidad": "BANCO CREDICOOP COOPERATIVO LIMITADO"
+    },
+    {
+      "codigo": 247,
+      "entidad": "BANCO ROELA S.A."
+    },
+    {
+      "codigo": 268,
+      "entidad": "BANCO PROVINCIA DE TIERRA DEL FUEGO"
+    },
+    {
+      "codigo": 269,
+      "entidad": "BANCO DE LA REPUBLICA ORIENTAL DEL URUGUAY"
+    },
+    {
+      "codigo": 277,
+      "entidad": "BANCO SAENZ S.A."
+    },
+    {
+      "codigo": 281,
+      "entidad": "BANCO MERIDIAN S.A."
+    },
+    {
+      "codigo": 285,
+      "entidad": "BANCO MACRO S.A."
+    },
+    {
+      "codigo": 299,
+      "entidad": "BANCO COMAFI SOCIEDAD ANONIMA"
+    },
+    {
+      "codigo": 309,
+      "entidad": "BANCO RIOJA SOCIEDAD ANONIMA UNIPERSONAL"
+    },
+    {
+      "codigo": 310,
+      "entidad": "BANCO DEL SOL S.A."
+    },
+    {
+      "codigo": 311,
+      "entidad": "NUEVO BANCO DEL CHACO S. A."
+    },
+    {
+      "codigo": 315,
+      "entidad": "BANCO DE FORMOSA S.A."
+    },
+    {
+      "codigo": 321,
+      "entidad": "BANCO DE SANTIAGO DEL ESTERO S.A."
+    },
+    {
+      "codigo": 322,
+      "entidad": "BANCO INDUSTRIAL S.A."
+    },
+    {
+      "codigo": 330,
+      "entidad": "NUEVO BANCO DE SANTA FE SOCIEDAD ANONIMA"
+    },
+    {
+      "codigo": 332,
+      "entidad": "BANCO DE SERVICIOS FINANCIEROS S.A."
+    },
+    {
+      "codigo": 341,
+      "entidad": "BANCO MASVENTAS S.A."
+    },
+    {
+      "codigo": 384,
+      "entidad": "UALA BANK S.A.U."
+    },
+    {
+      "codigo": 386,
+      "entidad": "NUEVO BANCO DE ENTRE RÍOS S.A."
+    },
+    {
+      "codigo": 389,
+      "entidad": "BANCO COLUMBIA S.A."
+    },
+    {
+      "codigo": 426,
+      "entidad": "BANCO BICA S.A."
+    },
+    {
+      "codigo": 431,
+      "entidad": "BANCO COINAG S.A."
+    },
+    {
+      "codigo": 432,
+      "entidad": "BANCO DE COMERCIO S.A."
+    },
+    {
+      "codigo": 448,
+      "entidad": "BANCO DINO S.A."
+    },
+    {
+      "codigo": 44077,
+      "entidad": "COMPAÑIA FINANCIERA ARGENTINA S.A."
+    },
+    {
+      "codigo": 45056,
+      "entidad": "MONTEMAR COMPAÑIA FINANCIERA S.A."
+    },
+    {
+      "codigo": 55028,
+      "entidad": "Favanet S.A."
+    },
+    {
+      "codigo": 55279,
+      "entidad": "SOLVENTA SAS"
+    },
+    {
+      "codigo": 55357,
+      "entidad": "CREDIBEL S.A."
+    },
+    {
+      "codigo": 65203,
+      "entidad": "CRÉDITO REGIONAL COMPAÑÍA FINANCIERA S.A.U."
+    },
+    {
+      "codigo": 70101,
+      "entidad": "AMERICAN EXPRESS ARGENTINA S.A."
+    },
+    {
+      "codigo": 70140,
+      "entidad": "COTO CENTRO INTEGRAL DE COMERCIALIZAC SA"
+    },
+    {
+      "codigo": 70141,
+      "entidad": "YPF S.A."
+    },
+    {
+      "codigo": 70142,
+      "entidad": "ALARFIN S.A."
+    },
+    {
+      "codigo": 70147,
+      "entidad": "CENCOSUD S.A."
+    },
+    {
+      "codigo": 70151,
+      "entidad": "GRUPO CTALAMOCHITA S.A."
+    },
+    {
+      "codigo": 70154,
+      "entidad": "TELEPEAJE S.A."
+    },
+    {
+      "codigo": 70156,
+      "entidad": "LIDERAR CARD S.A."
+    },
+    {
+      "codigo": 70161,
+      "entidad": "FIDEN S.A."
+    },
+    {
+      "codigo": 70165,
+      "entidad": "Propay SRL"
+    },
+    {
+      "codigo": 70166,
+      "entidad": "PRESTAMAS S.A."
+    },
+    {
+      "codigo": 70210,
+      "entidad": "ITALCRED S.A."
+    },
+    {
+      "codigo": 70212,
+      "entidad": "CREDI-PAZ S.A."
+    },
+    {
+      "codigo": 70224,
+      "entidad": "TARJETAS DEL MAR S.A."
+    },
+    {
+      "codigo": 70228,
+      "entidad": "SANTA MONICA S.A."
+    },
+    {
+      "codigo": 70229,
+      "entidad": "CONTAR S.A."
+    },
+    {
+      "codigo": 70231,
+      "entidad": "MUTUAL DE ASOC Y ADHER CLUB SPORTS SALTO"
+    },
+    {
+      "codigo": 70234,
+      "entidad": "NUEVA CARD S.A."
+    },
+    {
+      "codigo": 70239,
+      "entidad": "FERTIL FINANZAS S.A."
+    },
+    {
+      "codigo": 70248,
+      "entidad": "FAVACARD S.A"
+    },
+    {
+      "codigo": 70252,
+      "entidad": "JUCARD JUNIN S.R.L."
+    },
+    {
+      "codigo": 70257,
+      "entidad": "TARTAN S.A."
+    },
+    {
+      "codigo": 70268,
+      "entidad": "Asociación Mutual 20 de Julio"
+    },
+    {
+      "codigo": 70269,
+      "entidad": "Credinos Cooperativa de Vivienda, Crédito, Consumo, Servicios Asistenciales y de Turismo Ltda."
+    },
+    {
+      "codigo": 70270,
+      "entidad": "Asociación Mutual Club Social Deportivo Ascensión"
+    },
+    {
+      "codigo": 70301,
+      "entidad": "Tarjeta Pampeana S.A"
+    },
+    {
+      "codigo": 70407,
+      "entidad": "TALOR SOCIEDAD COLECTIVA"
+    },
+    {
+      "codigo": 70408,
+      "entidad": "TARJETA NARANJA S.A."
+    },
+    {
+      "codigo": 70411,
+      "entidad": "TEVISAL S.A."
+    },
+    {
+      "codigo": 70412,
+      "entidad": "Zafiro S.A."
+    },
+    {
+      "codigo": 70413,
+      "entidad": "VILLTER S.R.L."
+    },
+    {
+      "codigo": 70420,
+      "entidad": "Corfa Servi S.R.L."
+    },
+    {
+      "codigo": 70421,
+      "entidad": "MUTUAL COYSPU"
+    },
+    {
+      "codigo": 70424,
+      "entidad": "Tarjeta PL S.A."
+    },
+    {
+      "codigo": 70427,
+      "entidad": "TARJETA GRUPAR S.A."
+    },
+    {
+      "codigo": 70429,
+      "entidad": "MUTUAL DE LAS COMUNIDADES"
+    },
+    {
+      "codigo": 70430,
+      "entidad": "ASOC. MUTUAL DEL CLUB ALMAFUERTE DE LAS VARILLAS"
+    },
+    {
+      "codigo": 70433,
+      "entidad": "SISCOM S.R.L."
+    },
+    {
+      "codigo": 70434,
+      "entidad": "Coincidir S.A."
+    },
+    {
+      "codigo": 70503,
+      "entidad": "LOCRED SRL"
+    },
+    {
+      "codigo": 70602,
+      "entidad": "ACTUAL S.A."
+    },
+    {
+      "codigo": 70603,
+      "entidad": "COOP SERV ADM VTAS CRED Y CRED GUIA LTDA"
+    },
+    {
+      "codigo": 70704,
+      "entidad": "EMCO San Luis S.A."
+    },
+    {
+      "codigo": 70802,
+      "entidad": "S.A. CLUB DEL ESTE"
+    },
+    {
+      "codigo": 70803,
+      "entidad": "SISTEMA DE CREDITO DE ENTRE RIOS S.A."
+    },
+    {
+      "codigo": 70805,
+      "entidad": "DILFER S.A."
+    },
+    {
+      "codigo": 70806,
+      "entidad": "EMPRENDER S.A."
+    },
+    {
+      "codigo": 70808,
+      "entidad": "Caja Municipal de Préstamos Sociedad de Economía Mixta"
+    },
+    {
+      "codigo": 70903,
+      "entidad": "Única compañía de Crédito S.A."
+    },
+    {
+      "codigo": 71101,
+      "entidad": "NOA CARD S.A."
+    },
+    {
+      "codigo": 71103,
+      "entidad": "GLOBAL S.R.L."
+    },
+    {
+      "codigo": 71202,
+      "entidad": "EMPRESUR S.A."
+    },
+    {
+      "codigo": 71302,
+      "entidad": "CUMAR S.A."
+    },
+    {
+      "codigo": 71402,
+      "entidad": "CENTRO CARD S.A."
+    },
+    {
+      "codigo": 71605,
+      "entidad": "AVALON CREDITOS PERSONALES S.A."
+    },
+    {
+      "codigo": 71801,
+      "entidad": "DATA 2000 S.A."
+    },
+    {
+      "codigo": 71803,
+      "entidad": "VISION S.A."
+    },
+    {
+      "codigo": 72101,
+      "entidad": "ASOC MUT AYUDA ASOC ADHER CLUB ATL UNION"
+    },
+    {
+      "codigo": 72102,
+      "entidad": "ASOCIACION MUTUAL DEL CLUB A. ARGENTINO"
+    },
+    {
+      "codigo": 72103,
+      "entidad": "CLUB ATLETICO SAN JORGE MUTUAL Y SOCIAL"
+    },
+    {
+      "codigo": 72104,
+      "entidad": "MUTUAL SOCIOS ASOC MEDIC ROSARIO"
+    },
+    {
+      "codigo": 72106,
+      "entidad": "ASOCIACION MUTUAL VENADO TUERTO"
+    },
+    {
+      "codigo": 72112,
+      "entidad": "ASOC MUTUAL SOC CTRO EC CAÑADA DE GOMEZ"
+    },
+    {
+      "codigo": 72113,
+      "entidad": "MUTUAL ENTRE ASOC COOPER MUTUAL PATRONAL"
+    },
+    {
+      "codigo": 72115,
+      "entidad": "San Cristóbal Caja Mutual entre Asociados de San Cristobal SMSG"
+    },
+    {
+      "codigo": 72117,
+      "entidad": "ASOC MUT CONSEJ ARROYOS COOP EMP MULTIPL"
+    },
+    {
+      "codigo": 72120,
+      "entidad": "CREDIFE S.A."
+    },
+    {
+      "codigo": 72122,
+      "entidad": "MUTUAL DE RESIDENTES DEL BARRIO TAIS"
+    },
+    {
+      "codigo": 72123,
+      "entidad": "SOCIEDAD ARG DE SOCORROS MUTUO CORONDA"
+    },
+    {
+      "codigo": 72126,
+      "entidad": "CREDISOL S.A."
+    },
+    {
+      "codigo": 72128,
+      "entidad": "ASOCIACION MUTUAL CLUB COLON DE SAN JUSTO"
+    },
+    {
+      "codigo": 72129,
+      "entidad": "ASOCIACION MUTUAL CLUB ATLETICO PILAR"
+    },
+    {
+      "codigo": 72131,
+      "entidad": "Asociación Mutual del Personal Jerárquico de Bancos Oficiales Nacionales"
+    },
+    {
+      "codigo": 72132,
+      "entidad": "Asociación Mutual de Ayuda entre Asociados y Adherentes del Club Deportivo Libertad"
+    },
+    {
+      "codigo": 72133,
+      "entidad": "CREDIFIAR S.A."
+    },
+    {
+      "codigo": 72134,
+      "entidad": "Asociación Mutual de Ayuda entre Asociados y Adherentes del Club Atlético Libertad."
+    },
+    {
+      "codigo": 72135,
+      "entidad": "Asociación Mutual PYME RURAL"
+    },
+    {
+      "codigo": 72136,
+      "entidad": "Asociación Mutualista del Club Central San Carlos"
+    },
+    {
+      "codigo": 72303,
+      "entidad": "CREDIMAS S.A."
+    },
+    {
+      "codigo": 72304,
+      "entidad": "TARJETA TITANIO S.A."
+    },
+    {
+      "codigo": 72306,
+      "entidad": "VALLE FERTIL S.A."
+    },
+    {
+      "codigo": 72307,
+      "entidad": "CAJA POPULAR DE AHORROS PCIA DE TUCUMAN"
+    },
+    {
+      "codigo": 72308,
+      "entidad": "CASTILLO S.A.C.I.F.I.A."
+    },
+    {
+      "codigo": 72501,
+      "entidad": "TDF S.A."
+    },
+    {
+      "codigo": 72601,
+      "entidad": "IPLYC-MP HOGAR CONSORCIO DE COOPERACION"
+    },
+    {
+      "codigo": 72603,
+      "entidad": "CREDIMAZ S.R.L."
+    },
+    {
+      "codigo": 72614,
+      "entidad": "MUTUAL DE DOCENTES DE NEUQUEN"
+    },
+    {
+      "codigo": 72618,
+      "entidad": "ASOCIACION MUTUAL DE ASOCIADOS Y ADHERENTES DEL CENTRO JUVENIL SPORTIVO BELGRANO"
+    },
+    {
+      "codigo": 72622,
+      "entidad": "ASOCIACION MUTUAL SANTA AGUSTINA"
+    },
+    {
+      "codigo": 72631,
+      "entidad": "COOPERATIVA DE PROVISION DE BIENES Y SERVICIOS ALLEN LTDA"
+    },
+    {
+      "codigo": 72633,
+      "entidad": "COOPERATIVA FARO LTDA"
+    },
+    {
+      "codigo": 72634,
+      "entidad": "MERCADOLIBRE S.R.L."
+    },
+    {
+      "codigo": 72638,
+      "entidad": "Pago Virtual del Sur S.A."
+    },
+    {
+      "codigo": 55234,
+      "entidad": "1° de Julio Cooperativa de Vivienda, Crédito y Consumo Ltda"
+    },
+    {
+      "codigo": 55001,
+      "entidad": "Accicom S.A."
+    },
+    {
+      "codigo": 70602,
+      "entidad": "ACTUAL S.A."
+    },
+    {
+      "codigo": 55267,
+      "entidad": "ACUATRO S.A."
+    },
+    {
+      "codigo": 55141,
+      "entidad": "AD CREDITOS S.A."
+    },
+    {
+      "codigo": 55459,
+      "entidad": "Admiral Finance SA"
+    },
+    {
+      "codigo": 55319,
+      "entidad": "AGCO CAPITAL ARGENTINA S.A."
+    },
+    {
+      "codigo": 55349,
+      "entidad": "AGILCRED S.A."
+    },
+    {
+      "codigo": 55083,
+      "entidad": "AGL CAPITAL S.A."
+    },
+    {
+      "codigo": 55481,
+      "entidad": "AGMA S.R.L"
+    },
+    {
+      "codigo": 55284,
+      "entidad": "Agree Market S.A."
+    },
+    {
+      "codigo": 55262,
+      "entidad": "AGROFINAR S.A."
+    },
+    {
+      "codigo": 70142,
+      "entidad": "ALARFIN S.A."
+    },
+    {
+      "codigo": 55329,
+      "entidad": "Alau Tecnología S.A.U."
+    },
+    {
+      "codigo": 55426,
+      "entidad": "ALVAREZ&ALVAREZ S.A.S."
+    },
+    {
+      "codigo": 55067,
+      "entidad": "Amargot Créditos y Servicios S.A."
+    },
+    {
+      "codigo": 55002,
+      "entidad": "AMEPORT - Mutual del Personal del Estado Nacional, Provincial, Municipal y Afines"
+    },
+    {
+      "codigo": 55162,
+      "entidad": "Aquiprestamos.com S.A."
+    },
+    {
+      "codigo": 55107,
+      "entidad": "ARGENCRED S.A."
+    },
+    {
+      "codigo": 55248,
+      "entidad": "ARGENPAY SAU"
+    },
+    {
+      "codigo": 55112,
+      "entidad": "Argentina Corporación Financiera S.A."
+    },
+    {
+      "codigo": 55384,
+      "entidad": "ARGENTINA ESSENTIAL SERVICES S.R.L."
+    },
+    {
+      "codigo": 55531,
+      "entidad": "ARGENTUM CAPITAL SA"
+    },
+    {
+      "codigo": 55160,
+      "entidad": "Arrayanes Cooperativa de Vivienda, Crédito y Consumo"
+    },
+    {
+      "codigo": 55342,
+      "entidad": "Asistir Cooperativa de Vivienda, Credito, Consumo y Servicios Sociales Limitada"
+    },
+    {
+      "codigo": 55144,
+      "entidad": "ASOCIACION MUTUAL 23 DE SEPTIEMBRE"
+    },
+    {
+      "codigo": 55524,
+      "entidad": "ASOCIACION MUTUAL 7 DE AGOSTO"
+    },
+    {
+      "codigo": 55511,
+      "entidad": "ASOCIACION MUTUAL 9 DE JULIO OLIMPICO FREYRE"
+    },
+    {
+      "codigo": 55086,
+      "entidad": "Asociación Mutual Asis"
+    },
+    {
+      "codigo": 55437,
+      "entidad": "ASOCIACION MUTUAL BUENOS AIRES STAFF DE MEDICINA Y SERVICIOS"
+    },
+    {
+      "codigo": 55281,
+      "entidad": "ASOCIACION MUTUAL CELESOL DE SERVICIOS INTEGRALES Y EDUCATIVOS"
+    },
+    {
+      "codigo": 55003,
+      "entidad": "Asociación Mutual Centro Litoral"
+    },
+    {
+      "codigo": 72129,
+      "entidad": "ASOCIACION MUTUAL CLUB ATLETICO PILAR"
+    },
+    {
+      "codigo": 55476,
+      "entidad": "ASOCIACION MUTUAL CRESER"
+    },
+    {
+      "codigo": 55490,
+      "entidad": "ASOCIACION MUTUAL DE ASOCIADOS DEL CLUB ATLETICO UNION"
+    },
+    {
+      "codigo": 72618,
+      "entidad": "ASOCIACION MUTUAL DE ASOCIADOS Y ADHERENTES DEL CENTRO JUVENIL SPORTIVO BELGRANO"
+    },
+    {
+      "codigo": 55482,
+      "entidad": "Asociación Mutual de Ayuda Entre Asociados y Adherentes de Romang Futbol Club"
+    },
+    {
+      "codigo": 55088,
+      "entidad": "ASOCIACIÓN MUTUAL DE DOCENTES DE LA PROVINCIA DEL CHACO"
+    },
+    {
+      "codigo": 55077,
+      "entidad": "Asociación Mutual de Escribanos"
+    },
+    {
+      "codigo": 55004,
+      "entidad": "Asociación Mutual de la Economía Solidaria"
+    },
+    {
+      "codigo": 55005,
+      "entidad": "Asociación Mutual de las Fuerzas Armadas y Seguridad (AMFAYS)"
+    },
+    {
+      "codigo": 55082,
+      "entidad": "Asociación Mutual de Pensionados Sociales Ley 5110"
+    },
+    {
+      "codigo": 55152,
+      "entidad": "Asociación Mutual de protección Familiar"
+    },
+    {
+      "codigo": 55492,
+      "entidad": "Asociación Mutual de Trabajadores Argentinos Estatales"
+    },
+    {
+      "codigo": 55529,
+      "entidad": "Asociación Mutual de Trabajadores Municipales de Rosario"
+    },
+    {
+      "codigo": 72102,
+      "entidad": "ASOCIACION MUTUAL DEL CLUB A. ARGENTINO"
+    },
+    {
+      "codigo": 55006,
+      "entidad": "Asociación Mutual del Litoral 17 de Enero"
+    },
+    {
+      "codigo": 72131,
+      "entidad": "Asociación Mutual del Personal Jerárquico de Bancos Oficiales Nacionales"
+    },
+    {
+      "codigo": 55115,
+      "entidad": "Asociación Mutual Desarrollo Regional"
+    },
+    {
+      "codigo": 55504,
+      "entidad": "Asociación Mutual DOC"
+    },
+    {
+      "codigo": 55371,
+      "entidad": "ASOCIACION MUTUAL EMLEADOS DE COMERCIO DE ROSARIO"
+    },
+    {
+      "codigo": 55277,
+      "entidad": "ASOCIACION MUTUAL FIAT CONCORD"
+    },
+    {
+      "codigo": 55525,
+      "entidad": "ASOCIACION MUTUAL GRAL J JOSE DE URQUIZA"
+    },
+    {
+      "codigo": 55387,
+      "entidad": "Asociacion Mutual Integracion Solidaria Villa Maria \"AMISVIMA\""
+    },
+    {
+      "codigo": 72640,
+      "entidad": "ASOCIACION MUTUAL INTEGRAL DE CONSUMOS Y SERVICIOS (AMINT)"
+    },
+    {
+      "codigo": 55121,
+      "entidad": "Asociación Mutual Malvinas Argentinas"
+    },
+    {
+      "codigo": 55007,
+      "entidad": "Asociación Mutual Modelo de Entre Ríos"
+    },
+    {
+      "codigo": 55487,
+      "entidad": "ASOCIACION MUTUAL PARA EL PERSONAL DEL PODER JUDICIAL Y TRABAJADORES INDEPENDIENTES CONGRESO DE TUCUMAN"
+    },
+    {
+      "codigo": 55438,
+      "entidad": "ASOCIACION MUTUAL PARA LA PEQUEÑA Y MEDIANA EMPRESA DEL LITORAL"
+    },
+    {
+      "codigo": 55270,
+      "entidad": "ASOCIACION MUTUAL PEDRO DE MENDOZA"
+    },
+    {
+      "codigo": 55413,
+      "entidad": "ASOCIACIÓN MUTUAL PILARENSES"
+    },
+    {
+      "codigo": 55526,
+      "entidad": "Asociacion Mutual Progreso Entrerriano"
+    },
+    {
+      "codigo": 55520,
+      "entidad": "Asociación Mutual Trabajadores del Hospital de Pediatria SAMIC \"Profesor Dr. Juan P. Garrahan\""
+    },
+    {
+      "codigo": 55008,
+      "entidad": "Asociación Mutual Unión Solidaria"
+    },
+    {
+      "codigo": 55110,
+      "entidad": "Asociación Mutual Vital"
+    },
+    {
+      "codigo": 55052,
+      "entidad": "Asociación Mututal 18 de Julio"
+    },
+    {
+      "codigo": 55536,
+      "entidad": "ATLANTIC CAPITAL S.A"
+    },
+    {
+      "codigo": 55502,
+      "entidad": "ATYLIUM FINANCE GROUP SA"
+    },
+    {
+      "codigo": 55466,
+      "entidad": "AXXIA LENDING S.A."
+    },
+    {
+      "codigo": 55317,
+      "entidad": "BARSATEX S.A."
+    },
+    {
+      "codigo": 55100,
+      "entidad": "BAZAR AVENIDA S.A."
+    },
+    {
+      "codigo": 55069,
+      "entidad": "Bazar El Entrerriano S.A."
+    },
+    {
+      "codigo": 55397,
+      "entidad": "BELMONT CAPITAL S.A."
+    },
+    {
+      "codigo": 55222,
+      "entidad": "BFA Inversiones y Finanzas S.A."
+    },
+    {
+      "codigo": 55454,
+      "entidad": "BIA SRL"
+    },
+    {
+      "codigo": 55445,
+      "entidad": "BLM DESARROLLOS SA"
+    },
+    {
+      "codigo": 55415,
+      "entidad": "BLM SERVICIOS SA"
+    },
+    {
+      "codigo": 55541,
+      "entidad": "Blue Capital S.R.L"
+    },
+    {
+      "codigo": 55469,
+      "entidad": "BOCAS DEL TORO S.A."
+    },
+    {
+      "codigo": 55251,
+      "entidad": "BR CAPITAL S.A."
+    },
+    {
+      "codigo": 55300,
+      "entidad": "Buenos Aires Creditos SA"
+    },
+    {
+      "codigo": 70808,
+      "entidad": "Caja Municipal de Préstamos Sociedad de Economía Mixta"
+    },
+    {
+      "codigo": 55470,
+      "entidad": "CAMELUS S.A."
+    },
+    {
+      "codigo": 55009,
+      "entidad": "Carsa S.A."
+    },
+    {
+      "codigo": 55514,
+      "entidad": "CARTASUR CARDS S.A.U"
+    },
+    {
+      "codigo": 55505,
+      "entidad": "Cash Market SA"
+    },
+    {
+      "codigo": 55496,
+      "entidad": "Cash Online S.A."
+    },
+    {
+      "codigo": 72308,
+      "entidad": "CASTILLO S.A.C.I.F.I.A."
+    },
+    {
+      "codigo": 55177,
+      "entidad": "Catalinas Cooperativa de Crédito, Consumo y Vivienda Ltda."
+    },
+    {
+      "codigo": 55105,
+      "entidad": "Ceibo Créditos S.A."
+    },
+    {
+      "codigo": 70147,
+      "entidad": "CENCOSUD S A"
+    },
+    {
+      "codigo": 71402,
+      "entidad": "CENTRO CARD S.A."
+    },
+    {
+      "codigo": 55011,
+      "entidad": "Cetrogar S.A."
+    },
+    {
+      "codigo": 55012,
+      "entidad": "CFN SRL"
+    },
+    {
+      "codigo": 55233,
+      "entidad": "CGM Leasing Argentina S.A."
+    },
+    {
+      "codigo": 55478,
+      "entidad": "Chromafin S.A"
+    },
+    {
+      "codigo": 55013,
+      "entidad": "Cierto Argentina S.A."
+    },
+    {
+      "codigo": 55395,
+      "entidad": "CIGANDA & MASARIE S.R.L."
+    },
+    {
+      "codigo": 55519,
+      "entidad": "CIRCULO CLARO S.A."
+    },
+    {
+      "codigo": 55111,
+      "entidad": "Clank S.A."
+    },
+    {
+      "codigo": 55377,
+      "entidad": "Clave Creditos S.A."
+    },
+    {
+      "codigo": 72643,
+      "entidad": "Club Atletico Social Corralense A.M."
+    },
+    {
+      "codigo": 55390,
+      "entidad": "COAFIN SA"
+    },
+    {
+      "codigo": 55441,
+      "entidad": "COARD S.A."
+    },
+    {
+      "codigo": 55287,
+      "entidad": "COBRO FACIL SRL"
+    },
+    {
+      "codigo": 70434,
+      "entidad": "Coincidir S.A."
+    },
+    {
+      "codigo": 55148,
+      "entidad": "Collins S.A."
+    },
+    {
+      "codigo": 55523,
+      "entidad": "COMERCIAL FERSA SRL"
+    },
+    {
+      "codigo": 55376,
+      "entidad": "COMERPYSRL"
+    },
+    {
+      "codigo": 55189,
+      "entidad": "Compañía General de Finanzas S.A."
+    },
+    {
+      "codigo": 55014,
+      "entidad": "Compumundo S.A."
+    },
+    {
+      "codigo": 55139,
+      "entidad": "Concretar Coop. de Crédito, Consumo y Vivienda Ltda"
+    },
+    {
+      "codigo": 55373,
+      "entidad": "Confiar del Sur EE S.A."
+    },
+    {
+      "codigo": 55364,
+      "entidad": "CONFICRED SA"
+    },
+    {
+      "codigo": 55186,
+      "entidad": "Confinance S.A."
+    },
+    {
+      "codigo": 55280,
+      "entidad": "CONSTRUCRED S.A."
+    },
+    {
+      "codigo": 55098,
+      "entidad": "CONSUMO S.A."
+    },
+    {
+      "codigo": 70229,
+      "entidad": "CONTAR S.A."
+    },
+    {
+      "codigo": 55375,
+      "entidad": "COOP. DE CRED. CONS. Y VIV. MASELE LTDA"
+    },
+    {
+      "codigo": 55123,
+      "entidad": "Cooperativa 2001 de Vivienda, Crédito y Consumo Ltda."
+    },
+    {
+      "codigo": 55196,
+      "entidad": "Cooperativa Concred de crédito y vivienda Ltda."
+    },
+    {
+      "codigo": 55453,
+      "entidad": "Cooperativa de Credito Consumo y Vivienda Baymor Ltda"
+    },
+    {
+      "codigo": 55178,
+      "entidad": "Cooperativa de Crédito y Vivienda Unicred Ltda."
+    },
+    {
+      "codigo": 55017,
+      "entidad": "Cooperativa de Crédito, Consumo y Servicios Sociales La Plata Ltda."
+    },
+    {
+      "codigo": 55108,
+      "entidad": "Cooperativa de Crédito, Consumo y Vivienda Corona Ltda."
+    },
+    {
+      "codigo": 55185,
+      "entidad": "Cooperativa de Crédito, Consumo y Vvienda Fincredit Ltda"
+    },
+    {
+      "codigo": 55137,
+      "entidad": "Cooperativa de Crédito, Consumo, Vivienda y Servicios Sociales Videgar Ltda"
+    },
+    {
+      "codigo": 72631,
+      "entidad": "COOPERATIVA DE PROVISION DE BIENES Y SERVICIOS ALLEN LTDA"
+    },
+    {
+      "codigo": 55018,
+      "entidad": "Cooperativa de Provisión de Obras y Servicios Publicos y de Créditos Cuenca del Salado Ltda."
+    },
+    {
+      "codigo": 55170,
+      "entidad": "Cooperativa de Viv., Cred. y Con. Amigal Ltda."
+    },
+    {
+      "codigo": 55198,
+      "entidad": "Cooperativa de Vivienda Crédito y Consumo Concepción Limitada"
+    },
+    {
+      "codigo": 55089,
+      "entidad": "COOPERATIVA DE VIVIENDA CREDITO Y CONSUMO CREDIAYUDA LTDA"
+    },
+    {
+      "codigo": 55219,
+      "entidad": "Cooperativa de Vivienda Crédito y Consumo La Integradora Limitada"
+    },
+    {
+      "codigo": 55352,
+      "entidad": "Cooperativa de vivienda crédito y consumo San José Ltda"
+    },
+    {
+      "codigo": 55072,
+      "entidad": "Cooperativa de vivienda, crédito y consumo Bicentenaria Ltda."
+    },
+    {
+      "codigo": 55188,
+      "entidad": "Cooperativa de Vivienda, Crédito y Consumo del Litoral Ltda"
+    },
+    {
+      "codigo": 55200,
+      "entidad": "Cooperativa de Vivienda, Crédito y Consumo para el desarrollo limitado (CODESA)"
+    },
+    {
+      "codigo": 55118,
+      "entidad": "Cooperativa de Vivienda, Crédito y Consumo VIXA LTDA"
+    },
+    {
+      "codigo": 55125,
+      "entidad": "Cooperativa de Vivienda, Crédito, Consumo y Servicios Sociales Candelaria Ltda"
+    },
+    {
+      "codigo": 55175,
+      "entidad": "Cooperativa Interamericana de Credito, Vivienda y Consumo Limitada"
+    },
+    {
+      "codigo": 55015,
+      "entidad": "Coppel S.A."
+    },
+    {
+      "codigo": 55538,
+      "entidad": "CORDOBA VALORES S.A."
+    },
+    {
+      "codigo": 55312,
+      "entidad": "CORPORACION FINANCIERA DIGITAL S.A."
+    },
+    {
+      "codigo": 55462,
+      "entidad": "CORVALAN 1160 SA"
+    },
+    {
+      "codigo": 55265,
+      "entidad": "CRE-DIN S. A."
+    },
+    {
+      "codigo": 55360,
+      "entidad": "Credi-Full S.A."
+    },
+    {
+      "codigo": 70212,
+      "entidad": "CREDI-PAZ S.A."
+    },
+    {
+      "codigo": 55091,
+      "entidad": "CREDIAR S.A."
+    },
+    {
+      "codigo": 55357,
+      "entidad": "CREDIBEL S.A."
+    },
+    {
+      "codigo": 55024,
+      "entidad": "CREDICUOTAS CONSUMO S.A."
+    },
+    {
+      "codigo": 55023,
+      "entidad": "Credifácil S.A.F. y M."
+    },
+    {
+      "codigo": 72133,
+      "entidad": "CREDIFIAR S.A."
+    },
+    {
+      "codigo": 55381,
+      "entidad": "CREDIGOL S.A."
+    },
+    {
+      "codigo": 55109,
+      "entidad": "Credikot COOPERATIVA DE VIVIENDA, CRÉDITO Y CONSUMO LTDA"
+    },
+    {
+      "codigo": 55370,
+      "entidad": "CREDIL S.R.L."
+    },
+    {
+      "codigo": 55330,
+      "entidad": "CREDILOW S.A."
+    },
+    {
+      "codigo": 72303,
+      "entidad": "CREDIMAS S.A."
+    },
+    {
+      "codigo": 55214,
+      "entidad": "Credinegocios Moscasil S.A."
+    },
+    {
+      "codigo": 70269,
+      "entidad": "Credinos Cooperativa de Vivienda, Crédito, Consumo, Servicios Asistenciales y de Turismo Ltda."
+    },
+    {
+      "codigo": 55444,
+      "entidad": "CREDISE S.A."
+    },
+    {
+      "codigo": 55128,
+      "entidad": "Crediser Argentina S.A."
+    },
+    {
+      "codigo": 55182,
+      "entidad": "Crediserv S.A."
+    },
+    {
+      "codigo": 72126,
+      "entidad": "CREDISOL S.A."
+    },
+    {
+      "codigo": 55201,
+      "entidad": "Credit & Investment SRL"
+    },
+    {
+      "codigo": 55295,
+      "entidad": "CREDITAM LIMITADA S.A."
+    },
+    {
+      "codigo": 55411,
+      "entidad": "CREDITAN COOPERATIVA DE VIVIENDA CREDITO Y CONSUMO LTDA"
+    },
+    {
+      "codigo": 55294,
+      "entidad": "CREDITECH SA"
+    },
+    {
+      "codigo": 55266,
+      "entidad": "CRÉDITO DEL VALLE S.A."
+    },
+    {
+      "codigo": 55054,
+      "entidad": "Crédito Directo S.A."
+    },
+    {
+      "codigo": 55254,
+      "entidad": "CREDITO INMOBILIARIO S.R.L."
+    },
+    {
+      "codigo": 71204,
+      "entidad": "Crédito Móvil S.A."
+    },
+    {
+      "codigo": 55308,
+      "entidad": "CRÉDITOS AL RÍO S.A."
+    },
+    {
+      "codigo": 55272,
+      "entidad": "CRÉDITOS ESCOBAR S.A"
+    },
+    {
+      "codigo": 55388,
+      "entidad": "CREDLAP S.A."
+    },
+    {
+      "codigo": 55095,
+      "entidad": "CRENAC S.A."
+    },
+    {
+      "codigo": 55301,
+      "entidad": "CRESCENS S.A.U."
+    },
+    {
+      "codigo": 55079,
+      "entidad": "Cronocred S.A."
+    },
+    {
+      "codigo": 55345,
+      "entidad": "CSPB INVERSIONES SA"
+    },
+    {
+      "codigo": 71302,
+      "entidad": "CUMAR SA"
+    },
+    {
+      "codigo": 55299,
+      "entidad": "CUOTA CENTRAL ONLINE S.R.L."
+    },
+    {
+      "codigo": 55245,
+      "entidad": "CUOTAFACIL SA"
+    },
+    {
+      "codigo": 55025,
+      "entidad": "Cuotitas S.A."
+    },
+    {
+      "codigo": 55366,
+      "entidad": "CYAP NOW S.A."
+    },
+    {
+      "codigo": 55506,
+      "entidad": "CYFSA S.A."
+    },
+    {
+      "codigo": 55419,
+      "entidad": "Daneio SA"
+    },
+    {
+      "codigo": 55092,
+      "entidad": "Dante Tanino Hogar S.A."
+    },
+    {
+      "codigo": 55080,
+      "entidad": "DAP Cooperativa de Crédito y Consumo Ltda."
+    },
+    {
+      "codigo": 55465,
+      "entidad": "Dar Prestamos S.A."
+    },
+    {
+      "codigo": 71801,
+      "entidad": "DATA 2000 S.A."
+    },
+    {
+      "codigo": 55026,
+      "entidad": "Decréditos S.A."
+    },
+    {
+      "codigo": 55210,
+      "entidad": "DEL PAIS COOPERATIVA DE CREDITO, CONSUMO Y VIVIENDA LIMITADA"
+    },
+    {
+      "codigo": 55412,
+      "entidad": "Delivery Hero Financial Services SA"
+    },
+    {
+      "codigo": 55202,
+      "entidad": "Depsa Valores S.A."
+    },
+    {
+      "codigo": 55243,
+      "entidad": "Desarrollo en Trading y Agronegocios S.A."
+    },
+    {
+      "codigo": 55361,
+      "entidad": "DESARROLLOS AYTER S.A."
+    },
+    {
+      "codigo": 55204,
+      "entidad": "Development Corp S.A."
+    },
+    {
+      "codigo": 55359,
+      "entidad": "DHF SA"
+    },
+    {
+      "codigo": 55154,
+      "entidad": "Diagnóstico y Servicios S.R.L."
+    },
+    {
+      "codigo": 55501,
+      "entidad": "DIE ZUKUNFT SA"
+    },
+    {
+      "codigo": 55090,
+      "entidad": "DILCAR S.A."
+    },
+    {
+      "codigo": 55255,
+      "entidad": "DINEFA S.R.L."
+    },
+    {
+      "codigo": 55318,
+      "entidad": "DLL LEASING ARGENTINA S.A."
+    },
+    {
+      "codigo": 55452,
+      "entidad": "DOCTA FIDUCIARIA S.A.S"
+    },
+    {
+      "codigo": 55236,
+      "entidad": "Dourat SRL"
+    },
+    {
+      "codigo": 55228,
+      "entidad": "Drab S.A."
+    },
+    {
+      "codigo": 55120,
+      "entidad": "Ebucar S.A."
+    },
+    {
+      "codigo": 55508,
+      "entidad": "ECOCASH EJECUTIVA SA"
+    },
+    {
+      "codigo": 55522,
+      "entidad": "EDILCRED S.A."
+    },
+    {
+      "codigo": 55374,
+      "entidad": "EJS S.A."
+    },
+    {
+      "codigo": 55333,
+      "entidad": "El Nexo S.A."
+    },
+    {
+      "codigo": 55027,
+      "entidad": "ELECTRONICA MEGATONE SRL"
+    },
+    {
+      "codigo": 55142,
+      "entidad": "Emprendimiento La Luisina SRL"
+    },
+    {
+      "codigo": 71202,
+      "entidad": "EMPRESUR S.A."
+    },
+    {
+      "codigo": 55298,
+      "entidad": "ESPACIO DIGITAL S.A"
+    },
+    {
+      "codigo": 70256,
+      "entidad": "EUROCRED S.A."
+    },
+    {
+      "codigo": 55225,
+      "entidad": "EXI S.A."
+    },
+    {
+      "codigo": 55403,
+      "entidad": "FACILCRED S.A."
+    },
+    {
+      "codigo": 70248,
+      "entidad": "FAVACARD S.A"
+    },
+    {
+      "codigo": 55028,
+      "entidad": "Favanet S.A."
+    },
+    {
+      "codigo": 55537,
+      "entidad": "FELADAK S.A."
+    },
+    {
+      "codigo": 55332,
+      "entidad": "FENIXCRED S.A."
+    },
+    {
+      "codigo": 55368,
+      "entidad": "FERO BAHIA S.A."
+    },
+    {
+      "codigo": 70239,
+      "entidad": "FERTIL FINANZAS S.A."
+    },
+    {
+      "codigo": 55163,
+      "entidad": "FF Capital Group S.A."
+    },
+    {
+      "codigo": 55449,
+      "entidad": "FIDEICOMISO PRIVADO DE ADMINISTRACION CENTAURUS"
+    },
+    {
+      "codigo": 55474,
+      "entidad": "FIDEICOMISOS MANDATOS E INVERSIONES SA"
+    },
+    {
+      "codigo": 55515,
+      "entidad": "Fidelity SRL"
+    },
+    {
+      "codigo": 55479,
+      "entidad": "FIDUCIA ARGENTINA S.A.S."
+    },
+    {
+      "codigo": 55215,
+      "entidad": "FINAMERICA SA"
+    },
+    {
+      "codigo": 55303,
+      "entidad": "FINANCE GROUP SRL"
+    },
+    {
+      "codigo": 55096,
+      "entidad": "FINANCIACIONES CUYO S.A."
+    },
+    {
+      "codigo": 55297,
+      "entidad": "FINANCITY S.A."
+    },
+    {
+      "codigo": 55093,
+      "entidad": "FINANCOMP S.A."
+    },
+    {
+      "codigo": 55263,
+      "entidad": "FINANCOMPRA S.A."
+    },
+    {
+      "codigo": 55315,
+      "entidad": "FINANCRED SA"
+    },
+    {
+      "codigo": 55510,
+      "entidad": "FINANLEASE S.A"
+    },
+    {
+      "codigo": 55340,
+      "entidad": "FINANPRO S.R.L."
+    },
+    {
+      "codigo": 55507,
+      "entidad": "FINANZAS DIGITALES SAS"
+    },
+    {
+      "codigo": 55172,
+      "entidad": "FINARES S.A."
+    },
+    {
+      "codigo": 55409,
+      "entidad": "Finet SA"
+    },
+    {
+      "codigo": 55497,
+      "entidad": "FINLATINA SA"
+    },
+    {
+      "codigo": 55224,
+      "entidad": "FINMAT SRL"
+    },
+    {
+      "codigo": 55433,
+      "entidad": "Finpact SAS"
+    },
+    {
+      "codigo": 55216,
+      "entidad": "Finsol Microcreditos S.A."
+    },
+    {
+      "codigo": 72607,
+      "entidad": "FIRENZE COOPERATIVA DE CRÉDITO, CONSUMO, VIVIENDA, TURISMO Y SERVICIOS ASISTENCIALES LIMITADA"
+    },
+    {
+      "codigo": 55539,
+      "entidad": "FRANKFURT S.A."
+    },
+    {
+      "codigo": 55351,
+      "entidad": "Fraudkeeper SAS"
+    },
+    {
+      "codigo": 55030,
+      "entidad": "Fravega S.A.C.I. e I."
+    },
+    {
+      "codigo": 55355,
+      "entidad": "FULLCREDIT SA"
+    },
+    {
+      "codigo": 55192,
+      "entidad": "G Y F Factoring S.A."
+    },
+    {
+      "codigo": 55485,
+      "entidad": "G&T GESTIONES COMERCIALES S.A."
+    },
+    {
+      "codigo": 55356,
+      "entidad": "G10 EMPRENDIMIENTOS SA"
+    },
+    {
+      "codigo": 55031,
+      "entidad": "Garbarino S.A.I.C. e I."
+    },
+    {
+      "codigo": 55430,
+      "entidad": "GARNET INVEST S.A."
+    },
+    {
+      "codigo": 55032,
+      "entidad": "Gema Cooperativa de Crédito, Consumo y Vivienda Ltda."
+    },
+    {
+      "codigo": 55094,
+      "entidad": "Genesys S.A."
+    },
+    {
+      "codigo": 55190,
+      "entidad": "Gestisur Cooperativa de crédito y vivienda Ltda"
+    },
+    {
+      "codigo": 55288,
+      "entidad": "GLOBAL CAPITAL MANAGEMENT SA"
+    },
+    {
+      "codigo": 55145,
+      "entidad": "Global Finanzas S.A."
+    },
+    {
+      "codigo": 55383,
+      "entidad": "GOLD SMART S.A."
+    },
+    {
+      "codigo": 55060,
+      "entidad": "Gran Cooperativa de Crédito, Vivienda, Consumo y Servicios Sociales Limitada"
+    },
+    {
+      "codigo": 55521,
+      "entidad": "GRAY MATTER SRL"
+    },
+    {
+      "codigo": 55076,
+      "entidad": "Grupo Prestafácil S.A."
+    },
+    {
+      "codigo": 55324,
+      "entidad": "GRUPO TAHONAS S.R.L"
+    },
+    {
+      "codigo": 55033,
+      "entidad": "Grupo Unión S.A."
+    },
+    {
+      "codigo": 55473,
+      "entidad": "GrupoCDG SA"
+    },
+    {
+      "codigo": 55208,
+      "entidad": "GS Negocios S.A."
+    },
+    {
+      "codigo": 55068,
+      "entidad": "Hendel Hogar S.A."
+    },
+    {
+      "codigo": 55034,
+      "entidad": "Hogar Total S.A."
+    },
+    {
+      "codigo": 55258,
+      "entidad": "HOMYT S.A"
+    },
+    {
+      "codigo": 55075,
+      "entidad": "IDUN INVERSIONES S.A."
+    },
+    {
+      "codigo": 55484,
+      "entidad": "Inclusión Financiera Integral SRL"
+    },
+    {
+      "codigo": 55149,
+      "entidad": "INDO S.A."
+    },
+    {
+      "codigo": 55273,
+      "entidad": "INSIGHT GROUP SA"
+    },
+    {
+      "codigo": 55211,
+      "entidad": "Integración Solidaria de Ayuda Recíproca"
+    },
+    {
+      "codigo": 55414,
+      "entidad": "INTERCAPITAL FACTORING S.A."
+    },
+    {
+      "codigo": 55343,
+      "entidad": "INTERREDES COMERCIAL S.A.S."
+    },
+    {
+      "codigo": 55197,
+      "entidad": "Invercoop Cooperativa de Crédito, Consumo y Vivienda Limitada"
+    },
+    {
+      "codigo": 55275,
+      "entidad": "INVERSORA CREDITAL S.A."
+    },
+    {
+      "codigo": 55367,
+      "entidad": "INVERSORA DEL NORTE S.A."
+    },
+    {
+      "codigo": 70210,
+      "entidad": "ITALCRED S.A."
+    },
+    {
+      "codigo": 55513,
+      "entidad": "IXPAY SA"
+    },
+    {
+      "codigo": 55344,
+      "entidad": "JALIN S.A."
+    },
+    {
+      "codigo": 72624,
+      "entidad": "JASIDIM S.A."
+    },
+    {
+      "codigo": 55499,
+      "entidad": "JBOUCHARD SAS"
+    },
+    {
+      "codigo": 55241,
+      "entidad": "Joamar S.A."
+    },
+    {
+      "codigo": 55530,
+      "entidad": "Judon capital s.a"
+    },
+    {
+      "codigo": 55316,
+      "entidad": "KALIMA S.A."
+    },
+    {
+      "codigo": 55442,
+      "entidad": "LA LOMITA CAPITAL S.A."
+    },
+    {
+      "codigo": 55503,
+      "entidad": "LA PLATA FIUME D ORO S. A."
+    },
+    {
+      "codigo": 55097,
+      "entidad": "La Vitalicia Sociedad Mutual"
+    },
+    {
+      "codigo": 55117,
+      "entidad": "Lancers S.A."
+    },
+    {
+      "codigo": 55498,
+      "entidad": "LANTI SA"
+    },
+    {
+      "codigo": 55209,
+      "entidad": "Las Tierras S.A."
+    },
+    {
+      "codigo": 55468,
+      "entidad": "LATIN AMERICAN TRUST S.A."
+    },
+    {
+      "codigo": 55347,
+      "entidad": "Latin Sur Cooperativa de Credito, Consumo y Vivienda Ltda."
+    },
+    {
+      "codigo": 55246,
+      "entidad": "LIBERMAR SOCIEDAN ANONIMA"
+    },
+    {
+      "codigo": 55195,
+      "entidad": "Libertador Factoring S.A."
+    },
+    {
+      "codigo": 55146,
+      "entidad": "LIPACO MERCANTIL S.A."
+    },
+    {
+      "codigo": 55328,
+      "entidad": "LOGINCREDIT S.A."
+    },
+    {
+      "codigo": 55446,
+      "entidad": "LOMAS COOPERATIVA DE CREDITO CONSUMO Y VIVIENDA"
+    },
+    {
+      "codigo": 55035,
+      "entidad": "Lombardi Abel S.A."
+    },
+    {
+      "codigo": 55483,
+      "entidad": "Longcred S.A."
+    },
+    {
+      "codigo": 55432,
+      "entidad": "LUCSE INVERSIONES S.A."
+    },
+    {
+      "codigo": 55516,
+      "entidad": "M&B COMPANY S. A. S."
+    },
+    {
+      "codigo": 55310,
+      "entidad": "MACRO SOLUTIONS SA"
+    },
+    {
+      "codigo": 55339,
+      "entidad": "MAEBA S.R.L."
+    },
+    {
+      "codigo": 55037,
+      "entidad": "Maffra S.A."
+    },
+    {
+      "codigo": 55193,
+      "entidad": "Maficom Factoring S.A."
+    },
+    {
+      "codigo": 55399,
+      "entidad": "MAMLUSENA S.A."
+    },
+    {
+      "codigo": 55420,
+      "entidad": "MARIAS CAPITAL SA"
+    },
+    {
+      "codigo": 55540,
+      "entidad": "MASORI S. A."
+    },
+    {
+      "codigo": 55134,
+      "entidad": "MAXIHOGAR SRL"
+    },
+    {
+      "codigo": 55396,
+      "entidad": "MERIDIANO NORTE S.A."
+    },
+    {
+      "codigo": 55477,
+      "entidad": "MERITE S.A."
+    },
+    {
+      "codigo": 55306,
+      "entidad": "METROFINANZAS S.R.L."
+    },
+    {
+      "codigo": 55242,
+      "entidad": "MG GROUP SA"
+    },
+    {
+      "codigo": 55313,
+      "entidad": "MICODEMO S.A."
+    },
+    {
+      "codigo": 55400,
+      "entidad": "MICRO SISTEMAS S.A.U."
+    },
+    {
+      "codigo": 55494,
+      "entidad": "Mifloder SAS"
+    },
+    {
+      "codigo": 55457,
+      "entidad": "MIGXION S.A."
+    },
+    {
+      "codigo": 55463,
+      "entidad": "MILLASA S.A."
+    },
+    {
+      "codigo": 55207,
+      "entidad": "Mills Capital S.A."
+    },
+    {
+      "codigo": 55282,
+      "entidad": "MINS LFE SAS"
+    },
+    {
+      "codigo": 55085,
+      "entidad": "Moni Online S.A."
+    },
+    {
+      "codigo": 55425,
+      "entidad": "MOOVITECH S.A."
+    },
+    {
+      "codigo": 55421,
+      "entidad": "Movimiento MKT S.R.L"
+    },
+    {
+      "codigo": 55256,
+      "entidad": "MSA CREDITOS S.A."
+    },
+    {
+      "codigo": 55226,
+      "entidad": "MSM Leasing S.A."
+    },
+    {
+      "codigo": 55213,
+      "entidad": "Multiplycard S.A."
+    },
+    {
+      "codigo": 55230,
+      "entidad": "Multiprocesos S.A."
+    },
+    {
+      "codigo": 55191,
+      "entidad": "Murana S.A."
+    },
+    {
+      "codigo": 55534,
+      "entidad": "Mutual 22 de septiembre"
+    },
+    {
+      "codigo": 55143,
+      "entidad": "Mutual Asistencial y Social"
+    },
+    {
+      "codigo": 72614,
+      "entidad": "MUTUAL DE DOCENTES DE NEUQUEN"
+    },
+    {
+      "codigo": 55464,
+      "entidad": "MUTUAL DE INTEGRANTES DEL PODER JUDICIAL"
+    },
+    {
+      "codigo": 55130,
+      "entidad": "Mutual de Jubilados, Retirados y Pensionados Provinciales"
+    },
+    {
+      "codigo": 55439,
+      "entidad": "MUTUAL DE PORTEÑA ASOCIACION CULTURAL Y DEPORTIVA"
+    },
+    {
+      "codigo": 55244,
+      "entidad": "Mutual del agro, la industria y el comercio de Santa Fe"
+    },
+    {
+      "codigo": 55348,
+      "entidad": "MUTUAL DEL PERSONAL CIVIL DE LA NACION"
+    },
+    {
+      "codigo": 55309,
+      "entidad": "MUTUAL DEL PERSONAL DEL MINISTERIO DE EDUCACION Y JUSTICIA DE LA NACION"
+    },
+    {
+      "codigo": 72113,
+      "entidad": "MUTUAL ENTRE ASOC COOPER MUTUAL PATRONAL"
+    },
+    {
+      "codigo": 55227,
+      "entidad": "Mutual Federada 25 de junio SPR"
+    },
+    {
+      "codigo": 55057,
+      "entidad": "Mutual Integral de Servicios"
+    },
+    {
+      "codigo": 72104,
+      "entidad": "MUTUAL SOCIOS ASOC MEDIC ROSARIO"
+    },
+    {
+      "codigo": 55443,
+      "entidad": "MVT Finanzas S.A."
+    },
+    {
+      "codigo": 55040,
+      "entidad": "N&F Capital Markets S.A."
+    },
+    {
+      "codigo": 55041,
+      "entidad": "Naldo Lombardi S.A."
+    },
+    {
+      "codigo": 55392,
+      "entidad": "NEGOCIOS FINANCIEROS CREDILOMAS S.A."
+    },
+    {
+      "codigo": 55337,
+      "entidad": "NETTER SA"
+    },
+    {
+      "codigo": 71101,
+      "entidad": "NOA CARD S.A."
+    },
+    {
+      "codigo": 55183,
+      "entidad": "Nobel Cooperativa de Crédito, Vivienda y Servicio de Transporte Ltda."
+    },
+    {
+      "codigo": 55346,
+      "entidad": "Number S.A."
+    },
+    {
+      "codigo": 55405,
+      "entidad": "Oneri Bilancio S.A."
+    },
+    {
+      "codigo": 55362,
+      "entidad": "ONOYEN S.R.L."
+    },
+    {
+      "codigo": 55493,
+      "entidad": "OPENCRED SA"
+    },
+    {
+      "codigo": 55073,
+      "entidad": "Oportunidad Microfinanciera Latinoamericana OMLA S.A."
+    },
+    {
+      "codigo": 55336,
+      "entidad": "OSCAR BARBIERI S.A."
+    },
+    {
+      "codigo": 55231,
+      "entidad": "OTC S.R.L"
+    },
+    {
+      "codigo": 72638,
+      "entidad": "Pago Virtual del Sur S.A."
+    },
+    {
+      "codigo": 55435,
+      "entidad": "PARABENS TRUST S.A."
+    },
+    {
+      "codigo": 55491,
+      "entidad": "PATAGONIA VERDE NETWORK SAU"
+    },
+    {
+      "codigo": 72623,
+      "entidad": "PAYAGTK SA"
+    },
+    {
+      "codigo": 55042,
+      "entidad": "Plural Cooperativa de Crédito, Consumo y Vivienda Ltda."
+    },
+    {
+      "codigo": 55532,
+      "entidad": "PLUS COOPERATIVA DE CREDITO CONS Y VIV LTDA."
+    },
+    {
+      "codigo": 55124,
+      "entidad": "Plusrasgo S.A."
+    },
+    {
+      "codigo": 55194,
+      "entidad": "Policredito Coop. Limitada de Crédito y Vivienda."
+    },
+    {
+      "codigo": 55429,
+      "entidad": "POLO VALORES S.A."
+    },
+    {
+      "codigo": 55320,
+      "entidad": "POTSDAM S.A."
+    },
+    {
+      "codigo": 55436,
+      "entidad": "POWERFIN SA"
+    },
+    {
+      "codigo": 55456,
+      "entidad": "PREST SPC SAS"
+    },
+    {
+      "codigo": 55087,
+      "entidad": "Préstamos Bam S.A."
+    },
+    {
+      "codigo": 55155,
+      "entidad": "PRESTAMOS Y CONSUMOS DE ARGENTINA S.A."
+    },
+    {
+      "codigo": 55450,
+      "entidad": "PRESTY SRL"
+    },
+    {
+      "codigo": 55151,
+      "entidad": "PREVER COOPERATIVA DE CRÉDITO Y CONSUMO LTDA"
+    },
+    {
+      "codigo": 55341,
+      "entidad": "PROAVALAR S.R.L"
+    },
+    {
+      "codigo": 55074,
+      "entidad": "Profuturo S.A."
+    },
+    {
+      "codigo": 55043,
+      "entidad": "Provincia Leasing S.A."
+    },
+    {
+      "codigo": 55113,
+      "entidad": "PYME COOPERATIVA DE CREDITO Y VIVIENDA LIMITADA"
+    },
+    {
+      "codigo": 55428,
+      "entidad": "QWERTY SA"
+    },
+    {
+      "codigo": 55061,
+      "entidad": "Radio Sapienza S.A."
+    },
+    {
+      "codigo": 55307,
+      "entidad": "RED DE PRESTAMOS SA"
+    },
+    {
+      "codigo": 55434,
+      "entidad": "Red Salinas Network S.A."
+    },
+    {
+      "codigo": 55314,
+      "entidad": "REGGIO DI CALABRIA S.R.L."
+    },
+    {
+      "codigo": 55044,
+      "entidad": "Ribeiro S.A.C.I.F.A."
+    },
+    {
+      "codigo": 55488,
+      "entidad": "RIO FRANCO SA"
+    },
+    {
+      "codigo": 55133,
+      "entidad": "Rotas S.A."
+    },
+    {
+      "codigo": 55480,
+      "entidad": "RUMKALO S.R.L."
+    },
+    {
+      "codigo": 55283,
+      "entidad": "S&S SOLUTIONS SA"
+    },
+    {
+      "codigo": 70802,
+      "entidad": "S.A. CLUB DEL ESTE"
+    },
+    {
+      "codigo": 55379,
+      "entidad": "S.I.G. S.R.L."
+    },
+    {
+      "codigo": 55518,
+      "entidad": "Saiola S.A."
+    },
+    {
+      "codigo": 55158,
+      "entidad": "San Cristóbal Servicios Financieros S.A."
+    },
+    {
+      "codigo": 70228,
+      "entidad": "SANTA MONICA SA"
+    },
+    {
+      "codigo": 55296,
+      "entidad": "SANTANDER CONSUMER SA"
+    },
+    {
+      "codigo": 55542,
+      "entidad": "SANTO TOME SA"
+    },
+    {
+      "codigo": 55045,
+      "entidad": "SBM Créditos S.A."
+    },
+    {
+      "codigo": 55408,
+      "entidad": "SCANIA CREDIT ARGENTINA S.A.U."
+    },
+    {
+      "codigo": 55046,
+      "entidad": "Schejter y Schejter S.A."
+    },
+    {
+      "codigo": 55423,
+      "entidad": "SCORING X S.A.U."
+    },
+    {
+      "codigo": 55393,
+      "entidad": "SEILOP S.R.L."
+    },
+    {
+      "codigo": 55179,
+      "entidad": "Sequoia S.A."
+    },
+    {
+      "codigo": 55455,
+      "entidad": "SERVICIOS DE FINANZAS & DIVISAS SUREÑOS S.A."
+    },
+    {
+      "codigo": 55269,
+      "entidad": "SERVICIOS OSTENDE SRL"
+    },
+    {
+      "codigo": 55389,
+      "entidad": "SI CAPITAL S.A."
+    },
+    {
+      "codigo": 55048,
+      "entidad": "Sicom S.A."
+    },
+    {
+      "codigo": 72639,
+      "entidad": "SILOHUB ARGENTINA S.A.S."
+    },
+    {
+      "codigo": 70116,
+      "entidad": "SISTEMAS UNIFICADOS DE CREDITO DIRIGIDO S.A"
+    },
+    {
+      "codigo": 55249,
+      "entidad": "SMART CASH S.A."
+    },
+    {
+      "codigo": 55495,
+      "entidad": "SOCIEDAD DE CREDITO SA"
+    },
+    {
+      "codigo": 55424,
+      "entidad": "SOLUCIONES FINANCORP SA"
+    },
+    {
+      "codigo": 55323,
+      "entidad": "SOLUCIONES INTEGRALES S.A."
+    },
+    {
+      "codigo": 55279,
+      "entidad": "SOLVENTA SAS"
+    },
+    {
+      "codigo": 55247,
+      "entidad": "SOLVENTIA SA"
+    },
+    {
+      "codigo": 55458,
+      "entidad": "SOLVERS S.A."
+    },
+    {
+      "codigo": 55305,
+      "entidad": "SORAMUS S.A"
+    },
+    {
+      "codigo": 55321,
+      "entidad": "SOSER SA"
+    },
+    {
+      "codigo": 55164,
+      "entidad": "SPEED COOPERATIVA DE CREDITO CONSUMO VIVIENDA Y SERVICIOS SOCIALES LTDA"
+    },
+    {
+      "codigo": 55533,
+      "entidad": "SSCAPITAL SOCIEDAD ANONIMA"
+    },
+    {
+      "codigo": 55325,
+      "entidad": "STONE BULL FINANCE S.A."
+    },
+    {
+      "codigo": 55150,
+      "entidad": "Sudeste Valores S.A."
+    },
+    {
+      "codigo": 55472,
+      "entidad": "SUMA INVERSIONES S.A."
+    },
+    {
+      "codigo": 55528,
+      "entidad": "Sumas Gestión Financiera S.A."
+    },
+    {
+      "codigo": 55517,
+      "entidad": "SUNDAY SRL"
+    },
+    {
+      "codigo": 72641,
+      "entidad": "SUPRESTAMO SAS"
+    },
+    {
+      "codigo": 55380,
+      "entidad": "SUR FINANZAS GROUP SA"
+    },
+    {
+      "codigo": 55489,
+      "entidad": "SUR FINANZAS PSP S.A."
+    },
+    {
+      "codigo": 55049,
+      "entidad": "Surfinan S.A."
+    },
+    {
+      "codigo": 70427,
+      "entidad": "TARJETA GRUPAR S.A."
+    },
+    {
+      "codigo": 70408,
+      "entidad": "TARJETA NARANJA S.A."
+    },
+    {
+      "codigo": 70301,
+      "entidad": "Tarjeta Pampeana S.A"
+    },
+    {
+      "codigo": 70424,
+      "entidad": "Tarjeta PL S.A."
+    },
+    {
+      "codigo": 72304,
+      "entidad": "TARJETA TITANIO S.A."
+    },
+    {
+      "codigo": 70224,
+      "entidad": "TARJETAS DEL MAR S.A."
+    },
+    {
+      "codigo": 70257,
+      "entidad": "TARTAN S.A."
+    },
+    {
+      "codigo": 55050,
+      "entidad": "TBD Cooperativa de Crédito, Vivienda y Consumo Ltda."
+    },
+    {
+      "codigo": 55159,
+      "entidad": "TCC Cooperativa de Crédito, Consumo y Vivienda Limitada"
+    },
+    {
+      "codigo": 72642,
+      "entidad": "TECH DEMETER SA"
+    },
+    {
+      "codigo": 55404,
+      "entidad": "THE RAINBOW FAMILY S.A."
+    },
+    {
+      "codigo": 55132,
+      "entidad": "TIENDAJUBILO S.A."
+    },
+    {
+      "codigo": 55051,
+      "entidad": "Tinuviel S.A."
+    },
+    {
+      "codigo": 55486,
+      "entidad": "TODOPAY S.R.L."
+    },
+    {
+      "codigo": 55512,
+      "entidad": "TRADING PROFIT S.A."
+    },
+    {
+      "codigo": 55292,
+      "entidad": "TRANSCON S.A.U."
+    },
+    {
+      "codigo": 55302,
+      "entidad": "TRAYECTORIA LEASING S.A.U."
+    },
+    {
+      "codigo": 55176,
+      "entidad": "Trend Capital S.A."
+    },
+    {
+      "codigo": 55174,
+      "entidad": "Tres60 Services S.A."
+    },
+    {
+      "codigo": 55338,
+      "entidad": "TRESSFEN SA"
+    },
+    {
+      "codigo": 55278,
+      "entidad": "TRS AMAPOLA S.A.S."
+    },
+    {
+      "codigo": 55304,
+      "entidad": "TU ADELANTO SA"
+    },
+    {
+      "codigo": 55276,
+      "entidad": "TU PRESTAMO ONLINE SAS"
+    },
+    {
+      "codigo": 55181,
+      "entidad": "TUTELAR SERVICIOS FINANCIEROS S.A."
+    },
+    {
+      "codigo": 55382,
+      "entidad": "UFINAN SA"
+    },
+    {
+      "codigo": 70903,
+      "entidad": "Única compañía de Crédito S.A."
+    },
+    {
+      "codigo": 55156,
+      "entidad": "UNIGESTION SA"
+    },
+    {
+      "codigo": 55063,
+      "entidad": "Uninverc S.A."
+    },
+    {
+      "codigo": 55331,
+      "entidad": "UNION DEL PERSONAL CIVIL DE LA PROVINCIA DEL CHACO"
+    },
+    {
+      "codigo": 55289,
+      "entidad": "UNION PROVINCIAL ASOCIACION MUTUAL"
+    },
+    {
+      "codigo": 55365,
+      "entidad": "UNISA INVERSIONES S.A."
+    },
+    {
+      "codigo": 55467,
+      "entidad": "UQUIA S.R.L"
+    },
+    {
+      "codigo": 55235,
+      "entidad": "VALERZA S.A."
+    },
+    {
+      "codigo": 72306,
+      "entidad": "VALLE FERTIL S.A."
+    },
+    {
+      "codigo": 55334,
+      "entidad": "VALUARTE SRL"
+    },
+    {
+      "codigo": 55136,
+      "entidad": "Vento Capital S.A."
+    },
+    {
+      "codigo": 55353,
+      "entidad": "VIKA 2010 S.A."
+    },
+    {
+      "codigo": 55217,
+      "entidad": "VILCO INVERSIONES S.A."
+    },
+    {
+      "codigo": 71803,
+      "entidad": "VISION S.A."
+    },
+    {
+      "codigo": 55543,
+      "entidad": "VISIR SA"
+    },
+    {
+      "codigo": 55402,
+      "entidad": "VITSAN S.A."
+    },
+    {
+      "codigo": 55153,
+      "entidad": "VW JUNIN JAC S.A."
+    },
+    {
+      "codigo": 55166,
+      "entidad": "Waynicoin S.A."
+    },
+    {
+      "codigo": 55535,
+      "entidad": "WCA CAPITAL S. A. S."
+    },
+    {
+      "codigo": 72621,
+      "entidad": "WENANCE SA"
+    },
+    {
+      "codigo": 55386,
+      "entidad": "WIBOND SAS"
+    },
+    {
+      "codigo": 55184,
+      "entidad": "Wilmar Cooperativa de Vivienda, Crédito y Consumo Ltda"
+    },
+    {
+      "codigo": 55544,
+      "entidad": "YOLO CASH S.A."
+    },
+    {
+      "codigo": 55401,
+      "entidad": "ZHARO SA"
+    }
+  ]
+}

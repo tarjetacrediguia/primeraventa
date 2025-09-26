@@ -133,6 +133,11 @@ export interface SolicitudInicialRepositoryPort {
      */
     updateSolicitudInicialAprobaciónRechazo(solicitudInicial: SolicitudInicial,cliente:Cliente): Promise<SolicitudInicial>
 
-
+    /**
+   * Obtiene solicitudes iniciales por CUIL del cliente
+   * @param cuil - CUIL del cliente
+   * @returns Promise<SolicitudInicial[]> - Array de solicitudes iniciales del cliente
+   */
+    getSolicitudesInicialesByCuil(cuil: string): Promise<SolicitudInicial[]>;
     
 }

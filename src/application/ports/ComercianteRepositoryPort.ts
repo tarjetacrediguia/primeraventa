@@ -78,4 +78,12 @@ export interface ComercianteRepositoryPort {
      * @returns Promise<Comerciante | null> - Comerciante encontrado o null si no existe
      */
     findByCuil(cuil: string): Promise<Comerciante | null>;
+
+    /**
+     * Obtiene un comerciante por su ID
+     * @param id - ID del comerciante
+     * @returns Promise<Comerciante> - El comerciante encontrado
+     * @throws Error si el comerciante no existe
+     */
+    findById(id: number | undefined): Promise<Comerciante>;
 }

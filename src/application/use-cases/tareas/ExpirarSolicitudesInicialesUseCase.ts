@@ -13,8 +13,6 @@
  * - Registrar eventos en el historial del sistema
  * - Gestionar errores y notificaciones del proceso
  * 
- * @author Sistema de Gestión
- * @version 1.0.0
  */
 
 import { SolicitudInicialRepositoryPort } from "../../ports/SolicitudInicialRepositoryPort";
@@ -170,6 +168,7 @@ export class ExpirarSolicitudesInicialesUseCase {
                     solicitudesExpiradas: solicitudes.map(s => s.getId())
                 }
             });
+            console.log(`ExpirarSolicitudesInicialesUseCase: ${solicitudesExpiradas} solicitudes expiradas.`);
             
         } catch (error) {
             console.error('Error en ExpirarSolicitudesInicialesUseCase:', error);

@@ -2,6 +2,7 @@ import {
   NosisResponse,
   NosisVariable,
 } from "../../../domain/entities/NosisData";
+import { EntidadesService } from "../../../infrastructure/entidadesBancarias/EntidadesService";
 
 /**
  * MÓDULO: Caso de Uso - Verificación de Datos Nosis
@@ -95,6 +96,8 @@ export type VerificationResult = {
   motivo?: string;
   reglasFallidas?: string[];
   personalData?: PersonalData;
+  entidadesSituacion2?: number[];
+  entidadesDeuda?: number[];
 };
 /**
  * Configuración de reglas de validación para variables de Nosis
@@ -121,11 +124,13 @@ export class VerifyDataNosisUseCase {
   private rules: RuleConfig[];
   // Mínimo requerido de aportes para aprobación
   private readonly MINIMO_APORTES = 4;
+// Servicio para obtener nombres de entidades bancarias
+  private entidadesService: EntidadesService;
   /**
    * Constructor del caso de uso de verificación Nosis
    * @param rules - Reglas personalizadas de validación (opcional)
    */
-  constructor(rules?: RuleConfig[]) {
+  constructor(rules?: RuleConfig[], entidadesService?: EntidadesService) {
     // Reglas por defecto si no se proporcionan
     this.rules = rules || [
       {
@@ -135,6 +140,7 @@ export class VerifyDataNosisUseCase {
         mensaje: "Cliente es jubilado",
       },
     ];
+    this.entidadesService = entidadesService || new EntidadesService();
   }
   /**
    * Evalúa una regla de validación contra una variable de Nosis
@@ -312,19 +318,13 @@ export class VerifyDataNosisUseCase {
     // ===== ENTIDADES EN SITUACIÓN 2 =====
     const resultadoSituacion2 = this.verificarEntidadesSituacion2(variables);
     if (resultadoSituacion2.estado === "rechazado") {
-      reglasFallidas.push(
-        resultadoSituacion2.mensaje ||
-          "Tiene 2 o más entidades en situación 2 en los últimos 2 meses"
-      );
+      reglasFallidas.push(resultadoSituacion2.mensaje!);
     }
 
     // Verificación específica para deudas en entidades (situación 3-4-5)
     const tieneDeudaEntidades = this.verificarDeudaEntidades(variables);
     if (tieneDeudaEntidades.estado === "rechazado") {
-      reglasFallidas.push(
-        tieneDeudaEntidades.mensaje ||
-          "Tiene deuda en 3 o más entidades con situación 3, 4 o 5"
-      );
+      reglasFallidas.push(tieneDeudaEntidades.mensaje!);
     }
 
     // Verificación específica para monotributistas
@@ -394,6 +394,8 @@ export class VerifyDataNosisUseCase {
       motivo,
       reglasFallidas: status === "rechazado" ? reglasFallidas : [],
       personalData,
+      entidadesSituacion2: resultadoSituacion2.entidades,
+      entidadesDeuda: tieneDeudaEntidades.entidades
     };
   }
 
@@ -405,6 +407,7 @@ export class VerifyDataNosisUseCase {
   private verificarEntidadesSituacion2(variables: NosisVariable[]): {
     estado: "aprobado" | "pendiente" | "rechazado";
     mensaje?: string;
+    entidades?: number[]
   } {
     const detalleDeudas = variables.find(
       (v) => v.Nombre === "CI_24m_Detalle"
@@ -419,27 +422,37 @@ export class VerifyDataNosisUseCase {
     const dosMesesAtras = new Date();
     dosMesesAtras.setMonth(dosMesesAtras.getMonth() - 2);
 
-    const entidadesSituacion2 = new Set<string>();
-
+    const entidadesSituacion2 = new Set<number>();
+    //TODO corregir el parsing de entidad a número
     for (const registro of registros) {
-      // Filtrar por situación 2 y que sea de los últimos 2 meses
-      const fechaRegistro = this.convertirPeriodoAFecha(registro.periodo);
-      if (registro.situacion === 2 && fechaRegistro >= dosMesesAtras) {
-        entidadesSituacion2.add(registro.entidad);
+    // Filtrar por situación 2 y que sea de los últimos 2 meses
+    const fechaRegistro = this.convertirPeriodoAFecha(registro.periodo);
+    if (registro.situacion === 2 && fechaRegistro >= dosMesesAtras) {
+      // Convertir el código de entidad de string a número
+      const codigoEntidad = parseInt(registro.entidad, 10);
+      if (!isNaN(codigoEntidad)) {
+        entidadesSituacion2.add(codigoEntidad);
+      } else {
+        console.warn('No se pudo convertir código de entidad a número:', registro.entidad);
       }
     }
+  }
 
     const cantidadEntidades = entidadesSituacion2.size;
+    const entidadesArray = Array.from(entidadesSituacion2);
+    const nombresEntidades = this.entidadesService.obtenerNombresEntidades(entidadesArray);
 
     if (cantidadEntidades >= 2) {
       return {
         estado: "rechazado",
-        mensaje: `Tiene ${cantidadEntidades} entidades en situación 2 en los últimos 2 meses`,
+        mensaje: `Tiene ${cantidadEntidades} entidades en situación 2 en los últimos 2 meses: ${nombresEntidades.join(', ')}`,
+        entidades: entidadesArray
       };
     } else if (cantidadEntidades === 1) {
       return {
         estado: "pendiente",
-        mensaje: `Tiene 1 entidad en situación 2 en los últimos 2 meses`,
+        mensaje: `Tiene 1 entidad en situación 2 en los últimos 2 meses: ${nombresEntidades.join(', ')}`,
+        entidades: entidadesArray
       };
     }
 
@@ -467,6 +480,7 @@ export class VerifyDataNosisUseCase {
   private verificarDeudaEntidades(variables: NosisVariable[]): {
     estado: "aprobado" | "pendiente" | "rechazado";
     mensaje?: string;
+    entidades?: number[];
   } {
     const detalleDeudas = variables.find(
       (v) => v.Nombre === "CI_24m_Detalle"
@@ -475,24 +489,35 @@ export class VerifyDataNosisUseCase {
 
     const registros = this.parsearDetalleDeudas(detalleDeudas);
 
-    const entidadesConDeuda = new Set<string>();
+    const entidadesConDeuda = new Set<number>();
 
     for (const registro of registros) {
-      if (registro.situacion >= 3 && registro.situacion <= 5) {
-        entidadesConDeuda.add(registro.entidad);
+    if (registro.situacion >= 3 && registro.situacion <= 5) {
+      // Convertir el código de entidad de string a número
+      const codigoEntidad = parseInt(registro.entidad, 10);
+      if (!isNaN(codigoEntidad)) {
+        entidadesConDeuda.add(codigoEntidad);
+      } else {
+        console.warn('No se pudo convertir código de entidad a número:', registro.entidad);
       }
     }
+  }
 
     const cantidad = entidadesConDeuda.size;
+    const entidadesArray = Array.from(entidadesConDeuda);
+    const nombresEntidades = this.entidadesService.obtenerNombresEntidades(entidadesArray);
+
     if (cantidad >= 3) {
       return {
         estado: "rechazado",
-        mensaje: "Tiene deuda en 3 o más entidades con situación 3, 4 o 5",
+        mensaje: `Tiene deuda en 3 o más entidades con situación 3, 4 o 5: ${nombresEntidades.join(', ')}`,
+        entidades: entidadesArray
       };
     } else if (cantidad >= 1) {
       return {
         estado: "pendiente",
-        mensaje: "Tiene deuda en 1 o 2 entidades con situación 3, 4 o 5",
+        mensaje: `Tiene deuda en ${cantidad} entidades con situación 3, 4 o 5: ${nombresEntidades.join(', ')}`,
+        entidades: entidadesArray
       };
     }
 
@@ -523,16 +548,25 @@ export class VerifyDataNosisUseCase {
     let match;
 
     while ((match = regex.exec(detalleDeudas)) !== null) {
-      const partes = match[1].split("|");
-      if (partes.length === 4) {
+    const partes = match[1].split("|").map(part => part.trim());
+    
+    if (partes.length >= 4) {
+      // El primer campo debería ser el código de entidad (numérico)
+      const codigoEntidad = partes[0];
+      
+      // Verificar que sea un código numérico válido
+      if (codigoEntidad && !isNaN(Number(codigoEntidad))) {
         resultados.push({
-          entidad: partes[0],
-          periodo: parseInt(partes[1]),
-          situacion: parseInt(partes[2]),
-          monto: parseInt(partes[3]),
+          entidad: codigoEntidad, // Guardar como string para luego convertir a número
+          periodo: parseInt(partes[1]) || 0,
+          situacion: parseInt(partes[2]) || 0,
+          monto: parseInt(partes[3]) || 0,
         });
+      } else {
+        console.warn('Código de entidad inválido:', codigoEntidad);
       }
     }
+  }
 
     return resultados;
   }

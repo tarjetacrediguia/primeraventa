@@ -24,6 +24,7 @@ export interface ComercianteParams extends UsuarioParams {
     cuil: string;
     direccionComercio: string;
     permisos?: Permiso[];
+    activo?: any
 }
 
 
@@ -67,6 +68,8 @@ export class Comerciante extends Usuario {
         this.direccionComercio = direccionComercio;
         this.permisos = permisos ?? [];
   }
+
+   
 
   /**
    * Obtiene el nombre del comercio.

@@ -44,12 +44,16 @@ import {
   PersonalData,
   VerifyDataNosisUseCase,
 } from "../Nosis/VerifyDataNosisUseCase";
+import { EntidadesService } from "../../../infrastructure/entidadesBancarias/EntidadesService";
+import { ComercianteRepositoryPort } from "../../ports/ComercianteRepositoryPort";
 
 export type CrearSolicitudInicialResponse = {
   solicitud: SolicitudInicial;
   nosisData?: PersonalData;
   motivoRechazo?: string;
   reglasFallidas?: string[];
+  entidadesSituacion2?: number[];
+  entidadesDeuda?: number[];
 };
 /**
  * Caso de uso para crear una nueva solicitud inicial de crédito.
@@ -80,7 +84,9 @@ export class CrearSolicitudInicialUseCase {
     private readonly historialRepository: HistorialRepositoryPort,
     private readonly analistaRepository: AnalistaRepositoryPort,
     private readonly nosisPort: NosisPort,
-    private readonly nosisAutomatico: boolean
+    private readonly nosisAutomatico: boolean,
+    private readonly entidadesService: EntidadesService,
+    private readonly comercianteRepository: ComercianteRepositoryPort
   ) {}
 
   /**
@@ -119,52 +125,90 @@ export class CrearSolicitudInicialUseCase {
     comercianteId: number
   ): Promise<CrearSolicitudInicialResponse> {
     try {
-      // ===== PASO 1: CREAR O RECUPERAR CLIENTE =====
-      // Buscar cliente existente por CUIL o crear uno nuevo
-      let cliente: Cliente;
-      let clienteTemporal: Cliente;
-      try {
-        cliente = await this.clienteRepository.findByCuil(cuilCliente);
-      } catch (error) {
-        // No se encontró el cliente, se creará uno nuevo
-      } finally {
-        // Crear cliente con datos mínimos si no existe
-        cliente = new Cliente({
-          id:0,
-          nombreCompleto:"Nombre temporal",
-          apellido:"Apellido temporal",
-          dni:dniCliente,
-          cuil:cuilCliente
+
+      // ===== PASO 1: VERIFICAR SOLICITUDES EXISTENTES PRIMERO =====
+    console.log(`Verificando solicitudes existentes para CUIL: ${cuilCliente}, comerciante: ${comercianteId}`);
+    
+    const solicitudesExistentes = await this.verificarSolicitudesExistentes(cuilCliente, comercianteId);
+    
+    if (solicitudesExistentes.tieneSolicitudOtroComercio) {
+      console.log(`❌ Cliente ya tiene solicitud de otro comercio: ${solicitudesExistentes.nombreComercioOriginal}`);
+      
+      await this.notificationService.emitNotification({
+        userId: Number(comercianteId),
+        type: "solicitud_inicial",
+        message: `El cliente con CUIL ${cuilCliente} ya tiene una solicitud inicial creada por otro comercio`,
       });
-        clienteTemporal = await this.clienteRepository.save(cliente);
-      }
 
-      // ===== PASO 2: VALIDAR CRÉDITO ACTIVO =====
-      // Verificar que el cliente no tenga créditos activos
-      const tieneCreditoActivo = await this.tieneCreditoActivo(cuilCliente);
-      if (tieneCreditoActivo) {
-        // Notificar al comerciante que no puede crear solicitud
-        await this.notificationService.emitNotification({
-          userId: Number(comercianteId),
-          type: "solicitud_inicial",
-          message: `El cliente con CUIL ${cuilCliente} ya tiene un crédito activo`,
-        });
+      await this.historialRepository.registrarEvento({
+        usuarioId: comercianteId,
+        accion: HISTORIAL_ACTIONS.REJECT_SOLICITUD_INICIAL,
+        entidadAfectada: "solicitudes_iniciales",
+        entidadId: 0,
+        detalles: {
+          motivo: "Cliente ya tiene solicitud de otro comercio",
+          cuil_cliente: cuilCliente,
+          comerciante_original: solicitudesExistentes.comercianteOriginal,
+          nombre_comercio_original: solicitudesExistentes.nombreComercioOriginal
+        },
+        solicitudInicialId: undefined,
+      });
 
-        // Registrar evento de rechazo
-        await this.historialRepository.registrarEvento({
-          usuarioId: comercianteId,
-          accion: HISTORIAL_ACTIONS.REJECT_SOLICITUD_INICIAL,
-          entidadAfectada: "solicitudes_iniciales",
-          entidadId: 0, // No hay entidad aún
-          detalles: {
-            motivo: "Cliente con crédito activo",
-            dni_cliente: cuilCliente,
-          },
-          solicitudInicialId: undefined, // No hay solicitud aún
-        });
+      throw new Error(`El cliente ya tiene una solicitud inicial en el sistema. Comercio original: ${solicitudesExistentes.nombreComercioOriginal}`);
+    }
 
-        throw new Error("El cliente ya tiene un crédito activo");
-      }
+    console.log(`✅ No hay solicitudes de otros comercios, continuando...`);
+      
+      // ===== PASO 2: CREAR O RECUPERAR CLIENTE =====
+    let cliente: Cliente;
+    let clienteTemporal: Cliente;
+    
+    try {
+      // Intentar buscar cliente existente por CUIL
+      cliente = await this.clienteRepository.findByCuil(cuilCliente);
+      clienteTemporal = cliente;
+      console.log(`✅ Cliente encontrado con CUIL: ${cuilCliente}`);
+    } catch (error) {
+      // No se encontró el cliente, crear uno nuevo
+      console.log(`📝 Creando nuevo cliente con CUIL: ${cuilCliente}`);
+      cliente = new Cliente({
+        id: 0,
+        nombreCompleto: "Nombre temporal",
+        apellido: "Apellido temporal",
+        dni: dniCliente,
+        cuil: cuilCliente
+      });
+      clienteTemporal = await this.clienteRepository.save(cliente);
+    }
+
+    // ===== PASO 3: VALIDAR CRÉDITO ACTIVO =====
+    console.log(`🔍 Validando créditos activos para CUIL: ${cuilCliente}`);
+    const tieneCreditoActivo = await this.tieneCreditoActivo(cuilCliente);
+    if (tieneCreditoActivo) {
+      console.log(`❌ Cliente tiene crédito activo`);
+      await this.notificationService.emitNotification({
+        userId: Number(comercianteId),
+        type: "solicitud_inicial",
+        message: `El cliente con CUIL ${cuilCliente} ya tiene un crédito activo`,
+      });
+
+      await this.historialRepository.registrarEvento({
+        usuarioId: comercianteId,
+        accion: HISTORIAL_ACTIONS.REJECT_SOLICITUD_INICIAL,
+        entidadAfectada: "solicitudes_iniciales",
+        entidadId: 0,
+        detalles: {
+          motivo: "Cliente con crédito activo",
+          cuil_cliente: cuilCliente,
+        },
+        solicitudInicialId: undefined,
+      });
+
+      throw new Error("El cliente ya tiene un crédito activo");
+    }
+
+    console.log(`✅ No hay créditos activos, creando solicitud...`);
+
 
       // ===== PASO 3: CREAR SOLICITUD INICIAL =====
       // Crear solicitud inicial vinculada al cliente
@@ -213,7 +257,7 @@ export class CrearSolicitudInicialUseCase {
         const nosisResponse = await getNosisData.execute(cuilCliente);
         
         // Verificar y validar datos de Nosis
-        const verifyNosis = new VerifyDataNosisUseCase();
+        const verifyNosis = new VerifyDataNosisUseCase(undefined, this.entidadesService);
         const resultadoNosis = await verifyNosis.execute(nosisResponse);
         nosisData = resultadoNosis.personalData;
         
@@ -357,12 +401,17 @@ export class CrearSolicitudInicialUseCase {
             reglasFallidas = resultadoNosis.reglasFallidas;
             solicitudCreada.setEstado("pendiente");
             solicitud.setMotivoRechazo(motivoRechazo ?? "");
+
+            // Agregar comentario con información detallada de entidades
             solicitud.agregarComentario(`Pendiente: ${motivoRechazo}`);
+
             await this.solicitudInicialRepository.updateSolicitudInicial(
               solicitudCreada,
               clienteTemporal
             );
-            solicitud.agregarComentario(`Pendiente: ${resultadoNosis.motivo}`);
+
+            //solicitud.agregarComentario(`Pendiente: ${resultadoNosis.motivo}`);
+
             await this.historialRepository.registrarEvento({
               usuarioId: null,
               accion: HISTORIAL_ACTIONS.PENDING_SOLICITUD_INICIAL,
@@ -372,6 +421,8 @@ export class CrearSolicitudInicialUseCase {
                 sistema: "Nosis",
                 score: resultadoNosis.score,
                 motivo: resultadoNosis.motivo,
+                entidadesSituacion2: resultadoNosis.entidadesSituacion2,
+                entidadesDeuda: resultadoNosis.entidadesDeuda
               },
               solicitudInicialId,
             });
@@ -381,7 +432,19 @@ export class CrearSolicitudInicialUseCase {
             reglasFallidas = resultadoNosis.reglasFallidas;
             solicitudCreada.setEstado("rechazada");
             solicitud.setMotivoRechazo(motivoRechazo ?? "");
-            solicitud.agregarComentario(`Rechazo: ${motivoRechazo}`);
+
+            // Agregar comentario con información detallada de entidades
+            let comentario = `Rechazo: ${motivoRechazo}`;
+            if (resultadoNosis.entidadesSituacion2 && resultadoNosis.entidadesSituacion2.length > 0) {
+              const nombresEntidades = this.entidadesService.obtenerNombresEntidades(resultadoNosis.entidadesSituacion2);
+              comentario += `. Entidades en situación 2: ${nombresEntidades.join(', ')}`;
+            }
+            if (resultadoNosis.entidadesDeuda && resultadoNosis.entidadesDeuda.length > 0) {
+              const nombresEntidades = this.entidadesService.obtenerNombresEntidades(resultadoNosis.entidadesDeuda);
+              comentario += `. Entidades con deuda: ${nombresEntidades.join(', ')}`;
+            }
+            
+            solicitud.agregarComentario(comentario);
             
             // Guardar el motivo de rechazo en la solicitud
             await this.solicitudInicialRepository.updateSolicitudInicial(
@@ -399,6 +462,8 @@ export class CrearSolicitudInicialUseCase {
                 score: resultadoNosis.score,
                 motivo: resultadoNosis.motivo,
                 reglasFallidas: resultadoNosis.reglasFallidas,
+                entidadesSituacion2: resultadoNosis.entidadesSituacion2,
+                entidadesDeuda: resultadoNosis.entidadesDeuda
               },
               solicitudInicialId,
             });
@@ -537,6 +602,85 @@ export class CrearSolicitudInicialUseCase {
       console.error("Error notificando a analistas:", error);
       // Registrar error opcional
     }
+  }
+
+  /**
+   * Verifica si el cliente ya tiene solicitudes iniciales de otros comercios
+   * @param cuilCliente - CUIL del cliente a verificar
+   * @param comercianteIdActual - ID del comerciante que intenta crear la solicitud
+   * @returns Información sobre solicitudes existentes de otros comercios
+   */
+  private async verificarSolicitudesExistentes(
+  cuilCliente: string, 
+  comercianteIdActual: number
+): Promise<{
+  tieneSolicitudOtroComercio: boolean;
+  comercianteOriginal?: number;
+  nombreComercioOriginal?: string;
+}> {
+  try {
+    console.log(`🔍 Buscando solicitudes para CUIL: ${cuilCliente}`);
+    
+    const solicitudesCliente = await this.solicitudInicialRepository.getSolicitudesInicialesByCuil(cuilCliente);
+    console.log(`📊 Encontradas ${solicitudesCliente.length} solicitudes para el cliente`);
+    
+    if (solicitudesCliente.length === 0) {
+      console.log(`✅ No hay solicitudes existentes`);
+      return { tieneSolicitudOtroComercio: false };
+    }
+
+    // Filtrar solicitudes que no sean del comerciante actual
+    const solicitudesOtroComercio = solicitudesCliente.filter(solicitud => {
+      const solicitudComercianteId = solicitud.getComercianteId();
+      const esOtroComercio = solicitudComercianteId !== comercianteIdActual;
+      const estadoValido = ['pendiente', 'aprobada', 'rechazada'].includes(solicitud.getEstado());
+      
+      console.log(`Solicitud ID: ${solicitud.getId()}, Comerciante: ${solicitudComercianteId}, Estado: ${solicitud.getEstado()}, EsOtroComercio: ${esOtroComercio}, EstadoValido: ${estadoValido}`);
+      
+      return esOtroComercio && estadoValido;
+    });
+
+    console.log(`📊 Solicitudes de otros comercios: ${solicitudesOtroComercio.length}`);
+
+    if (solicitudesOtroComercio.length === 0) {
+      return { tieneSolicitudOtroComercio: false };
+    }
+
+    // Obtener información del comerciante original
+    const solicitudOriginal = solicitudesOtroComercio[0];
+    const comercianteOriginalId = solicitudOriginal.getComercianteId();
+    let nombreComercioOriginal = 'Comercio no disponible';
+    
+    if (comercianteOriginalId) {
+      try {
+        const comercianteOriginal = await this.comercianteRepository.findById(comercianteOriginalId);
+        nombreComercioOriginal = comercianteOriginal.getNombreComercio();
+        console.log(`🏪 Comercio original: ${nombreComercioOriginal}`);
+      } catch (error) {
+        console.error('Error obteniendo datos del comerciante original:', error);
+      }
+    }
+
+    return {
+      tieneSolicitudOtroComercio: true,
+      comercianteOriginal: comercianteOriginalId,
+      nombreComercioOriginal
+    };
+  } catch (error) {
+    console.error('❌ Error en verificación de solicitudes existentes:', error);
+    // En caso de error, permitir continuar (fail-open)
+    return { tieneSolicitudOtroComercio: false };
+  }
+}
+
+  /**
+   * Método auxiliar para obtener datos del comerciante
+   */
+  private async obtenerComerciantePorId(comercianteId: number): Promise<any> {
+    // Aquí necesitarías inyectar el repositorio de comerciantes
+    // Por simplicidad, asumimos que existe un método para esto
+    // En una implementación real, deberías inyectar ComercianteRepositoryPort
+    throw new Error('Método obtenerComerciantePorId no implementado');
   }
 }
 

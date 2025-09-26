@@ -57,6 +57,7 @@ import { GetComercianteByIdUseCase } from '../../../application/use-cases/Comerc
 import { ComercianteRepositoryAdapter } from '../../adapters/repository/ComercianteRepositoryAdapter';
 import { ObtenerDatosClienteComercianteUseCase } from '../../../application/use-cases/Cliente/ObtenerDatosClienteComercianteUseCase';
 import { ArchivoAdjunto } from '../../../domain/entities/ArchivosAdjuntos';
+import { EntidadesService } from '../../entidadesBancarias/EntidadesService';
 
 // Inyección de dependencias (deberían venir de un contenedor DI)
 const verazService: VerazPort = new VerazAdapter();
@@ -74,6 +75,8 @@ const compraRepository = new CompraRepositoryAdapter();
 const nosisAdapter = process.env.MODO_TEST === "true" 
     ? new MockNosisAdapter() 
     : new NosisAdapter('https://ws01.nosis.com/rest/variables', process.env.API_KEY || '');
+const entidadesService = new EntidadesService();
+const comercianteRepository = new ComercianteRepositoryAdapter();
 
 // Casos de uso inicializados
 const crearSolicitudInicialUC = new CrearSolicitudInicialUseCase(
@@ -85,7 +88,10 @@ const crearSolicitudInicialUC = new CrearSolicitudInicialUseCase(
   historialRepository,
   analistaRepository,
   nosisAdapter,
-  process.env.NOSIS_AUTO === 'true' // Modo automático de Veraz
+  process.env.NOSIS_AUTO === 'true', // Modo automático de Veraz,
+  entidadesService,
+  comercianteRepository
+
 );
 
 const getComerciantePorIdUC = new GetComercianteByIdUseCase( new ComercianteRepositoryAdapter());
@@ -132,6 +138,10 @@ const getSolicitudFormalByIdUC = new GetSolicitudesFormalesByIdUseCase(solicitud
 const listSolicitudesInicialesUC = new ListSolicitudesInicialesUseCase(solicitudInicialRepo);
 const obtenerDatosClienteComercianteUC = new ObtenerDatosClienteComercianteUseCase(clienteRepository);
 
+
+const quitarGuiones = (texto: string): string => texto.replace(/-/g, '');
+
+
 /**
  * Crea una nueva solicitud inicial.
  * @param req - Request de Express con los datos del cliente y recibo en el body.
@@ -146,9 +156,11 @@ export const crearSolicitudInicial = async (req: Request, res: Response) => {
     }
     const comercianteId = Number(req.user.id);
 
+    console.log('Creando solicitud inicial para comerciante ID:', comercianteId, 'con DNI:', dniCliente, 'y CUIL:', quitarGuiones(cuilCliente));
+
     const result  = await crearSolicitudInicialUC.execute(
       dniCliente,
-      cuilCliente,
+      quitarGuiones(cuilCliente),
       comercianteId
     );
 
@@ -166,12 +178,15 @@ export const crearSolicitudInicial = async (req: Request, res: Response) => {
   } catch (error) {
     if (error instanceof Error && error.message === 'El cliente ya tiene un crédito activo') {
       res.status(409).json({ error: error.message });
+    } else if (error instanceof Error && error.message.includes('El cliente ya tiene una solicitud inicial en el sistema')) {
+      // Nuevo error para cliente con solicitud de otro comercio
+      res.status(409).json({ 
+        error: error.message,
+        codigo: 'CLIENTE_YA_REGISTRADO',
+        mensaje: 'El cliente ya fue cargado por otro comercio en el sistema'
+      });
     } else if (error instanceof Error) {
-      if (error instanceof Error) {
-        res.status(400).json({ error: (error as Error).message });
-      } else {
-        res.status(400).json({ error: 'Unknown error' });
-      }
+      res.status(400).json({ error: error.message });
     } else {
       res.status(400).json({ error: 'Unknown error' });
     }

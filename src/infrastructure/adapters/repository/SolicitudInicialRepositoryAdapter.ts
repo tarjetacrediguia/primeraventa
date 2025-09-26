@@ -101,98 +101,106 @@ export class SolicitudInicialRepositoryAdapter
   async createSolicitudInicial(
     solicitudInicial: SolicitudInicial,
     cliente: Cliente
-  ): Promise<SolicitudInicial> {
+): Promise<SolicitudInicial> {
     const client = await pool.connect();
     try {
-      await client.query("BEGIN");
+        await client.query("BEGIN");
 
-      // Buscar cliente por DNI o crear uno nuevo
-      let clienteId: number;
+        // Buscar cliente por CUIL o DNI
+        let clienteId: number;
 
-      const clienteQuery = `SELECT id FROM clientes WHERE cuil = $1`;
-      const clienteResult = await client.query(clienteQuery, [
-        cliente.getCuil(),
-      ]);
+        const clienteQuery = `
+            SELECT id FROM clientes 
+            WHERE cuil = $1 OR dni = $2
+        `;
+        const clienteResult = await client.query(clienteQuery, [
+            cliente.getCuil(),
+            cliente.getDni()
+        ]);
 
-      if (clienteResult.rows.length === 0) {
-        // Crear nuevo cliente con datos mínimos
-        const insertClienteQuery = `
-                    INSERT INTO clientes (
-                        nombre_completo, apellido, dni, cuil, 
-                        telefono, email, fecha_nacimiento, domicilio, 
-                        datos_empleador, acepta_tarjeta
-                    )
-                    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
-                    RETURNING id
-                `;
-        const insertClienteValues = [
-          "Nombre por definir", // nombre_completo
-          "Apellido por definir", // apellido
-          cliente.getDni(),
-          cliente.getCuil(),
-          null, // telefono
-          null, // email
-          null, // fecha_nacimiento
-          null, // domicilio
-          null, // datos_empleador
-          false, // acepta_tarjeta
+        if (clienteResult.rows.length === 0) {
+            // Crear nuevo cliente con datos mínimos
+            const insertClienteQuery = `
+                INSERT INTO clientes (
+                    nombre_completo, apellido, dni, cuil, 
+                    telefono, email, fecha_nacimiento, domicilio, 
+                    datos_empleador, acepta_tarjeta
+                )
+                VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+                RETURNING id
+            `;
+            const insertClienteValues = [
+                "Nombre por definir",
+                "Apellido por definir",
+                cliente.getDni(),
+                cliente.getCuil(),
+                null,
+                null,
+                null,
+                null,
+                null,
+                false,
+            ];
+
+            const insertResult = await client.query(insertClienteQuery, insertClienteValues);
+            clienteId = insertResult.rows[0].id;
+        } else {
+            clienteId = clienteResult.rows[0].id;
+            
+            // Actualizar el CUIL si es necesario (en caso de que se encontró por DNI pero el CUIL es diferente)
+            if (clienteResult.rows[0].cuil !== cliente.getCuil()) {
+                await client.query(
+                    'UPDATE clientes SET cuil = $1 WHERE id = $2',
+                    [cliente.getCuil(), clienteId]
+                );
+            }
+        }
+
+        // Resto del código para crear la solicitud inicial...
+        const query = `
+            INSERT INTO solicitudes_iniciales (
+                cliente_id, comerciante_id, fecha_creacion, estado, 
+                reciboSueldo, comentarios, motivo_rechazo
+            )
+            VALUES ($1, $2, $3, $4, $5, $6, $7)
+            RETURNING id, fecha_creacion
+        `;
+
+        const values = [
+            clienteId,
+            solicitudInicial.getComercianteId() || null,
+            solicitudInicial.getFechaCreacion(),
+            solicitudInicial.getEstado(),
+            solicitudInicial.getReciboSueldo() || null,
+            solicitudInicial.getComentarios(),
+            solicitudInicial.getMotivoRechazo() || null,
         ];
 
-        const insertResult = await client.query(
-          insertClienteQuery,
-          insertClienteValues
-        );
-        clienteId = insertResult.rows[0].id;
-      } else {
-        clienteId = clienteResult.rows[0].id;
-      }
+        const result = await client.query(query, values);
+        const createdRow = result.rows[0];
 
-      // Crear la solicitud inicial
-      const query = `
-                INSERT INTO solicitudes_iniciales (
-                    cliente_id, comerciante_id, fecha_creacion, estado, 
-                    reciboSueldo, comentarios, motivo_rechazo
-                )
-                VALUES ($1, $2, $3, $4, $5, $6, $7)
-                RETURNING id, fecha_creacion
-            `;
+        await client.query("COMMIT");
 
-      const values = [
-        clienteId,
-        solicitudInicial.getComercianteId() || null,
-        solicitudInicial.getFechaCreacion(),
-        solicitudInicial.getEstado(),
-        solicitudInicial.getReciboSueldo() || null,
-        solicitudInicial.getComentarios(),
-        solicitudInicial.getMotivoRechazo() || null,
-      ];
-
-      const result = await client.query(query, values);
-      const createdRow = result.rows[0];
-
-      await client.query("COMMIT");
-
-      // Retornar la solicitud creada con su ID
-      return new SolicitudInicial({
-        id: createdRow.id.toString(),
-        fechaCreacion: new Date(createdRow.fecha_creacion),
-        estado: solicitudInicial.getEstado(),
-        clienteId: clienteId,
-        comercianteId: solicitudInicial.getComercianteId(),
-        comentarios: solicitudInicial.getComentarios(),
-        analistaAprobadorId: undefined,
-        administradorAprobadorId: undefined,
-        dniCliente: cliente.getDni(),
-        cuilCliente: cliente.getCuil(),
-        // motivoRechazo se omite ya que no estaba en el original
-      });
+        return new SolicitudInicial({
+            id: createdRow.id,
+            fechaCreacion: new Date(createdRow.fecha_creacion),
+            estado: solicitudInicial.getEstado(),
+            clienteId: clienteId,
+            comercianteId: solicitudInicial.getComercianteId(),
+            comentarios: solicitudInicial.getComentarios(),
+            analistaAprobadorId: undefined,
+            administradorAprobadorId: undefined,
+            dniCliente: cliente.getDni(),
+            cuilCliente: cliente.getCuil(),
+            motivoRechazo: solicitudInicial.getMotivoRechazo(),
+        });
     } catch (error) {
-      await client.query("ROLLBACK");
-      throw error;
+        await client.query("ROLLBACK");
+        throw error;
     } finally {
-      client.release();
+        client.release();
     }
-  }
+}
 
   /**
    * Obtiene una solicitud inicial por su ID.
@@ -602,6 +610,39 @@ export class SolicitudInicialRepositoryAdapter
 
     return solicitud;
   }
+  /*
+    * Obtiene las solicitudes iniciales por CUIL del cliente.
+    * @param cuil - CUIL del cliente
+    * @returns Promise<SolicitudInicial[]> - Array de solicitudes iniciales del cliente
+  */
+  async getSolicitudesInicialesByCuil(cuil: string): Promise<SolicitudInicial[]> {
+    const query = `
+      SELECT 
+        si.id, 
+        si.fecha_creacion, 
+        si.estado, 
+        si.reciboSueldo, 
+        si.comentarios, 
+        si.comerciante_id,
+        c.dni as dni_cliente, 
+        c.cuil as cuil_cliente,
+        si.motivo_rechazo,
+        u.nombre as comerciante_nombre,
+        u.apellido as comerciante_apellido,
+        com.nombre_comercio
+      FROM solicitudes_iniciales si
+      INNER JOIN clientes c ON si.cliente_id = c.id
+      LEFT JOIN comerciantes com ON si.comerciante_id = com.usuario_id
+      LEFT JOIN usuarios u ON com.usuario_id = u.id
+      WHERE c.cuil = $1
+      ORDER BY si.fecha_creacion DESC
+    `;
+
+    const result = await pool.query(query, [cuil]);
+    return result.rows.map((row) => this.mapRowToSolicitudInicial(row));
+  }
+
+
   /**
    * Obtiene las solicitudes iniciales por comerciante y estado.
    * @param comercianteId - ID del comerciante.
