@@ -17,7 +17,7 @@
  * - Registrar eventos en el historial del sistema
  * - Enviar notificaciones al comerciante y analistas
  * - Manejar errores y excepciones
- * 
+ *
  * FLUJO PRINCIPAL:
  * 1. Crear o recuperar cliente por CUIL
  * 2. Validar que no tenga créditos activos
@@ -42,10 +42,15 @@ import { NosisPort } from "../../ports/NosisPort";
 import { GetDataNosisUseCase } from "../Nosis/GetDataNosisUseCase";
 import {
   PersonalData,
+  VerificationResult,
   VerifyDataNosisUseCase,
 } from "../Nosis/VerifyDataNosisUseCase";
 import { EntidadesService } from "../../../infrastructure/entidadesBancarias/EntidadesService";
 import { ComercianteRepositoryPort } from "../../ports/ComercianteRepositoryPort";
+import {
+  crearComentarioAnalista,
+  crearComentarioComerciante,
+} from "../../../infrastructure/utils/comentariosHelper";
 
 export type CrearSolicitudInicialResponse = {
   solicitud: SolicitudInicial;
@@ -54,6 +59,12 @@ export type CrearSolicitudInicialResponse = {
   reglasFallidas?: string[];
   entidadesSituacion2?: number[];
   entidadesDeuda?: number[];
+  referenciasComerciales?: {
+    referenciasValidas: string[];
+    referenciasInvalidas: string[];
+    totalValidas: number;
+    totalInvalidas: number;
+  };
 };
 /**
  * Caso de uso para crear una nueva solicitud inicial de crédito.
@@ -125,100 +136,108 @@ export class CrearSolicitudInicialUseCase {
     comercianteId: number
   ): Promise<CrearSolicitudInicialResponse> {
     try {
-
       // ===== PASO 1: VERIFICAR SOLICITUDES EXISTENTES PRIMERO =====
-    console.log(`Verificando solicitudes existentes para CUIL: ${cuilCliente}, comerciante: ${comercianteId}`);
-    
-    const solicitudesExistentes = await this.verificarSolicitudesExistentes(cuilCliente, comercianteId);
-    
-    if (solicitudesExistentes.tieneSolicitudOtroComercio) {
-      console.log(`❌ Cliente ya tiene solicitud de otro comercio: ${solicitudesExistentes.nombreComercioOriginal}`);
-      
-      await this.notificationService.emitNotification({
-        userId: Number(comercianteId),
-        type: "solicitud_inicial",
-        message: `El cliente con CUIL ${cuilCliente} ya tiene una solicitud inicial creada por otro comercio`,
-      });
+      console.log(
+        `Verificando solicitudes existentes para CUIL: ${cuilCliente}, comerciante: ${comercianteId}`
+      );
 
-      await this.historialRepository.registrarEvento({
-        usuarioId: comercianteId,
-        accion: HISTORIAL_ACTIONS.REJECT_SOLICITUD_INICIAL,
-        entidadAfectada: "solicitudes_iniciales",
-        entidadId: 0,
-        detalles: {
-          motivo: "Cliente ya tiene solicitud de otro comercio",
-          cuil_cliente: cuilCliente,
-          comerciante_original: solicitudesExistentes.comercianteOriginal,
-          nombre_comercio_original: solicitudesExistentes.nombreComercioOriginal
-        },
-        solicitudInicialId: undefined,
-      });
+      const solicitudesExistentes = await this.verificarSolicitudesExistentes(
+        cuilCliente,
+        comercianteId
+      );
 
-      throw new Error(`El cliente ya tiene una solicitud inicial en el sistema. Comercio original: ${solicitudesExistentes.nombreComercioOriginal}`);
-    }
+      if (solicitudesExistentes.tieneSolicitudOtroComercio) {
+        console.log(
+          `❌ Cliente ya tiene solicitud de otro comercio: ${solicitudesExistentes.nombreComercioOriginal}`
+        );
 
-    console.log(`✅ No hay solicitudes de otros comercios, continuando...`);
-      
+        await this.notificationService.emitNotification({
+          userId: Number(comercianteId),
+          type: "solicitud_inicial",
+          message: `El cliente con CUIL ${cuilCliente} ya tiene una solicitud inicial creada por otro comercio`,
+        });
+
+        await this.historialRepository.registrarEvento({
+          usuarioId: comercianteId,
+          accion: HISTORIAL_ACTIONS.REJECT_SOLICITUD_INICIAL,
+          entidadAfectada: "solicitudes_iniciales",
+          entidadId: 0,
+          detalles: {
+            motivo: "Cliente ya tiene solicitud de otro comercio",
+            cuil_cliente: cuilCliente,
+            comerciante_original: solicitudesExistentes.comercianteOriginal,
+            nombre_comercio_original:
+              solicitudesExistentes.nombreComercioOriginal,
+          },
+          solicitudInicialId: undefined,
+        });
+
+        throw new Error(
+          `El cliente ya tiene una solicitud inicial en el sistema. Comercio original: ${solicitudesExistentes.nombreComercioOriginal}`
+        );
+      }
+
+      console.log(`✅ No hay solicitudes de otros comercios, continuando...`);
+
       // ===== PASO 2: CREAR O RECUPERAR CLIENTE =====
-    let cliente: Cliente;
-    let clienteTemporal: Cliente;
-    
-    try {
-      // Intentar buscar cliente existente por CUIL
-      cliente = await this.clienteRepository.findByCuil(cuilCliente);
-      clienteTemporal = cliente;
-      console.log(`✅ Cliente encontrado con CUIL: ${cuilCliente}`);
-    } catch (error) {
-      // No se encontró el cliente, crear uno nuevo
-      console.log(`📝 Creando nuevo cliente con CUIL: ${cuilCliente}`);
-      cliente = new Cliente({
-        id: 0,
-        nombreCompleto: "Nombre temporal",
-        apellido: "Apellido temporal",
-        dni: dniCliente,
-        cuil: cuilCliente
-      });
-      clienteTemporal = await this.clienteRepository.save(cliente);
-    }
+      let cliente: Cliente;
+      let clienteTemporal: Cliente;
 
-    // ===== PASO 3: VALIDAR CRÉDITO ACTIVO =====
-    console.log(`🔍 Validando créditos activos para CUIL: ${cuilCliente}`);
-    const tieneCreditoActivo = await this.tieneCreditoActivo(cuilCliente);
-    if (tieneCreditoActivo) {
-      console.log(`❌ Cliente tiene crédito activo`);
-      await this.notificationService.emitNotification({
-        userId: Number(comercianteId),
-        type: "solicitud_inicial",
-        message: `El cliente con CUIL ${cuilCliente} ya tiene un crédito activo`,
-      });
+      try {
+        // Intentar buscar cliente existente por CUIL
+        cliente = await this.clienteRepository.findByCuil(cuilCliente);
+        clienteTemporal = cliente;
+        console.log(`✅ Cliente encontrado con CUIL: ${cuilCliente}`);
+      } catch (error) {
+        // No se encontró el cliente, crear uno nuevo
+        console.log(`📝 Creando nuevo cliente con CUIL: ${cuilCliente}`);
+        cliente = new Cliente({
+          id: 0,
+          nombreCompleto: "Nombre temporal",
+          apellido: "Apellido temporal",
+          dni: dniCliente,
+          cuil: cuilCliente,
+        });
+        clienteTemporal = await this.clienteRepository.save(cliente);
+      }
 
-      await this.historialRepository.registrarEvento({
-        usuarioId: comercianteId,
-        accion: HISTORIAL_ACTIONS.REJECT_SOLICITUD_INICIAL,
-        entidadAfectada: "solicitudes_iniciales",
-        entidadId: 0,
-        detalles: {
-          motivo: "Cliente con crédito activo",
-          cuil_cliente: cuilCliente,
-        },
-        solicitudInicialId: undefined,
-      });
+      // ===== PASO 3: VALIDAR CRÉDITO ACTIVO =====
+      console.log(`🔍 Validando créditos activos para CUIL: ${cuilCliente}`);
+      const tieneCreditoActivo = await this.tieneCreditoActivo(cuilCliente);
+      if (tieneCreditoActivo) {
+        console.log(`❌ Cliente tiene crédito activo`);
+        await this.notificationService.emitNotification({
+          userId: Number(comercianteId),
+          type: "solicitud_inicial",
+          message: `El cliente con CUIL ${cuilCliente} ya tiene un crédito activo`,
+        });
 
-      throw new Error("El cliente ya tiene un crédito activo");
-    }
+        await this.historialRepository.registrarEvento({
+          usuarioId: comercianteId,
+          accion: HISTORIAL_ACTIONS.REJECT_SOLICITUD_INICIAL,
+          entidadAfectada: "solicitudes_iniciales",
+          entidadId: 0,
+          detalles: {
+            motivo: "Cliente con crédito activo",
+            cuil_cliente: cuilCliente,
+          },
+          solicitudInicialId: undefined,
+        });
 
-    console.log(`✅ No hay créditos activos, creando solicitud...`);
+        throw new Error("El cliente ya tiene un crédito activo");
+      }
 
+      console.log(`✅ No hay créditos activos, creando solicitud...`);
 
       // ===== PASO 3: CREAR SOLICITUD INICIAL =====
       // Crear solicitud inicial vinculada al cliente
       const solicitud = new SolicitudInicial({
-        id:0,
-        fechaCreacion:new Date(),
-        estado:"pendiente",
+        id: 0,
+        fechaCreacion: new Date(),
+        estado: "pendiente",
         clienteId: clienteTemporal.getId(),
-        comercianteId: comercianteId
-    });
+        comercianteId: comercianteId,
+      });
 
       // ===== PASO 4: PERSISTIR SOLICITUD =====
       // Guardar solicitud inicial en la base de datos
@@ -250,17 +269,42 @@ export class CrearSolicitudInicialUseCase {
       let nosisData: PersonalData | undefined;
       let motivoRechazo: string | undefined;
       let reglasFallidas: string[] | undefined;
+      let entidadesSituacion2: number[] | undefined;
+      let entidadesDeuda: number[] | undefined;
+      let referenciasComerciales: any | undefined;
 
       try {
         // Obtener datos del cliente desde Nosis
         const getNosisData = new GetDataNosisUseCase(this.nosisPort);
         const nosisResponse = await getNosisData.execute(cuilCliente);
-        
+
         // Verificar y validar datos de Nosis
-        const verifyNosis = new VerifyDataNosisUseCase(undefined, this.entidadesService);
+        const verifyNosis = new VerifyDataNosisUseCase(
+          undefined,
+          this.entidadesService
+        );
         const resultadoNosis = await verifyNosis.execute(nosisResponse);
         nosisData = resultadoNosis.personalData;
-        
+
+        nosisData = resultadoNosis.personalData;
+        motivoRechazo = resultadoNosis.motivo;
+        reglasFallidas = resultadoNosis.reglasFallidas;
+        entidadesSituacion2 = resultadoNosis.entidadesSituacion2;
+        entidadesDeuda = resultadoNosis.entidadesDeuda;
+        referenciasComerciales = resultadoNosis.referenciasComerciales;
+
+        // Generar comentarios según el rol (se asume que es comerciante en este contexto)
+        const comentarioComerciante = this.generarComentariosComerciante(
+          resultadoNosis,
+          this.entidadesService
+        );
+
+        // Para el analista, se guarda el comentario detallado en la base de datos
+        const comentarioAnalista = this.generarComentariosAnalista(
+          resultadoNosis,
+          this.entidadesService
+        );
+
         // ===== PASO 7: ACTUALIZAR DATOS DEL CLIENTE CON NOSIS =====
         // Actualizar información personal del cliente con datos de Nosis
         clienteTemporal.setNombreCompleto(
@@ -369,7 +413,7 @@ export class CrearSolicitudInicialUseCase {
               : null
           );
         }
-        
+
         // Persistir actualizaciones del cliente en la base de datos
         await this.clienteRepository.update(clienteTemporal);
         // ===== PASO 8: APLICAR REGLAS DE APROBACIÓN AUTOMÁTICA =====
@@ -382,7 +426,13 @@ export class CrearSolicitudInicialUseCase {
               solicitudCreada,
               clienteTemporal
             );
-            solicitud.agregarComentario(`Aprobado: Nosis automático`);
+            // Agregar comentarios diferenciados
+            solicitudCreada.agregarComentario(
+              crearComentarioComerciante("Solicitud aprobada automáticamente")
+            );
+            solicitudCreada.agregarComentario(
+              crearComentarioAnalista(comentarioAnalista)
+            );
             await this.historialRepository.registrarEvento({
               usuarioId: null,
               accion: HISTORIAL_ACTIONS.APPROVE_SOLICITUD_INICIAL,
@@ -392,6 +442,14 @@ export class CrearSolicitudInicialUseCase {
                 sistema: "Nosis",
                 score: resultadoNosis.score,
                 motivo: resultadoNosis.motivo,
+                reglasFallidas: resultadoNosis.reglasFallidas,
+                pendientes: resultadoNosis.pendientes,
+                aprobados: resultadoNosis.aprobados,
+                entidadesSituacion2: resultadoNosis.entidadesSituacion2,
+                entidadesDeuda: resultadoNosis.entidadesDeuda,
+                referenciasComerciales: resultadoNosis.referenciasComerciales,
+                comentarioComerciante: comentarioComerciante,
+                comentarioAnalista: comentarioAnalista,
               },
               solicitudInicialId,
             });
@@ -402,8 +460,13 @@ export class CrearSolicitudInicialUseCase {
             solicitudCreada.setEstado("pendiente");
             solicitud.setMotivoRechazo(motivoRechazo ?? "");
 
-            // Agregar comentario con información detallada de entidades
-            solicitud.agregarComentario(`Pendiente: ${motivoRechazo}`);
+            // Agregar comentarios diferenciados
+            solicitudCreada.agregarComentario(
+              crearComentarioComerciante(comentarioComerciante)
+            );
+            solicitudCreada.agregarComentario(
+              crearComentarioAnalista(comentarioAnalista)
+            );
 
             await this.solicitudInicialRepository.updateSolicitudInicial(
               solicitudCreada,
@@ -421,8 +484,14 @@ export class CrearSolicitudInicialUseCase {
                 sistema: "Nosis",
                 score: resultadoNosis.score,
                 motivo: resultadoNosis.motivo,
+                reglasFallidas: resultadoNosis.reglasFallidas,
+                pendientes: resultadoNosis.pendientes,
+                aprobados: resultadoNosis.aprobados,
                 entidadesSituacion2: resultadoNosis.entidadesSituacion2,
-                entidadesDeuda: resultadoNosis.entidadesDeuda
+                entidadesDeuda: resultadoNosis.entidadesDeuda,
+                referenciasComerciales: resultadoNosis.referenciasComerciales,
+                comentarioComerciante: comentarioComerciante,
+                comentarioAnalista: comentarioAnalista,
               },
               solicitudInicialId,
             });
@@ -433,19 +502,14 @@ export class CrearSolicitudInicialUseCase {
             solicitudCreada.setEstado("rechazada");
             solicitud.setMotivoRechazo(motivoRechazo ?? "");
 
-            // Agregar comentario con información detallada de entidades
-            let comentario = `Rechazo: ${motivoRechazo}`;
-            if (resultadoNosis.entidadesSituacion2 && resultadoNosis.entidadesSituacion2.length > 0) {
-              const nombresEntidades = this.entidadesService.obtenerNombresEntidades(resultadoNosis.entidadesSituacion2);
-              comentario += `. Entidades en situación 2: ${nombresEntidades.join(', ')}`;
-            }
-            if (resultadoNosis.entidadesDeuda && resultadoNosis.entidadesDeuda.length > 0) {
-              const nombresEntidades = this.entidadesService.obtenerNombresEntidades(resultadoNosis.entidadesDeuda);
-              comentario += `. Entidades con deuda: ${nombresEntidades.join(', ')}`;
-            }
-            
-            solicitud.agregarComentario(comentario);
-            
+            // Agregar comentarios diferenciados
+            solicitudCreada.agregarComentario(
+              crearComentarioComerciante(comentarioComerciante)
+            );
+            solicitudCreada.agregarComentario(
+              crearComentarioAnalista(comentarioAnalista)
+            );
+
             // Guardar el motivo de rechazo en la solicitud
             await this.solicitudInicialRepository.updateSolicitudInicial(
               solicitudCreada,
@@ -462,8 +526,13 @@ export class CrearSolicitudInicialUseCase {
                 score: resultadoNosis.score,
                 motivo: resultadoNosis.motivo,
                 reglasFallidas: resultadoNosis.reglasFallidas,
+                pendientes: resultadoNosis.pendientes,
+                aprobados: resultadoNosis.aprobados,
                 entidadesSituacion2: resultadoNosis.entidadesSituacion2,
-                entidadesDeuda: resultadoNosis.entidadesDeuda
+                entidadesDeuda: resultadoNosis.entidadesDeuda,
+                referenciasComerciales: resultadoNosis.referenciasComerciales,
+                comentarioComerciante: comentarioComerciante,
+                comentarioAnalista: comentarioAnalista,
               },
               solicitudInicialId,
             });
@@ -502,6 +571,9 @@ export class CrearSolicitudInicialUseCase {
         nosisData,
         motivoRechazo,
         reglasFallidas,
+        entidadesSituacion2,
+        entidadesDeuda,
+        referenciasComerciales,
       };
     } catch (error) {
       // ===== MANEJO DE ERRORES GENERALES =====
@@ -510,7 +582,7 @@ export class CrearSolicitudInicialUseCase {
       if (error instanceof Error) {
         errorMessage = error.message;
       }
-      
+
       // Notificar error al comerciante
       await this.notificationService.emitNotification({
         userId: Number(comercianteId),
@@ -611,67 +683,255 @@ export class CrearSolicitudInicialUseCase {
    * @returns Información sobre solicitudes existentes de otros comercios
    */
   private async verificarSolicitudesExistentes(
-  cuilCliente: string, 
-  comercianteIdActual: number
-): Promise<{
-  tieneSolicitudOtroComercio: boolean;
-  comercianteOriginal?: number;
-  nombreComercioOriginal?: string;
-}> {
-  try {
-    console.log(`🔍 Buscando solicitudes para CUIL: ${cuilCliente}`);
-    
-    const solicitudesCliente = await this.solicitudInicialRepository.getSolicitudesInicialesByCuil(cuilCliente);
-    console.log(`📊 Encontradas ${solicitudesCliente.length} solicitudes para el cliente`);
-    
-    if (solicitudesCliente.length === 0) {
-      console.log(`✅ No hay solicitudes existentes`);
-      return { tieneSolicitudOtroComercio: false };
-    }
+    cuilCliente: string,
+    comercianteIdActual: number
+  ): Promise<{
+    tieneSolicitudOtroComercio: boolean;
+    comercianteOriginal?: number;
+    nombreComercioOriginal?: string;
+  }> {
+    try {
+      console.log(`🔍 Buscando solicitudes para CUIL: ${cuilCliente}`);
 
-    // Filtrar solicitudes que no sean del comerciante actual
-    const solicitudesOtroComercio = solicitudesCliente.filter(solicitud => {
-      const solicitudComercianteId = solicitud.getComercianteId();
-      const esOtroComercio = solicitudComercianteId !== comercianteIdActual;
-      const estadoValido = ['pendiente', 'aprobada', 'rechazada'].includes(solicitud.getEstado());
-      
-      console.log(`Solicitud ID: ${solicitud.getId()}, Comerciante: ${solicitudComercianteId}, Estado: ${solicitud.getEstado()}, EsOtroComercio: ${esOtroComercio}, EstadoValido: ${estadoValido}`);
-      
-      return esOtroComercio && estadoValido;
-    });
+      const solicitudesCliente =
+        await this.solicitudInicialRepository.getSolicitudesInicialesByCuil(
+          cuilCliente
+        );
+      console.log(
+        `📊 Encontradas ${solicitudesCliente.length} solicitudes para el cliente`
+      );
 
-    console.log(`📊 Solicitudes de otros comercios: ${solicitudesOtroComercio.length}`);
-
-    if (solicitudesOtroComercio.length === 0) {
-      return { tieneSolicitudOtroComercio: false };
-    }
-
-    // Obtener información del comerciante original
-    const solicitudOriginal = solicitudesOtroComercio[0];
-    const comercianteOriginalId = solicitudOriginal.getComercianteId();
-    let nombreComercioOriginal = 'Comercio no disponible';
-    
-    if (comercianteOriginalId) {
-      try {
-        const comercianteOriginal = await this.comercianteRepository.findById(comercianteOriginalId);
-        nombreComercioOriginal = comercianteOriginal.getNombreComercio();
-        console.log(`🏪 Comercio original: ${nombreComercioOriginal}`);
-      } catch (error) {
-        console.error('Error obteniendo datos del comerciante original:', error);
+      if (solicitudesCliente.length === 0) {
+        console.log(`✅ No hay solicitudes existentes`);
+        return { tieneSolicitudOtroComercio: false };
       }
+
+      // Filtrar solicitudes que no sean del comerciante actual
+      const solicitudesOtroComercio = solicitudesCliente.filter((solicitud) => {
+        const solicitudComercianteId = solicitud.getComercianteId();
+        const esOtroComercio = solicitudComercianteId !== comercianteIdActual;
+        const estadoValido = ["pendiente", "aprobada", "rechazada"].includes(
+          solicitud.getEstado()
+        );
+
+        console.log(
+          `Solicitud ID: ${solicitud.getId()}, Comerciante: ${solicitudComercianteId}, Estado: ${solicitud.getEstado()}, EsOtroComercio: ${esOtroComercio}, EstadoValido: ${estadoValido}`
+        );
+
+        return esOtroComercio && estadoValido;
+      });
+
+      console.log(
+        `📊 Solicitudes de otros comercios: ${solicitudesOtroComercio.length}`
+      );
+
+      if (solicitudesOtroComercio.length === 0) {
+        return { tieneSolicitudOtroComercio: false };
+      }
+
+      // Obtener información del comerciante original
+      const solicitudOriginal = solicitudesOtroComercio[0];
+      const comercianteOriginalId = solicitudOriginal.getComercianteId();
+      let nombreComercioOriginal = "Comercio no disponible";
+
+      if (comercianteOriginalId) {
+        try {
+          const comercianteOriginal = await this.comercianteRepository.findById(
+            comercianteOriginalId
+          );
+          nombreComercioOriginal = comercianteOriginal.getNombreComercio();
+          console.log(`🏪 Comercio original: ${nombreComercioOriginal}`);
+        } catch (error) {
+          console.error(
+            "Error obteniendo datos del comerciante original:",
+            error
+          );
+        }
+      }
+
+      return {
+        tieneSolicitudOtroComercio: true,
+        comercianteOriginal: comercianteOriginalId,
+        nombreComercioOriginal,
+      };
+    } catch (error) {
+      console.error(
+        "❌ Error en verificación de solicitudes existentes:",
+        error
+      );
+      // En caso de error, permitir continuar (fail-open)
+      return { tieneSolicitudOtroComercio: false };
+    }
+  }
+
+  /**
+   * Genera comentarios detallados para analistas
+   */
+  private generarComentariosAnalista(
+    resultadoNosis: VerificationResult,
+    entidadesService: EntidadesService
+  ): string {
+    let comentario = `Resultado Nosis: ${resultadoNosis.status}. `;
+
+    if (
+      resultadoNosis.reglasFallidas &&
+      resultadoNosis.reglasFallidas.length > 0
+    ) {
+      comentario += `Rechazos: ${resultadoNosis.reglasFallidas.join("; ")}. `;
     }
 
-    return {
-      tieneSolicitudOtroComercio: true,
-      comercianteOriginal: comercianteOriginalId,
-      nombreComercioOriginal
-    };
-  } catch (error) {
-    console.error('❌ Error en verificación de solicitudes existentes:', error);
-    // En caso de error, permitir continuar (fail-open)
-    return { tieneSolicitudOtroComercio: false };
+    if (resultadoNosis.pendientes && resultadoNosis.pendientes.length > 0) {
+      comentario += `Pendientes: ${resultadoNosis.pendientes.join("; ")}. `;
+    }
+
+    if (resultadoNosis.aprobados && resultadoNosis.aprobados.length > 0) {
+      comentario += `Aprobados: ${resultadoNosis.aprobados.join("; ")}. `;
+    }
+
+    // Información de entidades si existe
+    if (
+      resultadoNosis.entidadesSituacion2 &&
+      resultadoNosis.entidadesSituacion2.length > 0
+    ) {
+      const nombresEntidades = entidadesService.obtenerNombresEntidades(
+        resultadoNosis.entidadesSituacion2
+      );
+      comentario += `Entidades situación 2: ${nombresEntidades.join(", ")}. `;
+    }
+
+    if (
+      resultadoNosis.entidadesDeuda &&
+      resultadoNosis.entidadesDeuda.length > 0
+    ) {
+      const nombresEntidades = entidadesService.obtenerNombresEntidades(
+        resultadoNosis.entidadesDeuda
+      );
+      comentario += `Entidades con deuda: ${nombresEntidades.join(", ")}. `;
+    }
+
+    // Información de referencias comerciales
+    if (resultadoNosis.referenciasComerciales) {
+      const ref = resultadoNosis.referenciasComerciales;
+      comentario += `Ref. válidas: ${
+        ref.totalValidas
+      } (${ref.referenciasValidas.join(", ")}). `;
+      comentario += `Ref. no válidas: ${
+        ref.totalInvalidas
+      } (${ref.referenciasInvalidas.join(", ")}). `;
+    }
+
+    return comentario;
   }
-}
+
+  /**
+   * Genera comentarios específicos para comerciantes con motivos exactos
+   */
+  private generarComentariosComerciante(
+    resultadoNosis: VerificationResult,
+    entidadesService: EntidadesService
+  ): string {
+    if (resultadoNosis.status === "aprobado") {
+      return "Solicitud aprobada automáticamente";
+    } else if (resultadoNosis.status === "rechazado") {
+      let motivo = "Solicitud rechazada";
+
+      if (
+        resultadoNosis.reglasFallidas &&
+        resultadoNosis.reglasFallidas.length > 0
+      ) {
+        const motivosPrincipales: string[] = [];
+
+        for (const regla of resultadoNosis.reglasFallidas) {
+          if (regla.includes("entidades en situación 2")) {
+            const match = regla.match(/(\d+) entidades/);
+            const cantidad = match ? match[1] : "varias";
+            motivosPrincipales.push(
+              `tiene ${cantidad} entidades en situación 2 (cuentas canceladas)`
+            );
+          } else if (regla.includes("entidades con deuda")) {
+            const match = regla.match(/(\d+) entidades/);
+            const cantidad = match ? match[1] : "varias";
+            motivosPrincipales.push(
+              `tiene deuda con ${cantidad} o más entidades con situación 3, 4 o 5`
+            );
+          } else if (regla.includes("referencias comerciales")) {
+            const match = regla.match(/(\d+) referencias comerciales válidas/);
+            if (match) {
+              motivosPrincipales.push(
+                `tiene ${match[1]} referencias comerciales válidas (máximo permitido: 2)`
+              );
+            } else {
+              motivosPrincipales.push(
+                "no cumple con criterios de referencias comerciales"
+              );
+            }
+          } else if (regla.includes("tarjeta Crediguía")) {
+            motivosPrincipales.push("tiene tarjeta Crediguía activa");
+          } else if (regla.includes("aporte")) {
+            motivosPrincipales.push(
+              "no cumple con el mínimo de aportes requerido"
+            );
+          } else if (regla.includes("jubilado")) {
+            motivosPrincipales.push("es jubilado");
+          } else if (regla.includes("monotributista")) {
+            motivosPrincipales.push("es monotributista sin empleo registrado");
+          } else if (regla.includes("situación laboral")) {
+            motivosPrincipales.push("no tiene situación laboral registrada");
+          } else {
+            const partePrincipal = regla.split(":")[0] || regla;
+            motivosPrincipales.push(partePrincipal.toLowerCase());
+          }
+        }
+
+        if (motivosPrincipales.length > 0) {
+          motivo += `: ${motivosPrincipales.join(", ")}`;
+        }
+      }
+
+      return motivo;
+    } else if (resultadoNosis.status === "pendiente") {
+      let motivo = "Solicitud pendiente de revisión manual";
+
+      if (resultadoNosis.pendientes && resultadoNosis.pendientes.length > 0) {
+        const motivosPendientes: string[] = [];
+
+        for (const pendiente of resultadoNosis.pendientes) {
+          if (pendiente.includes("entidades en situación 2")) {
+            motivosPendientes.push(
+              "tiene 1 entidad en situación 2 (cuenta cancelada)"
+            );
+          } else if (pendiente.includes("entidades con deuda")) {
+            const match = pendiente.match(/(\d+) entidades/);
+            const cantidad = match ? match[1] : "algunas";
+            motivosPendientes.push(
+              `tiene deuda con ${cantidad} entidades con situación 3, 4 o 5`
+            );
+          } else if (pendiente.includes("referencias comerciales")) {
+            const match = pendiente.match(/(\d+) referencia/);
+            if (match) {
+              motivosPendientes.push(
+                `tiene ${match[1]} referencia(s) comercial(es) válida(s)`
+              );
+            } else {
+              motivosPendientes.push(
+                "requiere validación de referencias comerciales"
+              );
+            }
+          } else {
+            motivosPendientes.push(pendiente.toLowerCase());
+          }
+        }
+
+        if (motivosPendientes.length > 0) {
+          motivo += `: ${motivosPendientes.join(", ")}`;
+        }
+      }
+
+      return motivo;
+    }
+
+    return "Solicitud en proceso de evaluación";
+  }
 
   /**
    * Método auxiliar para obtener datos del comerciante
@@ -680,7 +940,7 @@ export class CrearSolicitudInicialUseCase {
     // Aquí necesitarías inyectar el repositorio de comerciantes
     // Por simplicidad, asumimos que existe un método para esto
     // En una implementación real, deberías inyectar ComercianteRepositoryPort
-    throw new Error('Método obtenerComerciantePorId no implementado');
+    throw new Error("Método obtenerComerciantePorId no implementado");
   }
 }
 
@@ -715,8 +975,4 @@ export class CrearSolicitudInicialUseCase {
     "numeroDomicilio":"1234",
     "barrio":"Barrio Falso",
     "recibo":"/9j/4AAQSkZJRgABAQEAYABgAAD/2wBDAAMCAgMCA
-
-
-
-
 */
