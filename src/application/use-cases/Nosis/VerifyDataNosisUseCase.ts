@@ -94,6 +94,7 @@ export type VerificationResult = {
   approved: boolean;
   score?: number;
   motivo?: string;
+  motivoComerciante?: string;
   reglasFallidas?: string[];
   pendientes?: string[];
   aprobados?: string[];
@@ -132,7 +133,7 @@ export class VerifyDataNosisUseCase {
   private rules: RuleConfig[];
   // Mínimo requerido de aportes para aprobación
   private readonly MINIMO_APORTES = 4;
-// Servicio para obtener nombres de entidades bancarias
+  // Servicio para obtener nombres de entidades bancarias
   private entidadesService: EntidadesService;
   /**
    * Constructor del caso de uso de verificación Nosis
@@ -296,103 +297,121 @@ export class VerifyDataNosisUseCase {
   }
 
   /**
- * Verifica las referencias comerciales del cliente según los criterios especificados
- * @param variables - Lista de variables de Nosis
- * @returns Objeto con estado y detalles de las referencias
- */
-private verificarReferenciasComerciales(variables: NosisVariable[]): {
-  estado: "aprobado" | "pendiente" | "rechazado";
-  mensaje?: string;
-  referenciasValidas: string[];
-  referenciasInvalidas: string[];
-  totalValidas: number;
-  totalInvalidas: number;
-} {
-  // Variables a excluir (no se tienen en cuenta)
-  const EXCLUIR_FUENTES = [
-    "Telecom Argentina SA",
-    "Claro", 
-    "Telefónica Moviles Argentina SA",
-    "DirecTv"
-  ];
+   * Verifica las referencias comerciales del cliente según los criterios especificados
+   * @param variables - Lista de variables de Nosis
+   * @returns Objeto con estado y detalles de las referencias
+   */
+  private verificarReferenciasComerciales(variables: NosisVariable[]): {
+    estado: "aprobado" | "pendiente" | "rechazado";
+    mensaje?: string;
+    referenciasValidas: string[];
+    referenciasInvalidas: string[];
+    totalValidas: number;
+    totalInvalidas: number;
+  } {
+    // Variables a excluir (no se tienen en cuenta)
+    const EXCLUIR_FUENTES = [
+      "Telecom Argentina SA",
+      "Claro",
+      "Telefónica Moviles Argentina SA",
+      "DirecTv",
+    ];
 
-  // Obtener cantidad total de referencias
-  const cantidadRef = parseInt(
-    variables.find((v) => v.Nombre === "RC_12m_Cant")?.Valor || "0"
-  );
+    // Obtener cantidad total de referencias
+    const cantidadRef = parseInt(
+      variables.find((v) => v.Nombre === "RC_12m_Cant")?.Valor || "0"
+    );
 
-  // Obtener fuentes de referencias
-  const fuentesRef = variables.find((v) => v.Nombre === "RC_12m_Fuente")?.Valor;
+    // Obtener fuentes de referencias
+    const fuentesRef = variables.find(
+      (v) => v.Nombre === "RC_12m_Fuente"
+    )?.Valor;
 
-  let referenciasValidas: string[] = [];
-  let referenciasInvalidas: string[] = [];
+    let referenciasValidas: string[] = [];
+    let referenciasInvalidas: string[] = [];
 
-  if (fuentesRef) {
-    // Separar las fuentes (pueden venir separadas por | o ;)
-    const fuentes = fuentesRef.split(/[|;]/).map(f => f.trim()).filter(f => f);
-    
-    // Clasificar las fuentes
-    fuentes.forEach(fuente => {
-      if (EXCLUIR_FUENTES.some(excluida => 
-        fuente.toLowerCase().includes(excluida.toLowerCase()))) {
-        referenciasInvalidas.push(fuente);
-      } else {
-        referenciasValidas.push(fuente);
+    if (fuentesRef) {
+      // Separar las fuentes (pueden venir separadas por | o ;)
+      const fuentes = fuentesRef
+        .split(/[|;]/)
+        .map((f) => f.trim())
+        .filter((f) => f);
+
+      // Clasificar las fuentes
+      fuentes.forEach((fuente) => {
+        if (
+          EXCLUIR_FUENTES.some((excluida) =>
+            fuente.toLowerCase().includes(excluida.toLowerCase())
+          )
+        ) {
+          referenciasInvalidas.push(fuente);
+        } else {
+          referenciasValidas.push(fuente);
+        }
+      });
+    }
+
+    const totalValidas = referenciasValidas.length;
+    const totalInvalidas = referenciasInvalidas.length;
+
+    // Aplicar reglas de negocio
+    if (totalValidas === 0) {
+      // No tiene referencias válidas - APROBADO
+      let mensaje = "No tiene referencias comerciales válidas";
+      if (totalInvalidas > 0) {
+        mensaje += `. Referencias no consideradas: ${referenciasInvalidas.join(
+          ", "
+        )}`;
       }
-    });
-  }
 
-  const totalValidas = referenciasValidas.length;
-  const totalInvalidas = referenciasInvalidas.length;
+      return {
+        estado: "aprobado",
+        mensaje,
+        referenciasValidas,
+        referenciasInvalidas,
+        totalValidas,
+        totalInvalidas,
+      };
+    } else if (totalValidas >= 1 && totalValidas <= 2) {
+      // 1-2 referencias válidas - PENDIENTE
+      let mensaje = `Tiene ${totalValidas} referencia(s) comercial(es) válida(s): ${referenciasValidas.join(
+        ", "
+      )}`;
+      if (totalInvalidas > 0) {
+        mensaje += `. Referencias no consideradas: ${referenciasInvalidas.join(
+          ", "
+        )}`;
+      }
 
-  // Aplicar reglas de negocio
-  if (totalValidas === 0) {
-    // No tiene referencias válidas - APROBADO
-    let mensaje = "No tiene referencias comerciales válidas";
-    if (totalInvalidas > 0) {
-      mensaje += `. Referencias no consideradas: ${referenciasInvalidas.join(', ')}`;
+      return {
+        estado: "pendiente",
+        mensaje,
+        referenciasValidas,
+        referenciasInvalidas,
+        totalValidas,
+        totalInvalidas,
+      };
+    } else {
+      // 3+ referencias válidas - RECHAZADO
+      let mensaje = `Tiene ${totalValidas} referencias comerciales válidas (máximo permitido: 2): ${referenciasValidas.join(
+        ", "
+      )}`;
+      if (totalInvalidas > 0) {
+        mensaje += `. Referencias no consideradas: ${referenciasInvalidas.join(
+          ", "
+        )}`;
+      }
+
+      return {
+        estado: "rechazado",
+        mensaje,
+        referenciasValidas,
+        referenciasInvalidas,
+        totalValidas,
+        totalInvalidas,
+      };
     }
-    
-    return {
-      estado: "aprobado",
-      mensaje,
-      referenciasValidas,
-      referenciasInvalidas,
-      totalValidas,
-      totalInvalidas
-    };
-  } else if (totalValidas >= 1 && totalValidas <= 2) {
-    // 1-2 referencias válidas - PENDIENTE
-    let mensaje = `Tiene ${totalValidas} referencia(s) comercial(es) válida(s): ${referenciasValidas.join(', ')}`;
-    if (totalInvalidas > 0) {
-      mensaje += `. Referencias no consideradas: ${referenciasInvalidas.join(', ')}`;
-    }
-    
-    return {
-      estado: "pendiente",
-      mensaje,
-      referenciasValidas,
-      referenciasInvalidas,
-      totalValidas,
-      totalInvalidas
-    };
-  } else {
-    // 3+ referencias válidas - RECHAZADO
-    let mensaje = `Tiene ${totalValidas} referencias comerciales válidas (máximo permitido: 2): ${referenciasValidas.join(', ')}`;
-    if (totalInvalidas > 0) {
-      mensaje += `. Referencias no consideradas: ${referenciasInvalidas.join(', ')}`;
-    }
-    
-    return {
-      estado: "rechazado",
-      mensaje,
-      referenciasValidas,
-      referenciasInvalidas,
-      totalValidas,
-      totalInvalidas
-    };
   }
-}
 
   /**
    * Ejecuta el proceso completo de verificación de datos Nosis
@@ -400,150 +419,304 @@ private verificarReferenciasComerciales(variables: NosisVariable[]): {
    * @returns Promise<VerificationResult> - Resultado estructurado de la verificación
    */
   async execute(nosisData: NosisResponse): Promise<VerificationResult> {
-  const variables = nosisData.Contenido.Datos.Variables.Variable;
-  const reglasFallidas: string[] = [];
-  const pendientes: string[] = [];
-  const aprobados: string[] = [];
+    const variables = nosisData.Contenido.Datos.Variables.Variable;
+    const reglasFallidas: string[] = [];
+    const pendientes: string[] = [];
+    const aprobados: string[] = [];
+    let motivoComerciante: string = "";
 
-  // Buscar el score para incluirlo en el resultado
-  const scoreVar = variables.find((v) => v.Nombre === "SCO_Vig");
-  const score = scoreVar ? parseInt(scoreVar.Valor) : 0;
+    // Buscar el score para incluirlo en el resultado
+    const scoreVar = variables.find((v) => v.Nombre === "SCO_Vig");
+    const score = scoreVar ? parseInt(scoreVar.Valor) : 0;
+    // Evaluar si es monotributista
+    const esMonotributista =
+      variables.find((v) => v.Nombre === "VI_Inscrip_Monotributo_Es")?.Valor ===
+      "Si";
 
-  // Evaluar reglas estándar
-  for (const regla of this.rules) {
-    const variable = variables.find((v) => v.Nombre === regla.variable);
-    if (!this.evaluarRegla(variable, regla)) {
-      reglasFallidas.push(regla.mensaje);
+    // Evaluar reglas estándar
+    for (const regla of this.rules) {
+      const variable = variables.find((v) => v.Nombre === regla.variable);
+      if (!this.evaluarRegla(variable, regla)) {
+        reglasFallidas.push(regla.mensaje);
+      }
     }
-  }
 
-  // Aportes
-  if (!this.verificarAportes(variables)) {
-    reglasFallidas.push(
-      "Cliente no cumple con el mínimo de aportes registrados en los últimos 12 meses"
-    );
-  } else {
-    aprobados.push("Cumple con el mínimo de aportes requerido");
-  }
-
-  // ===== ENTIDADES EN SITUACIÓN 2 =====
-  const resultadoSituacion2 = this.verificarEntidadesSituacion2(variables);
-  if (resultadoSituacion2.estado === "rechazado") {
-    reglasFallidas.push(resultadoSituacion2.mensaje!);
-  } else if (resultadoSituacion2.estado === "pendiente") {
-    pendientes.push(resultadoSituacion2.mensaje!);
-  } else {
-    aprobados.push("No tiene entidades en situación 2");
-  }
-
-  // Verificación específica para deudas en entidades (situación 3-4-5)
-  const tieneDeudaEntidades = this.verificarDeudaEntidades(variables);
-  if (tieneDeudaEntidades.estado === "rechazado") {
-    reglasFallidas.push(tieneDeudaEntidades.mensaje!);
-  } else if (tieneDeudaEntidades.estado === "pendiente") {
-    pendientes.push(tieneDeudaEntidades.mensaje!);
-  } else {
-    aprobados.push("No tiene deudas en entidades con situación 3-4-5");
-  }
-
-  // ===== REFERENCIAS COMERCIALES =====
-  const resultadoReferencias = this.verificarReferenciasComerciales(variables);
-  if (resultadoReferencias.estado === "rechazado") {
-    reglasFallidas.push(resultadoReferencias.mensaje!);
-  } else if (resultadoReferencias.estado === "pendiente") {
-    pendientes.push(resultadoReferencias.mensaje!);
-  } else {
-    aprobados.push("Cumple con criterios de referencias comerciales");
-  }
-
-  // Verificación específica para monotributistas
-  const esMonotributista =
-    variables.find((v) => v.Nombre === "VI_Inscrip_Monotributo_Es")?.Valor ===
-    "Si";
-  if (esMonotributista) {
-    // Solo rechazamos si es monotributista Y NO tiene empleo registrado
-    const tieneEmpleoRegistrado = this.tieneEmpleoRegistrado(variables);
-    if (!tieneEmpleoRegistrado) {
-      reglasFallidas.push("Cliente es monotributista sin empleo registrado");
+    // Aportes
+    const totalAportes = this.calcularTotalAportes(variables);
+    const pagosRecientes = this.tieneAportesRecientes(variables);
+    if (totalAportes < this.MINIMO_APORTES) {
+      reglasFallidas.push(
+        `Cliente no cumple con el mínimo de aportes registrados en los últimos 12 meses (${totalAportes} de ${this.MINIMO_APORTES} requeridos)`
+      );
+      if (!motivoComerciante && !esMonotributista) {
+        motivoComerciante =
+          "Solicitud rechazada: no cumple con el mínimo de aportes requerido";
+      }
+    } else if (!pagosRecientes && esMonotributista) {
+      // Para monotributistas, destacar la falta de aportes recientes
+      aprobados.push(
+        `Cumple con el mínimo de aportes requerido (${totalAportes} aportes históricos)`
+      );
     } else {
-      aprobados.push("Monotributista con empleo registrado validado");
+      aprobados.push(
+        `Cumple con el mínimo de aportes requerido (${totalAportes} aportes)`
+      );
     }
-  } else {
-    aprobados.push("No es monotributista");
-  }
 
-  // Regla personalizada para situación laboral (solo para no monotributistas)
-  if (!esMonotributista) {
-    const tieneLaboral = this.verificarSituacionLaboral(variables);
-    if (!tieneLaboral) {
-      reglasFallidas.push("Cliente no tiene situación laboral registrada");
+    // ===== VERIFICACIONES QUE PUEDEN CAUSAR RECHAZO INMEDIATO =====
+
+    // 1. Entidades en situación 2
+    const resultadoSituacion2 = this.verificarEntidadesSituacion2(variables);
+    if (resultadoSituacion2.estado === "rechazado") {
+      reglasFallidas.push(resultadoSituacion2.mensaje!);
+    } else if (resultadoSituacion2.estado === "pendiente") {
+      pendientes.push(resultadoSituacion2.mensaje!);
     } else {
-      aprobados.push("Situación laboral validada");
+      aprobados.push("No tiene entidades en situación 2");
     }
-  }
 
-  // Tarjetas Crediguía
-  if (this.tieneTarjetaCrediguia(variables)) {
-    reglasFallidas.push("Cliente tiene tarjeta Crediguía activa");
-  } else {
-    aprobados.push("No tiene tarjetas Crediguía activas");
-  }
+    // 2. Deudas en entidades (situación 3-4-5)
+    const tieneDeudaEntidades = this.verificarDeudaEntidades(variables);
+    if (tieneDeudaEntidades.estado === "rechazado") {
+      reglasFallidas.push(tieneDeudaEntidades.mensaje!);
+    } else if (tieneDeudaEntidades.estado === "pendiente") {
+      pendientes.push(tieneDeudaEntidades.mensaje!);
+    } else {
+      aprobados.push("No tiene deudas en entidades con situación 3-4-5");
+    }
 
-  // Extraer datos personales
-  const personalData = this.extraerDatosPersonales(variables);
+    // 3. Referencias comerciales
+    const resultadoReferencias =
+      this.verificarReferenciasComerciales(variables);
+    if (resultadoReferencias.estado === "rechazado") {
+      reglasFallidas.push(resultadoReferencias.mensaje!);
+    } else if (resultadoReferencias.estado === "pendiente") {
+      pendientes.push(resultadoReferencias.mensaje!);
+    } else {
+      aprobados.push("Cumple con criterios de referencias comerciales");
+    }
 
-  // Determinar el estado overall - ahora con prioridad correcta
-  let status: "aprobado" | "rechazado" | "pendiente" = "aprobado";
-  
-  // Prioridad: Rechazo > Pendiente > Aprobado
-  if (reglasFallidas.length > 0) {
-    status = "rechazado";
-  } else if (pendientes.length > 0) {
-    status = "pendiente";
-  }
-
-  const approved = status === "aprobado";
-
-  // Construir mensaje detallado con TODOS los motivos
-  let motivo: string;
-  if (status === "aprobado") {
-    motivo = "APROBADO - Cumple con todos los criterios:\n" +
-             `✅ Criterios aprobados: ${aprobados.join("; ")}`;
-  } else if (status === "pendiente") {
-    motivo = "PENDIENTE - Requiere revisión manual:\n" +
-             `⏳ Motivos pendientes: ${pendientes.join("; ")}\n` +
-             `✅ Criterios aprobados: ${aprobados.join("; ")}`;
-  } else {
-    motivo = "RECHAZADO - No cumple con los criterios:\n" +
-             `❌ Motivos de rechazo: ${reglasFallidas.join("; ")}\n`;
+    // 4. Monotributistas sin empleo registrado (RECHAZO INMEDIATO)
     
-    // Solo mostrar pendientes y aprobados si existen
-    if (pendientes.length > 0) {
-      motivo += `⏳ Motivos pendientes: ${pendientes.join("; ")}\n`;
+    if (esMonotributista) {
+      const tieneEmpleoRegistrado = this.tieneEmpleoRegistrado(variables);
+      const cambioMonotributo = this.verificarCambioMonotributo(variables);
+      const tieneAportesRecientes = this.tieneAportesRecientes(variables);
+
+      if (!tieneEmpleoRegistrado) {
+        if (cambioMonotributo) {
+          // Mensaje claro y específico para el analista
+          reglasFallidas.push(
+            "Cliente es monotributista y cambió de empleo registrado a monotributo sin aportes recientes"
+          );
+
+          // Mensaje para el comerciante (más genérico pero informativo)
+          if (!motivoComerciante) {
+            motivoComerciante =
+              "Solicitud rechazada: Cliente es monotributista sin empleo registrado estable";
+          }
+        } else {
+          reglasFallidas.push(
+            "Cliente es monotributista sin empleo registrado estable"
+          );
+          if (!motivoComerciante) {
+            motivoComerciante =
+              "Solicitud rechazada: Cliente es monotributista sin empleo registrado estable";
+          }
+        }
+      } else {
+        aprobados.push("Monotributista con empleo registrado validado");
+      }
+    } else {
+      aprobados.push("No es monotributista");
     }
-    if (aprobados.length > 0) {
-      motivo += `✅ Criterios aprobados: ${aprobados.join("; ")}`;
+
+    // 5. Situación laboral (solo para no monotributistas)
+    if (!esMonotributista) {
+      const tieneLaboral = this.verificarSituacionLaboral(variables);
+      if (!tieneLaboral) {
+        reglasFallidas.push("Cliente no tiene situación laboral registrada");
+      } else {
+        aprobados.push("Situación laboral validada");
+      }
     }
+
+    // 6. Tarjetas Crediguía
+    if (this.tieneTarjetaCrediguia(variables)) {
+      reglasFallidas.push("Cliente tiene tarjeta Crediguía activa");
+    } else {
+      aprobados.push("No tiene tarjetas Crediguía activas");
+    }
+
+    // Extraer datos personales
+    const personalData = this.extraerDatosPersonales(variables);
+
+    // ===== DETERMINAR ESTADO FINAL CON PRIORIDAD CORRECTA =====
+    let status: "aprobado" | "rechazado" | "pendiente" = "aprobado";
+
+    // PRIORIDAD: Cualquier motivo de rechazo → RECHAZADO
+    if (reglasFallidas.length > 0) {
+      status = "rechazado";
+
+      // Mensaje genérico para comerciante si no se definió uno específico
+      if (!motivoComerciante) {
+        motivoComerciante =
+          "Solicitud rechazada: no cumple con los requisitos establecidos";
+      }
+    }
+    // Si no hay rechazos, pero hay pendientes → PENDIENTE
+    else if (pendientes.length > 0) {
+      status = "pendiente";
+      motivoComerciante =
+        "Solicitud en revisión: requiere verificación adicional";
+    }
+    // Solo si no hay rechazos ni pendientes → APROBADO
+    else {
+      status = "aprobado";
+      motivoComerciante = "Solicitud aprobada";
+    }
+
+    const approved = status === "aprobado";
+
+    // Construir mensaje detallado con TODOS los motivos
+    let motivo: string;
+    if (status === "aprobado") {
+      motivo =
+        "APROBADO - Cumple con todos los criterios:\n" +
+        `✅ Criterios aprobados: ${aprobados.join("; ")}`;
+    } else if (status === "pendiente") {
+      motivo =
+        "PENDIENTE - Requiere revisión manual:\n" +
+        `⏳ Motivos pendientes: ${pendientes.join("; ")}\n` +
+        `✅ Criterios aprobados: ${aprobados.join("; ")}`;
+    } else {
+      motivo =
+        "RECHAZADO - No cumple con los criterios:\n" +
+        `❌ Motivos de rechazo: ${reglasFallidas.join("; ")}\n`;
+
+      if (pendientes.length > 0) {
+        motivo += `⏳ Motivos pendientes: ${pendientes.join("; ")}\n`;
+      }
+      if (aprobados.length > 0) {
+        motivo += `✅ Criterios aprobados: ${aprobados.join("; ")}`;
+      }
+    }
+
+    return {
+      status,
+      approved,
+      score,
+      motivo,
+      motivoComerciante,
+      reglasFallidas: reglasFallidas,
+      pendientes: pendientes,
+      aprobados: aprobados,
+      personalData,
+      entidadesSituacion2: resultadoSituacion2.entidades,
+      entidadesDeuda: tieneDeudaEntidades.entidades,
+      referenciasComerciales: {
+        referenciasValidas: resultadoReferencias.referenciasValidas,
+        referenciasInvalidas: resultadoReferencias.referenciasInvalidas,
+        totalValidas: resultadoReferencias.totalValidas,
+        totalInvalidas: resultadoReferencias.totalInvalidas,
+      },
+    };
   }
 
-  return {
-    status,
-    approved,
-    score,
-    motivo,
-    reglasFallidas: reglasFallidas,
-    pendientes: pendientes, // Nuevo campo para pendientes
-    aprobados: aprobados,   // Nuevo campo para criterios aprobados
-    personalData,
-    entidadesSituacion2: resultadoSituacion2.entidades,
-    entidadesDeuda: tieneDeudaEntidades.entidades,
-    referenciasComerciales: {
-      referenciasValidas: resultadoReferencias.referenciasValidas,
-      referenciasInvalidas: resultadoReferencias.referenciasInvalidas,
-      totalValidas: resultadoReferencias.totalValidas,
-      totalInvalidas: resultadoReferencias.totalInvalidas
+  /**
+   * Calcula el total de aportes del cliente
+   * @param variables - Lista de variables de Nosis
+   * @returns Número total de aportes
+   */
+  private calcularTotalAportes(variables: NosisVariable[]): number {
+    const pagos = parseInt(
+      variables.find((v) => v.Nombre === "AP_12m_Empleado_Pagos_Cant")?.Valor ||
+        "0"
+    );
+    const impagos = parseInt(
+      variables.find((v) => v.Nombre === "AP_12m_Empleado_Impagos_Cant")
+        ?.Valor || "0"
+    );
+    const parciales = parseInt(
+      variables.find((v) => v.Nombre === "AP_12m_Empleado_PagoParcial_Cant")
+        ?.Valor || "0"
+    );
+
+    return pagos + impagos + parciales;
+  }
+
+  /**
+   * Verifica si el cliente cambió de empleado a monotributista sin aportes recientes
+   * @param variables - Lista de variables de Nosis
+   * @returns Boolean indicando si cambió a monotributista sin empleo reciente
+   */
+  private verificarCambioMonotributo(variables: NosisVariable[]): boolean {
+    const esMonotributista =
+      variables.find((v) => v.Nombre === "VI_Inscrip_Monotributo_Es")?.Valor ===
+      "Si";
+
+    if (!esMonotributista) {
+      return false;
     }
-  };
+
+    // Verificar si NO es empleado actualmente
+    const esEmpleadoActual =
+      variables.find((v) => v.Nombre === "VI_Empleado_Es")?.Valor === "Si";
+    if (esEmpleadoActual) {
+      return false; // Sigue siendo empleado, no hay cambio
+    }
+
+    // Verificar si tenía empleo en los últimos 12 meses pero ya no
+    const variableEmpleado12Meses = variables.find(
+      (v) => v.Nombre === "VI_Empleado_12m_Es"
+    );
+    const fueEmpleado12Meses = variableEmpleado12Meses
+      ? variableEmpleado12Meses.Valor === "Si"
+      : false;
+
+    // Obtener la última fecha de empleo registrada
+    const variableUltimaFechaEmpleo = variables.find(
+      (v) => v.Nombre === "VI_Empleado_Es_UltFecha"
+    );
+    const tieneUltimaFechaEmpleo =
+      !!variableUltimaFechaEmpleo?.Valor &&
+      variableUltimaFechaEmpleo.Valor !== "000000";
+
+    // Verificar aportes en los últimos 3 meses
+    const tieneAportesRecientes = this.tieneAportesRecientes(variables);
+
+    // Si fue empleado pero ya no lo es, y no tiene aportes recientes, detectamos el cambio
+    return (
+      (fueEmpleado12Meses || tieneUltimaFechaEmpleo) && !tieneAportesRecientes
+    );
+  }
+
+  /**
+   * Verifica si el cliente tiene aportes en los últimos 3 meses
+   * @param variables - Lista de variables de Nosis
+   * @returns Boolean indicando si tiene aportes recientes
+   */
+  private tieneAportesRecientes(variables: NosisVariable[]): boolean {
+    // Obtener la fecha más reciente de aportes
+    const fechaAporteReciente = variables.find(
+      (v) => v.Nombre === "AP_12m_Empleado_FecAntigua"
+    )?.Valor;
+
+    if (!fechaAporteReciente || fechaAporteReciente === "000000") {
+      return false;
+    }
+
+    // Convertir fecha de aporte (formato YYYYMM) a Date
+    const año = parseInt(fechaAporteReciente.substring(0, 4));
+    const mes = parseInt(fechaAporteReciente.substring(4, 6)) - 1;
+    const fechaAporte = new Date(año, mes, 1);
+
+    // Calcular fecha límite (últimos 3 meses)
+    const tresMesesAtras = new Date();
+    tresMesesAtras.setMonth(tresMesesAtras.getMonth() - 3);
+
+    // Verificar si el aporte es de los últimos 3 meses
+    return fechaAporte >= tresMesesAtras;
   }
 
   /**
@@ -554,7 +727,7 @@ private verificarReferenciasComerciales(variables: NosisVariable[]): {
   private verificarEntidadesSituacion2(variables: NosisVariable[]): {
     estado: "aprobado" | "pendiente" | "rechazado";
     mensaje?: string;
-    entidades?: number[]
+    entidades?: number[];
   } {
     const detalleDeudas = variables.find(
       (v) => v.Nombre === "CI_24m_Detalle"
@@ -572,34 +745,42 @@ private verificarReferenciasComerciales(variables: NosisVariable[]): {
     const entidadesSituacion2 = new Set<number>();
     //TODO corregir el parsing de entidad a número
     for (const registro of registros) {
-    // Filtrar por situación 2 y que sea de los últimos 2 meses
-    const fechaRegistro = this.convertirPeriodoAFecha(registro.periodo);
-    if (registro.situacion === 2 && fechaRegistro >= dosMesesAtras) {
-      // Convertir el código de entidad de string a número
-      const codigoEntidad = parseInt(registro.entidad, 10);
-      if (!isNaN(codigoEntidad)) {
-        entidadesSituacion2.add(codigoEntidad);
-      } else {
-        console.warn('No se pudo convertir código de entidad a número:', registro.entidad);
+      // Filtrar por situación 2 y que sea de los últimos 2 meses
+      const fechaRegistro = this.convertirPeriodoAFecha(registro.periodo);
+      if (registro.situacion === 2 && fechaRegistro >= dosMesesAtras) {
+        // Convertir el código de entidad de string a número
+        const codigoEntidad = parseInt(registro.entidad, 10);
+        if (!isNaN(codigoEntidad)) {
+          entidadesSituacion2.add(codigoEntidad);
+        } else {
+          console.warn(
+            "No se pudo convertir código de entidad a número:",
+            registro.entidad
+          );
+        }
       }
     }
-  }
 
     const cantidadEntidades = entidadesSituacion2.size;
     const entidadesArray = Array.from(entidadesSituacion2);
-    const nombresEntidades = this.entidadesService.obtenerNombresEntidades(entidadesArray);
+    const nombresEntidades =
+      this.entidadesService.obtenerNombresEntidades(entidadesArray);
 
     if (cantidadEntidades >= 2) {
       return {
         estado: "rechazado",
-        mensaje: `Tiene ${cantidadEntidades} entidades en situación 2 en los últimos 2 meses: ${nombresEntidades.join(', ')}`,
-        entidades: entidadesArray
+        mensaje: `Tiene ${cantidadEntidades} entidades en situación 2 en los últimos 2 meses: ${nombresEntidades.join(
+          ", "
+        )}`,
+        entidades: entidadesArray,
       };
     } else if (cantidadEntidades === 1) {
       return {
         estado: "pendiente",
-        mensaje: `Tiene 1 entidad en situación 2 en los últimos 2 meses: ${nombresEntidades.join(', ')}`,
-        entidades: entidadesArray
+        mensaje: `Tiene 1 entidad en situación 2 en los últimos 2 meses: ${nombresEntidades.join(
+          ", "
+        )}`,
+        entidades: entidadesArray,
       };
     }
 
@@ -639,32 +820,40 @@ private verificarReferenciasComerciales(variables: NosisVariable[]): {
     const entidadesConDeuda = new Set<number>();
 
     for (const registro of registros) {
-    if (registro.situacion >= 3 && registro.situacion <= 5) {
-      // Convertir el código de entidad de string a número
-      const codigoEntidad = parseInt(registro.entidad, 10);
-      if (!isNaN(codigoEntidad)) {
-        entidadesConDeuda.add(codigoEntidad);
-      } else {
-        console.warn('No se pudo convertir código de entidad a número:', registro.entidad);
+      if (registro.situacion >= 3 && registro.situacion <= 5) {
+        // Convertir el código de entidad de string a número
+        const codigoEntidad = parseInt(registro.entidad, 10);
+        if (!isNaN(codigoEntidad)) {
+          entidadesConDeuda.add(codigoEntidad);
+        } else {
+          console.warn(
+            "No se pudo convertir código de entidad a número:",
+            registro.entidad
+          );
+        }
       }
     }
-  }
 
     const cantidad = entidadesConDeuda.size;
     const entidadesArray = Array.from(entidadesConDeuda);
-    const nombresEntidades = this.entidadesService.obtenerNombresEntidades(entidadesArray);
+    const nombresEntidades =
+      this.entidadesService.obtenerNombresEntidades(entidadesArray);
 
     if (cantidad >= 3) {
       return {
         estado: "rechazado",
-        mensaje: `Tiene deuda en 3 o más entidades con situación 3, 4 o 5: ${nombresEntidades.join(', ')}`,
-        entidades: entidadesArray
+        mensaje: `Tiene deuda en 3 o más entidades con situación 3, 4 o 5: ${nombresEntidades.join(
+          ", "
+        )}`,
+        entidades: entidadesArray,
       };
     } else if (cantidad >= 1) {
       return {
         estado: "pendiente",
-        mensaje: `Tiene deuda en ${cantidad} entidades con situación 3, 4 o 5: ${nombresEntidades.join(', ')}`,
-        entidades: entidadesArray
+        mensaje: `Tiene deuda en ${cantidad} entidades con situación 3, 4 o 5: ${nombresEntidades.join(
+          ", "
+        )}`,
+        entidades: entidadesArray,
       };
     }
 
@@ -675,9 +864,7 @@ private verificarReferenciasComerciales(variables: NosisVariable[]): {
    * @param detalleDeudas - String crudo con información de deudas
    * @returns Array de objetos con información estructurada de deudas
    */
-  private parsearDetalleDeudas(
-    detalleDeudas: string
-  ): Array<{
+  private parsearDetalleDeudas(detalleDeudas: string): Array<{
     entidad: string;
     periodo: number;
     situacion: number;
@@ -695,43 +882,43 @@ private verificarReferenciasComerciales(variables: NosisVariable[]): {
     let match;
 
     while ((match = regex.exec(detalleDeudas)) !== null) {
-    const partes = match[1].split("|").map(part => part.trim());
-    
-    if (partes.length >= 4) {
-      // El primer campo debería ser el código de entidad (numérico)
-      const codigoEntidad = partes[0];
-      
-      // Verificar que sea un código numérico válido
-      if (codigoEntidad && !isNaN(Number(codigoEntidad))) {
-        resultados.push({
-          entidad: codigoEntidad, // Guardar como string para luego convertir a número
-          periodo: parseInt(partes[1]) || 0,
-          situacion: parseInt(partes[2]) || 0,
-          monto: parseInt(partes[3]) || 0,
-        });
-      } else {
-        console.warn('Código de entidad inválido:', codigoEntidad);
+      const partes = match[1].split("|").map((part) => part.trim());
+
+      if (partes.length >= 4) {
+        // El primer campo debería ser el código de entidad (numérico)
+        const codigoEntidad = partes[0];
+
+        // Verificar que sea un código numérico válido
+        if (codigoEntidad && !isNaN(Number(codigoEntidad))) {
+          resultados.push({
+            entidad: codigoEntidad, // Guardar como string para luego convertir a número
+            periodo: parseInt(partes[1]) || 0,
+            situacion: parseInt(partes[2]) || 0,
+            monto: parseInt(partes[3]) || 0,
+          });
+        } else {
+          console.warn("Código de entidad inválido:", codigoEntidad);
+        }
       }
     }
-  }
 
     return resultados;
   }
   /**
-   * Verifica si el cliente tiene empleo registrado
+   * Verifica si el cliente tiene empleo registrado estable
    * @param variables - Lista de variables de Nosis
    * @returns Boolean indicando si tiene empleo registrado
    */
   private tieneEmpleoRegistrado(variables: NosisVariable[]): boolean {
     const esEmpleado =
       variables.find((v) => v.Nombre === "VI_Empleado_Es")?.Valor === "Si";
-    const tieneAportes =
-      parseInt(
-        variables.find((v) => v.Nombre === "AP_12m_Empleado_Pagos_Cant")
-          ?.Valor || "0"
-      ) > 0;
+    const pagos = parseInt(
+      variables.find((v) => v.Nombre === "AP_12m_Empleado_Pagos_Cant")?.Valor ||
+        "0"
+    );
 
-    return esEmpleado || tieneAportes;
+    // Considerar empleo estable si está empleado actualmente O tiene al menos 3 pagos regulares
+    return esEmpleado || pagos >= 3;
   }
   /**
    * Verifica la situación laboral del cliente

@@ -14,4 +14,8 @@ export interface CompraRepositoryPort {
     getSolicitudFormalIdByCompraId(compraId: number): Promise<number | null>;
     getComprasByComerciante(comercianteId: number): Promise<any[]>;
     getAllCompras(): Promise<any[]>;
+    rechazarSolicitudesInicialesPorCompra(
+        cuilCliente: string, 
+        solicitudInicialExcluida: number
+    ): Promise<Array<{ id: number, comercianteId: number | null }>>;
 }

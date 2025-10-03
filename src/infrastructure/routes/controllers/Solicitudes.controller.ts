@@ -102,7 +102,8 @@ const crearSolicitudInicialUC = new CrearSolicitudInicialUseCase(
   nosisAdapter,
   process.env.NOSIS_AUTO === "true", // Modo automático de Veraz,
   entidadesService,
-  comercianteRepository
+  comercianteRepository,
+  compraRepository
 );
 
 const getComerciantePorIdUC = new GetComercianteByIdUseCase(

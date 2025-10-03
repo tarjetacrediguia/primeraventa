@@ -88,6 +88,8 @@ export const HISTORIAL_ACTIONS = {
     PENDING_SOLICITUD_INICIAL: 'pending_solicitud_inicial',
     /** Aprobación de una solicitud inicial de crédito (alias en español) */
     APROBAR_SOLICITUD_INICIAL: 'aprobacion_solicitud_inicial',
+    /** Rechazo automático de solicitudes iniciales duplicadas al aprobar una compra */
+    RECHAZO_AUTOMATICO_SOLICITUDES_DUPLICADAS: 'rechazo_automatico_solicitudes_duplicadas',
 
     // ===== SOLICITUDES FORMALES =====
     /** Creación de una nueva solicitud formal de crédito */
@@ -154,4 +156,5 @@ export const HISTORIAL_ACTIONS = {
     ERROR_PROCESO: 'error_proceso',
     /** Advertencia por intento de crear un duplicado */
     WARNING_DUPLICADO: 'warning_duplicado',
+
 } as const;

@@ -36,6 +36,7 @@ import { HistorialRepositoryPort } from "../../ports/HistorialRepositoryPort";
 import { NotificationPort } from "../../ports/NotificationPort";
 import { ClienteRepositoryPort } from "../../ports/ClienteRepositoryPort";
 import { HISTORIAL_ACTIONS } from "../../constants/historialActions";
+import { SolicitudInicialRepositoryPort } from "../../ports/SolicitudInicialRepositoryPort";
 
 export class AprobarCompraUseCase {
   /**
@@ -52,7 +53,8 @@ export class AprobarCompraUseCase {
     private readonly solicitudFormalRepository: SolicitudFormalRepositoryPort,
     private readonly historialRepository: HistorialRepositoryPort,
     private readonly notificationService: NotificationPort,
-    private readonly clienteRepository: ClienteRepositoryPort
+    private readonly clienteRepository: ClienteRepositoryPort,
+    private readonly solicitudInicialRepository: SolicitudInicialRepositoryPort
   ) {}
 
   /**
@@ -257,6 +259,9 @@ export class AprobarCompraUseCase {
         compra, compra.getClienteId()
       );
 
+      // ===== RECHAZAR SOLICITUDES INICIALES DUPLICADAS =====
+      await this.rechazarSolicitudesInicialesDuplicadas(compraActualizada, solicitudFormal, usuarioId);
+
       // ===== PASO 8: REGISTRAR APROBACIÓN EN HISTORIAL =====
       // Registrar evento de aprobación exitosa en historial
       await this.historialRepository.registrarEvento({
@@ -334,4 +339,80 @@ export class AprobarCompraUseCase {
       throw error;
     }
   }
+
+   /**
+   * Rechaza automáticamente las demás solicitudes iniciales del mismo cliente
+   * cuando se concreta una compra
+   */
+  private async rechazarSolicitudesInicialesDuplicadas(
+    compra: Compra,
+    solicitudFormal: any,
+    usuarioId: number
+  ): Promise<void> {
+    try {
+      // Obtener la solicitud inicial asociada a esta compra
+      const solicitudInicialOrigen = await this.solicitudInicialRepository.getSolicitudInicialById(
+        solicitudFormal.getSolicitudInicialId()
+      );
+
+      if (!solicitudInicialOrigen) {
+        console.warn(`No se encontró solicitud inicial para la compra ${compra.getId()}`);
+        return;
+      }
+
+      // Obtener CUIL del cliente
+      const cuilCliente = solicitudInicialOrigen.getCuilCliente();
+      if (!cuilCliente) {
+        console.warn(`No se pudo obtener CUIL del cliente para la compra ${compra.getId()}`);
+        return;
+      }
+
+      console.log(`🔄 Rechazando solicitudes duplicadas para CUIL: ${cuilCliente}, compra: ${compra.getId()}`);
+
+      // Usar el método del repositorio que ahora devuelve las solicitudes rechazadas
+      const solicitudesRechazadas = await this.compraRepository.rechazarSolicitudesInicialesPorCompra(
+        cuilCliente,
+        solicitudInicialOrigen.getId()
+      );
+
+      // Registrar en el historial y notificar por cada solicitud rechazada
+      for (const solicitud of solicitudesRechazadas) {
+        // Registrar en historial usando el puerto
+        await this.historialRepository.registrarEvento({
+          usuarioId: usuarioId,
+          accion: HISTORIAL_ACTIONS.RECHAZO_AUTOMATICO_SOLICITUDES_DUPLICADAS,
+          entidadAfectada: 'solicitudes_iniciales',
+          entidadId: solicitud.id,
+          detalles: {
+            motivo: 'Rechazada por concreción de compra en otro local',
+            cuil_cliente: cuilCliente,
+            solicitud_inicial_excluida: solicitudInicialOrigen.getId(),
+            compra_id: compra.getId()
+          },
+          solicitudInicialId: solicitud.id
+        });
+
+        // Notificar al comerciante afectado usando el puerto
+        if (solicitud.comercianteId) {
+          await this.notificationService.emitNotification({
+            userId: solicitud.comercianteId,
+            type: "solicitud_inicial",
+            message: `Solicitud rechazada: El cliente con CUIL ${cuilCliente} concretó una compra en otro comercio`,
+            metadata: {
+              motivo: 'compra_concretada_otro_comercio',
+              cuil_cliente: cuilCliente,
+              solicitud_inicial_id: solicitud.id
+            }
+          });
+        }
+      }
+
+      console.log(`✅ ${solicitudesRechazadas.length} solicitudes duplicadas rechazadas para CUIL: ${cuilCliente}`);
+      
+    } catch (error) {
+      console.error('❌ Error rechazando solicitudes duplicadas:', error);
+      // No lanzar error para no interrumpir el flujo principal de aprobación de compra
+    }
+  }
+
 }

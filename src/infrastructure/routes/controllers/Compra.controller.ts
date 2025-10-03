@@ -161,7 +161,8 @@ export const aprobarCompra = async (req: Request, res: Response) => {
             solicitudFormalRepository,
             historialRepository,
             notificationService,
-            clienteRepository
+            clienteRepository,
+            solicitudInicialRepository
         );
 
         const compraActualizada = await useCase.execute(id, Number(usuarioId), numeroAutorizacion, numeroCuenta);

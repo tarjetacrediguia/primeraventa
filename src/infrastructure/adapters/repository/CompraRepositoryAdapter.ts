@@ -5,6 +5,60 @@ import { CompraRepositoryPort } from "../../../application/ports/CompraRepositor
 import { pool } from "../../config/Database/DatabaseDonfig";
 
 export class CompraRepositoryAdapter implements CompraRepositoryPort {
+    async rechazarSolicitudesInicialesPorCompra(
+    cuilCliente: string, 
+    solicitudInicialExcluida: number
+): Promise<Array<{ id: number, comercianteId: number | null }>> {
+    const client = await pool.connect();
+    try {
+        await client.query('BEGIN');
+
+        console.log(`🔄 Rechazando solicitudes iniciales para CUIL: ${cuilCliente}, excluyendo: ${solicitudInicialExcluida}`);
+
+        // 1. Obtener el ID del cliente por CUIL
+        const clienteQuery = `SELECT id FROM clientes WHERE cuil = $1`;
+        const clienteResult = await client.query(clienteQuery, [cuilCliente]);
+        
+        if (clienteResult.rows.length === 0) {
+            throw new Error(`Cliente con CUIL ${cuilCliente} no encontrado`);
+        }
+
+        const clienteId = clienteResult.rows[0].id;
+
+        // 2. Actualizar todas las solicitudes iniciales del mismo cliente (excepto la que originó la compra)
+        const updateQuery = `
+            UPDATE solicitudes_iniciales 
+            SET estado = 'rechazada',
+                motivo_rechazo = 'Rechazada por concreción de compra en otro local',
+                fecha_actualizacion = CURRENT_TIMESTAMP
+            WHERE cliente_id = $1
+            AND id != $2
+            AND estado IN ('pendiente', 'aprobada')
+            RETURNING id, comerciante_id
+        `;
+        
+        const updateResult = await client.query(updateQuery, [clienteId, solicitudInicialExcluida]);
+        const solicitudesRechazadas = updateResult.rows;
+
+        console.log(`📝 Solicitudes rechazadas: ${solicitudesRechazadas.length}`);
+
+        await client.query('COMMIT');
+        console.log(`✅ Solicitudes rechazadas exitosamente para CUIL: ${cuilCliente}`);
+
+        // Devolver la lista de solicitudes rechazadas con sus comerciantes
+        return solicitudesRechazadas.map(row => ({
+            id: row.id,
+            comercianteId: row.comerciante_id
+        }));
+
+    } catch (error) {
+        await client.query('ROLLBACK');
+        console.error('❌ Error rechazando solicitudes iniciales:', error);
+        throw error;
+    } finally {
+        client.release();
+    }
+}
     async getAllCompras(): Promise<Compra[]> {
         const client = await pool.connect();
         try {

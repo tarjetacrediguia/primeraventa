@@ -51,6 +51,7 @@ import {
   crearComentarioAnalista,
   crearComentarioComerciante,
 } from "../../../infrastructure/utils/comentariosHelper";
+import { CompraRepositoryPort } from "../../ports/CompraRepositoryPort";
 
 export type CrearSolicitudInicialResponse = {
   solicitud: SolicitudInicial;
@@ -97,7 +98,8 @@ export class CrearSolicitudInicialUseCase {
     private readonly nosisPort: NosisPort,
     private readonly nosisAutomatico: boolean,
     private readonly entidadesService: EntidadesService,
-    private readonly comercianteRepository: ComercianteRepositoryPort
+    private readonly comercianteRepository: ComercianteRepositoryPort,
+    private readonly compraRepository: CompraRepositoryPort
   ) {}
 
   /**
@@ -146,38 +148,66 @@ export class CrearSolicitudInicialUseCase {
         comercianteId
       );
 
-      if (solicitudesExistentes.tieneSolicitudOtroComercio) {
-        console.log(
-          `❌ Cliente ya tiene solicitud de otro comercio: ${solicitudesExistentes.nombreComercioOriginal}`
-        );
+      // 🚨 PRIMERO: Verificar si hay solicitudes de OTRO comercio
+if (solicitudesExistentes.tieneSolicitudOtroComercio) {
+  console.log(
+    `❌ Cliente ya tiene solicitud de otro comercio: ${solicitudesExistentes.nombreComercioOriginal}`
+  );
 
-        await this.notificationService.emitNotification({
-          userId: Number(comercianteId),
-          type: "solicitud_inicial",
-          message: `El cliente con CUIL ${cuilCliente} ya tiene una solicitud inicial creada por otro comercio`,
-        });
+  await this.notificationService.emitNotification({
+    userId: Number(comercianteId),
+    type: "solicitud_inicial",
+    message: `El cliente con CUIL ${cuilCliente} ya tiene una solicitud inicial creada por otro comercio`,
+  });
 
-        await this.historialRepository.registrarEvento({
-          usuarioId: comercianteId,
-          accion: HISTORIAL_ACTIONS.REJECT_SOLICITUD_INICIAL,
-          entidadAfectada: "solicitudes_iniciales",
-          entidadId: 0,
-          detalles: {
-            motivo: "Cliente ya tiene solicitud de otro comercio",
-            cuil_cliente: cuilCliente,
-            comerciante_original: solicitudesExistentes.comercianteOriginal,
-            nombre_comercio_original:
-              solicitudesExistentes.nombreComercioOriginal,
-          },
-          solicitudInicialId: undefined,
-        });
+  await this.historialRepository.registrarEvento({
+    usuarioId: comercianteId,
+    accion: HISTORIAL_ACTIONS.REJECT_SOLICITUD_INICIAL,
+    entidadAfectada: "solicitudes_iniciales",
+    entidadId: 0,
+    detalles: {
+      motivo: "Cliente ya tiene solicitud de otro comercio",
+      cuil_cliente: cuilCliente,
+      comerciante_original: solicitudesExistentes.comercianteOriginal,
+      nombre_comercio_original: solicitudesExistentes.nombreComercioOriginal,
+    },
+    solicitudInicialId: undefined,
+  });
 
-        throw new Error(
-          `El cliente ya tiene una solicitud inicial en el sistema. Comercio original: ${solicitudesExistentes.nombreComercioOriginal}`
-        );
-      }
+  throw new Error(
+    `El cliente ya tiene una solicitud inicial en el sistema. Comercio original: ${solicitudesExistentes.nombreComercioOriginal}`
+  );
+}
 
-      console.log(`✅ No hay solicitudes de otros comercios, continuando...`);
+// 🚨 SEGUNDO: Verificar si hay solicitudes del MISMO comerciante
+if (solicitudesExistentes.tieneSolicitudMismoComercio) {
+  console.log(`❌ El comerciante ya tiene una solicitud para este cliente`);
+
+  await this.notificationService.emitNotification({
+    userId: Number(comercianteId),
+    type: "solicitud_inicial",
+    message: `Ya existe una solicitud inicial para el cliente con CUIL ${cuilCliente} en su comercio`,
+  });
+
+  await this.historialRepository.registrarEvento({
+    usuarioId: comercianteId,
+    accion: HISTORIAL_ACTIONS.REJECT_SOLICITUD_INICIAL,
+    entidadAfectada: "solicitudes_iniciales",
+    entidadId: 0,
+    detalles: {
+      motivo: "Comerciante ya tiene solicitud para este cliente",
+      cuil_cliente: cuilCliente,
+      comerciante_id: comercianteId,
+    },
+    solicitudInicialId: undefined,
+  });
+
+  throw new Error(
+    `Ya existe una solicitud inicial para este cliente en su comercio. No puede crear múltiples solicitudes.`
+  );
+}
+
+console.log(`✅ No hay solicitudes bloqueantes, continuando...`);
 
       // ===== PASO 2: CREAR O RECUPERAR CLIENTE =====
       let cliente: Cliente;
@@ -676,93 +706,222 @@ export class CrearSolicitudInicialUseCase {
     }
   }
 
-  /**
-   * Verifica si el cliente ya tiene solicitudes iniciales de otros comercios
-   * @param cuilCliente - CUIL del cliente a verificar
-   * @param comercianteIdActual - ID del comerciante que intenta crear la solicitud
-   * @returns Información sobre solicitudes existentes de otros comercios
-   */
-  private async verificarSolicitudesExistentes(
-    cuilCliente: string,
-    comercianteIdActual: number
-  ): Promise<{
-    tieneSolicitudOtroComercio: boolean;
-    comercianteOriginal?: number;
-    nombreComercioOriginal?: string;
-  }> {
-    try {
-      console.log(`🔍 Buscando solicitudes para CUIL: ${cuilCliente}`);
+private async verificarSolicitudesExistentes(
+  cuilCliente: string,
+  comercianteIdActual: number
+): Promise<{
+  tieneSolicitudOtroComercio: boolean;
+  tieneSolicitudMismoComercio: boolean;
+  comercianteOriginal?: number;
+  nombreComercioOriginal?: string;
+}> {
+  try {
+    console.log(`🔍 Buscando solicitudes para CUIL: ${cuilCliente}`);
 
-      const solicitudesCliente =
-        await this.solicitudInicialRepository.getSolicitudesInicialesByCuil(
-          cuilCliente
-        );
-      console.log(
-        `📊 Encontradas ${solicitudesCliente.length} solicitudes para el cliente`
-      );
+    const solicitudesCliente = await this.solicitudInicialRepository.getSolicitudesInicialesByCuil(cuilCliente);
+    console.log(`📊 Encontradas ${solicitudesCliente.length} solicitudes para el cliente`);
 
-      if (solicitudesCliente.length === 0) {
-        console.log(`✅ No hay solicitudes existentes`);
-        return { tieneSolicitudOtroComercio: false };
-      }
+    if (solicitudesCliente.length === 0) {
+      console.log(`✅ No hay solicitudes existentes`);
+      return { 
+        tieneSolicitudOtroComercio: false, 
+        tieneSolicitudMismoComercio: false 
+      };
+    }
 
-      // Filtrar solicitudes que no sean del comerciante actual
-      const solicitudesOtroComercio = solicitudesCliente.filter((solicitud) => {
-        const solicitudComercianteId = solicitud.getComercianteId();
-        const esOtroComercio = solicitudComercianteId !== comercianteIdActual;
-        const estadoValido = ["pendiente", "aprobada", "rechazada"].includes(
-          solicitud.getEstado()
-        );
+    // 🚨 FILTRAR SOLO ESTADOS QUE BLOQUEAN NUEVAS SOLICITUDES
+    const solicitudesBloqueantes = await this.filtrarSolicitudesBloqueantes(
+      solicitudesCliente, 
+      comercianteIdActual
+    );
 
-        console.log(
-          `Solicitud ID: ${solicitud.getId()}, Comerciante: ${solicitudComercianteId}, Estado: ${solicitud.getEstado()}, EsOtroComercio: ${esOtroComercio}, EstadoValido: ${estadoValido}`
-        );
+    console.log(`📊 Solicitudes bloqueantes totales: ${solicitudesBloqueantes.length}`);
 
-        return esOtroComercio && estadoValido;
-      });
+    if (solicitudesBloqueantes.length === 0) {
+      return { 
+        tieneSolicitudOtroComercio: false, 
+        tieneSolicitudMismoComercio: false 
+      };
+    }
 
-      console.log(
-        `📊 Solicitudes de otros comercios: ${solicitudesOtroComercio.length}`
-      );
+    // Separar entre solicitudes del mismo comerciante y de otros comercios
+    const solicitudesMismoComercio = solicitudesBloqueantes.filter(
+      solicitud => solicitud.getComercianteId() === comercianteIdActual
+    );
+    
+    const solicitudesOtroComercio = solicitudesBloqueantes.filter(
+      solicitud => solicitud.getComercianteId() !== comercianteIdActual
+    );
 
-      if (solicitudesOtroComercio.length === 0) {
-        return { tieneSolicitudOtroComercio: false };
-      }
+    console.log(`📊 Solicitudes bloqueantes mismo comercio: ${solicitudesMismoComercio.length}`);
+    console.log(`📊 Solicitudes bloqueantes otro comercio: ${solicitudesOtroComercio.length}`);
 
-      // Obtener información del comerciante original
+    // Si hay solicitudes de otros comercios, priorizar ese mensaje
+    if (solicitudesOtroComercio.length > 0) {
       const solicitudOriginal = solicitudesOtroComercio[0];
       const comercianteOriginalId = solicitudOriginal.getComercianteId();
       let nombreComercioOriginal = "Comercio no disponible";
 
       if (comercianteOriginalId) {
         try {
-          const comercianteOriginal = await this.comercianteRepository.findById(
-            comercianteOriginalId
-          );
+          const comercianteOriginal = await this.comercianteRepository.findById(comercianteOriginalId);
           nombreComercioOriginal = comercianteOriginal.getNombreComercio();
           console.log(`🏪 Comercio original: ${nombreComercioOriginal}`);
         } catch (error) {
-          console.error(
-            "Error obteniendo datos del comerciante original:",
-            error
-          );
+          console.error("Error obteniendo datos del comerciante original:", error);
         }
       }
 
       return {
         tieneSolicitudOtroComercio: true,
+        tieneSolicitudMismoComercio: false, // Aunque pueda haber del mismo, priorizamos el mensaje de otro comercio
         comercianteOriginal: comercianteOriginalId,
         nombreComercioOriginal,
       };
-    } catch (error) {
-      console.error(
-        "❌ Error en verificación de solicitudes existentes:",
-        error
-      );
-      // En caso de error, permitir continuar (fail-open)
-      return { tieneSolicitudOtroComercio: false };
+    }
+
+    // Si hay solicitudes del mismo comerciante
+    if (solicitudesMismoComercio.length > 0) {
+      return {
+        tieneSolicitudOtroComercio: false,
+        tieneSolicitudMismoComercio: true,
+      };
+    }
+
+    return { 
+      tieneSolicitudOtroComercio: false, 
+      tieneSolicitudMismoComercio: false 
+    };
+  } catch (error) {
+    console.error("❌ Error en verificación de solicitudes existentes:", error);
+    return { 
+      tieneSolicitudOtroComercio: false, 
+      tieneSolicitudMismoComercio: false 
+    };
+  }
+}
+
+/**
+ * Filtra las solicitudes que realmente deberían bloquear nuevas solicitudes
+ * Considera el estado de las compras asociadas y diferencia entre mismo y otro comerciante
+ */
+private async filtrarSolicitudesBloqueantes(
+  solicitudesCliente: SolicitudInicial[],
+  comercianteIdActual: number
+): Promise<SolicitudInicial[]> {
+  const solicitudesBloqueantes: SolicitudInicial[] = [];
+
+  for (const solicitud of solicitudesCliente) {
+    const solicitudComercianteId = solicitud.getComercianteId();
+    const esMismoComerciante = solicitudComercianteId === comercianteIdActual;
+    const esOtroComercio = !esMismoComerciante;
+    
+    const estado = solicitud.getEstado();
+    
+    console.log(
+      `📋 Analizando Solicitud ID: ${solicitud.getId()}, ` +
+      `Estado: ${estado}, Comerciante: ${solicitudComercianteId}, ` +
+      `EsMismoComerciante: ${esMismoComerciante}`
+    );
+
+    // ✅ LÓGICA DE BLOQUEO ACTUALIZADA - DIFERENCIAR MISMO VS OTRO COMERCIO
+    let esBloqueante = false;
+
+    if (esMismoComerciante) {
+      // 🚨 PARA EL MISMO COMERCIANTE: BLOQUEAR SIEMPRE (excepto expirada)
+      switch (estado) {
+        case "pendiente":
+        case "aprobada":
+        case "rechazada":
+          esBloqueante = true;
+          console.log(`   🚫 BLOQUEANTE (mismo comercio): Estado ${estado}`);
+          break;
+        case "expirada":
+          esBloqueante = false;
+          console.log(`   ✅ PERMITIDA (mismo comercio): Solicitud expirada`);
+          break;
+        default:
+          esBloqueante = false;
+      }
+    } else {
+      // 🚨 PARA OTRO COMERCIO: LÓGICA ESPECÍFICA
+      switch (estado) {
+        case "pendiente":
+          // Bloquea - ya está en evaluación en otro comercio
+          esBloqueante = true;
+          console.log(`   🚫 BLOQUEANTE (otro comercio): Solicitud pendiente en evaluación`);
+          break;
+
+        case "rechazada":
+          // Bloquea - evita shopping de créditos rechazados
+          esBloqueante = true;
+          console.log(`   🚫 BLOQUEANTE (otro comercio): Solicitud rechazada`);
+          break;
+
+        case "aprobada":
+          // ✅ CAMBIO CLAVE: Solo bloquea si tiene compras ACTIVAS
+          // Si está aprobada pero SIN compras, PERMITIR que otro comercio cree solicitud
+          const tieneComprasActivas = await this.tieneComprasActivas(solicitud);
+          esBloqueante = tieneComprasActivas;
+          console.log(`   ${tieneComprasActivas ? '🚫 BLOQUEANTE' : '✅ PERMITIDA'} (otro comercio): Solicitud aprobada ${tieneComprasActivas ? 'CON' : 'SIN'} compras activas`);
+          break;
+
+        case "expirada":
+          // Nunca bloquea - el crédito venció
+          esBloqueante = false;
+          console.log(`   ✅ PERMITIDA (otro comercio): Solicitud expirada`);
+          break;
+
+        default:
+          esBloqueante = false;
+          console.log(`   ⚠️  Estado no manejado: ${estado}`);
+      }
+    }
+
+    if (esBloqueante) {
+      solicitudesBloqueantes.push(solicitud);
     }
   }
+
+  return solicitudesBloqueantes;
+}
+
+/**
+ * Verifica si una solicitud inicial tiene compras activas asociadas
+ * Una compra activa es cualquier compra que NO esté rechazada
+ */
+private async tieneComprasActivas(solicitudInicial: SolicitudInicial): Promise<boolean> {
+  try {
+    // Obtener la solicitud formal asociada
+    const solicitudFormal = await this.solicitudFormalRepository.getSolicitudFormalBySolicitudInicialId(
+      solicitudInicial.getId()
+    );
+
+    if (!solicitudFormal) {
+      console.log(`   📦 No hay solicitud formal asociada`);
+      return false; // No hay solicitud formal, no hay compras
+    }
+
+    // Obtener compras asociadas a la solicitud formal
+    const compras = await this.compraRepository.getComprasBySolicitudFormalId(
+      solicitudFormal.getId()
+    );
+
+    // Buscar si hay alguna compra que NO esté rechazada
+    const tieneComprasActivas = compras.some((compra: { getEstado: () => string; }) => 
+      compra.getEstado().toLowerCase() !== 'rechazada'
+    );
+
+    console.log(`   📦 Compras encontradas: ${compras.length}, Activas: ${tieneComprasActivas}`);
+    
+    return tieneComprasActivas;
+
+  } catch (error) {
+    console.error(`   ❌ Error verificando compras:`, error);
+    // En caso de error, asumir que no hay compras activas para no bloquear incorrectamente
+    return false;
+  }
+}
 
   /**
    * Genera comentarios detallados para analistas
