@@ -719,86 +719,101 @@ export class VerifyDataNosisUseCase {
     return fechaAporte >= tresMesesAtras;
   }
 
-  /**
-   * Verifica las entidades en situación 2 según los nuevos criterios
-   * - 1 entidad en situación 2 en últimos 2 meses → Pendiente
-   * - 2+ entidades en situación 2 en últimos 2 meses → Rechazo
-   */
-  private verificarEntidadesSituacion2(variables: NosisVariable[]): {
-    estado: "aprobado" | "pendiente" | "rechazado";
-    mensaje?: string;
-    entidades?: number[];
-  } {
-    const detalleDeudas = variables.find(
-      (v) => v.Nombre === "CI_24m_Detalle"
-    )?.Valor;
-    if (!detalleDeudas) {
-      return { estado: "aprobado" };
-    }
-
-    const registros = this.parsearDetalleDeudas(detalleDeudas);
-
-    // Calcular fecha límite (últimos 2 meses)
-    const dosMesesAtras = new Date();
-    dosMesesAtras.setMonth(dosMesesAtras.getMonth() - 2);
-
-    const entidadesSituacion2 = new Set<number>();
-    //TODO corregir el parsing de entidad a número
-    for (const registro of registros) {
-      // Filtrar por situación 2 y que sea de los últimos 2 meses
-      const fechaRegistro = this.convertirPeriodoAFecha(registro.periodo);
-      if (registro.situacion === 2 && fechaRegistro >= dosMesesAtras) {
-        // Convertir el código de entidad de string a número
-        const codigoEntidad = parseInt(registro.entidad, 10);
-        if (!isNaN(codigoEntidad)) {
-          entidadesSituacion2.add(codigoEntidad);
-        } else {
-          console.warn(
-            "No se pudo convertir código de entidad a número:",
-            registro.entidad
-          );
-        }
-      }
-    }
-
-    const cantidadEntidades = entidadesSituacion2.size;
-    const entidadesArray = Array.from(entidadesSituacion2);
-    const nombresEntidades =
-      this.entidadesService.obtenerNombresEntidades(entidadesArray);
-
-    if (cantidadEntidades >= 2) {
-      return {
-        estado: "rechazado",
-        mensaje: `Tiene ${cantidadEntidades} entidades en situación 2 en los últimos 2 meses: ${nombresEntidades.join(
-          ", "
-        )}`,
-        entidades: entidadesArray,
-      };
-    } else if (cantidadEntidades === 1) {
-      return {
-        estado: "pendiente",
-        mensaje: `Tiene 1 entidad en situación 2 en los últimos 2 meses: ${nombresEntidades.join(
-          ", "
-        )}`,
-        entidades: entidadesArray,
-      };
-    }
-
+ /**
+ * Verifica las entidades en situación 2 según los nuevos criterios
+ * - 1 entidad en situación 2 en últimos 2 meses → Pendiente
+ * - 2+ entidades en situación 2 en últimos 2 meses → Rechazo
+ */
+private verificarEntidadesSituacion2(variables: NosisVariable[]): {
+  estado: "aprobado" | "pendiente" | "rechazado";
+  mensaje?: string;
+  entidades?: number[];
+} {
+  const detalleDeudas = variables.find(
+    (v) => v.Nombre === "CI_24m_Detalle"
+  )?.Valor;
+  
+  if (!detalleDeudas) {
     return { estado: "aprobado" };
   }
 
+  const registros = this.parsearDetalleDeudas(detalleDeudas);
+
+  // Obtener fecha actual para cálculo
+  const fechaActual = new Date();
+  
+  // Calcular fecha límite (últimos 2 meses completos)
+  // Usamos el primer día del mes actual y retrocedemos 2 meses
+  const primerDiaMesActual = new Date(fechaActual.getFullYear(), fechaActual.getMonth(), 1);
+  const dosMesesAtras = new Date(primerDiaMesActual);
+  dosMesesAtras.setMonth(dosMesesAtras.getMonth() - 2);
+  
+
+  const entidadesSituacion2 = new Set<number>();
+
+  for (const registro of registros) {
+    // Filtrar por situación 2 y que sea de los últimos 2 meses completos
+    const fechaRegistro = this.convertirPeriodoAFecha(registro.periodo);
+    const esSituacion2 = registro.situacion === 2;
+    const esReciente = fechaRegistro >= dosMesesAtras;
+    
+
+    if (esSituacion2 && esReciente) {
+      const codigoEntidad = parseInt(registro.entidad);
+      if (!isNaN(codigoEntidad)) {
+        entidadesSituacion2.add(codigoEntidad);
+      }
+    }
+  }
+
+  const cantidadEntidades = entidadesSituacion2.size;
+  const entidadesArray = Array.from(entidadesSituacion2);
+  const nombresEntidades = this.entidadesService.obtenerNombresEntidades(entidadesArray);
+
+  if (cantidadEntidades >= 2) {
+    return {
+      estado: "rechazado",
+      mensaje: `Tiene ${cantidadEntidades} entidades en situación 2 en los últimos 2 meses: ${nombresEntidades.join(", ")}`,
+      entidades: entidadesArray,
+    };
+  } else if (cantidadEntidades === 1) {
+    return {
+      estado: "pendiente",
+      mensaje: `Tiene 1 entidad en situación 2 en los últimos 2 meses: ${nombresEntidades.join(", ")}`,
+      entidades: entidadesArray,
+    };
+  }
+
+  return { estado: "aprobado" };
+}
+
   /**
-   * Convierte un período en formato AAAAMM a Date
-   * @param periodo - Período en formato AAAAMM (ej: 202401)
-   * @returns Date correspondiente al primer día del mes
-   */
-  private convertirPeriodoAFecha(periodo: number): Date {
-    const periodoStr = periodo.toString();
+ * Convierte un período en formato AAAAMM a Date de manera más robusta
+ */
+private convertirPeriodoAFecha(periodo: number): Date {
+  try {
+    const periodoStr = periodo.toString().padStart(6, '0');
+    
+    if (periodoStr.length !== 6) {
+      console.warn('❌ Formato de período inválido:', periodo);
+      return new Date(0); // Fecha muy antigua
+    }
+
     const año = parseInt(periodoStr.substring(0, 4));
     const mes = parseInt(periodoStr.substring(4, 6)) - 1; // Meses en Date son 0-based
 
-    return new Date(año, mes, 1);
+    if (isNaN(año) || isNaN(mes) || mes < 0 || mes > 11) {
+      console.warn('❌ Período con valores inválidos:', periodo, 'Año:', año, 'Mes:', mes);
+      return new Date(0); // Fecha muy antigua
+    }
+
+    const fecha = new Date(año, mes, 1);
+    return fecha;
+  } catch (error) {
+    console.error('❌ Error en convertirPeriodoAFecha:', error, 'Periodo:', periodo);
+    return new Date(0); // Fecha muy antigua
   }
+}
 
   /**
    * Verifica el estado de deudas en entidades financieras
@@ -860,24 +875,22 @@ export class VerifyDataNosisUseCase {
     return { estado: "aprobado" };
   }
   /**
-   * Parsea el string de detalle de deudas en estructura manejable
-   * @param detalleDeudas - String crudo con información de deudas
-   * @returns Array de objetos con información estructurada de deudas
-   */
-  private parsearDetalleDeudas(detalleDeudas: string): Array<{
+ * Mejorar el parsing de detalle de deudas con mejor manejo de errores
+ */
+private parsearDetalleDeudas(detalleDeudas: string): Array<{
+  entidad: string;
+  periodo: number;
+  situacion: number;
+  monto: number;
+}> {
+  const resultados: Array<{
     entidad: string;
     periodo: number;
     situacion: number;
     monto: number;
-  }> {
-    const resultados: Array<{
-      entidad: string;
-      periodo: number;
-      situacion: number;
-      monto: number;
-    }> = [];
+  }> = [];
 
-    // Usar una expresión regular para extraer cada registro <D>
+  try {
     const regex = /<D>(.*?)<\/D>/g;
     let match;
 
@@ -885,25 +898,29 @@ export class VerifyDataNosisUseCase {
       const partes = match[1].split("|").map((part) => part.trim());
 
       if (partes.length >= 4) {
-        // El primer campo debería ser el código de entidad (numérico)
         const codigoEntidad = partes[0];
-
-        // Verificar que sea un código numérico válido
-        if (codigoEntidad && !isNaN(Number(codigoEntidad))) {
+        
+        // Validar que el código de entidad sea numérico
+        if (codigoEntidad && /^\d+$/.test(codigoEntidad)) {
           resultados.push({
-            entidad: codigoEntidad, // Guardar como string para luego convertir a número
+            entidad: codigoEntidad,
             periodo: parseInt(partes[1]) || 0,
             situacion: parseInt(partes[2]) || 0,
             monto: parseInt(partes[3]) || 0,
           });
         } else {
-          console.warn("Código de entidad inválido:", codigoEntidad);
+          console.warn("❌ Código de entidad inválido (no numérico):", codigoEntidad);
         }
+      } else {
+        console.warn("❌ Registro con formato incorrecto:", partes);
       }
     }
-
-    return resultados;
+  } catch (error) {
+    console.error("❌ Error en parsearDetalleDeudas:", error);
   }
+
+  return resultados;
+}
   /**
    * Verifica si el cliente tiene empleo registrado estable
    * @param variables - Lista de variables de Nosis
