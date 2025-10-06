@@ -28,7 +28,10 @@
  */
 
 import { SolicitudFormal } from "../../../domain/entities/SolicitudFormal";
+import { HistorialRepositoryPort } from "../../ports/HistorialRepositoryPort";
 import { PermisoRepositoryPort } from "../../ports/PermisoRepositoryPort";
+import { SolicitudFormalRepositoryPort } from "../../ports/SolicitudFormalRepositoryPort";
+import { SolicitudInicialRepositoryPort } from "../../ports/SolicitudInicialRepositoryPort";
 import { AprobarSolicitudesFormalesUseCase } from "./AprobarSolicitudesFormalesUseCase";
 import { CrearSolicitudFormalUseCase } from "./CrearSolicitudFormalUseCase";
 
@@ -44,7 +47,10 @@ export class CrearYAprobarSolicitudFormalUseCase {
   constructor(
     private crearUseCase: CrearSolicitudFormalUseCase,
     private aprobarUseCase: AprobarSolicitudesFormalesUseCase,
-    private permisoRepo: PermisoRepositoryPort
+    private permisoRepo: PermisoRepositoryPort,
+    private historialRepository: HistorialRepositoryPort,
+    private solicitudInicialRepo: SolicitudInicialRepositoryPort,
+    private solicitudFormalRepo: SolicitudFormalRepositoryPort
   ) {}
 
   /**
@@ -83,8 +89,15 @@ export class CrearYAprobarSolicitudFormalUseCase {
     solicitaAmpliacionDeCredito: boolean,
     datosEmpleador?: any
   ): Promise<SolicitudFormal> {
-    // ===== PASO 1: CREAR SOLICITUD FORMAL =====
-    // Crear la solicitud formal usando el caso de uso específico
+try {
+    // ===== PASO 1: OBTENER SOLICITUD INICIAL =====
+    const solicitudInicial = await this.solicitudInicialRepo.getSolicitudInicialById(solicitudInicialId);
+    
+    if (!solicitudInicial) {
+      throw new Error("Solicitud inicial no encontrada");
+    }
+
+    // ===== PASO 2: CREAR SOLICITUD FORMAL (SIEMPRE PERMITIDO) =====
     const solicitudCreada = await this.crearUseCase.execute(
       solicitudInicialId,
       comercianteId,
@@ -94,17 +107,97 @@ export class CrearYAprobarSolicitudFormalUseCase {
       datosEmpleador
     );
 
-    // ===== PASO 2: APROBAR SOLICITUD INMEDIATAMENTE =====
-    // Aprobar la solicitud recién creada usando el caso de uso de aprobación
-    const solicitudAprobada = await this.aprobarUseCase.aprobarSolicitud(
-      solicitudCreada.getId(),
+    // ===== PASO 3: INTENTAR APROBAR SOLO SI LA INICIAL ESTÁ APROBADA =====
+    if (solicitudInicial.getEstado() === "aprobada") {
+      // Si la solicitud inicial está aprobada, proceder con la aprobación automática
+      const solicitudAprobada = await this.aprobarUseCase.aprobarSolicitud(
+        solicitudCreada.getId(),
+        comercianteId,
+        rol || 'comerciante',
+        comentario
+      );
+      
+      // Registrar evento específico para crear y aprobar exitoso
+      await this.registrarEventoCrearYAprobar(
+        comercianteId,
+        solicitudAprobada.getId(),
+        solicitudInicialId,
+        "Solicitud formal creada y aprobada exitosamente"
+      );
+      
+      return solicitudAprobada;
+    } else {
+      // Si la solicitud inicial está pendiente, solo crear y dejar en estado pendiente
+      const comentarioPendiente = `${comentario} (Aprobación pendiente de solicitud inicial)`;
+      solicitudCreada.agregarComentario(comentarioPendiente);
+      
+      // Actualizar la solicitud con el comentario adicional
+      const solicitudActualizada = await this.solicitudFormalRepo.updateSolicitudFormal(solicitudCreada);
+      
+      // Registrar evento específico para creación con aprobación pendiente
+      await this.registrarEventoCrearYAprobar(
+        comercianteId,
+        solicitudActualizada.getId(),
+        solicitudInicialId,
+        "Solicitud formal creada - Aprobación pendiente de solicitud inicial"
+      );
+      
+      return solicitudActualizada;
+    }
+  } catch (error) {
+    // Manejo de errores específico para este caso de uso
+    await this.registrarErrorHistorial(
       comercianteId,
-      rol || 'comerciante', // Usar rol proporcionado o 'comerciante' por defecto
-      comentario
+      solicitudInicialId,
+      0, // entidadId temporal
+      `Error en crear y aprobar: ${error instanceof Error ? error.message : String(error)}`
     );
-
-    // ===== PASO 3: RETORNAR SOLICITUD APROBADA =====
-    // Retornar la solicitud formal aprobada
-    return solicitudAprobada;
+    throw error;
   }
+}
+
+/**
+ * Registra evento específico para el flujo de crear y aprobar
+ */
+private async registrarEventoCrearYAprobar(
+  usuarioId: number,
+  solicitudFormalId: number,
+  solicitudInicialId: number,
+  mensaje: string
+): Promise<void> {
+  // Usar el historial repository del crearUseCase
+  await this.historialRepository.registrarEvento({
+    usuarioId: usuarioId,
+    accion: "CREAR_Y_APROBAR_SOLICITUD_FORMAL",
+    entidadAfectada: "solicitudes_formales",
+    entidadId: solicitudFormalId,
+    detalles: {
+      mensaje: mensaje,
+      solicitud_inicial_id: solicitudInicialId
+    },
+    solicitudInicialId: solicitudInicialId
+  });
+}
+
+/**
+ * Registra errores específicos para este caso de uso
+ */
+private async registrarErrorHistorial(
+  usuarioId: number,
+  solicitudInicialId: number,
+  entidadId: number,
+  error: string
+): Promise<void> {
+  await this.historialRepository.registrarEvento({
+    usuarioId: usuarioId,
+    accion: "ERROR_CREAR_Y_APROBAR",
+    entidadAfectada: "solicitudes_formales",
+    entidadId: entidadId,
+    detalles: {
+      error: error,
+      solicitud_inicial_id: solicitudInicialId
+    },
+    solicitudInicialId: solicitudInicialId
+  });
+}
 }

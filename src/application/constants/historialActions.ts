@@ -122,6 +122,8 @@ export const HISTORIAL_ACTIONS = {
     DELETE_COMPRA: 'delete_compra',
     /** Acceso a información de compras */
     ACCESS_COMPRAS: 'access_compras',
+    /** Compra realizada con una solicitud de crédito pendiente */
+    COMPRA_CON_SOLICITUD_PENDIENTE: 'compra_con_solicitud_pendiente',
 
     // ===== AMPLIACIONES DE CRÉDITO =====
     /** Solicitud de ampliación de crédito */

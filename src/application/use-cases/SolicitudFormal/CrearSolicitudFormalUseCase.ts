@@ -226,47 +226,39 @@ export class CrearSolicitudFormalUseCase {
 
       // ===== PASO 5: VALIDAR ESTADO DE SOLICITUD INICIAL =====
       // Verificar que la solicitud inicial esté en estado "aprobada"
-      if (solicitudInicial.getEstado() !== "aprobada") {
-        // Registrar evento de estado no aprobado
+      // Permitir solicitudes pendientes pero rechazar rechazadas o expiradas
+      if (solicitudInicial.getEstado() === 'rechazada' || solicitudInicial.getEstado() === 'expirada') {
         await this.historialRepository.registrarEvento({
           usuarioId: comercianteId,
           accion: HISTORIAL_ACTIONS.ERROR_PROCESO,
           entidadAfectada: "solicitudes_formales",
           entidadId: 0,
           detalles: {
-            error: "Solicitud inicial no aprobada",
+            error: "No se puede crear solicitud formal para una solicitud inicial rechazada o expirada",
             estado_actual: solicitudInicial.getEstado(),
             solicitud_inicial_id: solicitudInicialId,
           },
           solicitudInicialId: solicitudInicialId,
         });
-        throw new Error("La solicitud inicial no está aprobada");
+        throw new Error("No se puede crear solicitud formal para una solicitud inicial rechazada o expirada");
       }
 
       // ===== PASO 6: VALIDAR DUPLICADOS =====
       // Verificar que no exista ya una solicitud formal para esta solicitud inicial
-      const existentes =
-        await this.solicitudFormalRepo.getSolicitudesFormalesBySolicitudInicialId(
-          solicitudInicialId
-        );
-
-      if (existentes.length > 0) {
-        // Registrar evento de solicitud duplicada
+      const solicitudExistente = await this.solicitudFormalRepo.getSolicitudFormalBySolicitudInicialId(solicitudInicialId);
+      if (solicitudExistente) {
         await this.historialRepository.registrarEvento({
           usuarioId: comercianteId,
           accion: HISTORIAL_ACTIONS.ERROR_PROCESO,
           entidadAfectada: "solicitudes_formales",
           entidadId: 0,
           detalles: {
-            error: "Solicitud formal ya existe",
+            error: "Ya existe una solicitud formal para esta solicitud inicial",
             solicitud_inicial_id: solicitudInicialId,
-            solicitud_formal_id: existentes[0].getId(),
           },
           solicitudInicialId: solicitudInicialId,
         });
-        throw new Error(
-          "Ya existe una solicitud formal para esta solicitud inicial"
-        );
+        throw new Error("Ya existe una solicitud formal para esta solicitud inicial");
       }
 
       // ===== PASO 7: VALIDAR FORMATO DE RECIBO DE SUELDO =====
@@ -304,6 +296,19 @@ export class CrearSolicitudFormalUseCase {
       }
 
       // ===== PASO 8: CREAR SOLICITUD FORMAL =====
+      // ===== DETERMINAR ESTADO DE LA SOLICITUD FORMAL =====
+      // Determinar el estado basado en el estado de la solicitud inicial
+      let estadoSolicitudFormal: "pendiente" | "pendiente_aprobacion_inicial";
+      let comentariosFinales = [comentarioInicial];
+
+      if (solicitudInicial.getEstado() === "aprobada") {
+        estadoSolicitudFormal = "pendiente";
+      } else {
+        estadoSolicitudFormal = "pendiente_aprobacion_inicial";
+        // Agregar comentario informativo sobre el estado pendiente de la solicitud inicial
+        comentariosFinales.push("⚠️ Solicitud creada con solicitud inicial pendiente de revisión");
+      }
+
       // Crear la solicitud formal con todos los datos del cliente y empleador
       const solicitudFormal = new SolicitudFormal({
         id: 0, // ID se asignará automáticamente al guardar
@@ -383,7 +388,8 @@ export class CrearSolicitudFormalUseCase {
         entidadId: solicitudCreada.getId(),
         detalles: {
           solicitud_inicial_id: solicitudInicialId,
-          estado: "pendiente",
+          estado: estadoSolicitudFormal, // Registrar el estado real
+          estado_solicitud_inicial: solicitudInicial.getEstado(), // Registrar también el estado de la solicitud inicial
           cliente: `${datosSolicitud.nombreCompleto} ${datosSolicitud.apellido}`,
         },
         solicitudInicialId: solicitudInicialId,
@@ -391,10 +397,20 @@ export class CrearSolicitudFormalUseCase {
 
       // ===== PASO 13: NOTIFICAR AL COMERCIANTE =====
       // Enviar notificación al comerciante sobre la creación exitosa
+      let mensajeComerciante = "Solicitud formal creada exitosamente";
+      if (estadoSolicitudFormal === "pendiente_aprobacion_inicial") {
+        mensajeComerciante += ". La solicitud está sujeta a la aprobación de la solicitud inicial";
+      }
+
       await this.notificationService.emitNotification({
         userId: solicitudCreada.getComercianteId(),
         type: "solicitud_formal",
-        message: "Solicitud formal creada exitosamente",
+        message: mensajeComerciante,
+        metadata: {
+          estado: estadoSolicitudFormal,
+          solicitudInicialId: solicitudInicialId,
+          requiereAprobacionInicial: estadoSolicitudFormal === "pendiente_aprobacion_inicial"
+        }
       });
 
       // ===== PASO 14: NOTIFICAR A ANALISTAS =====

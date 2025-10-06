@@ -143,7 +143,10 @@ const aprobarSolicitudesUC = new AprobarSolicitudesFormalesUseCase(
 const crearYAprobarSolicitudFormalUC = new CrearYAprobarSolicitudFormalUseCase(
   crearSolicitudFormalUC,
   aprobarSolicitudesUC,
-  permisoRepo
+  permisoRepo,
+  historialRepository,
+  solicitudInicialRepo,
+  solicitudFormalRepo
 );
 
 const getSolicitudFormalBySolicitudInicialIdUC =
@@ -473,7 +476,7 @@ export const crearSolicitudFormal = async (req: Request, res: Response) => {
         apellido: cliente.apellido,
         telefono: cliente.telefono,
         email: cliente.email,
-        recibo: cliente.recibo, // Ahora es un Buffer
+        recibo: cliente.recibo,
         aceptaTarjeta: cliente.aceptaTarjeta,
         fechaNacimiento: new Date(cliente.fechaNacimiento),
         domicilio: cliente.domicilio,
@@ -492,7 +495,14 @@ export const crearSolicitudFormal = async (req: Request, res: Response) => {
       datosEmpleador
     );
 
-    res.status(201).json(solicitudFormal);
+    const response = solicitudFormal.toPlainObject();
+    
+    // Agregar información contextual sin modificar la estructura principal
+    if (response.estado === "pendiente_aprobacion_inicial") {
+      response.mensajeAdvertencia = "La solicitud formal fue creada exitosamente, pero está sujeta a la aprobación de la solicitud inicial";
+    }
+
+    res.status(201).json(response);
   } catch (error) {
     if (error instanceof Error) {
       if (error.message === "Solicitud inicial no encontrada") {
@@ -511,6 +521,35 @@ export const crearSolicitudFormal = async (req: Request, res: Response) => {
     } else {
       res.status(500).json({ error: "Error interno del servidor" });
     }
+  }
+};
+
+/**
+ * Función auxiliar para actualizar el estado de solicitudes formales cuando se aprueba la solicitud inicial
+ * Esta función puede ser llamada desde el caso de uso de aprobación de solicitud inicial
+ */
+export const actualizarEstadoSolicitudFormalPorAprobacionInicial = async (
+  solicitudInicialId: number
+): Promise<void> => {
+  try {
+    // Obtener la solicitud formal asociada
+    const solicitudFormal = await getSolicitudFormalBySolicitudInicialIdUC.execute(solicitudInicialId);
+    
+    if (solicitudFormal && solicitudFormal.getEstado() === "pendiente_aprobacion_inicial") {
+      // Cambiar el estado a pendiente normal
+      solicitudFormal.setEstado("pendiente");
+      
+      // Agregar comentario informativo
+      solicitudFormal.agregarComentario("✅ Solicitud inicial aprobada - La solicitud formal ahora puede ser procesada normalmente");
+      
+      // Actualizar en la base de datos
+      await updateSolicitudFormalUC.execute(solicitudFormal, 0); // Usuario sistema
+      
+      console.log(`Solicitud formal ${solicitudFormal.getId()} actualizada a estado "pendiente" tras aprobación de solicitud inicial`);
+    }
+  } catch (error) {
+    console.error("Error actualizando estado de solicitud formal:", error);
+    // No lanzamos error para no interrumpir el flujo principal de aprobación de solicitud inicial
   }
 };
 
@@ -1224,6 +1263,10 @@ export const aprobarSolicitudInicial = async (req: Request, res: Response) => {
         esAdministrador,
         comentario
       );
+
+      // Llamar a la función para actualizar la solicitud formal si existe
+    await actualizarEstadoSolicitudFormalPorAprobacionInicial(id);
+
     res.status(200).json(solicitudActualizada);
   } catch (error: any) {
     handleErrorResponse(res, error);
@@ -1423,7 +1466,16 @@ export const crearYAprobarSolicitudFormal = async (
       datosEmpleador
     );
 
-    res.status(201).json(solicitudFormal);
+    // Respuesta contextual basada en el estado resultante
+    const response = solicitudFormal.toPlainObject();
+    
+    if (solicitudFormal.getEstado() === "pendiente_aprobacion_inicial") {
+      response.mensajeAdvertencia = "La solicitud formal fue creada exitosamente, pero la aprobación está pendiente de la solicitud inicial";
+    } else if (solicitudFormal.getEstado() === "aprobada") {
+      response.mensajeExito = "Solicitud formal creada y aprobada exitosamente";
+    }
+
+    res.status(201).json(response);
   } catch (error) {
     if (error instanceof Error) {
       if (error.message === "Solicitud inicial no encontrada") {

@@ -29,7 +29,7 @@ export interface SolicitudFormalParams {
     email: string;
     fechaSolicitud: Date;
     recibo: Buffer;
-    estado: "pendiente" | "aprobada" | "rechazada" | "aprobada_sin_aumento" | "pendiente_ampliacion";
+    estado: "pendiente" | "aprobada" | "rechazada" | "aprobada_sin_aumento" | "pendiente_ampliacion" | "pendiente_aprobacion_inicial";
     aceptaTarjeta: boolean;
     fechaNacimiento: Date;
     domicilio: string;
@@ -73,7 +73,7 @@ export class SolicitudFormal {
     private email: string;
     private fechaSolicitud: Date;
     private recibo: Buffer;
-    private estado: "pendiente" | "aprobada" | "rechazada" | "aprobada_sin_aumento" | "pendiente_ampliacion";
+    private estado: "pendiente" | "aprobada" | "rechazada" | "aprobada_sin_aumento" | "pendiente_ampliacion" | "pendiente_aprobacion_inicial";
     private aceptaTarjeta: boolean;
     private fechaNacimiento: Date;
     private domicilio: string;
