@@ -124,6 +124,10 @@ export const HISTORIAL_ACTIONS = {
     ACCESS_COMPRAS: 'access_compras',
     /** Compra realizada con una solicitud de crédito pendiente */
     COMPRA_CON_SOLICITUD_PENDIENTE: 'compra_con_solicitud_pendiente',
+    /** Rechazo automático de solicitudes formales e iniciales al rechazar una compra */
+    RECHAZAR_SOLICITUD_FORMAL_AUTOMATICO: 'rechazar_solicitud_formal_automatico',
+    /** Rechazo automático de solicitudes iniciales al rechazar una compra */
+    RECHAZAR_SOLICITUD_INICIAL_AUTOMATICO: 'rechazar_solicitud_inicial_automatico',
 
     // ===== AMPLIACIONES DE CRÉDITO =====
     /** Solicitud de ampliación de crédito */

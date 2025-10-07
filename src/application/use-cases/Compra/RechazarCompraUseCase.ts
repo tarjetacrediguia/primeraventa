@@ -33,6 +33,7 @@ import { NotificationPort } from "../../ports/NotificationPort";
 import { SolicitudFormalRepositoryPort } from "../../ports/SolicitudFormalRepositoryPort";
 import { ClienteRepositoryPort } from "../../ports/ClienteRepositoryPort";
 import { HISTORIAL_ACTIONS } from "../../constants/historialActions";
+import { SolicitudInicialRepositoryPort } from "../../ports/SolicitudInicialRepositoryPort";
 
 /**
  * Caso de uso para rechazar compras pendientes.
@@ -56,7 +57,8 @@ export class RechazarCompraUseCase {
         private readonly historialRepository: HistorialRepositoryPort,
         private readonly notificationService: NotificationPort,
         private readonly solicitudFormalRepository: SolicitudFormalRepositoryPort,
-        private readonly clienteRepository: ClienteRepositoryPort
+        private readonly clienteRepository: ClienteRepositoryPort,
+        private readonly solicitudInicialRepository: SolicitudInicialRepositoryPort
     ) {}
 
     /**
@@ -159,6 +161,9 @@ export class RechazarCompraUseCase {
             // Guardar los cambios en la base de datos
             const compraActualizada = await this.compraRepository.updateCompra(compra, compra.getClienteId());
 
+            // ===== RECHAZO EN CASCADA DE SOLICITUDES ASOCIADAS =====
+            await this.rechazarSolicitudesAsociadas(compraActualizada, motivo, usuarioId);
+
             // ===== PASO 6: OBTENER DATOS PARA NOTIFICACIÓN =====
             // Obtener solicitud formal para notificar al comerciante
             const solicitudFormal = await this.solicitudFormalRepository.getSolicitudFormalById(
@@ -228,6 +233,121 @@ export class RechazarCompraUseCase {
             throw error;
         }
     }
+
+
+    /**
+     * Rechaza en cascada las solicitudes formales e iniciales asociadas
+     */
+    private async rechazarSolicitudesAsociadas(
+        compra: Compra, 
+        motivoCompra: string, 
+        usuarioId: number
+    ): Promise<void> {
+        try {
+            // Obtener solicitud formal asociada
+            const solicitudFormal = await this.solicitudFormalRepository.getSolicitudFormalById(
+                compra.getSolicitudFormalId()
+            );
+
+            if (!solicitudFormal) {
+                console.warn(`No se encontró solicitud formal para la compra ${compra.getId()}`);
+                return;
+            }
+
+            const solicitudInicialId = solicitudFormal.getSolicitudInicialId();
+            const motivo = `Rechazada automáticamente por rechazo de compra. Motivo: ${motivoCompra}`;
+
+            // Rechazar solicitud formal si está en estados pendientes
+            // Estados válidos según BD: 'pendiente', 'pendiente_ampliacion'
+            const estadosPendientesFormal = ['pendiente', 'pendiente_ampliacion'];
+            
+            if (estadosPendientesFormal.includes(solicitudFormal.getEstado())) {
+                
+                solicitudFormal.setEstado('rechazada');
+                solicitudFormal.agregarComentario(motivo);
+                solicitudFormal.setAnalistaAprobadorId(usuarioId);
+                
+                await this.solicitudFormalRepository.updateSolicitudFormal(solicitudFormal);
+
+                // Registrar en historial
+                await this.historialRepository.registrarEvento({
+                    usuarioId: usuarioId,
+                    accion: HISTORIAL_ACTIONS.RECHAZAR_SOLICITUD_FORMAL_AUTOMATICO,
+                    entidadAfectada: 'solicitudes_formales',
+                    entidadId: solicitudFormal.getId(),
+                    detalles: {
+                        motivo: motivo,
+                        compra_id: compra.getId(),
+                        estado_anterior: solicitudFormal.getEstado(),
+                        accion: "rechazo_automatico_por_compra"
+                    },
+                    solicitudInicialId: solicitudInicialId
+                });
+
+                console.log(`✅ Solicitud formal ${solicitudFormal.getId()} rechazada automáticamente por rechazo de compra. Estado anterior: ${solicitudFormal.getEstado()}`);
+            } else {
+                console.log(`ℹ️ Solicitud formal ${solicitudFormal.getId()} no se rechazó automáticamente porque su estado es: ${solicitudFormal.getEstado()}`);
+            }
+
+            // Rechazar solicitud inicial si está pendiente
+            // Estados válidos según BD: 'pendiente' (no rechazamos 'aprobada', 'rechazada', 'expirada')
+            const solicitudInicial = await this.solicitudInicialRepository.getSolicitudInicialById(solicitudInicialId);
+            
+            if (solicitudInicial && solicitudInicial.getEstado() === 'pendiente') {
+                // Obtener cliente para la actualización
+                const cliente = await this.clienteRepository.findById(solicitudInicial.getClienteId());
+                
+                if (cliente) {
+                    solicitudInicial.setEstado('rechazada');
+                    solicitudInicial.setMotivoRechazo(motivo);
+                    solicitudInicial.agregarComentario(motivo);
+                    solicitudInicial.setAnalistaAprobadorId(usuarioId);
+                    
+                    await this.solicitudInicialRepository.updateSolicitudInicialAprobaciónRechazo(
+                        solicitudInicial, 
+                        cliente
+                    );
+
+                    // Registrar en historial
+                    await this.historialRepository.registrarEvento({
+                        usuarioId: usuarioId,
+                        accion: HISTORIAL_ACTIONS.RECHAZAR_SOLICITUD_INICIAL_AUTOMATICO,
+                        entidadAfectada: 'solicitudes_iniciales',
+                        entidadId: solicitudInicialId,
+                        detalles: {
+                            motivo: motivo,
+                            compra_id: compra.getId(),
+                            estado_anterior: solicitudInicial.getEstado(),
+                            accion: "rechazo_automatico_por_compra"
+                        },
+                        solicitudInicialId: solicitudInicialId
+                    });
+
+                    console.log(`✅ Solicitud inicial ${solicitudInicialId} rechazada automáticamente por rechazo de compra`);
+                }
+            } else if (solicitudInicial) {
+                console.log(`ℹ️ Solicitud inicial ${solicitudInicialId} no se rechazó automáticamente porque su estado es: ${solicitudInicial.getEstado()}`);
+            }
+
+        } catch (error) {
+            console.error('❌ Error en rechazo en cascada de solicitudes:', error);
+            // No lanzamos el error para no interrumpir el flujo principal de rechazo de compra
+            // Pero registramos el error en el historial
+            await this.historialRepository.registrarEvento({
+                usuarioId: usuarioId,
+                accion: HISTORIAL_ACTIONS.ERROR_PROCESO,
+                entidadAfectada: 'compras',
+                entidadId: compra.getId(),
+                detalles: {
+                    error: `Error en rechazo en cascada: ${error instanceof Error ? error.message : String(error)}`,
+                    etapa: "rechazo_cascada_solicitudes"
+                },
+                solicitudInicialId: await this.obtenerSolicitudInicialId(compra.getId())
+            });
+        }
+    }
+
+
     /**
      * Método auxiliar para obtener el ID de la solicitud inicial asociada a una compra.
      * 
@@ -240,21 +360,17 @@ export class RechazarCompraUseCase {
      */
     private async obtenerSolicitudInicialId(compraId: number): Promise<number | undefined> {
         try {
-            // Obtener ID de solicitud formal asociada a la compra
             const solicitudFormalId = await this.compraRepository.getSolicitudFormalIdByCompraId(compraId);
             
             if (!solicitudFormalId) return undefined;
             
-            // Obtener solicitud formal para acceder a la solicitud inicial
             const solicitudFormal = await this.solicitudFormalRepository.getSolicitudFormalById(solicitudFormalId);
             
-            // Retornar ID de la solicitud inicial asociada
             return solicitudFormal?.getSolicitudInicialId();
         } catch (e) {
-            // Registrar error pero no interrumpir el flujo principal
             console.error("Error obteniendo solicitudInicialId", e);
             return undefined;
         }
     }
-
 }
+

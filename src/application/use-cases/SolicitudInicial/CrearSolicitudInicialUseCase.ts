@@ -1005,7 +1005,7 @@ private async tieneComprasActivas(solicitudInicial: SolicitudInicial): Promise<b
             const match = regla.match(/(\d+) entidades/);
             const cantidad = match ? match[1] : "varias";
             motivosPrincipales.push(
-              `tiene ${cantidad} entidades en situación 2 (cuentas canceladas)`
+              `tiene ${cantidad} entidades en situación 2`
             );
           } else if (regla.includes("entidades con deuda")) {
             const match = regla.match(/(\d+) entidades/);
@@ -1057,7 +1057,7 @@ private async tieneComprasActivas(solicitudInicial: SolicitudInicial): Promise<b
         for (const pendiente of resultadoNosis.pendientes) {
           if (pendiente.includes("entidades en situación 2")) {
             motivosPendientes.push(
-              "tiene 1 entidad en situación 2 (cuenta cancelada)"
+              "tiene 1 entidad en situación 2"
             );
           } else if (pendiente.includes("entidades con deuda")) {
             const match = pendiente.match(/(\d+) entidades/);

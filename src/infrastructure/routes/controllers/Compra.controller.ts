@@ -200,7 +200,8 @@ export const rechazarCompra = async (req: Request, res: Response) => {
             historialRepository,
             notificationService,
             solicitudFormalRepository,
-            clienteRepository
+            clienteRepository,
+            solicitudInicialRepository
         );
 
         const compraActualizada = await useCase.execute(id, motivo, Number(usuarioId));

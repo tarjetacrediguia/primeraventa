@@ -3,6 +3,7 @@ import { Request, Response } from 'express';
 import { NotificationAdapter } from '../../adapters/notification/NotificationAdapter';
 import { GetNotificationsByUserIdUseCase } from '../../../application/use-cases/Notificacion/GetNotificationsByUserIdUseCase';
 import { MarkNotificationAsReadUseCase } from '../../../application/use-cases/Notificacion/MarkNotificationAsReadUseCase';
+import { MarkAllNotificationsAsReadUseCase } from '../../../application/use-cases/Notificacion/MarkAllNotificationsAsReadUseCase';
 
 const notificationAdapter = new NotificationAdapter();
 
@@ -61,5 +62,32 @@ export const markNotificationAsRead = async (req: Request, res: Response) => {
         } else {
             res.status(500).json({ error: 'Error interno del servidor' });
         }
+    }
+};
+
+/**
+ * Marca todas las notificaciones del usuario autenticado como leídas.
+ * @param req - Request de Express con el usuario autenticado.
+ * @param res - Response de Express para enviar la respuesta.
+ * @returns Devuelve un mensaje de éxito o un error en caso de fallo.
+ */
+export const markAllNotificationsAsRead = async (req: Request, res: Response) => {
+    try {
+        // Obtener el ID del usuario autenticado
+        if (!req.user || !req.user.id) {
+            return res.status(401).json({ error: 'Usuario no autenticado' });
+        }
+        const userId = Number(req.user.id);
+        
+        const useCase = new MarkAllNotificationsAsReadUseCase(notificationAdapter);
+        await useCase.execute(userId);
+        
+        res.status(200).json({ 
+            message: 'Todas las notificaciones han sido marcadas como leídas',
+            userId: userId
+        });
+    } catch (error) {
+        console.error('Error al marcar todas las notificaciones como leídas:', error);
+        res.status(500).json({ error: 'Error interno del servidor' });
     }
 };

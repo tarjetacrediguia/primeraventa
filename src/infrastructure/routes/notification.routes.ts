@@ -8,7 +8,7 @@
  */
 
 import { Router } from 'express';
-import { getNotifications, markNotificationAsRead } from './controllers/Notificaciones.controller';
+import { getNotifications, markAllNotificationsAsRead, markNotificationAsRead } from './controllers/Notificaciones.controller';
 
 const router = Router();
 
@@ -17,5 +17,8 @@ router.get('/', getNotifications);
 
 // Marcar notificación como leída
 router.put('/:id/leida', markNotificationAsRead);
+
+// Marcar TODAS las notificaciones del usuario como leídas
+router.put('/leer-todas', markAllNotificationsAsRead);
 
 export default router;

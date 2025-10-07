@@ -441,27 +441,21 @@ export class VerifyDataNosisUseCase {
       }
     }
 
-    // Aportes
+    // ===== LÓGICA DE APORTES =====
     const totalAportes = this.calcularTotalAportes(variables);
-    const pagosRecientes = this.tieneAportesRecientes(variables);
-    if (totalAportes < this.MINIMO_APORTES) {
-      reglasFallidas.push(
-        `Cliente no cumple con el mínimo de aportes registrados en los últimos 12 meses (${totalAportes} de ${this.MINIMO_APORTES} requeridos)`
-      );
-      if (!motivoComerciante && !esMonotributista) {
-        motivoComerciante =
-          "Solicitud rechazada: no cumple con el mínimo de aportes requerido";
-      }
-    } else if (!pagosRecientes && esMonotributista) {
-      // Para monotributistas, destacar la falta de aportes recientes
-      aprobados.push(
-        `Cumple con el mínimo de aportes requerido (${totalAportes} aportes históricos)`
-      );
-    } else {
-      aprobados.push(
-        `Cumple con el mínimo de aportes requerido (${totalAportes} aportes)`
-      );
-    }
+const pagosRecientes = this.tieneAportesRecientes(variables);
+
+// ✅ VERIFICACIÓN DE APORTES MÍNIMOS
+if (totalAportes >= this.MINIMO_APORTES) {
+  aprobados.push(`Cumple con el mínimo de aportes requerido (${totalAportes} aportes)`);
+} else {
+  reglasFallidas.push(
+    `Cliente no cumple con el mínimo de aportes registrados en los últimos 12 meses (${totalAportes} de ${this.MINIMO_APORTES} requeridos)`
+  );
+  if (!motivoComerciante) {
+    motivoComerciante = "Solicitud rechazada: no cumple con el mínimo de aportes requerido";
+  }
+}
 
     // ===== VERIFICACIONES QUE PUEDEN CAUSAR RECHAZO INMEDIATO =====
 
@@ -496,50 +490,47 @@ export class VerifyDataNosisUseCase {
       aprobados.push("Cumple con criterios de referencias comerciales");
     }
 
-    // 4. Monotributistas sin empleo registrado (RECHAZO INMEDIATO)
-    
-    if (esMonotributista) {
-      const tieneEmpleoRegistrado = this.tieneEmpleoRegistrado(variables);
-      const cambioMonotributo = this.verificarCambioMonotributo(variables);
-      const tieneAportesRecientes = this.tieneAportesRecientes(variables);
+    // ===== LÓGICA CORREGIDA PARA MONOTRIBUTISTAS Y SITUACIÓN LABORAL =====
 
-      if (!tieneEmpleoRegistrado) {
-        if (cambioMonotributo) {
-          // Mensaje claro y específico para el analista
-          reglasFallidas.push(
-            "Cliente es monotributista y cambió de empleo registrado a monotributo sin aportes recientes"
-          );
+    const cambioLaboral = this.verificarPerdidaEmpleoReciente(variables);
 
-          // Mensaje para el comerciante (más genérico pero informativo)
-          if (!motivoComerciante) {
-            motivoComerciante =
-              "Solicitud rechazada: Cliente es monotributista sin empleo registrado estable";
-          }
-        } else {
-          reglasFallidas.push(
-            "Cliente es monotributista sin empleo registrado estable"
-          );
-          if (!motivoComerciante) {
-            motivoComerciante =
-              "Solicitud rechazada: Cliente es monotributista sin empleo registrado estable";
-          }
-        }
-      } else {
-        aprobados.push("Monotributista con empleo registrado validado");
-      }
+if (cambioLaboral.perdioEmpleo) {
+  // ❌ RECHAZAR POR PÉRDIDA DE EMPLEO (ambos escenarios 1 y 2)
+  reglasFallidas.push(cambioLaboral.motivo);
+  if (!motivoComerciante) {
+    motivoComerciante = "Solicitud rechazada: situación laboral inestable";
+  }
+}
+
+// ===== LÓGICA PARA MONOTRIBUTISTAS ESTABLES =====
+if (esMonotributista && !cambioLaboral.perdioEmpleo) {
+  // 🟡 CLIENTE QUE ES MONOTRIBUTISTA PERO NO PERDIÓ EMPLEO RECIENTEMENTE
+  const tieneEmpleoRegistrado = this.tieneEmpleoRegistrado(variables);
+  
+  if (tieneEmpleoRegistrado) {
+    // ✅ ESCENARIO 3: Tiene empleo Y es monotributista (APROBAR)
+    aprobados.push("Monotributista con empleo registrado validado");
+  } else {
+    // 🔄 Monotributista estable (sin cambio reciente)
+    const tieneAntiguedadMonotributo = this.verificarAntiguedadMonotributo(variables);
+    if (tieneAntiguedadMonotributo) {
+      aprobados.push("Monotributista con antigüedad validada");
     } else {
-      aprobados.push("No es monotributista");
-    }
-
-    // 5. Situación laboral (solo para no monotributistas)
-    if (!esMonotributista) {
-      const tieneLaboral = this.verificarSituacionLaboral(variables);
-      if (!tieneLaboral) {
-        reglasFallidas.push("Cliente no tiene situación laboral registrada");
-      } else {
-        aprobados.push("Situación laboral validada");
+      reglasFallidas.push("Monotributista sin antigüedad laboral suficiente");
+      if (!motivoComerciante) {
+        motivoComerciante = "Solicitud rechazada: monotributista sin antigüedad suficiente";
       }
     }
+  }
+} else if (!esMonotributista && !cambioLaboral.perdioEmpleo) {
+  // 🔵 NO ES MONOTRIBUTISTA Y NO PERDIÓ EMPLEO - VERIFICAR SITUACIÓN LABORAL NORMAL
+  const tieneLaboral = this.verificarSituacionLaboral(variables);
+  if (tieneLaboral) {
+    aprobados.push("Situación laboral validada");
+  } else {
+    reglasFallidas.push("Cliente no tiene situación laboral registrada");
+  }
+}
 
     // 6. Tarjetas Crediguía
     if (this.tieneTarjetaCrediguia(variables)) {
@@ -622,6 +613,81 @@ export class VerifyDataNosisUseCase {
       },
     };
   }
+
+  /**
+ * Verifica si el cliente perdió su empleo recientemente
+ * Detecta tanto cambio a monotributo como pérdida de empleo sin reconversión
+ */
+private verificarPerdidaEmpleoReciente(variables: NosisVariable[]): {
+  perdioEmpleo: boolean;
+  seHizoMonotributista: boolean;
+  motivo: string;
+} {
+  const esEmpleadoActual = variables.find((v) => v.Nombre === "VI_Empleado_Es")?.Valor === "Si";
+  const esMonotributistaActual = variables.find((v) => v.Nombre === "VI_Inscrip_Monotributo_Es")?.Valor === "Si";
+  
+  // Si sigue empleado, no perdió el trabajo
+  if (esEmpleadoActual) {
+    return { perdioEmpleo: false, seHizoMonotributista: false, motivo: "" };
+  }
+
+  // Verificar si tenía empleo en los últimos 12 meses
+  const variableEmpleado12Meses = variables.find((v) => v.Nombre === "VI_Empleado_12m_Es");
+  const fueEmpleado12Meses = variableEmpleado12Meses ? variableEmpleado12Meses.Valor === "Si" : false;
+
+  // Verificar última fecha de empleo
+  const variableUltimaFechaEmpleo = variables.find((v) => v.Nombre === "VI_Empleado_Es_UltFecha");
+  const ultimaFechaEmpleo = variableUltimaFechaEmpleo?.Valor;
+  const tuvoEmpleoReciente = ultimaFechaEmpleo && ultimaFechaEmpleo !== "000000";
+
+  // Verificar aportes recientes (últimos 3 meses)
+  const tieneAportesRecientes = this.tieneAportesRecientes(variables);
+
+  // 🔍 DETECCIÓN DE LOS ESCENARIOS
+  if ((fueEmpleado12Meses || tuvoEmpleoReciente) && !tieneAportesRecientes) {
+    if (esMonotributistaActual) {
+      // ESCENARIO 2: Dejó empleo y se hizo monotributista
+      return { 
+        perdioEmpleo: true, 
+        seHizoMonotributista: true, 
+        motivo: "Dejó empleo registrado y se convirtió en monotributista sin aportes recientes" 
+      };
+    } else {
+      // ESCENARIO 1: Perdió empleo y no se reconvirtió
+      return { 
+        perdioEmpleo: true, 
+        seHizoMonotributista: false, 
+        motivo: "Perdió empleo registrado sin reconversión laboral y sin aportes recientes" 
+      };
+    }
+  }
+
+  return { perdioEmpleo: false, seHizoMonotributista: false, motivo: "" };
+}
+
+/**
+ * Verifica si el monotributista tiene suficiente antigüedad
+ */
+private verificarAntiguedadMonotributo(variables: NosisVariable[]): boolean {
+  // Buscar fecha de inicio de monotributo
+  const fechaInicioMonotributo = variables.find(
+    v => v.Nombre === "VI_Inscrip_Monotributo_Fecha"
+  )?.Valor;
+
+  if (!fechaInicioMonotributo) {
+    return false; // No hay fecha de inicio registrada
+  }
+
+  const fechaInicio = new Date(fechaInicioMonotributo);
+  const fechaActual = new Date();
+  
+  // Calcular diferencia en meses
+  const diffMeses = (fechaActual.getFullYear() - fechaInicio.getFullYear()) * 12 + 
+                   (fechaActual.getMonth() - fechaInicio.getMonth());
+  
+  // Requerir al menos 6 meses de antigüedad como monotributista
+  return diffMeses >= 6;
+}
 
   /**
    * Calcula el total de aportes del cliente
@@ -719,208 +785,325 @@ export class VerifyDataNosisUseCase {
     return fechaAporte >= tresMesesAtras;
   }
 
- /**
- * Verifica las entidades en situación 2 según los nuevos criterios
- * - 1 entidad en situación 2 en últimos 2 meses → Pendiente
- * - 2+ entidades en situación 2 en últimos 2 meses → Rechazo
- */
-private verificarEntidadesSituacion2(variables: NosisVariable[]): {
-  estado: "aprobado" | "pendiente" | "rechazado";
-  mensaje?: string;
-  entidades?: number[];
-} {
-  const detalleDeudas = variables.find(
-    (v) => v.Nombre === "CI_24m_Detalle"
-  )?.Valor;
-  
-  if (!detalleDeudas) {
+  /**
+   * Verifica las entidades en situación 2 según los nuevos criterios
+   * Considera los 2 períodos MÁS RECIENTES disponibles en los datos de Nosis
+   * - 1 entidad en situación 2 en últimos 2 períodos disponibles → Pendiente
+   * - 2+ entidades en situación 2 en últimos 2 períodos disponibles → Rechazo
+   */
+  private verificarEntidadesSituacion2(variables: NosisVariable[]): {
+    estado: "aprobado" | "pendiente" | "rechazado";
+    mensaje?: string;
+    entidades?: number[];
+    datosDesactualizados?: boolean;
+  } {
+    const detalleDeudas = variables.find(
+      (v) => v.Nombre === "CI_24m_Detalle"
+    )?.Valor;
+
+    if (!detalleDeudas) {
+      return { estado: "aprobado" };
+    }
+
+    // Verificar actualización de datos
+    const datosDesactualizados = this.verificarActualizacionDatos(variables);
+
+    const registros = this.parsearDetalleDeudas(detalleDeudas);
+
+    // Agrupar por entidad y encontrar el registro más reciente de CADA ENTIDAD
+    const entidadesMap = new Map<
+      string,
+      { periodo: number; situacion: number; monto: number }
+    >();
+
+    for (const registro of registros) {
+      const entidad = registro.entidad;
+
+      // Para cada entidad, mantener solo el registro MÁS RECIENTE
+      if (
+        !entidadesMap.has(entidad) ||
+        registro.periodo > entidadesMap.get(entidad)!.periodo
+      ) {
+        entidadesMap.set(entidad, registro);
+      }
+    }
+
+    const entidadesSituacion2 = new Set<number>();
+
+    for (const [entidad, registroMasReciente] of entidadesMap.entries()) {
+      const esSituacion2 = registroMasReciente.situacion === 2;
+
+      if (esSituacion2) {
+        const codigoEntidad = parseInt(entidad);
+        if (!isNaN(codigoEntidad)) {
+          entidadesSituacion2.add(codigoEntidad);
+          console.log(
+            `⚠️ Entidad ${entidad} en SITUACIÓN 2 (período: ${registroMasReciente.periodo})`
+          );
+        }
+      }
+    }
+
+    const cantidadEntidades = entidadesSituacion2.size;
+    const entidadesArray = Array.from(entidadesSituacion2);
+    const nombresEntidades =
+      this.entidadesService.obtenerNombresEntidades(entidadesArray);
+
+    let mensaje = "";
+
+    if (cantidadEntidades >= 2) {
+      mensaje = `Tiene ${cantidadEntidades} entidades en situación 2: ${nombresEntidades.join(
+        ", "
+      )}`;
+    } else if (cantidadEntidades === 1) {
+      mensaje = `Tiene 1 entidad en situación 2: ${nombresEntidades.join(
+        ", "
+      )}`;
+    }
+
+    if (cantidadEntidades >= 2) {
+      return {
+        estado: "rechazado",
+        mensaje,
+        entidades: entidadesArray,
+        datosDesactualizados,
+      };
+    } else if (cantidadEntidades === 1) {
+      return {
+        estado: "pendiente",
+        mensaje,
+        entidades: entidadesArray,
+        datosDesactualizados,
+      };
+    }
+
     return { estado: "aprobado" };
   }
 
-  const registros = this.parsearDetalleDeudas(detalleDeudas);
-
-  // Obtener fecha actual para cálculo
-  const fechaActual = new Date();
-  
-  // Calcular fecha límite (últimos 2 meses completos)
-  // Usamos el primer día del mes actual y retrocedemos 2 meses
-  const primerDiaMesActual = new Date(fechaActual.getFullYear(), fechaActual.getMonth(), 1);
-  const dosMesesAtras = new Date(primerDiaMesActual);
-  dosMesesAtras.setMonth(dosMesesAtras.getMonth() - 2);
-  
-
-  const entidadesSituacion2 = new Set<number>();
-
-  for (const registro of registros) {
-    // Filtrar por situación 2 y que sea de los últimos 2 meses completos
-    const fechaRegistro = this.convertirPeriodoAFecha(registro.periodo);
-    const esSituacion2 = registro.situacion === 2;
-    const esReciente = fechaRegistro >= dosMesesAtras;
-    
-
-    if (esSituacion2 && esReciente) {
-      const codigoEntidad = parseInt(registro.entidad);
-      if (!isNaN(codigoEntidad)) {
-        entidadesSituacion2.add(codigoEntidad);
-      }
-    }
-  }
-
-  const cantidadEntidades = entidadesSituacion2.size;
-  const entidadesArray = Array.from(entidadesSituacion2);
-  const nombresEntidades = this.entidadesService.obtenerNombresEntidades(entidadesArray);
-
-  if (cantidadEntidades >= 2) {
-    return {
-      estado: "rechazado",
-      mensaje: `Tiene ${cantidadEntidades} entidades en situación 2 en los últimos 2 meses: ${nombresEntidades.join(", ")}`,
-      entidades: entidadesArray,
-    };
-  } else if (cantidadEntidades === 1) {
-    return {
-      estado: "pendiente",
-      mensaje: `Tiene 1 entidad en situación 2 en los últimos 2 meses: ${nombresEntidades.join(", ")}`,
-      entidades: entidadesArray,
-    };
-  }
-
-  return { estado: "aprobado" };
-}
-
   /**
- * Convierte un período en formato AAAAMM a Date de manera más robusta
- */
-private convertirPeriodoAFecha(periodo: number): Date {
-  try {
-    const periodoStr = periodo.toString().padStart(6, '0');
-    
-    if (periodoStr.length !== 6) {
-      console.warn('❌ Formato de período inválido:', periodo);
+   * Convierte un período en formato AAAAMM a Date de manera más robusta
+   */
+  private convertirPeriodoAFecha(periodo: number): Date {
+    try {
+      const periodoStr = periodo.toString().padStart(6, "0");
+
+      if (periodoStr.length !== 6) {
+        console.warn("❌ Formato de período inválido:", periodo);
+        return new Date(0); // Fecha muy antigua
+      }
+
+      const año = parseInt(periodoStr.substring(0, 4));
+      const mes = parseInt(periodoStr.substring(4, 6)) - 1; // Meses en Date son 0-based
+
+      if (isNaN(año) || isNaN(mes) || mes < 0 || mes > 11) {
+        console.warn(
+          "❌ Período con valores inválidos:",
+          periodo,
+          "Año:",
+          año,
+          "Mes:",
+          mes
+        );
+        return new Date(0); // Fecha muy antigua
+      }
+
+      const fecha = new Date(año, mes, 1);
+      return fecha;
+    } catch (error) {
+      console.error(
+        "❌ Error en convertirPeriodoAFecha:",
+        error,
+        "Periodo:",
+        periodo
+      );
       return new Date(0); // Fecha muy antigua
     }
-
-    const año = parseInt(periodoStr.substring(0, 4));
-    const mes = parseInt(periodoStr.substring(4, 6)) - 1; // Meses en Date son 0-based
-
-    if (isNaN(año) || isNaN(mes) || mes < 0 || mes > 11) {
-      console.warn('❌ Período con valores inválidos:', periodo, 'Año:', año, 'Mes:', mes);
-      return new Date(0); // Fecha muy antigua
-    }
-
-    const fecha = new Date(año, mes, 1);
-    return fecha;
-  } catch (error) {
-    console.error('❌ Error en convertirPeriodoAFecha:', error, 'Periodo:', periodo);
-    return new Date(0); // Fecha muy antigua
   }
-}
 
   /**
    * Verifica el estado de deudas en entidades financieras
-   * @param variables - Lista de variables de Nosis
-   * @returns Objeto con estado y mensaje de la verificación
+   * SOLO considera deuda si en el período MÁS RECIENTE la situación es 3, 4 o 5
+   * Y si el período más reciente está dentro de los 2 períodos más recientes disponibles
    */
   private verificarDeudaEntidades(variables: NosisVariable[]): {
     estado: "aprobado" | "pendiente" | "rechazado";
     mensaje?: string;
     entidades?: number[];
+    datosDesactualizados?: boolean;
   } {
     const detalleDeudas = variables.find(
       (v) => v.Nombre === "CI_24m_Detalle"
     )?.Valor;
     if (!detalleDeudas) return { estado: "aprobado" };
 
+    // Verificar actualización de datos
+    const datosDesactualizados = this.verificarActualizacionDatos(variables);
+
     const registros = this.parsearDetalleDeudas(detalleDeudas);
 
-    const entidadesConDeuda = new Set<number>();
+    // Agrupar registros por entidad y encontrar el MÁS RECIENTE de CADA ENTIDAD
+    const entidadesMap = new Map<
+      string,
+      { periodo: number; situacion: number; monto: number }
+    >();
 
     for (const registro of registros) {
-      if (registro.situacion >= 3 && registro.situacion <= 5) {
-        // Convertir el código de entidad de string a número
-        const codigoEntidad = parseInt(registro.entidad, 10);
-        if (!isNaN(codigoEntidad)) {
-          entidadesConDeuda.add(codigoEntidad);
-        } else {
-          console.warn(
-            "No se pudo convertir código de entidad a número:",
-            registro.entidad
-          );
-        }
+      const entidad = registro.entidad;
+
+      // Para cada entidad, mantener solo el registro MÁS RECIENTE
+      if (
+        !entidadesMap.has(entidad) ||
+        registro.periodo > entidadesMap.get(entidad)!.periodo
+      ) {
+        entidadesMap.set(entidad, registro);
       }
     }
 
-    const cantidad = entidadesConDeuda.size;
-    const entidadesArray = Array.from(entidadesConDeuda);
+    const entidadesConDeudaActiva = new Set<number>();
+
+    // Analizar cada entidad según su situación MÁS RECIENTE
+    for (const [entidad, registroMasReciente] of entidadesMap.entries()) {
+      const codigoEntidad = parseInt(entidad);
+      if (isNaN(codigoEntidad)) continue;
+
+      console.log(
+        `📊 Entidad ${entidad}: Situación más reciente = ${registroMasReciente.situacion} (período ${registroMasReciente.periodo})`
+      );
+
+      // SOLO considerar deuda activa si en el período MÁS RECIENTE está en 3, 4 o 5
+      if (
+        registroMasReciente.situacion >= 3 &&
+        registroMasReciente.situacion <= 5
+      ) {
+        entidadesConDeudaActiva.add(codigoEntidad);
+        console.log(
+          `❌ Entidad ${entidad} con DEUDA ACTIVA (situación ${registroMasReciente.situacion})`
+        );
+      } else if (registroMasReciente.situacion === 1) {
+        console.log(`✅ Entidad ${entidad} REGULARIZADA (situación 1)`);
+      } else if (registroMasReciente.situacion === 2) {
+        console.log(
+          `⚠️ Entidad ${entidad} en situación 2 (no cuenta como deuda activa)`
+        );
+      }
+    }
+
+    const cantidad = entidadesConDeudaActiva.size;
+    const entidadesArray = Array.from(entidadesConDeudaActiva);
     const nombresEntidades =
       this.entidadesService.obtenerNombresEntidades(entidadesArray);
+
+    let mensaje = "";
+
+    if (cantidad >= 3) {
+      mensaje = `Tiene deuda ACTIVA en 3 o más entidades con situación 3, 4 o 5: ${nombresEntidades.join(
+        ", "
+      )}`;
+    } else if (cantidad >= 1) {
+      mensaje = `Tiene deuda ACTIVA en ${cantidad} entidades con situación 3, 4 o 5: ${nombresEntidades.join(
+        ", "
+      )}`;
+    }
 
     if (cantidad >= 3) {
       return {
         estado: "rechazado",
-        mensaje: `Tiene deuda en 3 o más entidades con situación 3, 4 o 5: ${nombresEntidades.join(
-          ", "
-        )}`,
+        mensaje,
         entidades: entidadesArray,
+        datosDesactualizados,
       };
     } else if (cantidad >= 1) {
       return {
         estado: "pendiente",
-        mensaje: `Tiene deuda en ${cantidad} entidades con situación 3, 4 o 5: ${nombresEntidades.join(
-          ", "
-        )}`,
+        mensaje,
         entidades: entidadesArray,
+        datosDesactualizados,
       };
     }
 
     return { estado: "aprobado" };
   }
+
   /**
- * Mejorar el parsing de detalle de deudas con mejor manejo de errores
- */
-private parsearDetalleDeudas(detalleDeudas: string): Array<{
-  entidad: string;
-  periodo: number;
-  situacion: number;
-  monto: number;
-}> {
-  const resultados: Array<{
+   * Verifica si los datos de Nosis están actualizados
+   * Compara la fecha de actualización más reciente con la fecha actual
+   */
+  private verificarActualizacionDatos(variables: NosisVariable[]): boolean {
+    try {
+      // Buscar la fecha de actualización más reciente en las variables
+      const fechaActualizacionBCRA = variables.find(
+        (v) => v.Nombre === "FEX_BCRA_FecAct"
+      )?.Valor;
+
+      if (!fechaActualizacionBCRA) return true; // Si no hay fecha, asumir desactualizado
+
+      const fechaActual = new Date();
+      const fechaActualizacion = new Date(fechaActualizacionBCRA);
+
+      // Calcular diferencia en meses
+      const diffMeses =
+        (fechaActual.getFullYear() - fechaActualizacion.getFullYear()) * 12 +
+        (fechaActual.getMonth() - fechaActualizacion.getMonth());
+
+      // Considerar desactualizado si tiene más de 1 mes de antigüedad
+      const desactualizado = diffMeses > 1;
+
+      return desactualizado;
+    } catch (error) {
+      console.error("Error verificando actualización de datos:", error);
+      return true; // En caso de error, asumir desactualizado
+    }
+  }
+  /**
+   * Mejorar el parsing de detalle de deudas con mejor manejo de errores
+   */
+  private parsearDetalleDeudas(detalleDeudas: string): Array<{
     entidad: string;
     periodo: number;
     situacion: number;
     monto: number;
-  }> = [];
+  }> {
+    const resultados: Array<{
+      entidad: string;
+      periodo: number;
+      situacion: number;
+      monto: number;
+    }> = [];
 
-  try {
-    const regex = /<D>(.*?)<\/D>/g;
-    let match;
+    try {
+      const regex = /<D>(.*?)<\/D>/g;
+      let match;
 
-    while ((match = regex.exec(detalleDeudas)) !== null) {
-      const partes = match[1].split("|").map((part) => part.trim());
+      while ((match = regex.exec(detalleDeudas)) !== null) {
+        const partes = match[1].split("|").map((part) => part.trim());
 
-      if (partes.length >= 4) {
-        const codigoEntidad = partes[0];
-        
-        // Validar que el código de entidad sea numérico
-        if (codigoEntidad && /^\d+$/.test(codigoEntidad)) {
-          resultados.push({
-            entidad: codigoEntidad,
-            periodo: parseInt(partes[1]) || 0,
-            situacion: parseInt(partes[2]) || 0,
-            monto: parseInt(partes[3]) || 0,
-          });
+        if (partes.length >= 4) {
+          const codigoEntidad = partes[0];
+
+          // Validar que el código de entidad sea numérico
+          if (codigoEntidad && /^\d+$/.test(codigoEntidad)) {
+            resultados.push({
+              entidad: codigoEntidad,
+              periodo: parseInt(partes[1]) || 0,
+              situacion: parseInt(partes[2]) || 0,
+              monto: parseInt(partes[3]) || 0,
+            });
+          } else {
+            console.warn(
+              "❌ Código de entidad inválido (no numérico):",
+              codigoEntidad
+            );
+          }
         } else {
-          console.warn("❌ Código de entidad inválido (no numérico):", codigoEntidad);
+          console.warn("❌ Registro con formato incorrecto:", partes);
         }
-      } else {
-        console.warn("❌ Registro con formato incorrecto:", partes);
       }
+    } catch (error) {
+      console.error("❌ Error en parsearDetalleDeudas:", error);
     }
-  } catch (error) {
-    console.error("❌ Error en parsearDetalleDeudas:", error);
-  }
 
-  return resultados;
-}
+    return resultados;
+  }
   /**
    * Verifica si el cliente tiene empleo registrado estable
    * @param variables - Lista de variables de Nosis
@@ -943,16 +1126,19 @@ private parsearDetalleDeudas(detalleDeudas: string): Array<{
    * @returns Boolean indicando si tiene situación laboral válida
    */
   private verificarSituacionLaboral(variables: NosisVariable[]): boolean {
-    const esEmpleado =
-      variables.find((v) => v.Nombre === "VI_Empleado_Es")?.Valor === "Si";
-    //const esAutonomo = variables.find(v => v.Nombre === 'VI_Inscrip_Autonomo_Es')?.Valor === 'Si';
-    //const esDomestico = variables.find(v => v.Nombre === 'VI_EmpleadoDomestico_Es')?.Valor === 'Si';
-    const aportes =
-      variables.find((v) => v.Nombre === "AP_12m_Empleado_Pagos_Cant")?.Valor ||
-      "0";
+  const esEmpleado = variables.find((v) => v.Nombre === "VI_Empleado_Es")?.Valor === "Si";
+  const esEmpleador = variables.find((v) => v.Nombre === "VI_Empleador_Es")?.Valor === "Si";
+  const esJubilado = variables.find((v) => v.Nombre === "VI_Jubilado_Es")?.Valor === "Si";
+  const esPensionado = variables.find((v) => v.Nombre === "VI_Pensionado_Es")?.Valor === "Si";
+  
+  const aportes = variables.find((v) => v.Nombre === "AP_12m_Empleado_Pagos_Cant")?.Valor || "0";
+  const totalAportes = this.calcularTotalAportes(variables);
 
-    return esEmpleado || parseInt(aportes) > 0;
-  }
+  // ✅ Considerar que tiene situación laboral si:
+  // - Es empleado, empleador, jubilado o pensionado
+  // - O tiene aportes registrados (aunque no esté activo actualmente)
+  return esEmpleado || esEmpleador || esJubilado || esPensionado || totalAportes > 0;
+}
   /**
    * Extrae y estructura datos personales de las variables de Nosis
    * @param variables - Lista de variables de Nosis
