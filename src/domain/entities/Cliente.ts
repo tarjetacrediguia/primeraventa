@@ -41,6 +41,7 @@ export interface ClienteParams {
     empleadorCodigoPostal?: string | null;
     empleadorLocalidad?: string | null;
     empleadorProvincia?: string | null;
+    rubroEmpleador?: string | null;
     nacionalidad?: string | null;
     estadoCivil?: string | null;
 }
@@ -79,6 +80,7 @@ export class Cliente {
     private empleadorProvincia: string | null;
     private nacionalidad: string | null;
     private estadoCivil: string | null;
+    private rubroEmpleador: string | null;
 
 
     /**
@@ -134,7 +136,17 @@ export class Cliente {
         this.empleadorProvincia = params.empleadorProvincia ?? null;
         this.nacionalidad = params.nacionalidad ?? null;
         this.estadoCivil = params.estadoCivil ?? null;
+        this.rubroEmpleador = params.rubroEmpleador ?? null;
 
+    }
+
+    // Getter y setter para rubroEmpleador
+    public getRubroEmpleador(): string | null {
+        return this.rubroEmpleador;
+    }
+
+    public setRubroEmpleador(rubro: string | null): void {
+        this.rubroEmpleador = rubro;
     }
 
     /*
@@ -736,7 +748,8 @@ export class Cliente {
             empleadorLocalidad: this.empleadorLocalidad,
             empleadorProvincia: this.empleadorProvincia,
             nacionalidad: this.nacionalidad,
-            estadoCivil: this.estadoCivil
+            estadoCivil: this.estadoCivil,
+            rubroEmpleador: this.rubroEmpleador
         };
     }
 
@@ -762,7 +775,8 @@ export class Cliente {
             aceptaTarjeta:map.aceptaTarjeta ?? map.acepta_tarjeta ?? false,
             fechaCreacion:map.fechaCreacion ? new Date(map.fechaCreacion) : 
             map.fecha_creacion ? new Date(map.fecha_creacion) : new Date(),
-            comercianteId:map.comercianteId ?? 0
+            comercianteId:map.comercianteId ?? 0,
+            rubroEmpleador: map.rubroEmpleador || null
     });
     }
 

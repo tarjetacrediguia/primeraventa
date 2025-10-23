@@ -135,6 +135,7 @@ export class CrearSolicitudFormalUseCase {
       cuitEmpleador: string;
       cargoEmpleador: string;
       sectorEmpleador: string;
+      rubroEmpleador: string;
       codigoPostalEmpleador: string;
       localidadEmpleador: string;
       provinciaEmpleador: string;
@@ -341,6 +342,7 @@ export class CrearSolicitudFormalUseCase {
         localidadEmpleador: datosEmpleador.localidadEmpleador,
         provinciaEmpleador: datosEmpleador.provinciaEmpleador,
         telefonoEmpleador: datosEmpleador.telefonoEmpleador,
+        rubroEmpleador: datosEmpleador.rubroEmpleador,
         // Datos personales adicionales
         sexo: datosSolicitud.sexo,
         codigoPostal: datosSolicitud.codigoPostal,

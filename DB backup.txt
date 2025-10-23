@@ -1,0 +1,371 @@
+-- Tabla principal de Usuarios
+CREATE TYPE rol_usuario AS ENUM ('administrador', 'analista', 'comerciante');
+
+CREATE TABLE usuarios (
+    id SERIAL PRIMARY KEY,
+    nombre TEXT NOT NULL,
+    apellido TEXT NOT NULL,
+    email TEXT NOT NULL UNIQUE,
+    password_hash TEXT NOT NULL,
+    telefono TEXT,
+    rol rol_usuario NOT NULL,
+    fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    fecha_actualizacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    ultimo_login TIMESTAMP,
+    activo BOOLEAN DEFAULT TRUE
+);
+
+-- Tabla de Administradores
+CREATE TABLE administradores (
+    usuario_id INTEGER PRIMARY KEY REFERENCES usuarios(id) ON DELETE CASCADE
+);
+
+-- Tabla de Analistas
+CREATE TABLE analistas (
+    usuario_id INTEGER PRIMARY KEY REFERENCES usuarios(id) ON DELETE CASCADE
+);
+
+-- Tabla de Comerciantes
+CREATE TABLE comerciantes (
+    usuario_id INTEGER PRIMARY KEY REFERENCES usuarios(id) ON DELETE CASCADE,
+    nombre_comercio TEXT NOT NULL,
+    cuil TEXT NOT NULL UNIQUE,
+    direccion_comercio TEXT NOT NULL
+);
+
+-- Tabla de Permisos
+CREATE TABLE permisos (
+    id SERIAL PRIMARY KEY,
+    nombre TEXT NOT NULL UNIQUE,
+    descripcion TEXT
+);
+
+-- Insertar permisos básicos
+INSERT INTO permisos (nombre, descripcion) VALUES
+('create_user', 'Permiso para crear nuevos usuarios'),
+('edit_user', 'Permiso para editar usuarios existentes'),
+('delete_user', 'Permiso para eliminar usuarios'),
+('view_users', 'Permiso para ver listado de usuarios'),
+('manage_permissions', 'Permiso para gestionar permisos de usuarios'),
+('create_solicitudFormal', 'Permiso para crear solicitudes formales');
+
+-- Tabla de relación Usuario-Permiso
+CREATE TABLE usuario_permisos (
+    usuario_id INTEGER REFERENCES usuarios(id) ON DELETE CASCADE,
+    permiso_id INTEGER REFERENCES permisos(id) ON DELETE CASCADE,
+    PRIMARY KEY (usuario_id, permiso_id)
+);
+
+-- Tabla de Clientes
+CREATE TABLE clientes (
+    id SERIAL PRIMARY KEY,
+    nombre_completo TEXT NOT NULL,
+    apellido TEXT NOT NULL,
+    dni TEXT UNIQUE,
+    cuil TEXT NOT NULL UNIQUE, 
+    telefono TEXT,
+    email TEXT,
+    fecha_nacimiento DATE,
+    domicilio TEXT,
+    acepta_tarjeta BOOLEAN DEFAULT FALSE,
+    fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    sexo TEXT,
+    codigo_postal TEXT,
+    localidad TEXT,
+    provincia TEXT,
+    numero_domicilio TEXT,
+    barrio TEXT,
+    nacionalidad TEXT,
+    estado_civil TEXT,
+    empleador_razon_social TEXT,
+    empleador_cuit TEXT,
+    empleador_domicilio TEXT,
+    empleador_telefono TEXT,
+    empleador_codigo_postal TEXT,
+    empleador_localidad TEXT,
+    empleador_provincia TEXT
+);
+
+-- Tabla de Solicitudes Iniciales
+CREATE TABLE solicitudes_iniciales (
+    id SERIAL PRIMARY KEY,
+    cliente_id INTEGER REFERENCES clientes(id) ON DELETE CASCADE,
+    comerciante_id INTEGER REFERENCES comerciantes(usuario_id) ON DELETE SET NULL,
+    analista_aprobador_id INTEGER REFERENCES analistas(usuario_id) ON DELETE SET NULL,
+    administrador_aprobador_id INTEGER REFERENCES administradores(usuario_id) ON DELETE SET NULL,
+    fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    estado TEXT CHECK (estado IN ('pendiente', 'aprobada', 'rechazada', 'expirada')) DEFAULT 'pendiente',
+    reciboSueldo BYTEA,
+    comentarios TEXT[],
+    fecha_actualizacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    fecha_aprobacion TIMESTAMP,
+    motivo_rechazo TEXT
+);
+
+-- Conjuntos de tasas de interés
+CREATE TABLE conjuntos_tasas (
+    id SERIAL PRIMARY KEY,
+    nombre TEXT NOT NULL,
+    descripcion TEXT,
+    fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    fecha_actualizacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP, 
+    activo BOOLEAN DEFAULT FALSE
+);
+
+-- Valores individuales de tasas y comisiones
+CREATE TABLE tasas (
+    id SERIAL PRIMARY KEY,
+    conjunto_id INTEGER NOT NULL REFERENCES conjuntos_tasas(id) ON DELETE CASCADE,
+    valor NUMERIC(15,2) NOT NULL,
+    descripcion TEXT,
+    codigo TEXT NOT NULL,
+    UNIQUE (conjunto_id, codigo)
+);
+
+-- Tabla de Referentes
+CREATE TABLE referentes (
+    id SERIAL PRIMARY KEY,
+    nombre_completo TEXT NOT NULL,
+    apellido TEXT NOT NULL,
+    vinculo TEXT NOT NULL,
+    telefono TEXT NOT NULL
+);
+
+-- Tabla de Solicitudes Formales
+CREATE TABLE solicitudes_formales (
+    id SERIAL PRIMARY KEY,
+    cliente_id INTEGER REFERENCES clientes(id) ON DELETE CASCADE,
+    solicitud_inicial_id INTEGER NOT NULL REFERENCES solicitudes_iniciales(id) ON DELETE CASCADE,
+    comerciante_id INTEGER REFERENCES comerciantes(usuario_id) ON DELETE SET NULL,
+    analista_aprobador_id INTEGER REFERENCES analistas(usuario_id) ON DELETE SET NULL,
+    administrador_aprobador_id INTEGER REFERENCES administradores(usuario_id) ON DELETE SET NULL,
+    comerciante_aprobador_id INTEGER REFERENCES comerciantes(usuario_id) ON DELETE SET NULL,
+    fecha_solicitud TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    recibo BYTEA,
+    estado TEXT CHECK (estado IN ('pendiente', 'aprobada', 'rechazada', 'aprobada_sin_aumento', 'pendiente_ampliacion')) DEFAULT 'pendiente',
+    acepta_tarjeta BOOLEAN DEFAULT FALSE,
+    comentarios TEXT[],
+    fecha_actualizacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    fecha_aprobacion TIMESTAMP,
+    importe_neto NUMERIC(15,2) NOT NULL,
+    limite_base NUMERIC(15,2) NOT NULL,
+    limite_completo NUMERIC(15,2) NOT NULL,
+    nuevo_limite_completo_solicitado NUMERIC(15,2) DEFAULT NULL,
+    solicita_ampliacion_credito BOOLEAN,
+	ponderador NUMERIC(15,2),
+    razon_social_empleador TEXT,
+    cargo_funcion_empleador TEXT,
+    sector_empleador TEXT,
+    codigo_postal_empleador TEXT,
+    localidad_empleador TEXT,
+    provincia_empleador TEXT,
+    telefono_empleador TEXT,
+    cuit_empleador TEXT
+);
+
+-- Implementación corregida de la restricción única usando un índice parcial
+CREATE UNIQUE INDEX unica_solicitud_aprobada_por_cliente 
+ON solicitudes_formales (cliente_id) 
+WHERE estado = 'aprobada';
+
+-- Tabla de relación SolicitudFormal-Referente
+CREATE TABLE solicitud_referente (
+    solicitud_formal_id INTEGER REFERENCES solicitudes_formales(id) ON DELETE CASCADE,
+    referente_id INTEGER REFERENCES referentes(id) ON DELETE CASCADE,
+    orden SMALLINT NOT NULL CHECK (orden BETWEEN 1 AND 2),
+    PRIMARY KEY (solicitud_formal_id, referente_id)
+);
+
+-- Tabla de Contratos
+CREATE TABLE contratos (
+    id SERIAL PRIMARY KEY,
+    solicitud_formal_id INTEGER NOT NULL UNIQUE REFERENCES solicitudes_formales(id) ON DELETE CASCADE,
+    cliente_id INTEGER REFERENCES clientes(id) ON DELETE SET NULL,
+    fecha_generacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    monto NUMERIC(15,2) NOT NULL,
+    estado TEXT NOT NULL,
+    numero_autorizacion TEXT NOT NULL,
+    numero_cuenta TEXT NOT NULL,
+    pdf_contrato BYTEA,
+    fecha_actualizacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    comercio_nombre TEXT,
+    comercio_fecha TEXT,
+    comercio_n_autorizacion TEXT,
+    comercio_producto TEXT,
+    comercio_sucursal TEXT,
+    cliente_nombre_completo TEXT,
+    cliente_sexo TEXT,
+    cliente_cuitocuil TEXT,
+    cliente_tipo_documento TEXT,
+    cliente_dni TEXT,
+    cliente_fecha_nacimiento TEXT,
+    cliente_estado_civil TEXT,
+    cliente_nacionalidad TEXT,
+    cliente_Sueldo_Neto TEXT,
+    cliente_domicilio_calle TEXT,
+    cliente_domicilio_numero TEXT,
+    cliente_domicilio_piso TEXT,
+    cliente_domicilio_departamento TEXT,
+    cliente_domicilio_localidad TEXT,
+    cliente_domicilio_provincia TEXT,
+    cliente_domicilio_barrio TEXT,
+    cliente_domicilio_pais TEXT,
+    cliente_domicilio_codigo_postal TEXT,
+    cliente_domicilio_correo_electronico TEXT,
+    cliente_domicilio_telefono_fijo TEXT,
+    cliente_domicilio_telefono_celular TEXT,
+    cliente_referente1_nombre TEXT,
+    cliente_referente1_apellido TEXT,
+    cliente_referente1_vinculo TEXT,
+    cliente_referente1_telefono TEXT,
+    cliente_referente2_nombre TEXT,
+    cliente_referente2_apellido TEXT,
+    cliente_referente2_vinculo TEXT,
+    cliente_referente2_telefono TEXT,
+    cliente_datos_laborales_actividad TEXT,
+    cliente_datos_laborales_razon_social TEXT,
+    cliente_datos_laborales_cuit TEXT,
+    cliente_datos_laborales_inicio_actividades TEXT,
+    cliente_datos_laborales_cargo TEXT,
+    cliente_datos_laborales_sector TEXT,
+    cliente_datos_laborales_domicilio_legal TEXT,
+    cliente_datos_laborales_codigo_postal TEXT,
+    cliente_datos_laborales_localidad TEXT,
+    cliente_datos_laborales_provincia TEXT,
+    cliente_datos_laborales_telefono TEXT,
+    tasas_tea_ctf_financiacion NUMERIC,
+    tasas_tna_compensatorios_financiacion NUMERIC,
+    tasas_tna_punitorios NUMERIC,
+    tasas_ctf_financiacion NUMERIC,
+    tasas_comision_renovacion_anual NUMERIC,
+    tasas_comision_mantenimiento NUMERIC,
+    tasas_comision_reposicion_plastico NUMERIC,
+    tasas_atraso_05_31_dias NUMERIC,
+    tasas_atraso_32_60_dias NUMERIC,
+    tasas_atraso_61_90_dias NUMERIC,
+    tasas_pago_facil NUMERIC,
+    tasas_platinium_pago_facil NUMERIC,
+    tasas_platinium_tea_ctf_financiacion NUMERIC,
+    tasas_platinium_tna_compensatorios_financiacion NUMERIC,
+    tasas_platinium_tna_punitorios NUMERIC,
+    tasas_platinium_ctf_financiacion NUMERIC,
+    tasas_platinium_comision_renovacion_anual NUMERIC,
+    tasas_platinium_comision_mantenimiento NUMERIC,
+    tasas_platinium_comision_reposicion_plastico NUMERIC,
+    tasas_platinium_atraso_05_31_dias NUMERIC,
+    tasas_platinium_atraso_32_60_dias NUMERIC,
+    tasas_platinium_atraso_61_90_dias NUMERIC
+);
+ 
+-- Tabla de Historial de Acciones
+CREATE TABLE historial (
+    id SERIAL PRIMARY KEY,
+    usuario_id INTEGER REFERENCES usuarios(id) ON DELETE SET NULL,
+    accion TEXT NOT NULL,
+    entidad_afectada TEXT,
+    entidad_id INTEGER,
+    solicitud_inicial_id INTEGER,
+    detalles JSONB,
+    fecha_hora TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Tabla de Estadísticas
+CREATE TABLE estadisticas (
+    id SERIAL PRIMARY KEY,
+    tipo_estadistica TEXT NOT NULL,
+    periodo DATE NOT NULL,
+    datos JSONB NOT NULL,
+    fecha_generacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Tabla de Configuración del Sistema
+CREATE TABLE configuracion (
+    clave TEXT PRIMARY KEY,
+    valor JSONB NOT NULL,
+    descripcion TEXT,
+    fecha_actualizacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Tabla de Sesiones
+CREATE TABLE sesiones (
+    id SERIAL PRIMARY KEY,
+    usuario_id INTEGER REFERENCES usuarios(id) ON DELETE CASCADE,
+    token TEXT NOT NULL,
+    fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    fecha_expiracion TIMESTAMP NOT NULL,
+    dispositivo TEXT,
+    ip TEXT,
+    activa BOOLEAN DEFAULT TRUE
+);
+
+CREATE TYPE tipo_notificacion AS ENUM (
+    'solicitud_inicial', 
+    'solicitud_formal', 
+    'contrato', 
+    'error', 
+    'sistema',
+    'alerta',
+	'compra'
+);
+
+CREATE TABLE notificaciones (
+    id SERIAL PRIMARY KEY,
+    usuario_id INTEGER NOT NULL REFERENCES usuarios(id) ON DELETE CASCADE,
+    tipo tipo_notificacion NOT NULL,
+    mensaje TEXT NOT NULL,
+    leida BOOLEAN DEFAULT FALSE,
+    fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    entidad_asociada TEXT,
+    entidad_id INTEGER,
+    detalles JSONB
+);
+
+-- Asignar permisos básicos a administradores
+INSERT INTO usuario_permisos (usuario_id, permiso_id)
+SELECT a.usuario_id, p.id
+FROM administradores a
+CROSS JOIN permisos p
+ON CONFLICT DO NOTHING;
+
+CREATE TYPE estado_compra AS ENUM (
+  'pendiente', 
+  'aprobada', 
+  'rechazada'
+);
+
+CREATE TABLE compras (
+    id SERIAL PRIMARY KEY,
+    solicitud_formal_id INTEGER UNIQUE NOT NULL REFERENCES solicitudes_formales(id) ON DELETE CASCADE,
+    cliente_id INTEGER NOT NULL REFERENCES clientes(id) ON DELETE SET NULL,
+    monto_total NUMERIC(15,2) NOT NULL,
+    descripcion TEXT,
+    cantidad_cuotas SMALLINT NOT NULL CHECK (cantidad_cuotas BETWEEN 3 AND 14),
+    fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    fecha_actualizacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    estado estado_compra NOT NULL DEFAULT 'pendiente',
+	cuotas_solicitadas SMALLINT NOT NULL CHECK (cuotas_solicitadas BETWEEN 3 AND 14),
+    valor_cuota NUMERIC(15,2) NOT NULL,
+    numero_autorizacion TEXT,
+    numero_cuenta TEXT,
+    comerciante_id INTEGER REFERENCES comerciantes(usuario_id) ON DELETE SET NULL,
+    analista_aprobador_id INTEGER REFERENCES analistas(usuario_id) ON DELETE SET NULL,
+    motivo_rechazo TEXT
+);
+
+CREATE TABLE items_compra (
+    id SERIAL PRIMARY KEY,
+    compra_id INTEGER NOT NULL REFERENCES compras(id) ON DELETE CASCADE,
+    nombre TEXT NOT NULL,
+    precio NUMERIC(15,2) NOT NULL,
+    cantidad INTEGER NOT NULL DEFAULT 1 CHECK (cantidad > 0),
+    fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE archivos_adjuntos (
+    id SERIAL PRIMARY KEY,
+    solicitud_formal_id INTEGER NOT NULL REFERENCES solicitudes_formales(id) ON DELETE CASCADE,
+    nombre TEXT NOT NULL,
+    tipo TEXT NOT NULL,
+    contenido BYTEA NOT NULL,
+    fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);

@@ -18,10 +18,14 @@ import { AdministradorRepositoryAdapter } from '../../adapters/repository/Admini
 const administradorRepository = new AdministradorRepositoryAdapter();
 
 /**
+ * 
+ * 
  * Crea un nuevo administrador.
  * @param req - Request de Express con los datos del administrador en el body.
  * @param res - Response de Express para enviar la respuesta.
  * @returns Devuelve el administrador creado o un error en caso de fallo.
+ * 
+ * 
  */
 export const createAdministrador = async (req: Request, res: Response) => {
   try {

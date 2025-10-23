@@ -115,3 +115,17 @@ export const esComercianteOAdministrador = (req: Request, res: Response, next: N
   
   next();
 };
+
+
+/**
+ * Middleware que permite el acceso a comerciantes, analistas o administradores.
+ */
+export const esComercianteOAnalistaOAdministrador = (req: Request, res: Response, next: NextFunction) => {
+  if (!req.user) return res.status(401).json({ error: 'No autenticado' });
+  if (req.user.rol !== 'comerciante' && req.user.rol !== 'analista' && req.user.rol !== 'administrador') {
+    return res.status(403).json({ 
+      error: 'Acceso no autorizado. Se requiere rol de comerciante, analista o administrador' 
+    });
+  }
+  next();
+};

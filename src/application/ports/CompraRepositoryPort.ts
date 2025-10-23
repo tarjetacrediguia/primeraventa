@@ -18,4 +18,5 @@ export interface CompraRepositoryPort {
         cuilCliente: string, 
         solicitudInicialExcluida: number
     ): Promise<Array<{ id: number, comercianteId: number | null }>>;
+    getComprasBySolicitudFormalIdReporte(solicitudFormalId: number): Promise<Compra[]>;
 }

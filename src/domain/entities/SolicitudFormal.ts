@@ -43,6 +43,7 @@ export interface SolicitudFormalParams {
     cuitEmpleador?: string;
     cargoEmpleador?: string;
     sectorEmpleador?: string;
+    rubroEmpleador?: string;
     codigoPostalEmpleador?: string;
     localidadEmpleador?: string;
     provinciaEmpleador?: string;
@@ -107,6 +108,7 @@ export class SolicitudFormal {
     private numeroDomicilio: string | null;
     private barrio: string | null;  
     private archivosAdjuntos: ArchivoAdjunto[] = [];
+    private rubroEmpleador: string;
 
   /**
    * Constructor de la clase SolicitudFormal.
@@ -178,8 +180,17 @@ export class SolicitudFormal {
         this.barrio = params.barrio || null;
         this.archivosAdjuntos = params.archivosAdjuntos || [];
         this.comercianteAprobadorId = params.comercianteAprobadorId;
-        
+        this.rubroEmpleador = params.rubroEmpleador || "";
         this.calcularLimites();
+    }
+
+    // Getter y setter para rubroEmpleador
+    setRubroEmpleador(rubro: string) {
+        this.rubroEmpleador = rubro;
+    }
+
+    getRubroEmpleador() {
+        return this.rubroEmpleador;
     }
 
     public getArchivosAdjuntos(): ArchivoAdjunto[] {
@@ -782,6 +793,7 @@ export class SolicitudFormal {
         localidad: this.localidad,
         provincia: this.provincia,
         numeroDomicilio: this.numeroDomicilio,
+        rubroEmpleador: this.rubroEmpleador,
         barrio: this.barrio,
         archivosAdjuntos: this.archivosAdjuntos.map(a => ({
             id: a.getId(),
@@ -839,7 +851,8 @@ export class SolicitudFormal {
             administradorAprobadorId: map.administradorAprobadorId,
             comercianteAprobadorId: map.comercianteAprobadorId,
             nuevoLimiteCompletoSolicitado: map.nuevoLimiteCompletoSolicitado,
-            archivosAdjuntos: map.archivosAdjuntos || []
+            archivosAdjuntos: map.archivosAdjuntos || [],
+            rubroEmpleador: map.rubroEmpleador || "",
         });
 }
 

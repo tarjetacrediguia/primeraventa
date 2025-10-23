@@ -34,6 +34,7 @@ import { SolicitudInicial } from "../../../domain/entities/SolicitudInicial";
 import { HISTORIAL_ACTIONS } from "../../constants/historialActions";
 import { HistorialRepositoryPort } from "../../ports/HistorialRepositoryPort";
 import { ClienteRepositoryPort } from "../../ports/ClienteRepositoryPort";
+import { crearComentarioAnalista, crearComentarioComerciante } from "../../../infrastructure/utils/comentariosHelper";
 
 /**
  * Caso de uso para aprobar o rechazar solicitudes iniciales de crédito.
@@ -124,7 +125,16 @@ export class AprobarRechazarSolicitudInicialUseCase {
         
         // ===== PASO 4: AGREGAR COMENTARIO OPCIONAL =====
         // Agregar comentario de aprobación si se proporciona
-        if (comentario) solicitud.agregarComentario(`Aprobación: ${comentario}`);
+        if (comentario) {
+      // Comentario detallado para analistas
+      solicitud.agregarComentario(crearComentarioAnalista(`Aprobación: ${comentario}`));
+    }
+    
+    // Comentario genérico para comerciante
+    const mensajeComerciante = esAdministrador 
+      ? "aprobación manual / aprobado por administrador" 
+      : "aprobación manual / aprobado por analista";
+    solicitud.agregarComentario(crearComentarioComerciante(mensajeComerciante));
         
         // ===== PASO 5: ACTUALIZAR ESTADO =====
         // Cambiar estado de la solicitud a "aprobada"
@@ -240,7 +250,13 @@ export class AprobarRechazarSolicitudInicialUseCase {
         // ===== PASO 5: AGREGAR COMENTARIO CON CONTEXTO =====
         // Agregar comentario con información del rechazador
         const rol = esAdministrador ? 'administrador' : 'analista';
-        solicitud.agregarComentario(`Rechazo por ${rol}: ${comentario}`);
+        solicitud.agregarComentario(crearComentarioAnalista(`Rechazo por ${rol}: ${comentario}`));
+
+        // Comentario genérico para comerciante
+        const mensajeComerciante = esAdministrador 
+        ? "Rechazo manual / rechazo por administrador" 
+        : "Rechazo manual / rechazo por analista";
+        solicitud.agregarComentario(crearComentarioComerciante(mensajeComerciante));
         
         // ===== PASO 6: ESTABLECER MOTIVO DE RECHAZO =====
         // Establecer el motivo de rechazo en la solicitud

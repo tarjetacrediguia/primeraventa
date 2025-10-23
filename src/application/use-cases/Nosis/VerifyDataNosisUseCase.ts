@@ -3,6 +3,7 @@ import {
   NosisVariable,
 } from "../../../domain/entities/NosisData";
 import { EntidadesService } from "../../../infrastructure/entidadesBancarias/EntidadesService";
+import { RubrosLaboralesService } from "../../../infrastructure/RubrosLaborales/RubrosLaboralesService";
 
 /**
  * MÓDULO: Caso de Uso - Verificación de Datos Nosis
@@ -71,6 +72,7 @@ export type PersonalData = {
         codigoPostal?: string;
         provincia?: string;
       };
+      rubro?: string | null;
     };
     monotributo?: {
       esMonotributista?: string;
@@ -135,11 +137,13 @@ export class VerifyDataNosisUseCase {
   private readonly MINIMO_APORTES = 4;
   // Servicio para obtener nombres de entidades bancarias
   private entidadesService: EntidadesService;
+  // Servicio para obtener rubros laborales
+  private rubrosLaboralesService: RubrosLaboralesService;
   /**
    * Constructor del caso de uso de verificación Nosis
    * @param rules - Reglas personalizadas de validación (opcional)
    */
-  constructor(rules?: RuleConfig[], entidadesService?: EntidadesService) {
+  constructor(rules?: RuleConfig[], entidadesService?: EntidadesService,rubrosLaboralesService?: RubrosLaboralesService) {
     // Reglas por defecto si no se proporcionan
     this.rules = rules || [
       {
@@ -150,7 +154,87 @@ export class VerifyDataNosisUseCase {
       },
     ];
     this.entidadesService = entidadesService || new EntidadesService();
+    this.rubrosLaboralesService = rubrosLaboralesService || new RubrosLaboralesService();
   }
+
+  /**
+   * Verifica si el cliente trabaja en rubros de construcción o contratación de personal,
+   * no tiene deudas y tiene 12 meses de aportes completos
+   */
+  private verificarRubrosConstruccionContratacion(variables: NosisVariable[]): {
+  esRubroConstruccionContratacion: boolean;
+  estado: "aprobado" | "rechazado";
+  mensaje: string;
+  codigoRubro?: string;
+  descripcionRubro?: string;
+} {
+  // Obtener el código del rubro del empleador
+  const codigoRubroEmpleador = variables.find(
+    v => v.Nombre === "VI_Empleador_Act01_Cod"
+  )?.Valor;
+
+  if (!codigoRubroEmpleador) {
+    return { 
+      esRubroConstruccionContratacion: false, 
+      estado: "aprobado", // No aplica la regla especial
+      mensaje: ""
+    };
+  }
+
+  // Verificar si pertenece a los rubros de construcción/contratación
+  const esRubroConstruccionContratacion = 
+    this.rubrosLaboralesService.esRubroConstruccionOContratacion(codigoRubroEmpleador);
+
+  if (!esRubroConstruccionContratacion) {
+    return { 
+      esRubroConstruccionContratacion: false, 
+      estado: "aprobado", // No aplica la regla especial
+      mensaje: ""
+    };
+  }
+
+  // Obtener descripción del rubro
+  const descripcionRubro = this.rubrosLaboralesService.obtenerDescripcionRubro(codigoRubroEmpleador);
+
+  // Verificar que no tenga deudas en situación 3-4-5
+  const verificacionDeudas = this.verificarDeudaEntidades(variables);
+  const sinDeudas = verificacionDeudas.estado === "aprobado";
+
+  // Verificar que tenga 12 meses de aportes completos
+  const tiene12Aportes = this.verificar12MesesAportesCompletos(variables);
+
+  // ÚNICA CONDICIÓN DE APROBACIÓN: 12 meses de aportes + sin deudas
+  if (sinDeudas && tiene12Aportes) {
+    return {
+      esRubroConstruccionContratacion: true,
+      estado: "aprobado",
+      codigoRubro: codigoRubroEmpleador,
+      descripcionRubro: descripcionRubro,
+      mensaje: `APROBADO - Trabaja en rubro de construcción/contratación (${codigoRubroEmpleador} - ${descripcionRubro}) sin deudas y con 12 meses de aportes completos`,
+    };
+  } else {
+    // CUALQUIER OTRA COMBINACIÓN ES RECHAZADA
+    let motivoRechazo = `Trabaja en rubro de construcción/contratación (${codigoRubroEmpleador} - ${descripcionRubro}) RECHAZADO - `;
+    
+    if (!sinDeudas && !tiene12Aportes) {
+      motivoRechazo += "no tiene 12 meses de aportes completos y tiene deudas";
+    } else if (!tiene12Aportes) {
+      motivoRechazo += "no tiene 12 meses de aportes completos";
+    } else if (!sinDeudas) {
+      motivoRechazo += "tiene deudas";
+    }
+
+    return {
+      esRubroConstruccionContratacion: true,
+      estado: "rechazado",
+      codigoRubro: codigoRubroEmpleador,
+      descripcionRubro: descripcionRubro,
+      mensaje: motivoRechazo,
+    };
+  }
+}
+
+
   /**
    * Evalúa una regla de validación contra una variable de Nosis
    * @param variable - Variable de Nosis a evaluar
@@ -317,27 +401,55 @@ export class VerifyDataNosisUseCase {
       "DirecTv",
     ];
 
-    // Obtener cantidad total de referencias
-    const cantidadRef = parseInt(
+    // Obtener cantidad total de referencias VIGENTES
+    const cantidadRefVigentes = parseInt(
+      variables.find((v) => v.Nombre === "RC_Vig_Cant")?.Valor || "0"
+    );
+
+    // Obtener fuentes de referencias VIGENTES
+    const fuentesRefVigentes = variables.find(
+      (v) => v.Nombre === "RC_Vig_Fuente"
+    )?.Valor;
+
+    // También considerar referencias de últimos 12 meses
+    const cantidadRef12m = parseInt(
       variables.find((v) => v.Nombre === "RC_12m_Cant")?.Valor || "0"
     );
 
-    // Obtener fuentes de referencias
-    const fuentesRef = variables.find(
+    const fuentesRef12m = variables.find(
       (v) => v.Nombre === "RC_12m_Fuente"
     )?.Valor;
 
     let referenciasValidas: string[] = [];
     let referenciasInvalidas: string[] = [];
 
-    if (fuentesRef) {
-      // Separar las fuentes (pueden venir separadas por | o ;)
-      const fuentes = fuentesRef
+    // Procesar referencias VIGENTES (prioridad)
+    if (fuentesRefVigentes) {
+      const fuentes = fuentesRefVigentes
         .split(/[|;]/)
         .map((f) => f.trim())
         .filter((f) => f);
 
-      // Clasificar las fuentes
+      fuentes.forEach((fuente) => {
+        if (
+          EXCLUIR_FUENTES.some((excluida) =>
+            fuente.toLowerCase().includes(excluida.toLowerCase())
+          )
+        ) {
+          referenciasInvalidas.push(fuente);
+        } else {
+          referenciasValidas.push(fuente);
+        }
+      });
+    }
+
+    // Procesar referencias de últimos 12 meses (si no hay vigentes)
+    if (referenciasValidas.length === 0 && fuentesRef12m) {
+      const fuentes = fuentesRef12m
+        .split(/[|;]/)
+        .map((f) => f.trim())
+        .filter((f) => f);
+
       fuentes.forEach((fuente) => {
         if (
           EXCLUIR_FUENTES.some((excluida) =>
@@ -354,9 +466,8 @@ export class VerifyDataNosisUseCase {
     const totalValidas = referenciasValidas.length;
     const totalInvalidas = referenciasInvalidas.length;
 
-    // Aplicar reglas de negocio
+    // 🔥 LÓGICA SIMPLE SOLO PARA REFERENCIAS
     if (totalValidas === 0) {
-      // No tiene referencias válidas - APROBADO
       let mensaje = "No tiene referencias comerciales válidas";
       if (totalInvalidas > 0) {
         mensaje += `. Referencias no consideradas: ${referenciasInvalidas.join(
@@ -372,8 +483,8 @@ export class VerifyDataNosisUseCase {
         totalValidas,
         totalInvalidas,
       };
-    } else if (totalValidas >= 1 && totalValidas <= 2) {
-      // 1-2 referencias válidas - PENDIENTE
+    } else if (totalValidas <= 1) {
+      // 1 o 2 referencias válidas - PENDIENTE
       let mensaje = `Tiene ${totalValidas} referencia(s) comercial(es) válida(s): ${referenciasValidas.join(
         ", "
       )}`;
@@ -414,6 +525,59 @@ export class VerifyDataNosisUseCase {
   }
 
   /**
+   * Verifica que el cliente tenga entre 18 y 74 años
+   */
+  private verificarEdad(variables: NosisVariable[]): {
+    cumple: boolean;
+    edad?: number;
+    mensaje?: string;
+  } {
+    const fechaNacimientoStr = variables.find(
+      (v) => v.Nombre === "VI_FecNacimiento"
+    )?.Valor;
+
+    if (!fechaNacimientoStr) {
+      return {
+        cumple: false,
+        mensaje: "No se pudo obtener la fecha de nacimiento",
+      };
+    }
+
+    // Formato: YYYYMMDD
+    const año = parseInt(fechaNacimientoStr.substring(0, 4));
+    const mes = parseInt(fechaNacimientoStr.substring(4, 6)) - 1;
+    const dia = parseInt(fechaNacimientoStr.substring(6, 8));
+
+    const fechaNacimiento = new Date(año, mes, dia);
+    const hoy = new Date();
+
+    let edad = hoy.getFullYear() - fechaNacimiento.getFullYear();
+    const mesActual = hoy.getMonth();
+    const diaActual = hoy.getDate();
+
+    // Ajustar si aún no ha pasado el mes de nacimiento o si es el mes pero no el día
+    if (mesActual < mes || (mesActual === mes && diaActual < dia)) {
+      edad--;
+    }
+
+    if (edad < 18) {
+      return {
+        cumple: false,
+        edad,
+        mensaje: `El cliente es menor de edad (${edad} años)`,
+      };
+    } else if (edad > 74) {
+      return {
+        cumple: false,
+        edad,
+        mensaje: `El cliente supera la edad máxima (${edad} años)`,
+      };
+    }
+
+    return { cumple: true, edad };
+  }
+
+  /**
    * Ejecuta el proceso completo de verificación de datos Nosis
    * @param nosisData - Respuesta cruda del servicio Nosis
    * @returns Promise<VerificationResult> - Resultado estructurado de la verificación
@@ -428,266 +592,384 @@ export class VerifyDataNosisUseCase {
     // Buscar el score para incluirlo en el resultado
     const scoreVar = variables.find((v) => v.Nombre === "SCO_Vig");
     const score = scoreVar ? parseInt(scoreVar.Valor) : 0;
-    // Evaluar si es monotributista
-    const esMonotributista =
-      variables.find((v) => v.Nombre === "VI_Inscrip_Monotributo_Es")?.Valor ===
-      "Si";
 
-    // Evaluar reglas estándar
-    for (const regla of this.rules) {
-      const variable = variables.find((v) => v.Nombre === regla.variable);
-      if (!this.evaluarRegla(variable, regla)) {
-        reglasFallidas.push(regla.mensaje);
-      }
-    }
-
-    // ===== LÓGICA DE APORTES =====
-    const totalAportes = this.calcularTotalAportes(variables);
-const pagosRecientes = this.tieneAportesRecientes(variables);
-
-// ✅ VERIFICACIÓN DE APORTES MÍNIMOS
-if (totalAportes >= this.MINIMO_APORTES) {
-  aprobados.push(`Cumple con el mínimo de aportes requerido (${totalAportes} aportes)`);
-} else {
-  reglasFallidas.push(
-    `Cliente no cumple con el mínimo de aportes registrados en los últimos 12 meses (${totalAportes} de ${this.MINIMO_APORTES} requeridos)`
-  );
-  if (!motivoComerciante) {
-    motivoComerciante = "Solicitud rechazada: no cumple con el mínimo de aportes requerido";
-  }
-}
-
-    // ===== VERIFICACIONES QUE PUEDEN CAUSAR RECHAZO INMEDIATO =====
-
-    // 1. Entidades en situación 2
-    const resultadoSituacion2 = this.verificarEntidadesSituacion2(variables);
-    if (resultadoSituacion2.estado === "rechazado") {
-      reglasFallidas.push(resultadoSituacion2.mensaje!);
-    } else if (resultadoSituacion2.estado === "pendiente") {
-      pendientes.push(resultadoSituacion2.mensaje!);
-    } else {
-      aprobados.push("No tiene entidades en situación 2");
-    }
-
-    // 2. Deudas en entidades (situación 3-4-5)
-    const tieneDeudaEntidades = this.verificarDeudaEntidades(variables);
-    if (tieneDeudaEntidades.estado === "rechazado") {
-      reglasFallidas.push(tieneDeudaEntidades.mensaje!);
-    } else if (tieneDeudaEntidades.estado === "pendiente") {
-      pendientes.push(tieneDeudaEntidades.mensaje!);
-    } else {
-      aprobados.push("No tiene deudas en entidades con situación 3-4-5");
-    }
-
-    // 3. Referencias comerciales
-    const resultadoReferencias =
-      this.verificarReferenciasComerciales(variables);
-    if (resultadoReferencias.estado === "rechazado") {
-      reglasFallidas.push(resultadoReferencias.mensaje!);
-    } else if (resultadoReferencias.estado === "pendiente") {
-      pendientes.push(resultadoReferencias.mensaje!);
-    } else {
-      aprobados.push("Cumple con criterios de referencias comerciales");
-    }
-
-    // ===== LÓGICA CORREGIDA PARA MONOTRIBUTISTAS Y SITUACIÓN LABORAL =====
-
-    const cambioLaboral = this.verificarPerdidaEmpleoReciente(variables);
-
-if (cambioLaboral.perdioEmpleo) {
-  // ❌ RECHAZAR POR PÉRDIDA DE EMPLEO (ambos escenarios 1 y 2)
-  reglasFallidas.push(cambioLaboral.motivo);
-  if (!motivoComerciante) {
-    motivoComerciante = "Solicitud rechazada: situación laboral inestable";
-  }
-}
-
-// ===== LÓGICA PARA MONOTRIBUTISTAS ESTABLES =====
-if (esMonotributista && !cambioLaboral.perdioEmpleo) {
-  // 🟡 CLIENTE QUE ES MONOTRIBUTISTA PERO NO PERDIÓ EMPLEO RECIENTEMENTE
-  const tieneEmpleoRegistrado = this.tieneEmpleoRegistrado(variables);
-  
-  if (tieneEmpleoRegistrado) {
-    // ✅ ESCENARIO 3: Tiene empleo Y es monotributista (APROBAR)
-    aprobados.push("Monotributista con empleo registrado validado");
-  } else {
-    // 🔄 Monotributista estable (sin cambio reciente)
-    const tieneAntiguedadMonotributo = this.verificarAntiguedadMonotributo(variables);
-    if (tieneAntiguedadMonotributo) {
-      aprobados.push("Monotributista con antigüedad validada");
-    } else {
-      reglasFallidas.push("Monotributista sin antigüedad laboral suficiente");
-      if (!motivoComerciante) {
-        motivoComerciante = "Solicitud rechazada: monotributista sin antigüedad suficiente";
-      }
-    }
-  }
-} else if (!esMonotributista && !cambioLaboral.perdioEmpleo) {
-  // 🔵 NO ES MONOTRIBUTISTA Y NO PERDIÓ EMPLEO - VERIFICAR SITUACIÓN LABORAL NORMAL
-  const tieneLaboral = this.verificarSituacionLaboral(variables);
-  if (tieneLaboral) {
-    aprobados.push("Situación laboral validada");
-  } else {
-    reglasFallidas.push("Cliente no tiene situación laboral registrada");
-  }
-}
-
-    // 6. Tarjetas Crediguía
-    if (this.tieneTarjetaCrediguia(variables)) {
-      reglasFallidas.push("Cliente tiene tarjeta Crediguía activa");
-    } else {
-      aprobados.push("No tiene tarjetas Crediguía activas");
-    }
-
-    // Extraer datos personales
+    // Extraer datos personales (siempre se hace)
     const personalData = this.extraerDatosPersonales(variables);
 
-    // ===== DETERMINAR ESTADO FINAL CON PRIORIDAD CORRECTA =====
+    // ✅ VERIFICACIÓN DE EDAD
+    const verificacionEdad = this.verificarEdad(variables);
+    if (!verificacionEdad.cumple) {
+        reglasFallidas.push(verificacionEdad.mensaje!);
+        motivoComerciante = `Solicitud rechazada: ${verificacionEdad.mensaje}`;
+    } else {
+        aprobados.push(`Edad válida (${verificacionEdad.edad} años)`);
+    }
+
+    // ✅ VERIFICACIÓN DE EMPLEADO DOMÉSTICO
+    const verificacionEmpleadoDomestico = this.verificarEmpleadoDomesticoSinDeudas(variables);
+if (verificacionEmpleadoDomestico.esEmpleadoDomestico) {
+    if (verificacionEmpleadoDomestico.estado === "aprobado") {
+        aprobados.push(verificacionEmpleadoDomestico.mensaje);
+    } else {
+        reglasFallidas.push(verificacionEmpleadoDomestico.mensaje);
+    }
+}
+
+    // ✅ VERIFICACIÓN DE RUBROS CONSTRUCCIÓN/CONTRATACIÓN
+    const verificacionRubrosConstruccion = this.verificarRubrosConstruccionContratacion(variables);
+if (verificacionRubrosConstruccion.esRubroConstruccionContratacion) {
+    if (verificacionRubrosConstruccion.estado === "aprobado") {
+        aprobados.push(verificacionRubrosConstruccion.mensaje);
+    } else {
+        reglasFallidas.push(verificacionRubrosConstruccion.mensaje);
+    }
+}
+
+    // ✅ VERIFICACIÓN DE JUBILADOS/PENSIONADOS
+    const esJubilado = variables.find((v) => v.Nombre === "VI_Jubilado_Es")?.Valor === "Si";
+    const esPensionado = variables.find((v) => v.Nombre === "VI_Pensionado_Es")?.Valor === "Si";
+
+    if (esPensionado) {
+        reglasFallidas.push("Cliente es pensionado - no permitido");
+        if (!motivoComerciante) {
+            motivoComerciante = "Solicitud rechazada: no se admiten pensionados";
+        }
+    } else if (esJubilado) {
+        pendientes.push("Cliente es jubilado - pendiente de verificación de número de beneficio");
+        if (!motivoComerciante) {
+            motivoComerciante = "Solicitud en revisión: cliente jubilado requiere verificación de beneficio";
+        }
+    }
+
+    // ✅ EVALUAR REGLAS ESTÁNDAR
+    for (const regla of this.rules) {
+        const variable = variables.find((v) => v.Nombre === regla.variable);
+        if (!this.evaluarRegla(variable, regla)) {
+            reglasFallidas.push(regla.mensaje);
+        }
+    }
+
+    // ✅ VERIFICACIÓN DE APORTES
+    const totalAportes = this.calcularTotalAportes(variables);
+    if (totalAportes >= this.MINIMO_APORTES) {
+        aprobados.push(`Cumple con el mínimo de aportes requerido (${totalAportes} aportes)`);
+    } else {
+        reglasFallidas.push(`Cliente no cumple con el mínimo de aportes registrados en los últimos 12 meses (${totalAportes} de ${this.MINIMO_APORTES} requeridos)`);
+        if (!motivoComerciante) {
+            motivoComerciante = "Solicitud rechazada: no cumple con el mínimo de aportes requerido";
+        }
+    }
+
+    // ✅ VERIFICACIÓN DE ENTIDADES EN SITUACIÓN 2
+    const resultadoSituacion2 = this.verificarEntidadesSituacion2(variables);
+    if (resultadoSituacion2.estado === "rechazado") {
+        reglasFallidas.push(resultadoSituacion2.mensaje!);
+    } else if (resultadoSituacion2.estado === "pendiente") {
+        pendientes.push(resultadoSituacion2.mensaje!);
+    } else {
+        aprobados.push("No tiene entidades en situación 2");
+    }
+
+    // ✅ VERIFICACIÓN DE DEUDAS EN ENTIDADES
+    const tieneDeudaEntidades = this.verificarDeudaEntidades(variables);
+    if (tieneDeudaEntidades.estado === "rechazado") {
+        reglasFallidas.push(tieneDeudaEntidades.mensaje!);
+    } else if (tieneDeudaEntidades.estado === "pendiente") {
+        pendientes.push(tieneDeudaEntidades.mensaje!);
+    } else {
+        aprobados.push("No tiene deudas en entidades con situación 3-4-5");
+    }
+
+    // ✅ VERIFICACIÓN DE REFERENCIAS COMERCIALES
+    const resultadoReferencias = this.verificarReferenciasComerciales(variables);
+    if (resultadoReferencias.estado === "rechazado") {
+        reglasFallidas.push(resultadoReferencias.mensaje!);
+    } else if (resultadoReferencias.estado === "pendiente") {
+        pendientes.push(resultadoReferencias.mensaje!);
+    } else {
+        aprobados.push("Cumple con criterios de referencias comerciales");
+    }
+
+    // ✅ VERIFICACIÓN DE COMBINACIÓN REFERENCIAS + DEUDAS
+    const combinacionReferenciasDeudas = this.verificarCombinacionReferenciasDeudas(
+        resultadoReferencias,
+        tieneDeudaEntidades
+    );
+    if (combinacionReferenciasDeudas.estado === "rechazado") {
+        reglasFallidas.push(combinacionReferenciasDeudas.mensaje!);
+    } else if (combinacionReferenciasDeudas.estado === "pendiente") {
+        pendientes.push(combinacionReferenciasDeudas.mensaje!);
+    }
+
+    // ✅ VERIFICACIÓN DE SITUACIÓN LABORAL Y MONOTRIBUTO
+    const esMonotributista = variables.find((v) => v.Nombre === "VI_Inscrip_Monotributo_Es")?.Valor === "Si";
+    const cambioLaboral = this.verificarPerdidaEmpleoReciente(variables);
+
+    if (cambioLaboral.perdioEmpleo) {
+        reglasFallidas.push(cambioLaboral.motivo);
+        if (!motivoComerciante) {
+            motivoComerciante = "Solicitud rechazada: situación laboral inestable";
+        }
+    } else if (esMonotributista) {
+        const tieneEmpleoRegistrado = this.tieneEmpleoRegistrado(variables);
+        if (tieneEmpleoRegistrado) {
+            const tieneAportesRecientes = this.tieneAportesRecientes(variables);
+            if (tieneAportesRecientes) {
+                aprobados.push("Monotributista con empleo registrado y aportes recientes validados");
+            } else {
+                reglasFallidas.push("Monotributista con empleo pero sin aportes recientes suficientes");
+                if (!motivoComerciante) {
+                    motivoComerciante = "Solicitud rechazada: empleo sin aportes recientes";
+                }
+            }
+        } else {
+            reglasFallidas.push("Cliente es monotributista sin empleo registrado");
+            if (!motivoComerciante) {
+                motivoComerciante = "Solicitud rechazada: monotributista sin empleo registrado";
+            }
+        }
+    } else if (!cambioLaboral.perdioEmpleo) {
+        const tieneLaboral = this.verificarSituacionLaboral(variables);
+        if (tieneLaboral) {
+            aprobados.push("Situación laboral validada");
+        } else {
+            reglasFallidas.push("Cliente no tiene situación laboral registrada");
+        }
+    }
+
+    // ✅ VERIFICACIÓN DE TARJETAS CREDIGUÍA
+    if (this.tieneTarjetaCrediguia(variables)) {
+        reglasFallidas.push("Cliente tiene tarjeta Crediguía activa");
+    } else {
+        aprobados.push("No tiene tarjetas Crediguía activas");
+    }
+
+    // ===== DETERMINAR ESTADO FINAL =====
     let status: "aprobado" | "rechazado" | "pendiente" = "aprobado";
+    /*
+    const tieneAprobacionInmediata = aprobados.some(aprobado => 
+        aprobado.includes("APROBADO - Empleado doméstico") || 
+        aprobado.includes("APROBADO - Trabaja en rubro de construcción")
+    );
 
-    // PRIORIDAD: Cualquier motivo de rechazo → RECHAZADO
-    if (reglasFallidas.length > 0) {
-      status = "rechazado";
-
-      // Mensaje genérico para comerciante si no se definió uno específico
-      if (!motivoComerciante) {
-        motivoComerciante =
-          "Solicitud rechazada: no cumple con los requisitos establecidos";
-      }
-    }
-    // Si no hay rechazos, pero hay pendientes → PENDIENTE
-    else if (pendientes.length > 0) {
-      status = "pendiente";
-      motivoComerciante =
-        "Solicitud en revisión: requiere verificación adicional";
-    }
-    // Solo si no hay rechazos ni pendientes → APROBADO
-    else {
-      status = "aprobado";
-      motivoComerciante = "Solicitud aprobada";
+    if (tieneAprobacionInmediata && reglasFallidas.length === 0) {
+        status = "aprobado";
+        if (!motivoComerciante) {
+            motivoComerciante = "Solicitud aprobada - cumple con criterios de aprobación inmediata";
+        }
+    } else
+    */
+    
+    // Verificar si hay aprobaciones inmediatas (empleados domésticos o construcción)
+     if (reglasFallidas.length > 0) {
+        status = "rechazado";
+        if (!motivoComerciante) {
+            motivoComerciante = "Solicitud rechazada: no cumple con los requisitos establecidos";
+        }
+    } else if (pendientes.length > 0) {
+        status = "pendiente";
+        if (!motivoComerciante) {
+            motivoComerciante = "Solicitud en revisión: requiere verificación adicional";
+        }
+    } else {
+        status = "aprobado";
+        if (!motivoComerciante) {
+            motivoComerciante = "Solicitud aprobada";
+        }
     }
 
     const approved = status === "aprobado";
 
-    // Construir mensaje detallado con TODOS los motivos
-    let motivo: string;
-    if (status === "aprobado") {
-      motivo =
-        "APROBADO - Cumple con todos los criterios:\n" +
-        `✅ Criterios aprobados: ${aprobados.join("; ")}`;
-    } else if (status === "pendiente") {
-      motivo =
-        "PENDIENTE - Requiere revisión manual:\n" +
-        `⏳ Motivos pendientes: ${pendientes.join("; ")}\n` +
-        `✅ Criterios aprobados: ${aprobados.join("; ")}`;
-    } else {
-      motivo =
-        "RECHAZADO - No cumple con los criterios:\n" +
-        `❌ Motivos de rechazo: ${reglasFallidas.join("; ")}\n`;
-
-      if (pendientes.length > 0) {
-        motivo += `⏳ Motivos pendientes: ${pendientes.join("; ")}\n`;
-      }
-      if (aprobados.length > 0) {
-        motivo += `✅ Criterios aprobados: ${aprobados.join("; ")}`;
-      }
-    }
+    // ===== CONSTRUIR MENSAJE DETALLADO UNIFICADO =====
+    const motivo = this.construirMensajeDetallado(status, aprobados, reglasFallidas, pendientes);
 
     return {
-      status,
-      approved,
-      score,
-      motivo,
-      motivoComerciante,
-      reglasFallidas: reglasFallidas,
-      pendientes: pendientes,
-      aprobados: aprobados,
-      personalData,
-      entidadesSituacion2: resultadoSituacion2.entidades,
-      entidadesDeuda: tieneDeudaEntidades.entidades,
-      referenciasComerciales: {
-        referenciasValidas: resultadoReferencias.referenciasValidas,
-        referenciasInvalidas: resultadoReferencias.referenciasInvalidas,
-        totalValidas: resultadoReferencias.totalValidas,
-        totalInvalidas: resultadoReferencias.totalInvalidas,
-      },
+        status,
+        approved,
+        score,
+        motivo,
+        motivoComerciante,
+        reglasFallidas,
+        pendientes,
+        aprobados,
+        personalData,
+        entidadesSituacion2: resultadoSituacion2.entidades || [],
+        entidadesDeuda: tieneDeudaEntidades.entidades || [],
+        referenciasComerciales: {
+            referenciasValidas: resultadoReferencias.referenciasValidas,
+            referenciasInvalidas: resultadoReferencias.referenciasInvalidas,
+            totalValidas: resultadoReferencias.totalValidas,
+            totalInvalidas: resultadoReferencias.totalInvalidas,
+        },
     };
-  }
-
-  /**
- * Verifica si el cliente perdió su empleo recientemente
- * Detecta tanto cambio a monotributo como pérdida de empleo sin reconversión
- */
-private verificarPerdidaEmpleoReciente(variables: NosisVariable[]): {
-  perdioEmpleo: boolean;
-  seHizoMonotributista: boolean;
-  motivo: string;
-} {
-  const esEmpleadoActual = variables.find((v) => v.Nombre === "VI_Empleado_Es")?.Valor === "Si";
-  const esMonotributistaActual = variables.find((v) => v.Nombre === "VI_Inscrip_Monotributo_Es")?.Valor === "Si";
-  
-  // Si sigue empleado, no perdió el trabajo
-  if (esEmpleadoActual) {
-    return { perdioEmpleo: false, seHizoMonotributista: false, motivo: "" };
-  }
-
-  // Verificar si tenía empleo en los últimos 12 meses
-  const variableEmpleado12Meses = variables.find((v) => v.Nombre === "VI_Empleado_12m_Es");
-  const fueEmpleado12Meses = variableEmpleado12Meses ? variableEmpleado12Meses.Valor === "Si" : false;
-
-  // Verificar última fecha de empleo
-  const variableUltimaFechaEmpleo = variables.find((v) => v.Nombre === "VI_Empleado_Es_UltFecha");
-  const ultimaFechaEmpleo = variableUltimaFechaEmpleo?.Valor;
-  const tuvoEmpleoReciente = ultimaFechaEmpleo && ultimaFechaEmpleo !== "000000";
-
-  // Verificar aportes recientes (últimos 3 meses)
-  const tieneAportesRecientes = this.tieneAportesRecientes(variables);
-
-  // 🔍 DETECCIÓN DE LOS ESCENARIOS
-  if ((fueEmpleado12Meses || tuvoEmpleoReciente) && !tieneAportesRecientes) {
-    if (esMonotributistaActual) {
-      // ESCENARIO 2: Dejó empleo y se hizo monotributista
-      return { 
-        perdioEmpleo: true, 
-        seHizoMonotributista: true, 
-        motivo: "Dejó empleo registrado y se convirtió en monotributista sin aportes recientes" 
-      };
-    } else {
-      // ESCENARIO 1: Perdió empleo y no se reconvirtió
-      return { 
-        perdioEmpleo: true, 
-        seHizoMonotributista: false, 
-        motivo: "Perdió empleo registrado sin reconversión laboral y sin aportes recientes" 
-      };
-    }
-  }
-
-  return { perdioEmpleo: false, seHizoMonotributista: false, motivo: "" };
 }
 
 /**
- * Verifica si el monotributista tiene suficiente antigüedad
+ * Construye el mensaje detallado unificado para todas las situaciones
  */
-private verificarAntiguedadMonotributo(variables: NosisVariable[]): boolean {
-  // Buscar fecha de inicio de monotributo
-  const fechaInicioMonotributo = variables.find(
-    v => v.Nombre === "VI_Inscrip_Monotributo_Fecha"
-  )?.Valor;
+private construirMensajeDetallado(
+    status: "aprobado" | "rechazado" | "pendiente",
+    aprobados: string[],
+    reglasFallidas: string[],
+    pendientes: string[]
+): string {
+    switch (status) {
+        case "aprobado":
+            return "APROBADO - Cumple con todos los criterios:\n" +
+                   `✅ Criterios aprobados: ${aprobados.join("; ")}`;
 
-  if (!fechaInicioMonotributo) {
-    return false; // No hay fecha de inicio registrada
+        case "pendiente":
+            return "PENDIENTE - Requiere revisión manual:\n" +
+                   (pendientes.length > 0 ? `⏳ Motivos pendientes: ${pendientes.join("; ")}\n` : "") +
+                   (aprobados.length > 0 ? `✅ Criterios aprobados: ${aprobados.join("; ")}` : "");
+
+        case "rechazado":
+            let mensaje = "RECHAZADO - No cumple con los criterios:\n" +
+                         `❌ Motivos de rechazo: ${reglasFallidas.join("; ")}`;
+            
+            if (pendientes.length > 0) {
+                mensaje += `\n⏳ Motivos pendientes: ${pendientes.join("; ")}`;
+            }
+            if (aprobados.length > 0) {
+                mensaje += `\n✅ Criterios aprobados: ${aprobados.join("; ")}`;
+            }
+            
+            return mensaje;
+
+        default:
+            return "Estado no determinado";
+    }
+}
+
+  /**
+   * Verifica la combinación específica entre referencias comerciales y entidades con deuda
+   * según las reglas de negocio:
+   * - 1 ref. comercial y 1 entidad en sit 3,4, o 5: pendiente
+   * - 1 referencia comercial y dos entidades con deudas 3,4 o 5: rechazo
+   */
+  private verificarCombinacionReferenciasDeudas(
+    resultadoReferencias: {
+      estado: "aprobado" | "pendiente" | "rechazado";
+      mensaje?: string;
+      referenciasValidas: string[];
+      totalValidas: number;
+    },
+    resultadoDeudas: {
+      estado: "aprobado" | "pendiente" | "rechazado";
+      mensaje?: string;
+      entidades?: number[];
+    }
+  ): {
+    estado: "aprobado" | "pendiente" | "rechazado";
+    mensaje?: string;
+  } {
+    const tiene1Referencia = resultadoReferencias.totalValidas === 1;
+    const cantidadEntidadesDeuda = resultadoDeudas.entidades?.length || 0;
+
+    // Aplicar reglas específicas de combinación
+    if (tiene1Referencia && cantidadEntidadesDeuda === 1) {
+      return {
+        estado: "pendiente",
+        mensaje: `Tiene 1 referencia comercial y 1 entidad con deuda en situación 3-4-5`,
+      };
+    } else if (tiene1Referencia && cantidadEntidadesDeuda >= 2) {
+      return {
+        estado: "rechazado",
+        mensaje: `Tiene 1 referencia comercial y ${cantidadEntidadesDeuda} entidades con deudas en situación 3-4-5`,
+      };
+    }
+
+    // Si no aplican las reglas de combinación, retornar aprobado (no afecta)
+    return { estado: "aprobado" };
   }
 
-  const fechaInicio = new Date(fechaInicioMonotributo);
-  const fechaActual = new Date();
-  
-  // Calcular diferencia en meses
-  const diffMeses = (fechaActual.getFullYear() - fechaInicio.getFullYear()) * 12 + 
-                   (fechaActual.getMonth() - fechaInicio.getMonth());
-  
-  // Requerir al menos 6 meses de antigüedad como monotributista
-  return diffMeses >= 6;
-}
+  /**
+   * Verifica si el cliente perdió su empleo recientemente
+   * Detecta tanto cambio a monotributo como pérdida de empleo sin reconversión
+   */
+  private verificarPerdidaEmpleoReciente(variables: NosisVariable[]): {
+    perdioEmpleo: boolean;
+    seHizoMonotributista: boolean;
+    motivo: string;
+  } {
+    const esEmpleadoActual =
+      variables.find((v) => v.Nombre === "VI_Empleado_Es")?.Valor === "Si";
+    const esMonotributistaActual =
+      variables.find((v) => v.Nombre === "VI_Inscrip_Monotributo_Es")?.Valor ===
+      "Si";
+
+    // Si sigue empleado, no perdió el trabajo
+    if (esEmpleadoActual) {
+      return { perdioEmpleo: false, seHizoMonotributista: false, motivo: "" };
+    }
+
+    // Verificar si tenía empleo en los últimos 12 meses
+    const variableEmpleado12Meses = variables.find(
+      (v) => v.Nombre === "VI_Empleado_12m_Es"
+    );
+    const fueEmpleado12Meses = variableEmpleado12Meses
+      ? variableEmpleado12Meses.Valor === "Si"
+      : false;
+
+    // Verificar última fecha de empleo
+    const variableUltimaFechaEmpleo = variables.find(
+      (v) => v.Nombre === "VI_Empleado_Es_UltFecha"
+    );
+    const ultimaFechaEmpleo = variableUltimaFechaEmpleo?.Valor;
+    const tuvoEmpleoReciente =
+      ultimaFechaEmpleo && ultimaFechaEmpleo !== "000000";
+
+    // Verificar aportes recientes (últimos 3 meses)
+    const tieneAportesRecientes = this.tieneAportesRecientes(variables);
+
+    // 🔍 DETECCIÓN DE LOS ESCENARIOS
+    if ((fueEmpleado12Meses || tuvoEmpleoReciente) && !tieneAportesRecientes) {
+      if (esMonotributistaActual) {
+        // ESCENARIO 2: Dejó empleo y se hizo monotributista
+        return {
+          perdioEmpleo: true,
+          seHizoMonotributista: true,
+          motivo:
+            "Dejó empleo registrado y se convirtió en monotributista sin aportes recientes",
+        };
+      } else {
+        // ESCENARIO 1: Perdió empleo y no se reconvirtió
+        return {
+          perdioEmpleo: true,
+          seHizoMonotributista: false,
+          motivo:
+            "Perdió empleo registrado sin reconversión laboral y sin aportes recientes",
+        };
+      }
+    }
+
+    return { perdioEmpleo: false, seHizoMonotributista: false, motivo: "" };
+  }
+
+  /**
+   * Verifica si el monotributista tiene suficiente antigüedad
+   */
+  private verificarAntiguedadMonotributo(variables: NosisVariable[]): boolean {
+    // Buscar fecha de inicio de monotributo
+    const fechaInicioMonotributo = variables.find(
+      (v) => v.Nombre === "VI_Inscrip_Monotributo_Fecha"
+    )?.Valor;
+
+    if (!fechaInicioMonotributo) {
+      return false; // No hay fecha de inicio registrada
+    }
+
+    const fechaInicio = new Date(fechaInicioMonotributo);
+    const fechaActual = new Date();
+
+    // Calcular diferencia en meses
+    const diffMeses =
+      (fechaActual.getFullYear() - fechaInicio.getFullYear()) * 12 +
+      (fechaActual.getMonth() - fechaInicio.getMonth());
+
+    // Requerir al menos 6 meses de antigüedad como monotributista
+    return diffMeses >= 6;
+  }
 
   /**
    * Calcula el total de aportes del cliente
@@ -851,24 +1133,24 @@ private verificarAntiguedadMonotributo(variables: NosisVariable[]): boolean {
 
     let mensaje = "";
 
-    if (cantidadEntidades >= 2) {
+    if (cantidadEntidades >= 3) {
       mensaje = `Tiene ${cantidadEntidades} entidades en situación 2: ${nombresEntidades.join(
         ", "
       )}`;
-    } else if (cantidadEntidades === 1) {
+    } else if (cantidadEntidades >= 1) {
       mensaje = `Tiene 1 entidad en situación 2: ${nombresEntidades.join(
         ", "
       )}`;
     }
 
-    if (cantidadEntidades >= 2) {
+    if (cantidadEntidades >= 3) {
       return {
         estado: "rechazado",
         mensaje,
         entidades: entidadesArray,
         datosDesactualizados,
       };
-    } else if (cantidadEntidades === 1) {
+    } else if (cantidadEntidades >= 1) {
       return {
         estado: "pendiente",
         mensaje,
@@ -878,6 +1160,85 @@ private verificarAntiguedadMonotributo(variables: NosisVariable[]): boolean {
     }
 
     return { estado: "aprobado" };
+  }
+
+  // Agrega este método en la clase VerifyDataNosisUseCase
+
+  /**
+   * Verifica si el cliente es empleado doméstico, no tiene deudas y tiene 12 meses de aportes completos
+   * @param variables - Lista de variables de Nosis
+   * @returns Objeto con estado y mensaje de verificación
+   */
+  private verificarEmpleadoDomesticoSinDeudas(variables: NosisVariable[]): {
+  esEmpleadoDomestico: boolean;
+  estado: "aprobado" | "rechazado";
+  mensaje: string;
+} {
+  const esEmpleadoDomestico = variables.find(v => v.Nombre === "VI_EmpleadoDomestico_Es")?.Valor === "Si";
+
+  if (!esEmpleadoDomestico) {
+    return { 
+      esEmpleadoDomestico: false, 
+      estado: "aprobado", // No aplica la regla especial
+      mensaje: "" 
+    };
+  }
+
+  // Verificar que no tenga deudas en situación 3-4-5
+  const verificacionDeudas = this.verificarDeudaEntidades(variables);
+  const sinDeudas = verificacionDeudas.estado === "aprobado";
+
+  // Verificar que tenga 12 meses de aportes completos
+  const tiene12Aportes = this.verificar12MesesAportesCompletos(variables);
+
+  // ÚNICA CONDICIÓN DE APROBACIÓN: 12 meses de aportes + sin deudas
+  if (sinDeudas && tiene12Aportes) {
+    return {
+      esEmpleadoDomestico: true,
+      estado: "aprobado",
+      mensaje: "APROBADO - Empleado doméstico sin deudas y con 12 meses de aportes completos",
+    };
+  } else {
+    // CUALQUIER OTRA COMBINACIÓN ES RECHAZADA
+    let motivoRechazo = "Empleado doméstico RECHAZADO - ";
+    
+    if (!sinDeudas && !tiene12Aportes) {
+      motivoRechazo += "no tiene 12 meses de aportes completos y tiene deudas";
+    } else if (!tiene12Aportes) {
+      motivoRechazo += "no tiene 12 meses de aportes completos";
+    } else if (!sinDeudas) {
+      motivoRechazo += "tiene deudas";
+    }
+
+    return {
+      esEmpleadoDomestico: true,
+      estado: "rechazado",
+      mensaje: motivoRechazo,
+    };
+  }
+}
+
+  /**
+   * Verifica si el cliente tiene 12 meses de aportes completos
+   * @param variables - Lista de variables de Nosis
+   * @returns Boolean indicando si tiene 12 meses de aportes completos
+   */
+  private verificar12MesesAportesCompletos(variables: NosisVariable[]): boolean {
+    // Para los rubros especiales (construcción, doméstico, contratación)
+    // se consideran TODOS los tipos de aportes: pagos, impagos y parciales
+    const aportesPagos = parseInt(
+        variables.find((v) => v.Nombre === "AP_12m_Empleado_Pagos_Cant")?.Valor || "0"
+    );
+    const aportesImpagos = parseInt(
+        variables.find((v) => v.Nombre === "AP_12m_Empleado_Impagos_Cant")?.Valor || "0"
+    );
+    const aportesParciales = parseInt(
+        variables.find((v) => v.Nombre === "AP_12m_Empleado_PagoParcial_Cant")?.Valor || "0"
+    );
+
+    const totalAportes = aportesPagos + aportesImpagos + aportesParciales;
+     
+    return totalAportes >= 12;
   }
 
   /**
@@ -1126,19 +1487,31 @@ private verificarAntiguedadMonotributo(variables: NosisVariable[]): boolean {
    * @returns Boolean indicando si tiene situación laboral válida
    */
   private verificarSituacionLaboral(variables: NosisVariable[]): boolean {
-  const esEmpleado = variables.find((v) => v.Nombre === "VI_Empleado_Es")?.Valor === "Si";
-  const esEmpleador = variables.find((v) => v.Nombre === "VI_Empleador_Es")?.Valor === "Si";
-  const esJubilado = variables.find((v) => v.Nombre === "VI_Jubilado_Es")?.Valor === "Si";
-  const esPensionado = variables.find((v) => v.Nombre === "VI_Pensionado_Es")?.Valor === "Si";
-  
-  const aportes = variables.find((v) => v.Nombre === "AP_12m_Empleado_Pagos_Cant")?.Valor || "0";
-  const totalAportes = this.calcularTotalAportes(variables);
+    const esEmpleado =
+      variables.find((v) => v.Nombre === "VI_Empleado_Es")?.Valor === "Si";
+    const esEmpleador =
+      variables.find((v) => v.Nombre === "VI_Empleador_Es")?.Valor === "Si";
+    const esJubilado =
+      variables.find((v) => v.Nombre === "VI_Jubilado_Es")?.Valor === "Si";
+    const esPensionado =
+      variables.find((v) => v.Nombre === "VI_Pensionado_Es")?.Valor === "Si";
 
-  // ✅ Considerar que tiene situación laboral si:
-  // - Es empleado, empleador, jubilado o pensionado
-  // - O tiene aportes registrados (aunque no esté activo actualmente)
-  return esEmpleado || esEmpleador || esJubilado || esPensionado || totalAportes > 0;
-}
+    const aportes =
+      variables.find((v) => v.Nombre === "AP_12m_Empleado_Pagos_Cant")?.Valor ||
+      "0";
+    const totalAportes = this.calcularTotalAportes(variables);
+
+    // ✅ Considerar que tiene situación laboral si:
+    // - Es empleado, empleador, jubilado o pensionado
+    // - O tiene aportes registrados (aunque no esté activo actualmente)
+    return (
+      esEmpleado ||
+      esEmpleador ||
+      esJubilado ||
+      esPensionado ||
+      totalAportes > 0
+    );
+  }
   /**
    * Extrae y estructura datos personales de las variables de Nosis
    * @param variables - Lista de variables de Nosis
@@ -1216,6 +1589,13 @@ private verificarAntiguedadMonotributo(variables: NosisVariable[]): boolean {
     const localidadEmpleador = getValor("VI_Empleador_Dom_Loc");
     const codigoPostalEmpleador = getValor("VI_Empleador_Dom_CP");
     const provinciaEmpleador = getValor("VI_Empleador_Dom_Prov");
+    const codigoRubroEmpleador = getValor("VI_Empleador_Act01_Cod");
+let rubroEmpleador = null;
+
+if (codigoRubroEmpleador) {
+  // Usar el servicio de rubros para obtener la descripción corta
+  rubroEmpleador = this.rubrosLaboralesService.obtenerDescripcionCorta(codigoRubroEmpleador) || codigoRubroEmpleador;
+}
 
     // Construir objeto empleador solo si existe razón social
     const empleador = razonSocialEmpleador
@@ -1230,6 +1610,7 @@ private verificarAntiguedadMonotributo(variables: NosisVariable[]): boolean {
             codigoPostal: codigoPostalEmpleador,
             provincia: provinciaEmpleador,
           },
+          rubro: rubroEmpleador,
         }
       : undefined;
 

@@ -65,7 +65,8 @@ export class SolicitudFormalRepositoryAdapter
                 sf.fecha_aprobacion,
                 sf.analista_aprobador_id,
                 sf.administrador_aprobador_id,
-                sf.comerciante_aprobador_id
+                sf.comerciante_aprobador_id,
+                sf.rubro_empleador
         FROM solicitudes_formales sf
         INNER JOIN clientes c ON sf.cliente_id = c.id
         WHERE c.cuil = $1
@@ -168,12 +169,13 @@ export class SolicitudFormalRepositoryAdapter
                     razon_social_empleador,
                     cargo_funcion_empleador,
                     sector_empleador,
+                    rubro_empleador,
                     codigo_postal_empleador,
                     localidad_empleador,
                     provincia_empleador,
                     telefono_empleador
                 )
-                VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13,$14, $15, $16, $17, $18, $19, $20, $21)
+                VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13,$14, $15, $16, $17, $18, $19, $20, $21, $22)
                 RETURNING id
         `;
 
@@ -195,6 +197,7 @@ export class SolicitudFormalRepositoryAdapter
         solicitudFormal.getRazonSocialEmpleador() || null,
         solicitudFormal.getCargoEmpleador() || null,
         solicitudFormal.getSectorEmpleador() || null,
+        solicitudFormal.getRubroEmpleador(),
         solicitudFormal.getCodigoPostalEmpleador() || null,
         solicitudFormal.getLocalidadEmpleador() || null,
         solicitudFormal.getProvinciaEmpleador() || null,
@@ -318,7 +321,8 @@ export class SolicitudFormalRepositoryAdapter
                 sf.codigo_postal_empleador,
                 sf.localidad_empleador,
                 sf.provincia_empleador,
-                sf.telefono_empleador
+                sf.telefono_empleador,
+                sf.rubro_empleador
             FROM solicitudes_formales sf
             INNER JOIN clientes c ON sf.cliente_id = c.id
             WHERE sf.id = $1
@@ -414,6 +418,7 @@ export class SolicitudFormalRepositoryAdapter
           ? Number(row.nuevo_limite_completo_solicitado)
           : null,
       archivosAdjuntos: archivos,
+      rubroEmpleador: row.rubro_empleador || ""
     });
   }
 
@@ -485,7 +490,8 @@ export class SolicitudFormalRepositoryAdapter
                     codigo_postal_empleador = $14,
                     localidad_empleador = $15,
                     provincia_empleador = $16,
-                    telefono_empleador = $17
+                    telefono_empleador = $17,
+                    rubro_empleador = $18
                 WHERE id = $6
             `;
       await client.query(actualizarSolicitudQuery, [
@@ -502,10 +508,12 @@ export class SolicitudFormalRepositoryAdapter
         solicitudFormal.getCuitEmpleador(),
         solicitudFormal.getCargoEmpleador(),
         solicitudFormal.getSectorEmpleador(),
+        solicitudFormal.getRubroEmpleador(),
         solicitudFormal.getCodigoPostalEmpleador(),
         solicitudFormal.getLocalidadEmpleador(),
         solicitudFormal.getProvinciaEmpleador(),
         solicitudFormal.getTelefonoEmpleador(),
+        solicitudFormal.getRubroEmpleador()
       ]);
 
       // Eliminar referentes existentes
@@ -911,7 +919,8 @@ export class SolicitudFormalRepositoryAdapter
                 sf.codigo_postal_empleador,
                 sf.localidad_empleador,
                 sf.provincia_empleador,
-                sf.telefono_empleador             
+                sf.telefono_empleador,
+                sf.rubro_empleador             
             FROM solicitudes_formales sf
             INNER JOIN clientes c ON sf.cliente_id = c.id
             ORDER BY sf.fecha_solicitud DESC
@@ -970,6 +979,7 @@ export class SolicitudFormalRepositoryAdapter
           telefonoEmpleador: row.telefono_empleador,
           // Asignar valores por defecto para propiedades faltantes
           solicitaAmpliacionDeCredito: false, // Valor por defecto
+          rubroEmpleador: row.rubro_empleador || ""
         })
       );
     }
@@ -1023,7 +1033,8 @@ export class SolicitudFormalRepositoryAdapter
                 sf.fecha_aprobacion,
                 sf.analista_aprobador_id,
                 sf.administrador_aprobador_id,
-                sf.comerciante_aprobador_id
+                sf.comerciante_aprobador_id,
+                sf.rubro_empleador
             FROM solicitudes_formales sf
             INNER JOIN clientes c ON sf.cliente_id = c.id
             WHERE c.dni = $1
@@ -1081,7 +1092,8 @@ export class SolicitudFormalRepositoryAdapter
                 sf.fecha_aprobacion,
                 sf.analista_aprobador_id,
                 sf.administrador_aprobador_id,
-                sf.comerciante_aprobador_id 
+                sf.comerciante_aprobador_id,
+                sf.rubro_empleador
             FROM solicitudes_formales sf
             INNER JOIN clientes c ON sf.cliente_id = c.id
             WHERE sf.estado = $1
@@ -1137,7 +1149,8 @@ export class SolicitudFormalRepositoryAdapter
                 sf.fecha_aprobacion,
                 sf.analista_aprobador_id,
                 sf.administrador_aprobador_id,
-                sf.comerciante_aprobador_id
+                sf.comerciante_aprobador_id,
+                sf.rubro_empleador
             FROM solicitudes_formales sf
             INNER JOIN clientes c ON sf.cliente_id = c.id
             WHERE DATE(sf.fecha_solicitud) = DATE($1)
@@ -1195,7 +1208,8 @@ export class SolicitudFormalRepositoryAdapter
                 sf.fecha_aprobacion,
                 sf.analista_aprobador_id,
                 sf.administrador_aprobador_id,
-                sf.comerciante_aprobador_id
+                sf.comerciante_aprobador_id,
+                sf.rubro_empleador
             FROM solicitudes_formales sf
             INNER JOIN clientes c ON sf.cliente_id = c.id
             WHERE sf.comerciante_id = $1
@@ -1253,7 +1267,8 @@ export class SolicitudFormalRepositoryAdapter
                 sf.fecha_aprobacion,
                 sf.analista_aprobador_id,
                 sf.administrador_aprobador_id,
-                sf.comerciante_aprobador_id
+                sf.comerciante_aprobador_id,
+                sf.rubro_empleador
             FROM solicitudes_formales sf
             INNER JOIN clientes c ON sf.cliente_id = c.id
             WHERE sf.analista_aprobador_id = $1
@@ -1311,7 +1326,8 @@ export class SolicitudFormalRepositoryAdapter
                 sf.fecha_aprobacion,
                 sf.analista_aprobador_id,
                 sf.administrador_aprobador_id,
-                sf.comerciante_aprobador_id
+                sf.comerciante_aprobador_id,
+                sf.rubro_empleador
             FROM solicitudes_formales sf
             INNER JOIN clientes c ON sf.cliente_id = c.id
             WHERE sf.solicitud_inicial_id = $1
@@ -1450,6 +1466,7 @@ export class SolicitudFormalRepositoryAdapter
           localidadEmpleador: row.localidad_empleador,
           provinciaEmpleador: row.provincia_empleador,
           telefonoEmpleador: row.telefono_empleador,
+          rubroEmpleador: row.rubro_empleador,
           sexo: row.sexo,
           codigoPostal: row.codigo_postal,
           localidad: row.localidad,
@@ -1508,7 +1525,8 @@ export class SolicitudFormalRepositoryAdapter
             sf.codigo_postal_empleador,
             sf.localidad_empleador,
             sf.provincia_empleador,
-            sf.telefono_empleador 
+            sf.telefono_empleador,
+            sf.rubro_empleador
         FROM solicitudes_formales sf
         INNER JOIN clientes c ON sf.cliente_id = c.id
         WHERE sf.comerciante_id = $1 AND sf.estado = $2

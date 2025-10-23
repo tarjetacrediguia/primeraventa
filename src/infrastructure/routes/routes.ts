@@ -23,6 +23,7 @@ import historialRoutes from './historial.routes';
 import tasasRoutes from './tasas.routes';
 import compraRoutes from './compra.routes';
 import sistemaRoutes from './sistema.routes';
+import reportesRoutes from './reportes.routes';
 
 
 const router = Router();
@@ -46,6 +47,7 @@ router.use('/configuracion', configuracionRoutes);
 router.use('/historial', historialRoutes);
 router.use('/tasas', tasasRoutes);
 router.use('/compra', compraRoutes);
+router.use('/reportes', reportesRoutes);
 //router.use('/simulacion', simulacionRoutes);
 //router.use('/tareas', tareasRoutes);
 //router.use('/sistema', sistemaRoutes);

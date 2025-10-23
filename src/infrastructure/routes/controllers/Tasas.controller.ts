@@ -8,6 +8,7 @@ import { AgregarTasaAConjuntoUseCase } from '../../../application/use-cases/Tasa
 import { ActivarConjuntoTasasUseCase } from '../../../application/use-cases/Tasas/ActivarConjuntoTasasUseCase';
 import { ListarConjuntosTasasUseCase } from '../../../application/use-cases/Tasas/ListarConjuntosTasasUseCase';
 import { EliminarConjuntoTasasUseCase } from '../../../application/use-cases/Tasas/EliminarConjuntoTasasUseCase';
+import { ObtenerTasaActivaPorCodigoUseCase } from '../../../application/use-cases/Tasas/ObtenerTasaActivaPorCodigoUseCase';
 
 const repository = new TasasRepositoryAdapter();
 
@@ -36,6 +37,39 @@ export const createConjuntoTasas = async (req: Request, res: Response) => {
     } catch (error) {
         const errorMessage = error instanceof Error ? error.message : String(error);
         res.status(400).json({ error: errorMessage });
+    }
+};
+
+export const getTasaActivaByCodigo = async (req: Request, res: Response) => {
+    try {
+        const { codigo } = req.params;
+        console.log('🔍 Buscando tasa activa con código:', codigo);
+        
+        const useCase = new ObtenerTasaActivaPorCodigoUseCase(repository);
+        const tasa = await useCase.execute(codigo);
+
+        if (!tasa) {
+            return res.status(404).json({ error: 'Tasa no encontrada' });
+        }
+        
+        res.status(200).json({
+            codigo,
+            valor: tasa.valor,
+            descripcion: tasa.descripcion,
+            mensaje: 'Tasa obtenida exitosamente'
+        });
+    } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : String(error);
+        
+        if (errorMessage.includes('no encontrada')) {
+            return res.status(404).json({ error: errorMessage });
+        }
+        
+        if (errorMessage.includes('requerido')) {
+            return res.status(400).json({ error: errorMessage });
+        }
+        
+        res.status(500).json({ error: errorMessage });
     }
 };
 

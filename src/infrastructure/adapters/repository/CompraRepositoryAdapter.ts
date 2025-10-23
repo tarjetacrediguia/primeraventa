@@ -119,6 +119,63 @@ export class CompraRepositoryAdapter implements CompraRepositoryPort {
             client.release();
         }
     }
+
+    async getComprasBySolicitudFormalIdReporte(solicitudFormalId: number): Promise<Compra[]> {
+    const client = await pool.connect();
+    try {
+        // Obtener TODAS las compras por solicitud formal
+        const comprasQuery = `
+            SELECT c.*, 
+                   cl.nombre_completo as cliente_nombre,
+                   cl.apellido as cliente_apellido,
+                   cl.cuil as cliente_cuil,
+                   co.nombre_comercio,
+                   co.usuario_id as comerciante_id
+            FROM compras c
+            LEFT JOIN clientes cl ON c.cliente_id = cl.id
+            LEFT JOIN comerciantes co ON c.comerciante_id = co.usuario_id
+            WHERE c.solicitud_formal_id = $1
+            ORDER BY c.fecha_creacion DESC
+        `;
+        const comprasRes = await client.query(comprasQuery, [solicitudFormalId]);
+
+        const compras: Compra[] = [];
+
+        // Procesar todas las compras encontradas
+        for (const compraData of comprasRes.rows) {
+            const compra = new Compra({
+                id: compraData.id,
+                solicitudFormalId: compraData.solicitud_formal_id,
+                descripcion: compraData.descripcion,
+                cantidadCuotas: compraData.cantidad_cuotas,
+                estado: compraData.estado,
+                montoTotal: compraData.monto_total,
+                clienteId: compraData.cliente_id,
+                fechaCreacion: compraData.fecha_creacion,
+                fechaActualizacion: compraData.fecha_actualizacion,
+                valorCuota: compraData.valor_cuota,
+                numeroAutorizacion: compraData.numero_autorizacion,
+                numeroCuenta: compraData.numero_cuenta,
+                comercianteId: compraData.comerciante_id,
+                analistaAprobadorId: compraData.analista_aprobador_id,
+                motivoRechazo: compraData.motivo_rechazo
+            });
+
+            // Agregar información adicional al objeto plano
+            (compra as any).cliente_nombre = `${compraData.cliente_nombre} ${compraData.cliente_apellido}`;
+            (compra as any).nombre_comercio = compraData.nombre_comercio;
+            (compra as any).comerciante_id = compraData.comerciante_id;
+            (compra as any).cliente_cuil = compraData.cliente_cuil;
+
+            compras.push(compra);
+        }
+
+        return compras;
+    } finally {
+        client.release();
+    }
+}
+
     async getSolicitudFormalIdByCompraId(compraId: number): Promise<number | null> {
         const client = await pool.connect();
         try {

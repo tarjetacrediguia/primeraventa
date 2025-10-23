@@ -46,6 +46,7 @@ import {
   VerifyDataNosisUseCase,
 } from "../Nosis/VerifyDataNosisUseCase";
 import { EntidadesService } from "../../../infrastructure/entidadesBancarias/EntidadesService";
+import { RubrosLaboralesService } from "../../../infrastructure/RubrosLaborales/RubrosLaboralesService";
 import { ComercianteRepositoryPort } from "../../ports/ComercianteRepositoryPort";
 import {
   crearComentarioAnalista,
@@ -98,6 +99,7 @@ export class CrearSolicitudInicialUseCase {
     private readonly nosisPort: NosisPort,
     private readonly nosisAutomatico: boolean,
     private readonly entidadesService: EntidadesService,
+    private readonly rubrosLaboralesService: RubrosLaboralesService,
     private readonly comercianteRepository: ComercianteRepositoryPort,
     private readonly compraRepository: CompraRepositoryPort
   ) {}
@@ -311,7 +313,8 @@ console.log(`✅ No hay solicitudes bloqueantes, continuando...`);
         // Verificar y validar datos de Nosis
         const verifyNosis = new VerifyDataNosisUseCase(
           undefined,
-          this.entidadesService
+          this.entidadesService,
+          this.rubrosLaboralesService
         );
         const resultadoNosis = await verifyNosis.execute(nosisResponse);
         nosisData = resultadoNosis.personalData;
@@ -442,6 +445,15 @@ console.log(`✅ No hay solicitudes bloqueantes, continuando...`);
               ? nosisData.datosLaborales.empleador.domicilio.provincia
               : null
           );
+          if (nosisData.datosLaborales.empleador.rubro) {
+    const descripcionCorta = this.rubrosLaboralesService.obtenerDescripcionCorta(
+      nosisData.datosLaborales.empleador.rubro
+    );
+    // Guardar la descripción corta, o si no existe, guardar el código original
+    clienteTemporal.setRubroEmpleador(descripcionCorta || nosisData.datosLaborales.empleador.rubro);
+  } else {
+    clienteTemporal.setRubroEmpleador(null);
+  }
         }
 
         // Persistir actualizaciones del cliente en la base de datos
@@ -986,111 +998,194 @@ private async tieneComprasActivas(solicitudInicial: SolicitudInicial): Promise<b
    * Genera comentarios específicos para comerciantes con motivos exactos
    */
   private generarComentariosComerciante(
-    resultadoNosis: VerificationResult,
-    entidadesService: EntidadesService
-  ): string {
-    if (resultadoNosis.status === "aprobado") {
-      return "Solicitud aprobada automáticamente";
-    } else if (resultadoNosis.status === "rechazado") {
-      let motivo = "Solicitud rechazada";
+  resultadoNosis: VerificationResult,
+  entidadesService: EntidadesService
+): string {
+  if (resultadoNosis.status === "aprobado") {
+    return "Solicitud aprobada automáticamente";
+  } else if (resultadoNosis.status === "rechazado") {
+    let motivo = "Solicitud rechazada";
 
-      if (
-        resultadoNosis.reglasFallidas &&
-        resultadoNosis.reglasFallidas.length > 0
-      ) {
-        const motivosPrincipales: string[] = [];
+    if (
+      resultadoNosis.reglasFallidas &&
+      resultadoNosis.reglasFallidas.length > 0
+    ) {
+      const motivosPrincipales: string[] = [];
 
-        for (const regla of resultadoNosis.reglasFallidas) {
-          if (regla.includes("entidades en situación 2")) {
-            const match = regla.match(/(\d+) entidades/);
-            const cantidad = match ? match[1] : "varias";
+      // Verificar si el rechazo es por rubros especiales y obtener detalles específicos
+      const detalleRubro = this.obtenerDetalleRubroRechazo(resultadoNosis.reglasFallidas);
+
+      if (detalleRubro) {
+        return `Solicitud rechazada: rubro - ${detalleRubro.rubro}${detalleRubro.razones ? `, ${detalleRubro.razones}` : ''}`;
+      }
+
+      // Lógica original para otros tipos de rechazo
+      for (const regla of resultadoNosis.reglasFallidas) {
+        if (regla.includes("entidades en situación 2")) {
+          const match = regla.match(/(\d+) entidades/);
+          const cantidad = match ? match[1] : "varias";
+          motivosPrincipales.push(
+            `tiene ${cantidad} entidades en situación 2`
+          );
+        } else if (regla.includes("entidades con deuda")) {
+          const match = regla.match(/(\d+) entidades/);
+          const cantidad = match ? match[1] : "varias";
+          motivosPrincipales.push(
+            `tiene deuda con ${cantidad} o más entidades con situación 3, 4 o 5`
+          );
+        } else if (regla.includes("referencias comerciales")) {
+          const match = regla.match(/(\d+) referencias comerciales válidas/);
+          if (match) {
             motivosPrincipales.push(
-              `tiene ${cantidad} entidades en situación 2`
+              `tiene ${match[1]} referencias comerciales válidas (máximo permitido: 2)`
             );
-          } else if (regla.includes("entidades con deuda")) {
-            const match = regla.match(/(\d+) entidades/);
-            const cantidad = match ? match[1] : "varias";
-            motivosPrincipales.push(
-              `tiene deuda con ${cantidad} o más entidades con situación 3, 4 o 5`
-            );
-          } else if (regla.includes("referencias comerciales")) {
-            const match = regla.match(/(\d+) referencias comerciales válidas/);
-            if (match) {
-              motivosPrincipales.push(
-                `tiene ${match[1]} referencias comerciales válidas (máximo permitido: 2)`
-              );
-            } else {
-              motivosPrincipales.push(
-                "no cumple con criterios de referencias comerciales"
-              );
-            }
-          } else if (regla.includes("tarjeta Crediguía")) {
-            motivosPrincipales.push("tiene tarjeta Crediguía activa");
-          } else if (regla.includes("aporte")) {
-            motivosPrincipales.push(
-              "no cumple con el mínimo de aportes requerido"
-            );
-          } else if (regla.includes("jubilado")) {
-            motivosPrincipales.push("es jubilado");
-          } else if (regla.includes("monotributista")) {
-            motivosPrincipales.push("es monotributista sin empleo registrado");
-          } else if (regla.includes("situación laboral")) {
-            motivosPrincipales.push("no tiene situación laboral registrada");
           } else {
-            const partePrincipal = regla.split(":")[0] || regla;
-            motivosPrincipales.push(partePrincipal.toLowerCase());
+            motivosPrincipales.push(
+              "no cumple con criterios de referencias comerciales"
+            );
           }
-        }
-
-        if (motivosPrincipales.length > 0) {
-          motivo += `: ${motivosPrincipales.join(", ")}`;
+        } else if (regla.includes("tarjeta Crediguía")) {
+          motivosPrincipales.push("tiene tarjeta Crediguía activa");
+        } else if (regla.includes("aporte")) {
+          motivosPrincipales.push(
+            "no cumple con el mínimo de aportes requerido"
+          );
+        } else if (regla.includes("jubilado")) {
+          motivosPrincipales.push("es jubilado");
+        } else if (regla.includes("monotributista")) {
+          motivosPrincipales.push("es monotributista sin empleo registrado");
+        } else if (regla.includes("situación laboral")) {
+          motivosPrincipales.push("no tiene situación laboral registrada");
+        } else {
+          const partePrincipal = regla.split(":")[0] || regla;
+          motivosPrincipales.push(partePrincipal.toLowerCase());
         }
       }
 
-      return motivo;
-    } else if (resultadoNosis.status === "pendiente") {
-      let motivo = "Solicitud pendiente de revisión manual";
-
-      if (resultadoNosis.pendientes && resultadoNosis.pendientes.length > 0) {
-        const motivosPendientes: string[] = [];
-
-        for (const pendiente of resultadoNosis.pendientes) {
-          if (pendiente.includes("entidades en situación 2")) {
-            motivosPendientes.push(
-              "tiene 1 entidad en situación 2"
-            );
-          } else if (pendiente.includes("entidades con deuda")) {
-            const match = pendiente.match(/(\d+) entidades/);
-            const cantidad = match ? match[1] : "algunas";
-            motivosPendientes.push(
-              `tiene deuda con ${cantidad} entidades con situación 3, 4 o 5`
-            );
-          } else if (pendiente.includes("referencias comerciales")) {
-            const match = pendiente.match(/(\d+) referencia/);
-            if (match) {
-              motivosPendientes.push(
-                `tiene ${match[1]} referencia(s) comercial(es) válida(s)`
-              );
-            } else {
-              motivosPendientes.push(
-                "requiere validación de referencias comerciales"
-              );
-            }
-          } else {
-            motivosPendientes.push(pendiente.toLowerCase());
-          }
-        }
-
-        if (motivosPendientes.length > 0) {
-          motivo += `: ${motivosPendientes.join(", ")}`;
-        }
+      if (motivosPrincipales.length > 0) {
+        motivo += `: ${motivosPrincipales.join(", ")}`;
       }
-
-      return motivo;
     }
 
-    return "Solicitud en proceso de evaluación";
+    return motivo;
+  } else if (resultadoNosis.status === "pendiente") {
+    let motivo = "Solicitud pendiente de revisión manual";
+
+    if (resultadoNosis.pendientes && resultadoNosis.pendientes.length > 0) {
+      const motivosPendientes: string[] = [];
+
+      for (const pendiente of resultadoNosis.pendientes) {
+        if (pendiente.includes("entidades en situación 2")) {
+          motivosPendientes.push(
+            "tiene 1 entidad en situación 2"
+          );
+        } else if (pendiente.includes("entidades con deuda")) {
+          const match = pendiente.match(/(\d+) entidades/);
+          const cantidad = match ? match[1] : "algunas";
+          motivosPendientes.push(
+            `tiene deuda con ${cantidad} entidades con situación 3, 4 o 5`
+          );
+        } else if (pendiente.includes("referencias comerciales")) {
+          const match = pendiente.match(/(\d+) referencia/);
+          if (match) {
+            motivosPendientes.push(
+              `tiene ${match[1]} referencia(s) comercial(es) válida(s)`
+            );
+          } else {
+            motivosPendientes.push(
+              "requiere validación de referencias comerciales"
+            );
+          }
+        } else {
+          motivosPendientes.push(pendiente.toLowerCase());
+        }
+      }
+
+      if (motivosPendientes.length > 0) {
+        motivo += `: ${motivosPendientes.join(", ")}`;
+      }
+    }
+
+    return motivo;
   }
+
+  return "Solicitud en proceso de evaluación";
+}
+
+  /**
+ * Determina el rubro específico y las razones detalladas del rechazo
+ */
+private obtenerDetalleRubroRechazo(reglasFallidas: string[]): { rubro: string, razones: string } | null {
+  for (const regla of reglasFallidas) {
+    // Detectar empleado doméstico
+    if (regla.includes("Empleado doméstico RECHAZADO")) {
+      const razones = this.extraerRazonesEspecificas(regla);
+      return { 
+        rubro: "Doméstico", 
+        razones: razones 
+      };
+    }
+    
+    // Detectar rubros de construcción/contratación
+    if (regla.includes("Trabaja en rubro de construcción/contratación")) {
+      // Extraer el código y descripción del rubro del mensaje
+      const rubroMatch = regla.match(/\(([^)]+)\)/);
+      let rubroEspecifico = "Construcción o Contratación de personal";
+      
+      if (rubroMatch && rubroMatch[1]) {
+        const [codigo, descripcion] = rubroMatch[1].split(" - ");
+        
+        // Determinar el tipo específico basado en la descripción
+        if (descripcion) {
+          const descripcionLower = descripcion.toLowerCase();
+          
+          if (descripcionLower.includes("construcción") || descripcionLower.includes("construccion")) {
+            rubroEspecifico = "Construcción";
+          } else if (descripcionLower.includes("contratación") || descripcionLower.includes("contratacion") || 
+                     descripcionLower.includes("personal") || descripcionLower.includes("empleo")) {
+            rubroEspecifico = "Contratación de personal";
+          } else {
+            rubroEspecifico = descripcion;
+          }
+        }
+      }
+
+      const razones = this.extraerRazonesEspecificas(regla);
+      return { 
+        rubro: rubroEspecifico, 
+        razones: razones 
+      };
+    }
+  }
+  
+  return null;
+}
+
+/**
+ * Extrae las razones específicas de deudas y/o falta de aportes del mensaje de rechazo
+ */
+private extraerRazonesEspecificas(mensajeRechazo: string): string {
+  const razones: string[] = [];
+
+  // Buscar patrones específicos en el mensaje
+  if (mensajeRechazo.includes("no tiene 12 meses de aportes completos")) {
+    razones.push("no tiene 12 meses de aportes completos");
+  }
+  
+  if (mensajeRechazo.includes("tiene deudas")) {
+    razones.push("tiene deudas");
+  }
+
+  // Si no encontramos patrones específicos, intentar extraer la parte después de "RECHAZADO - "
+  if (razones.length === 0) {
+    const rechazoMatch = mensajeRechazo.split("RECHAZADO - ");
+    if (rechazoMatch.length > 1) {
+      return rechazoMatch[1].toLowerCase();
+    }
+  }
+
+  return razones.join(" y ");
+}
 
   /**
    * Método auxiliar para obtener datos del comerciante

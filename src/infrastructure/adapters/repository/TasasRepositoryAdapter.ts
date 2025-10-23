@@ -12,6 +12,31 @@ export class TasasRepositoryAdapter implements TasasRepositoryPort {
         this.pool = pool;
     }
 
+    async findTasaActivaByCodigo(codigo: string): Promise<{ valor: number; descripcion: string } | null> {
+    const client = await this.pool.connect();
+    try {
+        const query = `
+            SELECT t.valor, t.descripcion
+            FROM tasas t
+            JOIN conjuntos_tasas ct ON t.conjunto_id = ct.id
+            WHERE ct.activo = true AND t.codigo = $1
+        `;
+        const result = await client.query(query, [codigo]);
+        
+        if (result.rows.length === 0) {
+            return null;
+        }
+        
+        const row = result.rows[0];
+        return {
+            valor: parseFloat(row.valor),
+            descripcion: row.descripcion
+        };
+    } finally {
+        client.release();
+    }
+}
+
     async createConjuntoTasas(conjunto: ConjuntoTasas): Promise<ConjuntoTasas> {
         const client = await this.pool.connect();
         try {

@@ -53,7 +53,8 @@ export class CreateComercianteUseCase {
         telefono: string,
         nombreComercio: string,
         cuil: string,
-        direccionComercio: string
+        direccionComercio: string,
+        
     ): Promise<Comerciante> {
         // Validaciones básicas
         if (!nombre || !apellido || !email || !password || !telefono || !nombreComercio || !cuil || !direccionComercio) {
@@ -62,12 +63,7 @@ export class CreateComercianteUseCase {
         // Encriptar contraseña
         const saltRounds = 10;
         const passwordHash = await bcrypt.hash(password, saltRounds);
-        // Validación de CUIL
-        /*
-        if (!this.validarCUIL(cuil)) {
-            throw new Error("CUIL inválido");
-        }
-*/
+
         // Verificar CUIL único
         const existeCuil = await this.repository.findByCuil(cuil);
         if (existeCuil) {

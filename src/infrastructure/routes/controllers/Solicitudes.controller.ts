@@ -63,6 +63,7 @@ import {
   obtenerComentariosAnalista,
   obtenerUltimoComentarioComerciante,
 } from "../../utils/comentariosHelper";
+import { RubrosLaboralesService } from "../../RubrosLaborales/RubrosLaboralesService";
 
 // Inyección de dependencias (deberían venir de un contenedor DI)
 const verazService: VerazPort = new VerazAdapter();
@@ -88,6 +89,7 @@ const nosisAdapter =
         process.env.API_KEY || ""
       );
 const entidadesService = new EntidadesService();
+const rubrosLaboralesService = new RubrosLaboralesService();
 const comercianteRepository = new ComercianteRepositoryAdapter();
 
 // Casos de uso inicializados
@@ -102,6 +104,7 @@ const crearSolicitudInicialUC = new CrearSolicitudInicialUseCase(
   nosisAdapter,
   process.env.NOSIS_AUTO === "true", // Modo automático de Veraz,
   entidadesService,
+  rubrosLaboralesService,
   comercianteRepository,
   compraRepository
 );
@@ -364,6 +367,16 @@ export const crearSolicitudFormal = async (req: Request, res: Response) => {
       datosEmpleador,
       archivosAdjuntos,
     } = req.body;
+
+    // Si el rubro viene como código, convertirlo a descripción corta
+    if (datosEmpleador && datosEmpleador.rubroEmpleador) {
+      const descripcionCorta = rubrosLaboralesService.obtenerDescripcionCorta(
+        datosEmpleador.rubroEmpleador
+      );
+      if (descripcionCorta) {
+        datosEmpleador.rubroEmpleador = descripcionCorta;
+      }
+    }
     // Validar que el recibo sea proporcionado
 
     if (!cliente.recibo) {

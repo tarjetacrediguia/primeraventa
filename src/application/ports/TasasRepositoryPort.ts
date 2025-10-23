@@ -15,4 +15,5 @@ export interface TasasRepositoryPort {
     agregarTasaAConjunto(conjuntoId: number, codigo: string, valor: number, descripcion?: string): Promise<void>;
     actualizarTasaEnConjunto(conjuntoId: number, codigo: string, nuevoValor: number, nuevaDescripcion?: string): Promise<void>;
     eliminarTasaDeConjunto(conjuntoId: number, codigo: string): Promise<void>;
+    findTasaActivaByCodigo(codigo: string): Promise<{ valor: number; descripcion: string } | null>;
 }

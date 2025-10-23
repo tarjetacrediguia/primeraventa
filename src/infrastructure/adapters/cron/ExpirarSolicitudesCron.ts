@@ -60,6 +60,8 @@ cron.schedule('0 1 * * *', async () => {
             notificationService,
             historialRepository
         );
+
+        console.log('⏰ Ejecutando tarea programada: Expiración de Solicitudes Iniciales');
         
         // Ejecutar la tarea de expiración
         await useCase.execute();

@@ -42,8 +42,10 @@ export class ClienteRepositoryAdapter implements ClienteRepositoryPort {
       empleadorCodigoPostal: row.empleador_codigo_postal || null,
       empleadorLocalidad: row.empleador_localidad || null,
       empleadorProvincia: row.empleador_provincia || null,
+      rubroEmpleador: row.rubro_empleador || null,
       nacionalidad: row.nacionalidad || null,
-      estadoCivil: row.estado_civil || null
+      estadoCivil: row.estado_civil || null,
+      
     });
   }
 
@@ -156,9 +158,10 @@ export class ClienteRepositoryAdapter implements ClienteRepositoryPort {
                 empleador_telefono,
                 empleador_codigo_postal,
                 empleador_localidad,
-                empleador_provincia
+                empleador_provincia,
+                rubro_empleador
             ) 
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25)
             RETURNING *
         `;
 
@@ -187,6 +190,7 @@ export class ClienteRepositoryAdapter implements ClienteRepositoryPort {
       cliente.getEmpleadorCodigoPostal(),
       cliente.getEmpleadorLocalidad(),
       cliente.getEmpleadorProvincia(),
+      cliente.getRubroEmpleador()
     ];
 
     const result = await pool.query(query, values);
@@ -224,8 +228,9 @@ export class ClienteRepositoryAdapter implements ClienteRepositoryPort {
                 empleador_telefono = $21,
                 empleador_codigo_postal = $22,
                 empleador_localidad = $23,
-                empleador_provincia = $24
-            WHERE id = $25
+                empleador_provincia = $24,
+                rubro_empleador = $25
+            WHERE id = $26
             RETURNING *
         `;
 
@@ -254,6 +259,7 @@ export class ClienteRepositoryAdapter implements ClienteRepositoryPort {
       cliente.getEmpleadorCodigoPostal(),
       cliente.getEmpleadorLocalidad(),
       cliente.getEmpleadorProvincia(),
+      cliente.getRubroEmpleador(),
       cliente.getId(),
     ];
 

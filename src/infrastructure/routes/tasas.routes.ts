@@ -1,7 +1,7 @@
 // src/infrastructure/routes/tasas.routes.ts
 
 import { Router } from 'express';
-import { esAdministrador } from './middlewares/rolesMiddleware';
+import { esAdministrador, esComercianteOAnalistaOAdministrador } from './middlewares/rolesMiddleware';
 import {
     createConjuntoTasas,
     updateConjuntoTasas,
@@ -9,7 +9,8 @@ import {
     agregarTasaAConjunto,
     getConjuntoTasas,
     activateConjuntoTasas,
-    listConjuntosTasas
+    listConjuntosTasas,
+    getTasaActivaByCodigo
 } from '../routes/controllers/Tasas.controller';
 
 const router = Router();
@@ -24,5 +25,7 @@ router.get('/conjuntos/:id', esAdministrador, getConjuntoTasas);
 
 // Operaciones con tasas individuales
 router.post('/conjuntos/:conjuntoId/tasas', esAdministrador, agregarTasaAConjunto);
+
+router.get('/activa/:codigo', esComercianteOAnalistaOAdministrador, getTasaActivaByCodigo);
 
 export default router;
