@@ -942,7 +942,14 @@ private async tieneComprasActivas(solicitudInicial: SolicitudInicial): Promise<b
     resultadoNosis: VerificationResult,
     entidadesService: EntidadesService
   ): string {
-    let comentario = `Resultado Nosis: ${resultadoNosis.status}. `;
+      let comentario = "";
+
+  // Agregar información de Eureka si está disponible
+  if (resultadoNosis.eurekaMensajeAnalista) {
+    comentario += `${resultadoNosis.eurekaMensajeAnalista}\n\n`;
+  }
+
+  comentario += `Resultado Nosis: ${resultadoNosis.status}. `;
 
     if (
       resultadoNosis.reglasFallidas &&
@@ -1001,6 +1008,11 @@ private async tieneComprasActivas(solicitudInicial: SolicitudInicial): Promise<b
   resultadoNosis: VerificationResult,
   entidadesService: EntidadesService
 ): string {
+    // PRIORIDAD: Usar el mensaje específico de Eureka para el comerciante si está disponible
+  if (resultadoNosis.eurekaMensajeComerciante) {
+    return resultadoNosis.eurekaMensajeComerciante;
+  }
+  
   if (resultadoNosis.status === "aprobado") {
     return "Solicitud aprobada automáticamente";
   } else if (resultadoNosis.status === "rechazado") {

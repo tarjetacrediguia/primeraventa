@@ -2,8 +2,10 @@ import {
   NosisResponse,
   NosisVariable,
 } from "../../../domain/entities/NosisData";
+import { EurekaAdapter } from "../../../infrastructure/adapters/eureka/eurekaAdapter";
 import { EntidadesService } from "../../../infrastructure/entidadesBancarias/EntidadesService";
 import { RubrosLaboralesService } from "../../../infrastructure/RubrosLaborales/RubrosLaboralesService";
+import { GetSituacionPersona } from "../Eureka/GetSituacionPersona";
 
 /**
  * MÓDULO: Caso de Uso - Verificación de Datos Nosis
@@ -109,6 +111,9 @@ export type VerificationResult = {
     totalValidas: number;
     totalInvalidas: number;
   };
+  eurekaMensajeComerciante?: string;
+  eurekaMensajeAnalista?: string;
+  detallesEureka?: any;
 };
 /**
  * Configuración de reglas de validación para variables de Nosis
@@ -139,11 +144,18 @@ export class VerifyDataNosisUseCase {
   private entidadesService: EntidadesService;
   // Servicio para obtener rubros laborales
   private rubrosLaboralesService: RubrosLaboralesService;
+  // Caso de uso para obtener situación de persona desde Eureka
+  private getSituacionPersona: GetSituacionPersona;
   /**
    * Constructor del caso de uso de verificación Nosis
    * @param rules - Reglas personalizadas de validación (opcional)
    */
-  constructor(rules?: RuleConfig[], entidadesService?: EntidadesService,rubrosLaboralesService?: RubrosLaboralesService) {
+  constructor(
+    rules?: RuleConfig[],
+    entidadesService?: EntidadesService,
+    rubrosLaboralesService?: RubrosLaboralesService,
+    getSituacionPersona?: GetSituacionPersona
+  ) {
     // Reglas por defecto si no se proporcionan
     this.rules = rules || [
       {
@@ -154,86 +166,255 @@ export class VerifyDataNosisUseCase {
       },
     ];
     this.entidadesService = entidadesService || new EntidadesService();
-    this.rubrosLaboralesService = rubrosLaboralesService || new RubrosLaboralesService();
+    this.rubrosLaboralesService =
+      rubrosLaboralesService || new RubrosLaboralesService();
+    this.getSituacionPersona =
+      getSituacionPersona || new GetSituacionPersona(new EurekaAdapter());
   }
+  /*
+
+    Agregar método para verificar situación en SGCG Eureka
+    */
+  private async verificarSituacionEureka(cuil: string): Promise<{
+  estado: "aprobado" | "rechazado" | "pendiente";
+  mensajeComerciante: string;
+  mensajeAnalista: string;
+  detallesEureka?: any;
+}> {
+  try {
+    const situacion = await this.getSituacionPersona.execute(cuil);
+    
+    const situacionBase = situacion.Situacion;
+    const detalle = situacion.Detalle || '';
+    const issues = situacion.Issues || [];
+    
+    let mensajeComerciante: string = "";
+    let mensajeAnalista: string;
+    let estadoFinal: "aprobado" | "rechazado" | "pendiente" = "pendiente";
+
+    // ✅ FUNCIÓN PARA DETERMINAR RECHAZOS ESPECÍFICOS BASADOS EN EL DETALLE
+    const determinarRechazoPorDetalle = (detalleTexto: string): { rechazado: boolean; mensaje?: string } => {
+      const detalleLower = detalleTexto.toLowerCase();
+      
+      // Casos de RECHAZO automático
+      if (detalleLower.includes("titular de cuenta") && detalleLower.includes("activa y con deuda")) {
+        return { rechazado: true, mensaje: "❌ Cliente tiene cuenta activa con deuda en Crediguía" };
+      }
+      if (detalleLower.includes("titular de tarjeta crediguía") || detalleLower.includes("titular de tarjeta crediguia")) {
+        return { rechazado: true, mensaje: "❌ Cliente tiene tarjeta Crediguía activa" };
+      }
+      if (detalleLower.includes("adicional de tarjeta crediguía") || detalleLower.includes("adicional de tarjeta crediguia")) {
+        return { rechazado: true, mensaje: "❌ Cliente es adicional de tarjeta Crediguía" };
+      }
+      if (detalleLower.includes("adicional con consumos de cuenta activa")) {
+        return { rechazado: true, mensaje: "❌ Adicional con consumos de cuenta activa" };
+      }
+      if (detalleLower.includes("titular de cuenta") && 
+          (detalleLower.includes("estado gme") || detalleLower.includes("gme") || detalleLower.includes("gestión judicial"))) {
+        return { rechazado: true, mensaje: "❌ Deuda judicial CG" };
+      }
+      
+      return { rechazado: false };
+    };
+
+    // ✅ PRIMERO: Verificar si el DETALLE PRINCIPAL indica rechazo
+    const rechazoDetallePrincipal = determinarRechazoPorDetalle(detalle);
+    if (rechazoDetallePrincipal.rechazado) {
+      estadoFinal = "rechazado";
+      mensajeComerciante = rechazoDetallePrincipal.mensaje!;
+    }
+    // ✅ SEGUNDO: Verificar si alguno de los ISSUES indica rechazo
+    else if (issues.length > 0) {
+      let rechazoEncontrado = false;
+      
+      for (const issue of issues) {
+        const rechazoIssue = determinarRechazoPorDetalle(issue.Detalle);
+        if (rechazoIssue.rechazado && issue.Situacion === "RECHAZAR") {
+          estadoFinal = "rechazado";
+          mensajeComerciante = rechazoIssue.mensaje!;
+          rechazoEncontrado = true;
+          break;
+        }
+      }
+      
+      // Si no encontramos rechazo específico en issues, usar lógica normal
+      if (!rechazoEncontrado) {
+        estadoFinal = this.mapearEstadoEureka(situacionBase);
+        mensajeComerciante = this.obtenerMensajeComerciantePorEstado(situacionBase, detalle);
+      }
+    }
+    // ✅ TERCERO: Casos normales sin rechazo específico
+    else {
+      estadoFinal = this.mapearEstadoEureka(situacionBase);
+      mensajeComerciante = this.obtenerMensajeComerciantePorEstado(situacionBase, detalle);
+    }
+
+    // Construir mensaje detallado para analista
+    mensajeAnalista = this.construirMensajeAnalista(situacion, estadoFinal);
+
+    return {
+      estado: estadoFinal,
+      mensajeComerciante,
+      mensajeAnalista,
+      detallesEureka: situacion
+    };
+  } catch (error) {
+    console.error("Error al verificar situación en Eureka:", error);
+    const mensajeError = "No se pudo verificar la situación en sistema anterior";
+    return {
+      estado: "pendiente",
+      mensajeComerciante: mensajeError,
+      mensajeAnalista: `${mensajeError}. Error: ${error instanceof Error ? error.message : 'Error desconocido'}`
+    };
+  }
+}
+
+/**
+ * Obtiene mensaje para comerciante basado en estado general
+ */
+private obtenerMensajeComerciantePorEstado(estado: string, detalle: string): string {
+  switch (estado) {
+    case "OK":
+      return "✅ Cliente aprobado en sistema SGCG";
+    case "OPERADOR":
+      return "⏳ Cliente en revisión por operador";
+    case "RECHAZAR":
+      // Si llegamos aquí y es RECHAZAR pero no capturamos un caso específico
+      if (detalle.includes("Persona no registrada en SGCG")) {
+        return "✅ Cliente no registrado en sistema anterior";
+      }
+      return "❌ Cliente rechazado por sistema anterior";
+    default:
+      return "⏳ Situación del cliente en revisión";
+  }
+}
+
+/**
+ * Construye mensaje detallado para analistas
+ */
+private construirMensajeAnalista(situacion: any, estadoFinal: string): string {
+  const { Situacion, Detalle, CUILT, Nombres, Apellidos, InfoAdicional1, InfoAdicional2, Issues, Meta } = situacion;
+  
+  let mensaje = `SITUACIÓN SGCG - ${estadoFinal.toUpperCase()}\n` +
+                `• Estado Original: ${Situacion}\n` +
+                `• Estado Final: ${estadoFinal}\n` +
+                `• Detalle: ${Detalle || 'N/A'}\n` +
+                `• CUILT: ${CUILT || 'No disponible'}\n` +
+                `• Nombre: ${Nombres || 'No disponible'} ${Apellidos || ''}\n` +
+                `• Info Adicional 1: ${InfoAdicional1 || 'N/A'}\n` +
+                `• Info Adicional 2: ${InfoAdicional2 || 'N/A'}\n` +
+                `• Meta: ${Meta || 'N/A'}\n` +
+                `• Issues: ${Issues?.length || 0} problemas detectados`;
+
+  if (Issues && Issues.length > 0) {
+    mensaje += `\n• Detalles de Issues:\n`;
+    Issues.forEach((issue: any, index: number) => {
+      mensaje += `  ${index + 1}. ${issue.Situacion}: ${issue.Detalle}`;
+      if (issue.InfoAdicional) {
+        mensaje += ` (${issue.InfoAdicional})`;
+      }
+      mensaje += '\n';
+    });
+  }
+
+  return mensaje;
+}
+
+  /**
+ * Mapea el estado de Eureka a nuestro sistema interno
+ */
+private mapearEstadoEureka(estadoEureka: string): "aprobado" | "rechazado" | "pendiente" {
+  switch (estadoEureka) {
+    case "OK":
+      return "aprobado";
+    case "RECHAZAR":
+      return "rechazado";
+    case "OPERADOR":
+    default:
+      return "pendiente";
+  }
+}
 
   /**
    * Verifica si el cliente trabaja en rubros de construcción o contratación de personal,
    * no tiene deudas y tiene 12 meses de aportes completos
    */
   private verificarRubrosConstruccionContratacion(variables: NosisVariable[]): {
-  esRubroConstruccionContratacion: boolean;
-  estado: "aprobado" | "rechazado";
-  mensaje: string;
-  codigoRubro?: string;
-  descripcionRubro?: string;
-} {
-  // Obtener el código del rubro del empleador
-  const codigoRubroEmpleador = variables.find(
-    v => v.Nombre === "VI_Empleador_Act01_Cod"
-  )?.Valor;
+    esRubroConstruccionContratacion: boolean;
+    estado: "aprobado" | "rechazado";
+    mensaje: string;
+    codigoRubro?: string;
+    descripcionRubro?: string;
+  } {
+    // Obtener el código del rubro del empleador
+    const codigoRubroEmpleador = variables.find(
+      (v) => v.Nombre === "VI_Empleador_Act01_Cod"
+    )?.Valor;
 
-  if (!codigoRubroEmpleador) {
-    return { 
-      esRubroConstruccionContratacion: false, 
-      estado: "aprobado", // No aplica la regla especial
-      mensaje: ""
-    };
-  }
-
-  // Verificar si pertenece a los rubros de construcción/contratación
-  const esRubroConstruccionContratacion = 
-    this.rubrosLaboralesService.esRubroConstruccionOContratacion(codigoRubroEmpleador);
-
-  if (!esRubroConstruccionContratacion) {
-    return { 
-      esRubroConstruccionContratacion: false, 
-      estado: "aprobado", // No aplica la regla especial
-      mensaje: ""
-    };
-  }
-
-  // Obtener descripción del rubro
-  const descripcionRubro = this.rubrosLaboralesService.obtenerDescripcionRubro(codigoRubroEmpleador);
-
-  // Verificar que no tenga deudas en situación 3-4-5
-  const verificacionDeudas = this.verificarDeudaEntidades(variables);
-  const sinDeudas = verificacionDeudas.estado === "aprobado";
-
-  // Verificar que tenga 12 meses de aportes completos
-  const tiene12Aportes = this.verificar12MesesAportesCompletos(variables);
-
-  // ÚNICA CONDICIÓN DE APROBACIÓN: 12 meses de aportes + sin deudas
-  if (sinDeudas && tiene12Aportes) {
-    return {
-      esRubroConstruccionContratacion: true,
-      estado: "aprobado",
-      codigoRubro: codigoRubroEmpleador,
-      descripcionRubro: descripcionRubro,
-      mensaje: `APROBADO - Trabaja en rubro de construcción/contratación (${codigoRubroEmpleador} - ${descripcionRubro}) sin deudas y con 12 meses de aportes completos`,
-    };
-  } else {
-    // CUALQUIER OTRA COMBINACIÓN ES RECHAZADA
-    let motivoRechazo = `Trabaja en rubro de construcción/contratación (${codigoRubroEmpleador} - ${descripcionRubro}) RECHAZADO - `;
-    
-    if (!sinDeudas && !tiene12Aportes) {
-      motivoRechazo += "no tiene 12 meses de aportes completos y tiene deudas";
-    } else if (!tiene12Aportes) {
-      motivoRechazo += "no tiene 12 meses de aportes completos";
-    } else if (!sinDeudas) {
-      motivoRechazo += "tiene deudas";
+    if (!codigoRubroEmpleador) {
+      return {
+        esRubroConstruccionContratacion: false,
+        estado: "aprobado", // No aplica la regla especial
+        mensaje: "",
+      };
     }
 
-    return {
-      esRubroConstruccionContratacion: true,
-      estado: "rechazado",
-      codigoRubro: codigoRubroEmpleador,
-      descripcionRubro: descripcionRubro,
-      mensaje: motivoRechazo,
-    };
-  }
-}
+    // Verificar si pertenece a los rubros de construcción/contratación
+    const esRubroConstruccionContratacion =
+      this.rubrosLaboralesService.esRubroConstruccionOContratacion(
+        codigoRubroEmpleador
+      );
 
+    if (!esRubroConstruccionContratacion) {
+      return {
+        esRubroConstruccionContratacion: false,
+        estado: "aprobado", // No aplica la regla especial
+        mensaje: "",
+      };
+    }
+
+    // Obtener descripción del rubro
+    const descripcionRubro =
+      this.rubrosLaboralesService.obtenerDescripcionRubro(codigoRubroEmpleador);
+
+    // Verificar que no tenga deudas en situación 3-4-5
+    const verificacionDeudas = this.verificarDeudaEntidades(variables);
+    const sinDeudas = verificacionDeudas.estado === "aprobado";
+
+    // Verificar que tenga 12 meses de aportes completos
+    const tiene12Aportes = this.verificar12MesesAportesCompletos(variables);
+
+    // ÚNICA CONDICIÓN DE APROBACIÓN: 12 meses de aportes + sin deudas
+    if (sinDeudas && tiene12Aportes) {
+      return {
+        esRubroConstruccionContratacion: true,
+        estado: "aprobado",
+        codigoRubro: codigoRubroEmpleador,
+        descripcionRubro: descripcionRubro,
+        mensaje: `APROBADO - Trabaja en rubro de construcción/contratación (${codigoRubroEmpleador} - ${descripcionRubro}) sin deudas y con 12 meses de aportes completos`,
+      };
+    } else {
+      // CUALQUIER OTRA COMBINACIÓN ES RECHAZADA
+      let motivoRechazo = `Trabaja en rubro de construcción/contratación (${codigoRubroEmpleador} - ${descripcionRubro}) RECHAZADO - `;
+
+      if (!sinDeudas && !tiene12Aportes) {
+        motivoRechazo +=
+          "no tiene 12 meses de aportes completos y tiene deudas";
+      } else if (!tiene12Aportes) {
+        motivoRechazo += "no tiene 12 meses de aportes completos";
+      } else if (!sinDeudas) {
+        motivoRechazo += "tiene deudas";
+      }
+
+      return {
+        esRubroConstruccionContratacion: true,
+        estado: "rechazado",
+        codigoRubro: codigoRubroEmpleador,
+        descripcionRubro: descripcionRubro,
+        mensaje: motivoRechazo,
+      };
+    }
+  }
 
   /**
    * Evalúa una regla de validación contra una variable de Nosis
@@ -593,158 +774,224 @@ export class VerifyDataNosisUseCase {
     const scoreVar = variables.find((v) => v.Nombre === "SCO_Vig");
     const score = scoreVar ? parseInt(scoreVar.Valor) : 0;
 
+    // Extraer CUIL para verificación en Eureka
+    const cuil = variables.find((v) => v.Nombre === "VI_Identificacion")?.Valor;
+
+    // ✅ VERIFICACIÓN EN EUREKA (SGCG)
+
+    let eurekaMensajeComerciante: string | undefined;
+    let eurekaMensajeAnalista: string | undefined;
+    let detallesEureka: any;
+    if (cuil) {
+      const verificacionEureka = await this.verificarSituacionEureka(cuil);
+
+      // Guardar mensajes diferenciados para el resultado
+      eurekaMensajeComerciante = verificacionEureka.mensajeComerciante;
+      eurekaMensajeAnalista = verificacionEureka.mensajeAnalista;
+      detallesEureka = verificacionEureka.detallesEureka;
+
+      // Usar el mensaje del comerciante para la lógica de decisión
+      switch (verificacionEureka.estado) {
+        case "aprobado":
+          aprobados.push(verificacionEureka.mensajeComerciante);
+          break;
+        case "pendiente":
+          pendientes.push(verificacionEureka.mensajeComerciante);
+          break;
+        case "rechazado":
+          reglasFallidas.push(verificacionEureka.mensajeComerciante);
+          break;
+      }
+    } else {
+      const mensaje =
+        "No se pudo obtener CUIL para verificación en sistema anterior";
+      pendientes.push(mensaje);
+      eurekaMensajeComerciante = mensaje;
+      eurekaMensajeAnalista = mensaje;
+    }
+
     // Extraer datos personales (siempre se hace)
     const personalData = this.extraerDatosPersonales(variables);
 
     // ✅ VERIFICACIÓN DE EDAD
     const verificacionEdad = this.verificarEdad(variables);
     if (!verificacionEdad.cumple) {
-        reglasFallidas.push(verificacionEdad.mensaje!);
-        motivoComerciante = `Solicitud rechazada: ${verificacionEdad.mensaje}`;
+      reglasFallidas.push(verificacionEdad.mensaje!);
+      motivoComerciante = `Solicitud rechazada: ${verificacionEdad.mensaje}`;
     } else {
-        aprobados.push(`Edad válida (${verificacionEdad.edad} años)`);
+      aprobados.push(`Edad válida (${verificacionEdad.edad} años)`);
     }
 
     // ✅ VERIFICACIÓN DE EMPLEADO DOMÉSTICO
-    const verificacionEmpleadoDomestico = this.verificarEmpleadoDomesticoSinDeudas(variables);
-if (verificacionEmpleadoDomestico.esEmpleadoDomestico) {
-    if (verificacionEmpleadoDomestico.estado === "aprobado") {
+    const verificacionEmpleadoDomestico =
+      this.verificarEmpleadoDomesticoSinDeudas(variables);
+    if (verificacionEmpleadoDomestico.esEmpleadoDomestico) {
+      if (verificacionEmpleadoDomestico.estado === "aprobado") {
         aprobados.push(verificacionEmpleadoDomestico.mensaje);
-    } else {
+      } else {
         reglasFallidas.push(verificacionEmpleadoDomestico.mensaje);
+      }
     }
-}
 
     // ✅ VERIFICACIÓN DE RUBROS CONSTRUCCIÓN/CONTRATACIÓN
-    const verificacionRubrosConstruccion = this.verificarRubrosConstruccionContratacion(variables);
-if (verificacionRubrosConstruccion.esRubroConstruccionContratacion) {
-    if (verificacionRubrosConstruccion.estado === "aprobado") {
+    const verificacionRubrosConstruccion =
+      this.verificarRubrosConstruccionContratacion(variables);
+    if (verificacionRubrosConstruccion.esRubroConstruccionContratacion) {
+      if (verificacionRubrosConstruccion.estado === "aprobado") {
         aprobados.push(verificacionRubrosConstruccion.mensaje);
-    } else {
+      } else {
         reglasFallidas.push(verificacionRubrosConstruccion.mensaje);
+      }
     }
-}
 
     // ✅ VERIFICACIÓN DE JUBILADOS/PENSIONADOS
-    const esJubilado = variables.find((v) => v.Nombre === "VI_Jubilado_Es")?.Valor === "Si";
-    const esPensionado = variables.find((v) => v.Nombre === "VI_Pensionado_Es")?.Valor === "Si";
+    const esJubilado =
+      variables.find((v) => v.Nombre === "VI_Jubilado_Es")?.Valor === "Si";
+    const esPensionado =
+      variables.find((v) => v.Nombre === "VI_Pensionado_Es")?.Valor === "Si";
 
     if (esPensionado) {
-        reglasFallidas.push("Cliente es pensionado - no permitido");
-        if (!motivoComerciante) {
-            motivoComerciante = "Solicitud rechazada: no se admiten pensionados";
-        }
+      reglasFallidas.push("Cliente es pensionado - no permitido");
+      if (!motivoComerciante) {
+        motivoComerciante = "Solicitud rechazada: no se admiten pensionados";
+      }
     } else if (esJubilado) {
-        pendientes.push("Cliente es jubilado - pendiente de verificación de número de beneficio");
-        if (!motivoComerciante) {
-            motivoComerciante = "Solicitud en revisión: cliente jubilado requiere verificación de beneficio";
-        }
+      pendientes.push(
+        "Cliente es jubilado - pendiente de verificación de número de beneficio"
+      );
+      if (!motivoComerciante) {
+        motivoComerciante =
+          "Solicitud en revisión: cliente jubilado requiere verificación de beneficio";
+      }
     }
 
     // ✅ EVALUAR REGLAS ESTÁNDAR
     for (const regla of this.rules) {
-        const variable = variables.find((v) => v.Nombre === regla.variable);
-        if (!this.evaluarRegla(variable, regla)) {
-            reglasFallidas.push(regla.mensaje);
-        }
+      const variable = variables.find((v) => v.Nombre === regla.variable);
+      if (!this.evaluarRegla(variable, regla)) {
+        reglasFallidas.push(regla.mensaje);
+      }
     }
 
     // ✅ VERIFICACIÓN DE APORTES
     const totalAportes = this.calcularTotalAportes(variables);
     if (totalAportes >= this.MINIMO_APORTES) {
-        aprobados.push(`Cumple con el mínimo de aportes requerido (${totalAportes} aportes)`);
+      aprobados.push(
+        `Cumple con el mínimo de aportes requerido (${totalAportes} aportes)`
+      );
     } else {
-        reglasFallidas.push(`Cliente no cumple con el mínimo de aportes registrados en los últimos 12 meses (${totalAportes} de ${this.MINIMO_APORTES} requeridos)`);
-        if (!motivoComerciante) {
-            motivoComerciante = "Solicitud rechazada: no cumple con el mínimo de aportes requerido";
-        }
+      reglasFallidas.push(
+        `Cliente no cumple con el mínimo de aportes registrados en los últimos 12 meses (${totalAportes} de ${this.MINIMO_APORTES} requeridos)`
+      );
+      if (!motivoComerciante) {
+        motivoComerciante =
+          "Solicitud rechazada: no cumple con el mínimo de aportes requerido";
+      }
     }
 
     // ✅ VERIFICACIÓN DE ENTIDADES EN SITUACIÓN 2
     const resultadoSituacion2 = this.verificarEntidadesSituacion2(variables);
     if (resultadoSituacion2.estado === "rechazado") {
-        reglasFallidas.push(resultadoSituacion2.mensaje!);
+      reglasFallidas.push(resultadoSituacion2.mensaje!);
     } else if (resultadoSituacion2.estado === "pendiente") {
-        pendientes.push(resultadoSituacion2.mensaje!);
+      pendientes.push(resultadoSituacion2.mensaje!);
     } else {
-        aprobados.push("No tiene entidades en situación 2");
+      aprobados.push("No tiene entidades en situación 2");
     }
 
     // ✅ VERIFICACIÓN DE DEUDAS EN ENTIDADES
     const tieneDeudaEntidades = this.verificarDeudaEntidades(variables);
     if (tieneDeudaEntidades.estado === "rechazado") {
-        reglasFallidas.push(tieneDeudaEntidades.mensaje!);
+      reglasFallidas.push(tieneDeudaEntidades.mensaje!);
     } else if (tieneDeudaEntidades.estado === "pendiente") {
-        pendientes.push(tieneDeudaEntidades.mensaje!);
+      pendientes.push(tieneDeudaEntidades.mensaje!);
     } else {
-        aprobados.push("No tiene deudas en entidades con situación 3-4-5");
+      aprobados.push("No tiene deudas en entidades con situación 3-4-5");
     }
 
     // ✅ VERIFICACIÓN DE REFERENCIAS COMERCIALES
-    const resultadoReferencias = this.verificarReferenciasComerciales(variables);
+    const resultadoReferencias =
+      this.verificarReferenciasComerciales(variables);
     if (resultadoReferencias.estado === "rechazado") {
-        reglasFallidas.push(resultadoReferencias.mensaje!);
+      reglasFallidas.push(resultadoReferencias.mensaje!);
     } else if (resultadoReferencias.estado === "pendiente") {
-        pendientes.push(resultadoReferencias.mensaje!);
+      pendientes.push(resultadoReferencias.mensaje!);
     } else {
-        aprobados.push("Cumple con criterios de referencias comerciales");
+      aprobados.push("Cumple con criterios de referencias comerciales");
     }
 
     // ✅ VERIFICACIÓN DE COMBINACIÓN REFERENCIAS + DEUDAS
-    const combinacionReferenciasDeudas = this.verificarCombinacionReferenciasDeudas(
+    const combinacionReferenciasDeudas =
+      this.verificarCombinacionReferenciasDeudas(
         resultadoReferencias,
         tieneDeudaEntidades
-    );
+      );
     if (combinacionReferenciasDeudas.estado === "rechazado") {
-        reglasFallidas.push(combinacionReferenciasDeudas.mensaje!);
+      reglasFallidas.push(combinacionReferenciasDeudas.mensaje!);
     } else if (combinacionReferenciasDeudas.estado === "pendiente") {
-        pendientes.push(combinacionReferenciasDeudas.mensaje!);
+      pendientes.push(combinacionReferenciasDeudas.mensaje!);
     }
 
     // ✅ VERIFICACIÓN DE SITUACIÓN LABORAL Y MONOTRIBUTO
-    const esMonotributista = variables.find((v) => v.Nombre === "VI_Inscrip_Monotributo_Es")?.Valor === "Si";
+    const esMonotributista =
+      variables.find((v) => v.Nombre === "VI_Inscrip_Monotributo_Es")?.Valor ===
+      "Si";
     const cambioLaboral = this.verificarPerdidaEmpleoReciente(variables);
 
     if (cambioLaboral.perdioEmpleo) {
-        reglasFallidas.push(cambioLaboral.motivo);
-        if (!motivoComerciante) {
-            motivoComerciante = "Solicitud rechazada: situación laboral inestable";
-        }
+      reglasFallidas.push(cambioLaboral.motivo);
+      if (!motivoComerciante) {
+        motivoComerciante = "Solicitud rechazada: situación laboral inestable";
+      }
     } else if (esMonotributista) {
-        const tieneEmpleoRegistrado = this.tieneEmpleoRegistrado(variables);
-        if (tieneEmpleoRegistrado) {
-            const tieneAportesRecientes = this.tieneAportesRecientes(variables);
-            if (tieneAportesRecientes) {
-                aprobados.push("Monotributista con empleo registrado y aportes recientes validados");
-            } else {
-                reglasFallidas.push("Monotributista con empleo pero sin aportes recientes suficientes");
-                if (!motivoComerciante) {
-                    motivoComerciante = "Solicitud rechazada: empleo sin aportes recientes";
-                }
-            }
+      const tieneEmpleoRegistrado = this.tieneEmpleoRegistrado(variables);
+      if (tieneEmpleoRegistrado) {
+        const tieneAportesRecientes = this.tieneAportesRecientes(variables);
+        if (tieneAportesRecientes) {
+          aprobados.push(
+            "Monotributista con empleo registrado y aportes recientes validados"
+          );
         } else {
-            reglasFallidas.push("Cliente es monotributista sin empleo registrado");
-            if (!motivoComerciante) {
-                motivoComerciante = "Solicitud rechazada: monotributista sin empleo registrado";
-            }
+          reglasFallidas.push(
+            "Monotributista con empleo pero sin aportes recientes suficientes"
+          );
+          if (!motivoComerciante) {
+            motivoComerciante =
+              "Solicitud rechazada: empleo sin aportes recientes";
+          }
         }
+      } else {
+        reglasFallidas.push("Cliente es monotributista sin empleo registrado");
+        if (!motivoComerciante) {
+          motivoComerciante =
+            "Solicitud rechazada: monotributista sin empleo registrado";
+        }
+      }
     } else if (!cambioLaboral.perdioEmpleo) {
-        const tieneLaboral = this.verificarSituacionLaboral(variables);
-        if (tieneLaboral) {
-            aprobados.push("Situación laboral validada");
-        } else {
-            reglasFallidas.push("Cliente no tiene situación laboral registrada");
-        }
+      const tieneLaboral = this.verificarSituacionLaboral(variables);
+      if (tieneLaboral) {
+        aprobados.push("Situación laboral validada");
+      } else {
+        reglasFallidas.push("Cliente no tiene situación laboral registrada");
+      }
     }
 
     // ✅ VERIFICACIÓN DE TARJETAS CREDIGUÍA
     if (this.tieneTarjetaCrediguia(variables)) {
-        reglasFallidas.push("Cliente tiene tarjeta Crediguía activa");
+      reglasFallidas.push("Cliente tiene tarjeta Crediguía activa");
     } else {
-        aprobados.push("No tiene tarjetas Crediguía activas");
+      aprobados.push("No tiene tarjetas Crediguía activas");
     }
 
     // ===== DETERMINAR ESTADO FINAL =====
+
+    const eurekaRechazo = reglasFallidas.some((m) =>
+      m.includes("Situación en Eureka: RECHAZADO")
+    );
+    const eurekaPendiente = pendientes.some((m) =>
+      m.includes("Situación en Eureka: PENDIENTE")
+    );
+
     let status: "aprobado" | "rechazado" | "pendiente" = "aprobado";
     /*
     const tieneAprobacionInmediata = aprobados.some(aprobado => 
@@ -759,87 +1006,106 @@ if (verificacionRubrosConstruccion.esRubroConstruccionContratacion) {
         }
     } else
     */
-    
+
     // Verificar si hay aprobaciones inmediatas (empleados domésticos o construcción)
-     if (reglasFallidas.length > 0) {
-        status = "rechazado";
-        if (!motivoComerciante) {
-            motivoComerciante = "Solicitud rechazada: no cumple con los requisitos establecidos";
-        }
-    } else if (pendientes.length > 0) {
-        status = "pendiente";
-        if (!motivoComerciante) {
-            motivoComerciante = "Solicitud en revisión: requiere verificación adicional";
-        }
+    if (eurekaRechazo || reglasFallidas.length > 0) {
+      status = "rechazado";
+      if (!motivoComerciante) {
+        motivoComerciante =
+          "Solicitud rechazada: no cumple con los requisitos establecidos";
+      }
+    } else if (eurekaPendiente || pendientes.length > 0) {
+      status = "pendiente";
+      if (!motivoComerciante) {
+        motivoComerciante =
+          "Solicitud en revisión: requiere verificación adicional";
+      }
     } else {
-        status = "aprobado";
-        if (!motivoComerciante) {
-            motivoComerciante = "Solicitud aprobada";
-        }
+      status = "aprobado";
+      if (!motivoComerciante) {
+        motivoComerciante = "Solicitud aprobada";
+      }
     }
 
     const approved = status === "aprobado";
 
     // ===== CONSTRUIR MENSAJE DETALLADO UNIFICADO =====
-    const motivo = this.construirMensajeDetallado(status, aprobados, reglasFallidas, pendientes);
+    const motivo = this.construirMensajeDetallado(
+      status,
+      aprobados,
+      reglasFallidas,
+      pendientes
+    );
 
     return {
-        status,
-        approved,
-        score,
-        motivo,
-        motivoComerciante,
-        reglasFallidas,
-        pendientes,
-        aprobados,
-        personalData,
-        entidadesSituacion2: resultadoSituacion2.entidades || [],
-        entidadesDeuda: tieneDeudaEntidades.entidades || [],
-        referenciasComerciales: {
-            referenciasValidas: resultadoReferencias.referenciasValidas,
-            referenciasInvalidas: resultadoReferencias.referenciasInvalidas,
-            totalValidas: resultadoReferencias.totalValidas,
-            totalInvalidas: resultadoReferencias.totalInvalidas,
-        },
+      status,
+      approved,
+      score,
+      motivo,
+      motivoComerciante,
+      reglasFallidas,
+      pendientes,
+      aprobados,
+      personalData,
+      entidadesSituacion2: resultadoSituacion2.entidades || [],
+      entidadesDeuda: tieneDeudaEntidades.entidades || [],
+      referenciasComerciales: {
+        referenciasValidas: resultadoReferencias.referenciasValidas,
+        referenciasInvalidas: resultadoReferencias.referenciasInvalidas,
+        totalValidas: resultadoReferencias.totalValidas,
+        totalInvalidas: resultadoReferencias.totalInvalidas,
+      },
+      eurekaMensajeComerciante,
+      eurekaMensajeAnalista,
+      detallesEureka,
     };
-}
+  }
 
-/**
- * Construye el mensaje detallado unificado para todas las situaciones
- */
-private construirMensajeDetallado(
+  /**
+   * Construye el mensaje detallado unificado para todas las situaciones
+   */
+  private construirMensajeDetallado(
     status: "aprobado" | "rechazado" | "pendiente",
     aprobados: string[],
     reglasFallidas: string[],
     pendientes: string[]
-): string {
+  ): string {
     switch (status) {
-        case "aprobado":
-            return "APROBADO - Cumple con todos los criterios:\n" +
-                   `✅ Criterios aprobados: ${aprobados.join("; ")}`;
+      case "aprobado":
+        return (
+          "APROBADO - Cumple con todos los criterios:\n" +
+          `✅ Criterios aprobados: ${aprobados.join("; ")}`
+        );
 
-        case "pendiente":
-            return "PENDIENTE - Requiere revisión manual:\n" +
-                   (pendientes.length > 0 ? `⏳ Motivos pendientes: ${pendientes.join("; ")}\n` : "") +
-                   (aprobados.length > 0 ? `✅ Criterios aprobados: ${aprobados.join("; ")}` : "");
+      case "pendiente":
+        return (
+          "PENDIENTE - Requiere revisión manual:\n" +
+          (pendientes.length > 0
+            ? `⏳ Motivos pendientes: ${pendientes.join("; ")}\n`
+            : "") +
+          (aprobados.length > 0
+            ? `✅ Criterios aprobados: ${aprobados.join("; ")}`
+            : "")
+        );
 
-        case "rechazado":
-            let mensaje = "RECHAZADO - No cumple con los criterios:\n" +
-                         `❌ Motivos de rechazo: ${reglasFallidas.join("; ")}`;
-            
-            if (pendientes.length > 0) {
-                mensaje += `\n⏳ Motivos pendientes: ${pendientes.join("; ")}`;
-            }
-            if (aprobados.length > 0) {
-                mensaje += `\n✅ Criterios aprobados: ${aprobados.join("; ")}`;
-            }
-            
-            return mensaje;
+      case "rechazado":
+        let mensaje =
+          "RECHAZADO - No cumple con los criterios:\n" +
+          `❌ Motivos de rechazo: ${reglasFallidas.join("; ")}`;
 
-        default:
-            return "Estado no determinado";
+        if (pendientes.length > 0) {
+          mensaje += `\n⏳ Motivos pendientes: ${pendientes.join("; ")}`;
+        }
+        if (aprobados.length > 0) {
+          mensaje += `\n✅ Criterios aprobados: ${aprobados.join("; ")}`;
+        }
+
+        return mensaje;
+
+      default:
+        return "Estado no determinado";
     }
-}
+  }
 
   /**
    * Verifica la combinación específica entre referencias comerciales y entidades con deuda
@@ -1170,74 +1436,83 @@ private construirMensajeDetallado(
    * @returns Objeto con estado y mensaje de verificación
    */
   private verificarEmpleadoDomesticoSinDeudas(variables: NosisVariable[]): {
-  esEmpleadoDomestico: boolean;
-  estado: "aprobado" | "rechazado";
-  mensaje: string;
-} {
-  const esEmpleadoDomestico = variables.find(v => v.Nombre === "VI_EmpleadoDomestico_Es")?.Valor === "Si";
+    esEmpleadoDomestico: boolean;
+    estado: "aprobado" | "rechazado";
+    mensaje: string;
+  } {
+    const esEmpleadoDomestico =
+      variables.find((v) => v.Nombre === "VI_EmpleadoDomestico_Es")?.Valor ===
+      "Si";
 
-  if (!esEmpleadoDomestico) {
-    return { 
-      esEmpleadoDomestico: false, 
-      estado: "aprobado", // No aplica la regla especial
-      mensaje: "" 
-    };
-  }
-
-  // Verificar que no tenga deudas en situación 3-4-5
-  const verificacionDeudas = this.verificarDeudaEntidades(variables);
-  const sinDeudas = verificacionDeudas.estado === "aprobado";
-
-  // Verificar que tenga 12 meses de aportes completos
-  const tiene12Aportes = this.verificar12MesesAportesCompletos(variables);
-
-  // ÚNICA CONDICIÓN DE APROBACIÓN: 12 meses de aportes + sin deudas
-  if (sinDeudas && tiene12Aportes) {
-    return {
-      esEmpleadoDomestico: true,
-      estado: "aprobado",
-      mensaje: "APROBADO - Empleado doméstico sin deudas y con 12 meses de aportes completos",
-    };
-  } else {
-    // CUALQUIER OTRA COMBINACIÓN ES RECHAZADA
-    let motivoRechazo = "Empleado doméstico RECHAZADO - ";
-    
-    if (!sinDeudas && !tiene12Aportes) {
-      motivoRechazo += "no tiene 12 meses de aportes completos y tiene deudas";
-    } else if (!tiene12Aportes) {
-      motivoRechazo += "no tiene 12 meses de aportes completos";
-    } else if (!sinDeudas) {
-      motivoRechazo += "tiene deudas";
+    if (!esEmpleadoDomestico) {
+      return {
+        esEmpleadoDomestico: false,
+        estado: "aprobado", // No aplica la regla especial
+        mensaje: "",
+      };
     }
 
-    return {
-      esEmpleadoDomestico: true,
-      estado: "rechazado",
-      mensaje: motivoRechazo,
-    };
+    // Verificar que no tenga deudas en situación 3-4-5
+    const verificacionDeudas = this.verificarDeudaEntidades(variables);
+    const sinDeudas = verificacionDeudas.estado === "aprobado";
+
+    // Verificar que tenga 12 meses de aportes completos
+    const tiene12Aportes = this.verificar12MesesAportesCompletos(variables);
+
+    // ÚNICA CONDICIÓN DE APROBACIÓN: 12 meses de aportes + sin deudas
+    if (sinDeudas && tiene12Aportes) {
+      return {
+        esEmpleadoDomestico: true,
+        estado: "aprobado",
+        mensaje:
+          "APROBADO - Empleado doméstico sin deudas y con 12 meses de aportes completos",
+      };
+    } else {
+      // CUALQUIER OTRA COMBINACIÓN ES RECHAZADA
+      let motivoRechazo = "Empleado doméstico RECHAZADO - ";
+
+      if (!sinDeudas && !tiene12Aportes) {
+        motivoRechazo +=
+          "no tiene 12 meses de aportes completos y tiene deudas";
+      } else if (!tiene12Aportes) {
+        motivoRechazo += "no tiene 12 meses de aportes completos";
+      } else if (!sinDeudas) {
+        motivoRechazo += "tiene deudas";
+      }
+
+      return {
+        esEmpleadoDomestico: true,
+        estado: "rechazado",
+        mensaje: motivoRechazo,
+      };
+    }
   }
-}
 
   /**
    * Verifica si el cliente tiene 12 meses de aportes completos
    * @param variables - Lista de variables de Nosis
    * @returns Boolean indicando si tiene 12 meses de aportes completos
    */
-  private verificar12MesesAportesCompletos(variables: NosisVariable[]): boolean {
+  private verificar12MesesAportesCompletos(
+    variables: NosisVariable[]
+  ): boolean {
     // Para los rubros especiales (construcción, doméstico, contratación)
     // se consideran TODOS los tipos de aportes: pagos, impagos y parciales
     const aportesPagos = parseInt(
-        variables.find((v) => v.Nombre === "AP_12m_Empleado_Pagos_Cant")?.Valor || "0"
+      variables.find((v) => v.Nombre === "AP_12m_Empleado_Pagos_Cant")?.Valor ||
+        "0"
     );
     const aportesImpagos = parseInt(
-        variables.find((v) => v.Nombre === "AP_12m_Empleado_Impagos_Cant")?.Valor || "0"
+      variables.find((v) => v.Nombre === "AP_12m_Empleado_Impagos_Cant")
+        ?.Valor || "0"
     );
     const aportesParciales = parseInt(
-        variables.find((v) => v.Nombre === "AP_12m_Empleado_PagoParcial_Cant")?.Valor || "0"
+      variables.find((v) => v.Nombre === "AP_12m_Empleado_PagoParcial_Cant")
+        ?.Valor || "0"
     );
 
     const totalAportes = aportesPagos + aportesImpagos + aportesParciales;
-     
+
     return totalAportes >= 12;
   }
 
@@ -1590,12 +1865,15 @@ private construirMensajeDetallado(
     const codigoPostalEmpleador = getValor("VI_Empleador_Dom_CP");
     const provinciaEmpleador = getValor("VI_Empleador_Dom_Prov");
     const codigoRubroEmpleador = getValor("VI_Empleador_Act01_Cod");
-let rubroEmpleador = null;
+    let rubroEmpleador = null;
 
-if (codigoRubroEmpleador) {
-  // Usar el servicio de rubros para obtener la descripción corta
-  rubroEmpleador = this.rubrosLaboralesService.obtenerDescripcionCorta(codigoRubroEmpleador) || codigoRubroEmpleador;
-}
+    if (codigoRubroEmpleador) {
+      // Usar el servicio de rubros para obtener la descripción corta
+      rubroEmpleador =
+        this.rubrosLaboralesService.obtenerDescripcionCorta(
+          codigoRubroEmpleador
+        ) || codigoRubroEmpleador;
+    }
 
     // Construir objeto empleador solo si existe razón social
     const empleador = razonSocialEmpleador
