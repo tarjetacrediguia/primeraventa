@@ -120,6 +120,7 @@ export const obtenerCompraPorSolicitudFormal = async (req: Request, res: Respons
         } else if (error.message.includes('No tienes permiso')) {
             res.status(403).json({ error: error.message });
         } else {
+            console.error('Error al obtener compra por solicitud formal:', error);
             res.status(500).json({ error: 'Error al obtener compra por solicitud formal' });
         }
     }

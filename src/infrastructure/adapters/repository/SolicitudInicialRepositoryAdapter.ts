@@ -396,35 +396,36 @@ export class SolicitudInicialRepositoryAdapter
    * Obtiene todas las solicitudes iniciales del sistema.
    * @returns Promise<SolicitudInicial[]> - Array de todas las solicitudes iniciales.
    */
-  async getAllSolicitudesIniciales(): Promise<SolicitudInicial[]> {
+async getAllSolicitudesIniciales(): Promise<SolicitudInicial[]> {
     const query = `
-            SELECT 
-      si.id, 
-      si.fecha_creacion, 
-      si.estado, 
-      si.reciboSueldo, 
-      si.comentarios, 
-      si.comerciante_id,
-      c.dni as dni_cliente, 
-      c.cuil as cuil_cliente,
-      si.motivo_rechazo,
-      u.nombre as comerciante_nombre,
-      u.apellido as comerciante_apellido,
-      com.nombre_comercio,
-      sf.estado as estado_solicitud_formal,
-      comp.estado as estado_compra
-    FROM solicitudes_iniciales si
-    INNER JOIN clientes c ON si.cliente_id = c.id
-    LEFT JOIN comerciantes com ON si.comerciante_id = com.usuario_id
-    LEFT JOIN usuarios u ON com.usuario_id = u.id
-    LEFT JOIN solicitudes_formales sf ON si.id = sf.solicitud_inicial_id
-    LEFT JOIN compras comp ON sf.id = comp.solicitud_formal_id
-    ORDER BY si.fecha_creacion DESC
-        `;
+        SELECT 
+            si.id, 
+            si.fecha_creacion, 
+            si.estado, 
+            si.reciboSueldo, 
+            si.comentarios, 
+            si.comerciante_id,
+            c.dni as dni_cliente, 
+            c.cuil as cuil_cliente,
+            si.motivo_rechazo,
+            u.nombre as comerciante_nombre,
+            u.apellido as comerciante_apellido,
+            comercios.nombre_comercio,
+            sf.estado as estado_solicitud_formal,
+            comp.estado as estado_compra
+        FROM solicitudes_iniciales si
+        INNER JOIN clientes c ON si.cliente_id = c.id
+        LEFT JOIN comerciantes com ON si.comerciante_id = com.usuario_id
+        LEFT JOIN usuarios u ON com.usuario_id = u.id
+        LEFT JOIN comercios ON com.numero_comercio = comercios.numero_comercio
+        LEFT JOIN solicitudes_formales sf ON si.id = sf.solicitud_inicial_id
+        LEFT JOIN compras comp ON sf.id = comp.solicitud_formal_id
+        ORDER BY si.fecha_creacion DESC
+    `;
 
     const result = await pool.query(query);
     return result.rows.map((row) => this.mapRowToSolicitudInicial(row));
-  }
+}
 
   /**
    * Obtiene las solicitudes iniciales por DNI del cliente.
@@ -452,68 +453,66 @@ export class SolicitudInicialRepositoryAdapter
    * @param estado - Estado de las solicitudes a buscar.
    * @returns Promise<SolicitudInicial[]> - Array de solicitudes iniciales con el estado especificado.
    */
-  async getSolicitudesInicialesByEstado(
-    estado: string
-  ): Promise<SolicitudInicial[]> {
+  async getSolicitudesInicialesByEstado(estado: string): Promise<SolicitudInicial[]> {
     const query = `
-            SELECT 
-                si.id, 
-                si.fecha_creacion, 
-                si.estado, 
-                si.reciboSueldo, 
-                si.comentarios, 
-                si.comerciante_id,
-                c.dni as dni_cliente, 
-                c.cuil as cuil_cliente,
-                si.motivo_rechazo,
-                u.nombre as comerciante_nombre,
-                u.apellido as comerciante_apellido,
-                com.nombre_comercio
-            FROM solicitudes_iniciales si
-            INNER JOIN clientes c ON si.cliente_id = c.id
-            LEFT JOIN comerciantes com ON si.comerciante_id = com.usuario_id
-            LEFT JOIN usuarios u ON com.usuario_id = u.id
-            WHERE si.estado = $1
-            ORDER BY si.fecha_creacion DESC
-        `;
+        SELECT 
+            si.id, 
+            si.fecha_creacion, 
+            si.estado, 
+            si.reciboSueldo, 
+            si.comentarios, 
+            si.comerciante_id,
+            c.dni as dni_cliente, 
+            c.cuil as cuil_cliente,
+            si.motivo_rechazo,
+            u.nombre as comerciante_nombre,
+            u.apellido as comerciante_apellido,
+            comercios.nombre_comercio
+        FROM solicitudes_iniciales si
+        INNER JOIN clientes c ON si.cliente_id = c.id
+        LEFT JOIN comerciantes com ON si.comerciante_id = com.usuario_id
+        LEFT JOIN usuarios u ON com.usuario_id = u.id
+        LEFT JOIN comercios ON com.numero_comercio = comercios.numero_comercio
+        WHERE si.estado = $1
+        ORDER BY si.fecha_creacion DESC
+    `;
 
     const result = await pool.query(query, [estado]);
     return result.rows.map((row) => this.mapRowToSolicitudInicial(row));
-  }
+}
 
   /**
    * Obtiene las solicitudes iniciales por fecha de creación.
    * @param fecha - Fecha de creación de las solicitudes.
    * @returns Promise<SolicitudInicial[]> - Array de solicitudes iniciales creadas en esa fecha.
    */
-  async getSolicitudesInicialesByFecha(
-    fecha: Date
-  ): Promise<SolicitudInicial[]> {
+  async getSolicitudesInicialesByFecha(fecha: Date): Promise<SolicitudInicial[]> {
     const query = `
-            SELECT 
-                si.id, 
-                si.fecha_creacion, 
-                si.estado, 
-                si.reciboSueldo, 
-                si.comentarios, 
-                si.comerciante_id,
-                c.dni as dni_cliente, 
-                c.cuil as cuil_cliente,
-                si.motivo_rechazo,
-                u.nombre as comerciante_nombre,
-                u.apellido as comerciante_apellido,
-                com.nombre_comercio
-            FROM solicitudes_iniciales si
-            INNER JOIN clientes c ON si.cliente_id = c.id
-            LEFT JOIN comerciantes com ON si.comerciante_id = com.usuario_id
-            LEFT JOIN usuarios u ON com.usuario_id = u.id
-            WHERE DATE(si.fecha_creacion) = DATE($1)
-            ORDER BY si.fecha_creacion DESC
-        `;
+        SELECT 
+            si.id, 
+            si.fecha_creacion, 
+            si.estado, 
+            si.reciboSueldo, 
+            si.comentarios, 
+            si.comerciante_id,
+            c.dni as dni_cliente, 
+            c.cuil as cuil_cliente,
+            si.motivo_rechazo,
+            u.nombre as comerciante_nombre,
+            u.apellido as comerciante_apellido,
+            comercios.nombre_comercio
+        FROM solicitudes_iniciales si
+        INNER JOIN clientes c ON si.cliente_id = c.id
+        LEFT JOIN comerciantes com ON si.comerciante_id = com.usuario_id
+        LEFT JOIN usuarios u ON com.usuario_id = u.id
+        LEFT JOIN comercios ON com.numero_comercio = comercios.numero_comercio
+        WHERE DATE(si.fecha_creacion) = DATE($1)
+        ORDER BY si.fecha_creacion DESC
+    `;
 
     const result = await pool.query(query, [fecha]);
     return result.rows.map((row) => this.mapRowToSolicitudInicial(row));
-  }
+}
 
   /**
    * Obtiene las solicitudes iniciales por ID del comerciante.
@@ -617,30 +616,31 @@ export class SolicitudInicialRepositoryAdapter
   */
   async getSolicitudesInicialesByCuil(cuil: string): Promise<SolicitudInicial[]> {
     const query = `
-      SELECT 
-        si.id, 
-        si.fecha_creacion, 
-        si.estado, 
-        si.reciboSueldo, 
-        si.comentarios, 
-        si.comerciante_id,
-        c.dni as dni_cliente, 
-        c.cuil as cuil_cliente,
-        si.motivo_rechazo,
-        u.nombre as comerciante_nombre,
-        u.apellido as comerciante_apellido,
-        com.nombre_comercio
-      FROM solicitudes_iniciales si
-      INNER JOIN clientes c ON si.cliente_id = c.id
-      LEFT JOIN comerciantes com ON si.comerciante_id = com.usuario_id
-      LEFT JOIN usuarios u ON com.usuario_id = u.id
-      WHERE c.cuil = $1
-      ORDER BY si.fecha_creacion DESC
+        SELECT 
+            si.id, 
+            si.fecha_creacion, 
+            si.estado, 
+            si.reciboSueldo, 
+            si.comentarios, 
+            si.comerciante_id,
+            c.dni as dni_cliente, 
+            c.cuil as cuil_cliente,
+            si.motivo_rechazo,
+            u.nombre as comerciante_nombre,
+            u.apellido as comerciante_apellido,
+            comercios.nombre_comercio
+        FROM solicitudes_iniciales si
+        INNER JOIN clientes c ON si.cliente_id = c.id
+        LEFT JOIN comerciantes com ON si.comerciante_id = com.usuario_id
+        LEFT JOIN usuarios u ON com.usuario_id = u.id
+        LEFT JOIN comercios ON com.numero_comercio = comercios.numero_comercio
+        WHERE c.cuil = $1
+        ORDER BY si.fecha_creacion DESC
     `;
 
     const result = await pool.query(query, [cuil]);
     return result.rows.map((row) => this.mapRowToSolicitudInicial(row));
-  }
+}
 
 
   /**

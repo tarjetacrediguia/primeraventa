@@ -16,6 +16,7 @@
 import { Comerciante } from "../../../domain/entities/Comerciante";
 import { ComercianteRepositoryPort } from "../../ports/ComercianteRepositoryPort";
 import bcrypt from 'bcrypt';
+import { ComercioRepositoryPort } from "../../ports/ComercioRepositoryPort";
 
 /**
  * Caso de uso para crear un nuevo comerciante.
@@ -29,61 +30,41 @@ export class CreateComercianteUseCase {
      *
      * @param repository - Puerto de acceso al repositorio de comerciantes
      */
-    constructor(private readonly repository: ComercianteRepositoryPort) {}
+    constructor(
+        private readonly repository: ComercianteRepositoryPort,
+        private readonly comercioRepository: ComercioRepositoryPort
+    ) {}
 
-    /**
-     * Ejecuta el registro de un nuevo comerciante.
-     *
-     * @param nombre - Nombre del comerciante
-     * @param apellido - Apellido del comerciante
-     * @param email - Correo electrónico
-     * @param password - Contraseña en texto plano
-     * @param telefono - Teléfono de contacto
-     * @param nombreComercio - Nombre del comercio
-     * @param cuil - CUIL del comerciante
-     * @param direccionComercio - Dirección del comercio
-     * @returns Promise<Comerciante> - Comerciante registrado
-     * @throws Error si falta algún campo obligatorio, si el CUIL ya existe o si la validación falla
-     */
     async execute(
         nombre: string,
         apellido: string,
         email: string,
         password: string,
         telefono: string,
-        nombreComercio: string,
-        cuil: string,
-        direccionComercio: string,
-        
+        numeroComercio: string
     ): Promise<Comerciante> {
-        // Validaciones básicas
-        if (!nombre || !apellido || !email || !password || !telefono || !nombreComercio || !cuil || !direccionComercio) {
+        if (!nombre || !apellido || !email || !password || !telefono || !numeroComercio) {
             throw new Error("Todos los campos son obligatorios");
         }
-        // Encriptar contraseña
+
+        const comercio = await this.comercioRepository.getComercioByNumero(numeroComercio);
+        if (!comercio) {
+            throw new Error("Comercio no encontrado");
+        }
+
         const saltRounds = 10;
         const passwordHash = await bcrypt.hash(password, saltRounds);
 
-        // Verificar CUIL único
-        const existeCuil = await this.repository.findByCuil(cuil);
-        if (existeCuil) {
-            throw new Error("Ya existe un comerciante con este CUIL");
-        }
-
-        // Crear instancia de Comerciante
         const comerciante = new Comerciante({
-            id: 0, // ID temporal
+            id: 0,
             nombre,
             apellido,
             email,
             password: passwordHash,
             telefono,
-            nombreComercio,
-            cuil,
-            direccionComercio
+            comercio
         });
 
-        // Guardar en el repositorio
         return this.repository.saveComerciante(comerciante);
     }
 

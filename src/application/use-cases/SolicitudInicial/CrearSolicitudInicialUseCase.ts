@@ -1008,60 +1008,46 @@ private async tieneComprasActivas(solicitudInicial: SolicitudInicial): Promise<b
   resultadoNosis: VerificationResult,
   entidadesService: EntidadesService
 ): string {
-    // PRIORIDAD: Usar el mensaje específico de Eureka para el comerciante si está disponible
-  if (resultadoNosis.eurekaMensajeComerciante) {
+  // SOLO usar mensaje de Eureka si no hay reglas fallidas (rechazos)
+  if (resultadoNosis.eurekaMensajeComerciante && 
+      (!resultadoNosis.reglasFallidas || resultadoNosis.reglasFallidas.length === 0)) {
     return resultadoNosis.eurekaMensajeComerciante;
   }
   
-  if (resultadoNosis.status === "aprobado") {
-    return "Solicitud aprobada automáticamente";
-  } else if (resultadoNosis.status === "rechazado") {
+  // Si hay reglas fallidas, priorizar los motivos de rechazo
+  if (resultadoNosis.status === "rechazado") {
     let motivo = "Solicitud rechazada";
 
-    if (
-      resultadoNosis.reglasFallidas &&
-      resultadoNosis.reglasFallidas.length > 0
-    ) {
+    if (resultadoNosis.reglasFallidas && resultadoNosis.reglasFallidas.length > 0) {
       const motivosPrincipales: string[] = [];
 
-      // Verificar si el rechazo es por rubros especiales y obtener detalles específicos
+      // Verificar si el rechazo es por rubros especiales
       const detalleRubro = this.obtenerDetalleRubroRechazo(resultadoNosis.reglasFallidas);
-
       if (detalleRubro) {
         return `Solicitud rechazada: rubro - ${detalleRubro.rubro}${detalleRubro.razones ? `, ${detalleRubro.razones}` : ''}`;
       }
 
-      // Lógica original para otros tipos de rechazo
+      // Lógica para otros tipos de rechazo
       for (const regla of resultadoNosis.reglasFallidas) {
         if (regla.includes("entidades en situación 2")) {
           const match = regla.match(/(\d+) entidades/);
           const cantidad = match ? match[1] : "varias";
-          motivosPrincipales.push(
-            `tiene ${cantidad} entidades en situación 2`
-          );
+          motivosPrincipales.push(`tiene ${cantidad} entidades en situación 2`);
         } else if (regla.includes("entidades con deuda")) {
           const match = regla.match(/(\d+) entidades/);
           const cantidad = match ? match[1] : "varias";
-          motivosPrincipales.push(
-            `tiene deuda con ${cantidad} o más entidades con situación 3, 4 o 5`
-          );
+          motivosPrincipales.push(`tiene deuda con ${cantidad} entidades`);
         } else if (regla.includes("referencias comerciales")) {
           const match = regla.match(/(\d+) referencias comerciales válidas/);
           if (match) {
-            motivosPrincipales.push(
-              `tiene ${match[1]} referencias comerciales válidas (máximo permitido: 2)`
-            );
+            motivosPrincipales.push(`tiene ${match[1]} referencias comerciales válidas (máximo permitido: 2)`);
           } else {
-            motivosPrincipales.push(
-              "no cumple con criterios de referencias comerciales"
-            );
+            motivosPrincipales.push("no cumple con criterios de referencias comerciales");
           }
         } else if (regla.includes("tarjeta Crediguía")) {
           motivosPrincipales.push("tiene tarjeta Crediguía activa");
         } else if (regla.includes("aporte")) {
-          motivosPrincipales.push(
-            "no cumple con el mínimo de aportes requerido"
-          );
+          motivosPrincipales.push("no cumple con el mínimo de aportes requerido");
         } else if (regla.includes("jubilado")) {
           motivosPrincipales.push("es jubilado");
         } else if (regla.includes("monotributista")) {
@@ -1081,44 +1067,41 @@ private async tieneComprasActivas(solicitudInicial: SolicitudInicial): Promise<b
 
     return motivo;
   } else if (resultadoNosis.status === "pendiente") {
+    // Usar mensaje de Eureka solo si no hay otros pendientes más importantes
+    if (resultadoNosis.eurekaMensajeComerciante && 
+        (!resultadoNosis.pendientes || resultadoNosis.pendientes.length === 0)) {
+      return resultadoNosis.eurekaMensajeComerciante;
+    }
+    
     let motivo = "Solicitud pendiente de revisión manual";
-
     if (resultadoNosis.pendientes && resultadoNosis.pendientes.length > 0) {
       const motivosPendientes: string[] = [];
-
       for (const pendiente of resultadoNosis.pendientes) {
         if (pendiente.includes("entidades en situación 2")) {
-          motivosPendientes.push(
-            "tiene 1 entidad en situación 2"
-          );
+          motivosPendientes.push("tiene 1 entidad en situación 2");
         } else if (pendiente.includes("entidades con deuda")) {
           const match = pendiente.match(/(\d+) entidades/);
           const cantidad = match ? match[1] : "algunas";
-          motivosPendientes.push(
-            `tiene deuda con ${cantidad} entidades con situación 3, 4 o 5`
-          );
+          motivosPendientes.push(`tiene deuda con ${cantidad} entidades`);
         } else if (pendiente.includes("referencias comerciales")) {
           const match = pendiente.match(/(\d+) referencia/);
           if (match) {
-            motivosPendientes.push(
-              `tiene ${match[1]} referencia(s) comercial(es) válida(s)`
-            );
+            motivosPendientes.push(`tiene ${match[1]} referencia(s) comercial(es) válida(s)`);
           } else {
-            motivosPendientes.push(
-              "requiere validación de referencias comerciales"
-            );
+            motivosPendientes.push("requiere validación de referencias comerciales");
           }
         } else {
           motivosPendientes.push(pendiente.toLowerCase());
         }
       }
-
       if (motivosPendientes.length > 0) {
         motivo += `: ${motivosPendientes.join(", ")}`;
       }
     }
-
     return motivo;
+  } else if (resultadoNosis.status === "aprobado") {
+    // Para aprobados, sí usar el mensaje de Eureka
+    return resultadoNosis.eurekaMensajeComerciante || "Solicitud aprobada automáticamente";
   }
 
   return "Solicitud en proceso de evaluación";

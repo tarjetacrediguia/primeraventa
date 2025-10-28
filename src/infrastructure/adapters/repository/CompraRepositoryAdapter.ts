@@ -63,30 +63,21 @@ export class CompraRepositoryAdapter implements CompraRepositoryPort {
         const client = await pool.connect();
         try {
             const query = `
-                SELECT c.*, 
-                   cl.nombre_completo as cliente_nombre,
-                   cl.apellido as cliente_apellido,
-                   cl.cuil as cliente_cuil,
-                   co.nombre_comercio,
-                   co.usuario_id as comerciante_id
-            FROM compras c
-            LEFT JOIN clientes cl ON c.cliente_id = cl.id
-            LEFT JOIN comerciantes co ON c.comerciante_id = co.usuario_id
-            `;
+    SELECT c.*, 
+           cl.nombre_completo as cliente_nombre,
+           cl.apellido as cliente_apellido,
+           cl.cuil as cliente_cuil,
+           com.nombre_comercio,
+           co.usuario_id as comerciante_id
+    FROM compras c
+    LEFT JOIN clientes cl ON c.cliente_id = cl.id
+    LEFT JOIN comerciantes co ON c.comerciante_id = co.usuario_id
+    LEFT JOIN comercios com ON co.numero_comercio = com.numero_comercio
+`;
             const res = await client.query(query);
             
             const compras: Compra[] = [];
             for (const row of res.rows) {
-                /*
-                const itemsRes = await client.query(
-                    'SELECT * FROM items_compra WHERE compra_id = $1',
-                    [row.id]
-                );
-                
-                const items = itemsRes.rows.map(item => 
-                    new ItemCompra(item.id, item.compra_id, item.nombre, item.precio, item.cantidad)
-                );
-                */
                 const compra =new Compra({
                     id: row.id,
                     solicitudFormalId: row.solicitud_formal_id,
@@ -125,18 +116,19 @@ export class CompraRepositoryAdapter implements CompraRepositoryPort {
     try {
         // Obtener TODAS las compras por solicitud formal
         const comprasQuery = `
-            SELECT c.*, 
-                   cl.nombre_completo as cliente_nombre,
-                   cl.apellido as cliente_apellido,
-                   cl.cuil as cliente_cuil,
-                   co.nombre_comercio,
-                   co.usuario_id as comerciante_id
-            FROM compras c
-            LEFT JOIN clientes cl ON c.cliente_id = cl.id
-            LEFT JOIN comerciantes co ON c.comerciante_id = co.usuario_id
-            WHERE c.solicitud_formal_id = $1
-            ORDER BY c.fecha_creacion DESC
-        `;
+    SELECT c.*, 
+           cl.nombre_completo as cliente_nombre,
+           cl.apellido as cliente_apellido,
+           cl.cuil as cliente_cuil,
+           com.nombre_comercio,
+           co.usuario_id as comerciante_id
+    FROM compras c
+    LEFT JOIN clientes cl ON c.cliente_id = cl.id
+    LEFT JOIN comerciantes co ON c.comerciante_id = co.usuario_id
+    LEFT JOIN comercios com ON co.numero_comercio = com.numero_comercio
+    WHERE c.solicitud_formal_id = $1
+    ORDER BY c.fecha_creacion DESC
+`;
         const comprasRes = await client.query(comprasQuery, [solicitudFormalId]);
 
         const compras: Compra[] = [];
@@ -288,17 +280,18 @@ export class CompraRepositoryAdapter implements CompraRepositoryPort {
         try {
             // Obtener compra
             const compraQuery = `
-                    SELECT c.*, 
-                    cl.nombre_completo as cliente_nombre,
-                    cl.apellido as cliente_apellido,
-                    cl.cuil as cliente_cuil,
-                    co.nombre_comercio,
-                    co.usuario_id as comerciante_id
-                FROM compras c
-                LEFT JOIN clientes cl ON c.cliente_id = cl.id
-                LEFT JOIN comerciantes co ON c.comerciante_id = co.usuario_id
-                WHERE c.id = $1
-            `;
+    SELECT c.*, 
+           cl.nombre_completo as cliente_nombre,
+           cl.apellido as cliente_apellido,
+           cl.cuil as cliente_cuil,
+           com.nombre_comercio,
+           co.usuario_id as comerciante_id
+    FROM compras c
+    LEFT JOIN clientes cl ON c.cliente_id = cl.id
+    LEFT JOIN comerciantes co ON c.comerciante_id = co.usuario_id
+    LEFT JOIN comercios com ON co.numero_comercio = com.numero_comercio
+    WHERE c.id = $1
+`;
             const compraRes = await client.query(compraQuery, [id]);
             if (compraRes.rows.length === 0) {
                 return null;
@@ -480,16 +473,17 @@ export class CompraRepositoryAdapter implements CompraRepositoryPort {
     const client = await pool.connect();
     try {
         // Obtener compras por solicitud formal
-        const comprasQuery = `
+        const comprasQuery =  `
             SELECT c.*, 
                    cl.nombre_completo as cliente_nombre,
                    cl.apellido as cliente_apellido,
                    cl.cuil as cliente_cuil,
-                   co.nombre_comercio,
+                   com.nombre_comercio,  -- ✅ Desde la tabla comercios
                    co.usuario_id as comerciante_id
             FROM compras c
             LEFT JOIN clientes cl ON c.cliente_id = cl.id
             LEFT JOIN comerciantes co ON c.comerciante_id = co.usuario_id
+            LEFT JOIN comercios com ON co.numero_comercio = com.numero_comercio
             WHERE c.solicitud_formal_id = $1
         `;
         const comprasRes = await client.query(comprasQuery, [solicitudFormalId]);
@@ -550,17 +544,18 @@ export class CompraRepositoryAdapter implements CompraRepositoryPort {
     const client = await pool.connect();
     try {
         const query = `
-            SELECT c.*, 
-                   cl.nombre_completo as cliente_nombre,
-                   cl.apellido as cliente_apellido,
-                   cl.cuil as cliente_cuil,
-                   co.nombre_comercio,
-                   co.usuario_id as comerciante_id
-            FROM compras c
-            LEFT JOIN clientes cl ON c.cliente_id = cl.id
-            LEFT JOIN comerciantes co ON c.comerciante_id = co.usuario_id
-            WHERE c.estado = $1
-        `;
+    SELECT c.*, 
+           cl.nombre_completo as cliente_nombre,
+           cl.apellido as cliente_apellido,
+           cl.cuil as cliente_cuil,
+           com.nombre_comercio,
+           co.usuario_id as comerciante_id
+    FROM compras c
+    LEFT JOIN clientes cl ON c.cliente_id = cl.id
+    LEFT JOIN comerciantes co ON c.comerciante_id = co.usuario_id
+    LEFT JOIN comercios com ON co.numero_comercio = com.numero_comercio
+    WHERE c.estado = $1
+`;
         const res = await client.query(query, [estado]);
         
         const compras: Compra[] = [];
@@ -615,17 +610,18 @@ export class CompraRepositoryAdapter implements CompraRepositoryPort {
         const client = await pool.connect();
         try {
             const query = `
-                SELECT c.*, 
-                   cl.nombre_completo as cliente_nombre,
-                   cl.apellido as cliente_apellido,
-                   cl.cuil as cliente_cuil,
-                   co.nombre_comercio,
-                   co.usuario_id as comerciante_id
-            FROM compras c
-            INNER JOIN clientes cl ON c.cliente_id = cl.id
-            INNER JOIN comerciantes co ON c.comerciante_id = co.usuario_id
-            WHERE c.comerciante_id = $1
-            `;
+    SELECT c.*, 
+           cl.nombre_completo as cliente_nombre,
+           cl.apellido as cliente_apellido,
+           cl.cuil as cliente_cuil,
+           com.nombre_comercio,
+           co.usuario_id as comerciante_id
+    FROM compras c
+    INNER JOIN clientes cl ON c.cliente_id = cl.id
+    INNER JOIN comerciantes co ON c.comerciante_id = co.usuario_id
+    INNER JOIN comercios com ON co.numero_comercio = com.numero_comercio
+    WHERE c.comerciante_id = $1
+`;
             const res = await client.query(query, [comercianteId]);
             
             const compras: Compra[] = [];

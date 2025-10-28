@@ -10,48 +10,64 @@
 
 import { ComercianteRepositoryPort } from "../../../application/ports/ComercianteRepositoryPort";
 import { Comerciante } from "../../../domain/entities/Comerciante";
+import { Comercio } from "../../../domain/entities/Comercio";
 import { pool } from "../../config/Database/DatabaseDonfig";
 
 export class ComercianteRepositoryAdapter implements ComercianteRepositoryPort {
+    
     async findById(id: number): Promise<Comerciante> {
-        const query = `
-            SELECT 
-                c.usuario_id as id,
-                c.nombre_comercio,
-                c.cuil,
-                c.direccion_comercio,
-                u.nombre,
-                u.apellido,
-                u.email,
-                u.password_hash as password,
-                u.telefono,
-                u.activo
-            FROM comerciantes c
-            INNER JOIN usuarios u ON c.usuario_id = u.id
-            WHERE c.usuario_id = $1 AND u.activo = true
-        `;
-        
-        const result = await pool.query(query, [id]);
+    const query = `
+        SELECT 
+            u.id,
+            u.nombre,
+            u.apellido,
+            u.email,
+            u.password_hash as password,
+            u.telefono,
+            u.activo,
+            c.numero_comercio,
+            co.nombre_comercio,
+            co.cuil,
+            co.direccion_comercio,
+            ARRAY_AGG(p.nombre) AS permisos
+        FROM usuarios u
+        INNER JOIN comerciantes c ON u.id = c.usuario_id
+        INNER JOIN comercios co ON c.numero_comercio = co.numero_comercio
+        LEFT JOIN usuario_permisos up ON u.id = up.usuario_id
+        LEFT JOIN permisos p ON up.permiso_id = p.id
+        WHERE u.id = $1 AND u.activo = true
+        GROUP BY u.id, c.numero_comercio, co.numero_comercio, co.nombre_comercio, co.cuil, co.direccion_comercio
+    `;
+    
+    const result = await pool.query(query, [id]);
 
-        if (result.rows.length === 0) {
-            throw new Error("Comerciante no encontrado");
-        }
-
-        const row = result.rows[0];
-        
-        return new Comerciante({
-            id: row.id,
-            nombre: row.nombre,
-            apellido: row.apellido,
-            email: row.email,
-            password: row.password,
-            telefono: row.telefono,
-            nombreComercio: row.nombre_comercio,
-            cuil: row.cuil,
-            direccionComercio: row.direccion_comercio,
-            activo: row.activo
-        });
+    if (result.rows.length === 0) {
+        throw new Error("Comerciante no encontrado");
     }
+
+    const row = result.rows[0];
+    
+    // Crear instancia de Comercio
+    const comercio = new Comercio({
+        numeroComercio: row.numero_comercio,
+        nombreComercio: row.nombre_comercio,
+        cuil: row.cuil,
+        direccionComercio: row.direccion_comercio
+    });
+    
+    return new Comerciante({
+        id: row.id,
+        nombre: row.nombre,
+        apellido: row.apellido,
+        email: row.email,
+        password: row.password,
+        telefono: row.telefono,
+        comercio: comercio,
+        permisos: row.permisos ? row.permisos.filter((p: string | null) => p !== null) : [],
+        activo: row.activo
+    });
+}
+        
     /**
      * Busca un comerciante por su email.
      * @param email - Email del comerciante a buscar.
@@ -60,14 +76,16 @@ export class ComercianteRepositoryAdapter implements ComercianteRepositoryPort {
     async findByEmail(email: string): Promise<Comerciante | null> {
         const query = `
             SELECT u.id, u.nombre, u.apellido, u.email, u.telefono,
-                   c.nombre_comercio, c.cuil, c.direccion_comercio,
+                   c.numero_comercio,
+                   co.nombre_comercio, co.cuil, co.direccion_comercio,
                    ARRAY_AGG(p.nombre) AS permisos
             FROM usuarios u
             INNER JOIN comerciantes c ON u.id = c.usuario_id
+            INNER JOIN comercios co ON c.numero_comercio = co.numero_comercio
             LEFT JOIN usuario_permisos up ON u.id = up.usuario_id
             LEFT JOIN permisos p ON up.permiso_id = p.id
             WHERE u.email = $1 AND u.rol = 'comerciante'
-            GROUP BY u.id, c.nombre_comercio, c.cuil, c.direccion_comercio
+            GROUP BY u.id, c.numero_comercio, co.numero_comercio
         `;
         const result = await pool.query(query, [email]);
         
@@ -86,14 +104,14 @@ export class ComercianteRepositoryAdapter implements ComercianteRepositoryPort {
     async findByCuil(cuil: string): Promise<Comerciante | null> {
         const query = `
             SELECT u.id, u.nombre, u.apellido, u.email, u.telefono,
-                   c.nombre_comercio, c.cuil, c.direccion_comercio,
+                   c.nombre_comercio, c.cuil, c.direccion_comercio, c.numero_comercio,
                    ARRAY_AGG(p.nombre) AS permisos
             FROM usuarios u
             INNER JOIN comerciantes c ON u.id = c.usuario_id
             LEFT JOIN usuario_permisos up ON u.id = up.usuario_id
             LEFT JOIN permisos p ON up.permiso_id = p.id
             WHERE c.cuil = $1
-            GROUP BY u.id, c.nombre_comercio, c.cuil, c.direccion_comercio
+            GROUP BY u.id, c.nombre_comercio, c.cuil, c.direccion_comercio, c.numero_comercio
         `;
         const result = await pool.query(query, [cuil]);
         
@@ -135,14 +153,12 @@ export class ComercianteRepositoryAdapter implements ComercianteRepositoryPort {
             
             // Insertar en la tabla comerciantes
             const comercianteQuery = `
-                INSERT INTO comerciantes (usuario_id, nombre_comercio, cuil, direccion_comercio)
-                VALUES ($1, $2, $3, $4)
+                INSERT INTO comerciantes (usuario_id, numero_comercio)
+                VALUES ($1, $2)
             `;
             await client.query(comercianteQuery, [
                 usuarioId,
-                comerciante.getNombreComercio(),
-                comerciante.getCuil(),
-                comerciante.getDireccionComercio()
+                comerciante.getComercio().getNumeroComercio()
             ]);
             
             // Insertar permisos
@@ -160,9 +176,7 @@ export class ComercianteRepositoryAdapter implements ComercianteRepositoryPort {
                 email: comerciante.getEmail(),
                 password: comerciante.getPassword(),
                 telefono: comerciante.getTelefono(),
-                nombreComercio: comerciante.getNombreComercio(),
-                cuil: comerciante.getCuil(),
-                direccionComercio: comerciante.getDireccionComercio(),
+                comercio: comerciante.getComercio(),
                 permisos: comerciante.getPermisos()
             });
         } catch (error) {
@@ -181,15 +195,18 @@ export class ComercianteRepositoryAdapter implements ComercianteRepositoryPort {
     async getComercianteById(id: number): Promise<Comerciante | null> {
         const query = `
             SELECT u.id, u.nombre, u.apellido, u.email, u.telefono,
-                   c.nombre_comercio, c.cuil, c.direccion_comercio,
+                   c.numero_comercio,
+                   co.nombre_comercio, co.cuil, co.direccion_comercio,
                    ARRAY_AGG(p.nombre) AS permisos
             FROM usuarios u
             INNER JOIN comerciantes c ON u.id = c.usuario_id
+            INNER JOIN comercios co ON c.numero_comercio = co.numero_comercio
             LEFT JOIN usuario_permisos up ON u.id = up.usuario_id
             LEFT JOIN permisos p ON up.permiso_id = p.id
             WHERE u.id = $1
-            GROUP BY u.id, c.nombre_comercio, c.cuil, c.direccion_comercio
+            GROUP BY u.id, c.numero_comercio, co.numero_comercio
         `;
+        
         const result = await pool.query(query, [id]);
         
         if (result.rows.length === 0) {
@@ -227,19 +244,6 @@ export class ComercianteRepositoryAdapter implements ComercianteRepositoryPort {
                 id
             ]);
             
-            // Actualizar datos específicos de comerciante
-            const updateComercianteQuery = `
-                UPDATE comerciantes
-                SET nombre_comercio = $1, cuil = $2, direccion_comercio = $3
-                WHERE usuario_id = $4
-            `;
-            await client.query(updateComercianteQuery, [
-                comerciante.getNombreComercio(),
-                comerciante.getCuil(),
-                comerciante.getDireccionComercio(),
-                id
-            ]);
-            
             await client.query('COMMIT');
             
             return comerciante;
@@ -261,23 +265,9 @@ export class ComercianteRepositoryAdapter implements ComercianteRepositoryPort {
         try {
             await client.query('BEGIN');
             
-            // Eliminar permisos primero por restricciones de clave foránea
-            await client.query(
-                'DELETE FROM usuario_permisos WHERE usuario_id = $1',
-                [id]
-            );
-            
-            // Eliminar de comerciantes
-            await client.query(
-                'DELETE FROM comerciantes WHERE usuario_id = $1',
-                [id]
-            );
-            
-            // Finalmente eliminar de usuarios
-            await client.query(
-                'DELETE FROM usuarios WHERE id = $1',
-                [id]
-            );
+            await client.query('DELETE FROM usuario_permisos WHERE usuario_id = $1', [id]);
+            await client.query('DELETE FROM comerciantes WHERE usuario_id = $1', [id]);
+            await client.query('DELETE FROM usuarios WHERE id = $1', [id]);
             
             await client.query('COMMIT');
         } catch (error) {
@@ -295,28 +285,28 @@ export class ComercianteRepositoryAdapter implements ComercianteRepositoryPort {
     async getAllComerciantes(): Promise<Comerciante[]> {
         const query = `
             SELECT u.id, u.nombre, u.apellido, u.email, u.telefono,
-                   c.nombre_comercio, c.cuil, c.direccion_comercio,
+                   c.numero_comercio,
+                   co.nombre_comercio, co.cuil, co.direccion_comercio,
                    ARRAY_AGG(p.nombre) AS permisos
             FROM usuarios u
             INNER JOIN comerciantes c ON u.id = c.usuario_id
+            INNER JOIN comercios co ON c.numero_comercio = co.numero_comercio
             LEFT JOIN usuario_permisos up ON u.id = up.usuario_id
             LEFT JOIN permisos p ON up.permiso_id = p.id
             WHERE u.rol = 'comerciante'
-            GROUP BY u.id, c.nombre_comercio, c.cuil, c.direccion_comercio
+            GROUP BY u.id, c.numero_comercio, co.numero_comercio
         `;
         const result = await pool.query(query);
         return result.rows.map(row => this.mapRowToComerciante(row));
     }
 
     private async asignarPermiso(client: any, usuarioId: number, permisoNombre: string): Promise<void> {
-        // Obtener ID del permiso
         const permisoRes = await client.query('SELECT id FROM permisos WHERE nombre = $1', [permisoNombre]);
         if (permisoRes.rows.length === 0) {
             throw new Error(`Permiso '${permisoNombre}' no encontrado`);
         }
         const permisoId = permisoRes.rows[0].id;
         
-        // Asignar permiso al usuario
         await client.query(`
             INSERT INTO usuario_permisos (usuario_id, permiso_id)
             VALUES ($1, $2)
@@ -325,16 +315,21 @@ export class ComercianteRepositoryAdapter implements ComercianteRepositoryPort {
     }
 
     private mapRowToComerciante(row: any): Comerciante {
+        const comercio = new Comercio({
+            numeroComercio: row.numero_comercio,
+            nombreComercio: row.nombre_comercio,
+            cuil: row.cuil,
+            direccionComercio: row.direccion_comercio
+        });
+
         return new Comerciante({
             id: Number(row.id),
             nombre: row.nombre,
             apellido: row.apellido,
             email: row.email,
-            password: '', // La contraseña no se retorna en las consultas
+            password: '',
             telefono: row.telefono,
-            nombreComercio: row.nombre_comercio,
-            cuil: row.cuil,
-            direccionComercio: row.direccion_comercio,
+            comercio: comercio,
             permisos: row.permisos.filter((p: string | null) => p !== null)
         });
     }

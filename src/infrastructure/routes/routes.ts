@@ -24,6 +24,7 @@ import tasasRoutes from './tasas.routes';
 import compraRoutes from './compra.routes';
 import sistemaRoutes from './sistema.routes';
 import reportesRoutes from './reportes.routes';
+import comerciosRoutes from './comercios.routes';
 
 
 const router = Router();
@@ -38,6 +39,7 @@ router.use(authMiddleware);
 router.use('/administradores', administradoresRoutes);
 router.use('/analistas', analistasRoutes);
 router.use('/comerciantes', comerciantesRoutes);
+router.use('/comercios', comerciosRoutes);
 router.use('/permisos', permisosRoutes);
 router.use('/solicitudes', solicitudesRoutes);
 router.use('/contratos', contratosRoutes);

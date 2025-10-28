@@ -40,14 +40,15 @@ export class EurekaAdapter implements EurekaPort {
     return await this.makeRequest<SituacionPersonaResponse>(`/personas/situacion/cuilt/${cuil}`);
   }
 
-  async getPlanesDeCuotas(params: any): Promise<PlanesDeCuotasResponse> {
-    // Por ahora implementamos un esqueleto
-    // TODO: Implementar cuando se conozca el endpoint específico
-    console.log("Obteniendo planes de cuotas con params:", params);
+  async getPlanesDeCuotas(params: { nroComercio: string; importe: number }): Promise<PlanesDeCuotasResponse> {
+    const { nroComercio, importe } = params;
     
-    // Esto es temporal - lanzar error hasta que se implemente
-    throw new Error("Endpoint de planes de cuotas no implementado aún");
-    
-    // return await this.makeRequest<PlanesDeCuotasResponse>('/planes-de-cuotas');
+    if (!nroComercio || !importe) {
+      throw new Error("nroComercio e importe son requeridos");
+    }
+
+    return await this.makeRequest<PlanesDeCuotasResponse>(
+      `/planes/generico/nroComercio/${nroComercio}/importe/${importe}`
+    );
   }
 }

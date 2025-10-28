@@ -30,7 +30,8 @@ CREATE TABLE comerciantes (
     usuario_id INTEGER PRIMARY KEY REFERENCES usuarios(id) ON DELETE CASCADE,
     nombre_comercio TEXT NOT NULL,
     cuil TEXT NOT NULL UNIQUE,
-    direccion_comercio TEXT NOT NULL
+    direccion_comercio TEXT NOT NULL,
+    numero_comercio TEXT NOT NULL
 );
 
 -- Tabla de Permisos
@@ -83,7 +84,8 @@ CREATE TABLE clientes (
     empleador_telefono TEXT,
     empleador_codigo_postal TEXT,
     empleador_localidad TEXT,
-    empleador_provincia TEXT
+    empleador_provincia TEXT,
+    rubro_empleador TEXT
 );
 
 -- Tabla de Solicitudes Iniciales
@@ -160,7 +162,8 @@ CREATE TABLE solicitudes_formales (
     localidad_empleador TEXT,
     provincia_empleador TEXT,
     telefono_empleador TEXT,
-    cuit_empleador TEXT
+    cuit_empleador TEXT,
+    rubro_empleador TEXT
 );
 
 -- Implementación corregida de la restricción única usando un índice parcial

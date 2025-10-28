@@ -1,6 +1,8 @@
 import { Request, Response } from 'express';
 import { CreateComercianteUseCase } from '../../../application/use-cases/Comerciante/CreateComercianteUseCase';
 import { ComercianteRepositoryAdapter } from '../../adapters/repository/ComercianteRepositoryAdapter';
+import { ComercioRepositoryAdapter } from '../../adapters/repository/ComercioRepositoryAdapter';
+import { UpdateComercianteUseCase } from '../../../application/use-cases/Comerciante/UpdateComercianteUseCase';
 
 const comercianteRepository = new ComercianteRepositoryAdapter();
 
@@ -12,35 +14,24 @@ const comercianteRepository = new ComercianteRepositoryAdapter();
  */
 export const createComerciante = async (req: Request, res: Response) => {
     try {
-        const {
-            nombre,
-            apellido,
-            email,
-            password,
-            telefono,
-            nombreComercio,
-            cuil,
-            direccionComercio
-        } = req.body;
+        const { nombre, apellido, email, password, telefono, numeroComercio } = req.body;
 
-
-        if (!nombreComercio) {
-            throw new Error("El nombre del comercio es obligatorio");
-        }
-
-        const useCase = new CreateComercianteUseCase(comercianteRepository);
+        const comercioRepository = new ComercioRepositoryAdapter();
+        const useCase = new CreateComercianteUseCase(comercianteRepository, comercioRepository);
+        
         const comerciante = await useCase.execute(
             nombre,
             apellido,
             email,
             password,
             telefono,
-            nombreComercio,
-            cuil,
-            direccionComercio
+            numeroComercio
         );
 
-        res.status(201).json(comerciante.toPlainObject());
+        res.status(201).json({
+            success: true,
+            data: comerciante.toPlainObject()
+        });
     } catch (error) {
         res.status(400).json({
             success: false,
@@ -62,32 +53,43 @@ export const updateComerciante = async (req: Request, res: Response) => {
             nombre,
             apellido,
             telefono,
-            nombreComercio,
-            direccionComercio
+            numeroComercio
         } = req.body;
 
-        if (!nombre || !apellido || !telefono || !nombreComercio || !direccionComercio) {
-            throw new Error("Todos los campos son obligatorios");
+        // Validar que al menos un campo a actualizar esté presente
+        if (!nombre && !apellido && !telefono && !numeroComercio) {
+            return res.status(400).json({
+                error: "Al menos un campo debe ser proporcionado para actualizar: nombre, apellido, telefono o numeroComercio"
+            });
         }
 
-        const comerciante = await comercianteRepository.getComercianteById(id);
-        if (!comerciante) {
-            throw new Error("Comerciante no encontrado");
-        }
+        // Usar el caso de uso en lugar de interactuar directamente con el repositorio
+        const comercianteRepository = new ComercianteRepositoryAdapter();
+        const comercioRepository = new ComercioRepositoryAdapter(); // Asume que existe este adaptador
+        const updateComercianteUseCase = new UpdateComercianteUseCase(comercianteRepository, comercioRepository);
 
-        // Actualizar solo los campos proporcionados
-        if (nombre) comerciante.setNombre(nombre);
-        if (apellido) comerciante.setApellido(apellido);
-        if (telefono) comerciante.setTelefono(telefono);
-        if (nombreComercio) comerciante.setNombreComercio(nombreComercio);
-        if (direccionComercio) comerciante.setDireccionComercio(direccionComercio);
-
-        const comercianteActualizado = await comercianteRepository.updateComerciante(comerciante);
+        const comercianteActualizado = await updateComercianteUseCase.execute(
+            id,
+            nombre,
+            apellido,
+            telefono,
+            numeroComercio
+        );
 
         res.status(200).json(comercianteActualizado.toPlainObject());
     } catch (error) {
-        res.status(400).json({
-            error: error instanceof Error ? error.message : 'Error al actualizar el comerciante'
+        console.error('Error al actualizar comerciante:', error);
+        
+        // Manejar diferentes tipos de errores con códigos de estado apropiados
+        if (error instanceof Error) {
+            if (error.message.includes("no encontrado")) {
+                return res.status(404).json({ error: error.message });
+            }
+            return res.status(400).json({ error: error.message });
+        }
+        
+        res.status(500).json({
+            error: 'Error interno del servidor al actualizar el comerciante'
         });
     }
 };

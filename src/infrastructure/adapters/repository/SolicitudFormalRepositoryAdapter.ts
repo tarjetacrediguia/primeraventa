@@ -418,7 +418,7 @@ export class SolicitudFormalRepositoryAdapter
           ? Number(row.nuevo_limite_completo_solicitado)
           : null,
       archivosAdjuntos: archivos,
-      rubroEmpleador: row.rubro_empleador || ""
+      rubroEmpleador: row.rubro_empleador || "",
     });
   }
 
@@ -473,27 +473,27 @@ export class SolicitudFormalRepositoryAdapter
 
       // Actualizar solicitud formal
       const actualizarSolicitudQuery = `
-                UPDATE solicitudes_formales
-                SET fecha_solicitud = $1, 
-                    recibo = $2, 
-                    estado = $3, 
-                    acepta_tarjeta = $4, 
-                    comentarios = $5, 
-                    fecha_actualizacion = CURRENT_TIMESTAMP,
-                    importe_neto = $7,
-                    limite_base = $8,
-                    limite_completo = $9,
-                    razon_social_empleador = $10,
-                    cuit_empleador = $11,
-                    cargo_funcion_empleador = $12,
-                    sector_empleador = $13,
-                    codigo_postal_empleador = $14,
-                    localidad_empleador = $15,
-                    provincia_empleador = $16,
-                    telefono_empleador = $17,
-                    rubro_empleador = $18
-                WHERE id = $6
-            `;
+    UPDATE solicitudes_formales
+    SET fecha_solicitud = $1, 
+        recibo = $2, 
+        estado = $3, 
+        acepta_tarjeta = $4, 
+        comentarios = $5, 
+        fecha_actualizacion = CURRENT_TIMESTAMP,
+        importe_neto = $7,
+        limite_base = $8,
+        limite_completo = $9,
+        razon_social_empleador = $10,
+        cuit_empleador = $11,
+        cargo_funcion_empleador = $12,
+        sector_empleador = $13,
+        codigo_postal_empleador = $14,
+        localidad_empleador = $15,
+        provincia_empleador = $16,
+        telefono_empleador = $17,
+        rubro_empleador = $18
+    WHERE id = $6
+`;
       await client.query(actualizarSolicitudQuery, [
         solicitudFormal.getFechaSolicitud(),
         solicitudFormal.getRecibo(),
@@ -508,12 +508,11 @@ export class SolicitudFormalRepositoryAdapter
         solicitudFormal.getCuitEmpleador(),
         solicitudFormal.getCargoEmpleador(),
         solicitudFormal.getSectorEmpleador(),
-        solicitudFormal.getRubroEmpleador(),
         solicitudFormal.getCodigoPostalEmpleador(),
         solicitudFormal.getLocalidadEmpleador(),
         solicitudFormal.getProvinciaEmpleador(),
         solicitudFormal.getTelefonoEmpleador(),
-        solicitudFormal.getRubroEmpleador()
+        solicitudFormal.getRubroEmpleador(),
       ]);
 
       // Eliminar referentes existentes
@@ -979,7 +978,7 @@ export class SolicitudFormalRepositoryAdapter
           telefonoEmpleador: row.telefono_empleador,
           // Asignar valores por defecto para propiedades faltantes
           solicitaAmpliacionDeCredito: false, // Valor por defecto
-          rubroEmpleador: row.rubro_empleador || ""
+          rubroEmpleador: row.rubro_empleador || "",
         })
       );
     }
@@ -1420,22 +1419,22 @@ export class SolicitudFormalRepositoryAdapter
       );
 
       // Obtener archivos adjuntos para cada solicitud
-        const archivosQuery = `
+      const archivosQuery = `
             SELECT id, nombre, tipo, contenido, fecha_creacion
             FROM archivos_adjuntos
             WHERE solicitud_formal_id = $1
         `;
-        const archivosResult = await pool.query(archivosQuery, [row.id]);
-        const archivos = archivosResult.rows.map(
-            (archivoRow) =>
-                new ArchivoAdjunto(
-                    archivoRow.id,
-                    archivoRow.nombre,
-                    archivoRow.tipo,
-                    archivoRow.contenido,
-                    archivoRow.fecha_creacion
-                )
-        );
+      const archivosResult = await pool.query(archivosQuery, [row.id]);
+      const archivos = archivosResult.rows.map(
+        (archivoRow) =>
+          new ArchivoAdjunto(
+            archivoRow.id,
+            archivoRow.nombre,
+            archivoRow.tipo,
+            archivoRow.contenido,
+            archivoRow.fecha_creacion
+          )
+      );
 
       solicitudes.push(
         new SolicitudFormal({
@@ -1483,7 +1482,7 @@ export class SolicitudFormalRepositoryAdapter
             row.nuevo_limite_completo_solicitado !== null
               ? Number(row.nuevo_limite_completo_solicitado)
               : null,
-          archivosAdjuntos: archivos
+          archivosAdjuntos: archivos,
         })
       );
     }

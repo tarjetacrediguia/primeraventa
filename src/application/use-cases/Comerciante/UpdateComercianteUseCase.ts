@@ -8,26 +8,31 @@
  *
  * RESPONSABILIDADES:
  * - Verificar la existencia del comerciante
- * - Actualizar los datos permitidos del comerciante
- * - Validar el formato del CUIL
+ * - Actualizar los datos personales del comerciante
+ * - No permite actualizar datos del comercio (se hace en ComercioUseCase)
  */
 
 import { Comerciante } from "../../../domain/entities/Comerciante";
 import { ComercianteRepositoryPort } from "../../ports/ComercianteRepositoryPort";
+import { ComercioRepositoryPort } from "../../ports/ComercioRepositoryPort";
 
 /**
  * Caso de uso para actualizar los datos de un comerciante.
  *
- * Esta clase permite modificar los datos personales y comerciales de un comerciante
- * previamente registrado, exceptuando la contraseña y el email.
+ * Esta clase permite modificar los datos personales de un comerciante
+ * previamente registrado, exceptuando la contraseña, email y datos del comercio.
  */
 export class UpdateComercianteUseCase {
     /**
      * Constructor del caso de uso.
      *
      * @param repository - Puerto de acceso al repositorio de comerciantes
+     * @param comercioRepository - Puerto de acceso al repositorio de comercios
      */
-    constructor(private readonly repository: ComercianteRepositoryPort) {}
+    constructor(
+        private readonly repository: ComercianteRepositoryPort,
+        private readonly comercioRepository: ComercioRepositoryPort
+    ) {}
 
     /**
      * Ejecuta la actualización de un comerciante existente.
@@ -36,52 +41,69 @@ export class UpdateComercianteUseCase {
      * @param nombre - Nuevo nombre (opcional)
      * @param apellido - Nuevo apellido (opcional)
      * @param telefono - Nuevo teléfono (opcional)
-     * @param nombreComercio - Nuevo nombre de comercio (opcional)
-     * @param cuil - Nuevo CUIL (opcional)
-     * @param direccionComercio - Nueva dirección de comercio (opcional)
+     * @param numeroComercio - Nuevo número de comercio (opcional - para cambiar de comercio)
      * @returns Promise<Comerciante> - Comerciante actualizado
-     * @throws Error si el comerciante no existe
+     * @throws Error si el comerciante no existe o si el comercio no existe
      */
     async execute(
         id: number,
-        nombre: string,
-        apellido: string,
-        telefono: string,
-        nombreComercio: string,
-        cuil: string,
-        direccionComercio: string
+        nombre?: string,
+        apellido?: string,
+        telefono?: string,
+        numeroComercio?: string
     ): Promise<Comerciante> {
-        // Verificar existencia
-        const existe = await this.repository.getComercianteById(id);
-        if (!existe) {
+        // Verificar existencia del comerciante
+        const comercianteExistente = await this.repository.getComercianteById(id);
+        if (!comercianteExistente) {
             throw new Error("Comerciante no encontrado");
         }
 
-        // Crear objeto con datos actualizados
-        const comercianteActualizado = new Comerciante({
-            id: id,
-            nombre: nombre || existe.getNombre(),
-            apellido: apellido || existe.getApellido(),
-            email: existe.getEmail(),
-            password: existe.getPassword(), // No permitimos actualizar la contraseña aquí
-            telefono: telefono || existe.getTelefono(),
-            nombreComercio: nombreComercio || existe.getNombreComercio(),
-            cuil: cuil || existe.getCuil(),
-            direccionComercio: direccionComercio || existe.getDireccionComercio(),
-            permisos: existe.getPermisos()
-        });
+        let comercio = comercianteExistente.getComercio();
 
-        return this.repository.updateComerciante(comercianteActualizado);
+        // Si se proporciona un nuevo número de comercio, verificar que existe
+        if (numeroComercio && numeroComercio !== comercio.getNumeroComercio()) {
+            const nuevoComercio = await this.comercioRepository.getComercioByNumero(numeroComercio);
+            if (!nuevoComercio) {
+                throw new Error("Comercio no encontrado");
+            }
+            comercio = nuevoComercio;
+        }
+
+        // Actualizar solo los campos proporcionados
+        if (nombre) comercianteExistente.setNombre(nombre);
+        if (apellido) comercianteExistente.setApellido(apellido);
+        if (telefono) comercianteExistente.setTelefono(telefono);
+        
+        // Actualizar comercio si cambió
+        if (numeroComercio && numeroComercio !== comercianteExistente.getComercio().getNumeroComercio()) {
+            comercianteExistente.setComercio(comercio);
+        }
+
+        return this.repository.updateComerciante(comercianteExistente);
     }
 
     /**
-     * Valida el formato del CUIL.
+     * Ejecuta la actualización de un comerciante existente (método alternativo con objeto)
      *
-     * @param cuil - CUIL a validar
-     * @returns boolean - true si el formato es válido, false en caso contrario
+     * @param id - Identificador del comerciante
+     * @param updates - Objeto con los campos a actualizar
+     * @returns Promise<Comerciante> - Comerciante actualizado
      */
-    private validarCUIL(cuil: string): boolean {
-        // Implementación básica de validación de CUIL
-        return /^\d{2}-\d{8}-\d{1}$/.test(cuil);
+    async executeWithObject(
+        id: number,
+        updates: {
+            nombre?: string;
+            apellido?: string;
+            telefono?: string;
+            numeroComercio?: string;
+        }
+    ): Promise<Comerciante> {
+        return this.execute(
+            id,
+            updates.nombre,
+            updates.apellido,
+            updates.telefono,
+            updates.numeroComercio
+        );
     }
 }

@@ -15,6 +15,7 @@ import { Analista } from "../../../domain/entities/Analista";
 import { pool } from "../../config/Database/DatabaseDonfig";
 import { Comerciante } from "../../../domain/entities/Comerciante";
 import { Permiso } from "../../../domain/entities/Permiso";
+import { Comercio } from "../../../domain/entities/Comercio";
 
 export class PermisoRepositoryAdapter implements PermisoRepositoryPort {
     /**
@@ -292,18 +293,24 @@ export class PermisoRepositoryAdapter implements PermisoRepositoryPort {
                 });
                 
             case 'comerciante':
-                return new Comerciante({
-                    id: baseUsuario.id,
-                    nombre: baseUsuario.nombre,
-                    apellido: baseUsuario.apellido,
-                    email: baseUsuario.email,
-                    password: '', // Password no disponible
-                    telefono: baseUsuario.telefono,
-                    cuil: row.cuil,
-                    nombreComercio: row.nombre_comercio,
-                    direccionComercio: row.direccion_comercio,
-                    permisos: baseUsuario.permisos
-                });
+                // Crear instancia de Comercio con los datos disponibles
+    const comercio = new Comercio({
+        numeroComercio: row.numero_comercio || '',
+        nombreComercio: row.nombre_comercio || '',
+        cuil: row.cuil || '',
+        direccionComercio: row.direccion_comercio || ''
+    });
+    
+    return new Comerciante({
+        id: row.id,
+        nombre: row.nombre,
+        apellido: row.apellido,
+        email: row.email,
+        password: '', // Password no disponible
+        telefono: row.telefono,
+        comercio: comercio,
+        permisos: baseUsuario.permisos
+    });
                 
             default:
                 throw new Error(`Rol desconocido: ${row.rol}`);

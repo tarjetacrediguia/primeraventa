@@ -1346,7 +1346,6 @@ export const crearYAprobarSolicitudFormal = async (
       archivosAdjuntos,
     } = req.body;
     // Validar que el recibo sea proporcionado
-
     if (!cliente.recibo) {
       return res.status(400).json({ error: "El recibo es obligatorio" });
     }
@@ -1500,8 +1499,10 @@ export const crearYAprobarSolicitudFormal = async (
       ) {
         res.status(409).json({ error: error.message });
       } else if (error.message.includes("Cada referente debe tener")) {
+        console.log("Error de referente:", error.message);
         res.status(400).json({ error: error.message });
       } else {
+        console.log("Error al crear y aprobar solicitud formal:", error.message);
         res.status(400).json({ error: error.message });
       }
     } else {

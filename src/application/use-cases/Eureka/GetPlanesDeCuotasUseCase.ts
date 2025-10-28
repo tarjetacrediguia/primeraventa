@@ -1,13 +1,9 @@
-//src/application/use-cases/Eureka/GetPlanesDeCuotasUseCase.ts
-
+// src/application/use-cases/Comercio/GetPlanesDeCuotasUseCase.ts
 import { EurekaPort, PlanesDeCuotasResponse } from "../../ports/EurekaPort";
 
 export interface GetPlanesDeCuotasParams {
-  // Definir parámetros según lo que necesite el endpoint
-  cuil?: string;
-  monto?: number;
-  plazo?: number;
-  // agregar más parámetros según sea necesario
+  nroComercio: string;
+  importe: number;
 }
 
 export class GetPlanesDeCuotasUseCase {
@@ -15,7 +11,17 @@ export class GetPlanesDeCuotasUseCase {
 
   async execute(params: GetPlanesDeCuotasParams): Promise<PlanesDeCuotasResponse> {
     try {
-      const planes = await this.eurekaAdapter.getPlanesDeCuotas(params);
+      const { nroComercio, importe } = params;
+
+      if (!nroComercio || !importe) {
+        throw new Error("El número de comercio y el importe son obligatorios");
+      }
+
+      if (importe <= 0) {
+        throw new Error("El importe debe ser mayor a 0");
+      }
+
+      const planes = await this.eurekaAdapter.getPlanesDeCuotas({ nroComercio, importe });
       return planes;
     } catch (error) {
       console.error("Error en GetPlanesDeCuotasUseCase:", error);

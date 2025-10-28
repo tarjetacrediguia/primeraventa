@@ -778,36 +778,36 @@ private mapearEstadoEureka(estadoEureka: string): "aprobado" | "rechazado" | "pe
     const cuil = variables.find((v) => v.Nombre === "VI_Identificacion")?.Valor;
 
     // ✅ VERIFICACIÓN EN EUREKA (SGCG)
-
     let eurekaMensajeComerciante: string | undefined;
     let eurekaMensajeAnalista: string | undefined;
     let detallesEureka: any;
+    let estadoEureka: "aprobado" | "rechazado" | "pendiente" = "pendiente";
+
     if (cuil) {
-      const verificacionEureka = await this.verificarSituacionEureka(cuil);
+        const verificacionEureka = await this.verificarSituacionEureka(cuil);
+        estadoEureka = verificacionEureka.estado;
+        eurekaMensajeComerciante = verificacionEureka.mensajeComerciante;
+        eurekaMensajeAnalista = verificacionEureka.mensajeAnalista;
+        detallesEureka = verificacionEureka.detallesEureka;
 
-      // Guardar mensajes diferenciados para el resultado
-      eurekaMensajeComerciante = verificacionEureka.mensajeComerciante;
-      eurekaMensajeAnalista = verificacionEureka.mensajeAnalista;
-      detallesEureka = verificacionEureka.detallesEureka;
-
-      // Usar el mensaje del comerciante para la lógica de decisión
-      switch (verificacionEureka.estado) {
-        case "aprobado":
-          aprobados.push(verificacionEureka.mensajeComerciante);
-          break;
-        case "pendiente":
-          pendientes.push(verificacionEureka.mensajeComerciante);
-          break;
-        case "rechazado":
-          reglasFallidas.push(verificacionEureka.mensajeComerciante);
-          break;
-      }
+        // Solo agregar a las listas si NO es aprobado
+        if (estadoEureka !== "aprobado") {
+            switch (estadoEureka) {
+                case "pendiente":
+                    pendientes.push(verificacionEureka.mensajeComerciante);
+                    break;
+                case "rechazado":
+                    reglasFallidas.push(verificacionEureka.mensajeComerciante);
+                    break;
+            }
+        } else {
+            aprobados.push(verificacionEureka.mensajeComerciante);
+        }
     } else {
-      const mensaje =
-        "No se pudo obtener CUIL para verificación en sistema anterior";
-      pendientes.push(mensaje);
-      eurekaMensajeComerciante = mensaje;
-      eurekaMensajeAnalista = mensaje;
+        const mensaje = "No se pudo obtener CUIL para verificación en sistema anterior";
+        pendientes.push(mensaje);
+        eurekaMensajeComerciante = mensaje;
+        eurekaMensajeAnalista = mensaje;
     }
 
     // Extraer datos personales (siempre se hace)
@@ -816,250 +816,299 @@ private mapearEstadoEureka(estadoEureka: string): "aprobado" | "rechazado" | "pe
     // ✅ VERIFICACIÓN DE EDAD
     const verificacionEdad = this.verificarEdad(variables);
     if (!verificacionEdad.cumple) {
-      reglasFallidas.push(verificacionEdad.mensaje!);
-      motivoComerciante = `Solicitud rechazada: ${verificacionEdad.mensaje}`;
+        reglasFallidas.push(verificacionEdad.mensaje!);
     } else {
-      aprobados.push(`Edad válida (${verificacionEdad.edad} años)`);
+        aprobados.push(`Edad válida (${verificacionEdad.edad} años)`);
     }
 
     // ✅ VERIFICACIÓN DE EMPLEADO DOMÉSTICO
-    const verificacionEmpleadoDomestico =
-      this.verificarEmpleadoDomesticoSinDeudas(variables);
+    const verificacionEmpleadoDomestico = this.verificarEmpleadoDomesticoSinDeudas(variables);
     if (verificacionEmpleadoDomestico.esEmpleadoDomestico) {
-      if (verificacionEmpleadoDomestico.estado === "aprobado") {
-        aprobados.push(verificacionEmpleadoDomestico.mensaje);
-      } else {
-        reglasFallidas.push(verificacionEmpleadoDomestico.mensaje);
-      }
+        if (verificacionEmpleadoDomestico.estado === "aprobado") {
+            aprobados.push(verificacionEmpleadoDomestico.mensaje);
+        } else {
+            reglasFallidas.push(verificacionEmpleadoDomestico.mensaje);
+        }
     }
 
     // ✅ VERIFICACIÓN DE RUBROS CONSTRUCCIÓN/CONTRATACIÓN
-    const verificacionRubrosConstruccion =
-      this.verificarRubrosConstruccionContratacion(variables);
+    const verificacionRubrosConstruccion = this.verificarRubrosConstruccionContratacion(variables);
     if (verificacionRubrosConstruccion.esRubroConstruccionContratacion) {
-      if (verificacionRubrosConstruccion.estado === "aprobado") {
-        aprobados.push(verificacionRubrosConstruccion.mensaje);
-      } else {
-        reglasFallidas.push(verificacionRubrosConstruccion.mensaje);
-      }
+        if (verificacionRubrosConstruccion.estado === "aprobado") {
+            aprobados.push(verificacionRubrosConstruccion.mensaje);
+        } else {
+            reglasFallidas.push(verificacionRubrosConstruccion.mensaje);
+        }
     }
 
     // ✅ VERIFICACIÓN DE JUBILADOS/PENSIONADOS
-    const esJubilado =
-      variables.find((v) => v.Nombre === "VI_Jubilado_Es")?.Valor === "Si";
-    const esPensionado =
-      variables.find((v) => v.Nombre === "VI_Pensionado_Es")?.Valor === "Si";
+    const esJubilado = variables.find((v) => v.Nombre === "VI_Jubilado_Es")?.Valor === "Si";
+    const esPensionado = variables.find((v) => v.Nombre === "VI_Pensionado_Es")?.Valor === "Si";
 
     if (esPensionado) {
-      reglasFallidas.push("Cliente es pensionado - no permitido");
-      if (!motivoComerciante) {
-        motivoComerciante = "Solicitud rechazada: no se admiten pensionados";
-      }
+        reglasFallidas.push("Cliente es pensionado - no permitido");
     } else if (esJubilado) {
-      pendientes.push(
-        "Cliente es jubilado - pendiente de verificación de número de beneficio"
-      );
-      if (!motivoComerciante) {
-        motivoComerciante =
-          "Solicitud en revisión: cliente jubilado requiere verificación de beneficio";
-      }
+        pendientes.push("Cliente es jubilado - pendiente de verificación de número de beneficio");
     }
 
     // ✅ EVALUAR REGLAS ESTÁNDAR
     for (const regla of this.rules) {
-      const variable = variables.find((v) => v.Nombre === regla.variable);
-      if (!this.evaluarRegla(variable, regla)) {
-        reglasFallidas.push(regla.mensaje);
-      }
+        const variable = variables.find((v) => v.Nombre === regla.variable);
+        if (!this.evaluarRegla(variable, regla)) {
+            reglasFallidas.push(regla.mensaje);
+        }
     }
 
     // ✅ VERIFICACIÓN DE APORTES
     const totalAportes = this.calcularTotalAportes(variables);
     if (totalAportes >= this.MINIMO_APORTES) {
-      aprobados.push(
-        `Cumple con el mínimo de aportes requerido (${totalAportes} aportes)`
-      );
+        aprobados.push(`Cumple con el mínimo de aportes requerido (${totalAportes} aportes)`);
     } else {
-      reglasFallidas.push(
-        `Cliente no cumple con el mínimo de aportes registrados en los últimos 12 meses (${totalAportes} de ${this.MINIMO_APORTES} requeridos)`
-      );
-      if (!motivoComerciante) {
-        motivoComerciante =
-          "Solicitud rechazada: no cumple con el mínimo de aportes requerido";
-      }
+        reglasFallidas.push(`Cliente no cumple con el mínimo de aportes registrados en los últimos 12 meses (${totalAportes} de ${this.MINIMO_APORTES} requeridos)`);
     }
 
     // ✅ VERIFICACIÓN DE ENTIDADES EN SITUACIÓN 2
     const resultadoSituacion2 = this.verificarEntidadesSituacion2(variables);
     if (resultadoSituacion2.estado === "rechazado") {
-      reglasFallidas.push(resultadoSituacion2.mensaje!);
+        reglasFallidas.push(resultadoSituacion2.mensaje!);
     } else if (resultadoSituacion2.estado === "pendiente") {
-      pendientes.push(resultadoSituacion2.mensaje!);
+        pendientes.push(resultadoSituacion2.mensaje!);
     } else {
-      aprobados.push("No tiene entidades en situación 2");
+        aprobados.push("No tiene entidades en situación 2");
     }
 
     // ✅ VERIFICACIÓN DE DEUDAS EN ENTIDADES
     const tieneDeudaEntidades = this.verificarDeudaEntidades(variables);
     if (tieneDeudaEntidades.estado === "rechazado") {
-      reglasFallidas.push(tieneDeudaEntidades.mensaje!);
+        reglasFallidas.push(tieneDeudaEntidades.mensaje!);
     } else if (tieneDeudaEntidades.estado === "pendiente") {
-      pendientes.push(tieneDeudaEntidades.mensaje!);
+        pendientes.push(tieneDeudaEntidades.mensaje!);
     } else {
-      aprobados.push("No tiene deudas en entidades con situación 3-4-5");
+        aprobados.push("No tiene deudas en entidades con situación 3-4-5");
     }
 
     // ✅ VERIFICACIÓN DE REFERENCIAS COMERCIALES
-    const resultadoReferencias =
-      this.verificarReferenciasComerciales(variables);
+    const resultadoReferencias = this.verificarReferenciasComerciales(variables);
     if (resultadoReferencias.estado === "rechazado") {
-      reglasFallidas.push(resultadoReferencias.mensaje!);
+        reglasFallidas.push(resultadoReferencias.mensaje!);
     } else if (resultadoReferencias.estado === "pendiente") {
-      pendientes.push(resultadoReferencias.mensaje!);
+        pendientes.push(resultadoReferencias.mensaje!);
     } else {
-      aprobados.push("Cumple con criterios de referencias comerciales");
+        aprobados.push("Cumple con criterios de referencias comerciales");
     }
 
     // ✅ VERIFICACIÓN DE COMBINACIÓN REFERENCIAS + DEUDAS
-    const combinacionReferenciasDeudas =
-      this.verificarCombinacionReferenciasDeudas(
+    const combinacionReferenciasDeudas = this.verificarCombinacionReferenciasDeudas(
         resultadoReferencias,
         tieneDeudaEntidades
-      );
+    );
     if (combinacionReferenciasDeudas.estado === "rechazado") {
-      reglasFallidas.push(combinacionReferenciasDeudas.mensaje!);
+        reglasFallidas.push(combinacionReferenciasDeudas.mensaje!);
     } else if (combinacionReferenciasDeudas.estado === "pendiente") {
-      pendientes.push(combinacionReferenciasDeudas.mensaje!);
+        pendientes.push(combinacionReferenciasDeudas.mensaje!);
     }
 
     // ✅ VERIFICACIÓN DE SITUACIÓN LABORAL Y MONOTRIBUTO
-    const esMonotributista =
-      variables.find((v) => v.Nombre === "VI_Inscrip_Monotributo_Es")?.Valor ===
-      "Si";
+    const esMonotributista = variables.find((v) => v.Nombre === "VI_Inscrip_Monotributo_Es")?.Valor === "Si";
     const cambioLaboral = this.verificarPerdidaEmpleoReciente(variables);
 
     if (cambioLaboral.perdioEmpleo) {
-      reglasFallidas.push(cambioLaboral.motivo);
-      if (!motivoComerciante) {
-        motivoComerciante = "Solicitud rechazada: situación laboral inestable";
-      }
+        reglasFallidas.push(cambioLaboral.motivo);
     } else if (esMonotributista) {
-      const tieneEmpleoRegistrado = this.tieneEmpleoRegistrado(variables);
-      if (tieneEmpleoRegistrado) {
-        const tieneAportesRecientes = this.tieneAportesRecientes(variables);
-        if (tieneAportesRecientes) {
-          aprobados.push(
-            "Monotributista con empleo registrado y aportes recientes validados"
-          );
+        const tieneEmpleoRegistrado = this.tieneEmpleoRegistrado(variables);
+        if (tieneEmpleoRegistrado) {
+            const tieneAportesRecientes = this.tieneAportesRecientes(variables);
+            if (tieneAportesRecientes) {
+                aprobados.push("Monotributista con empleo registrado y aportes recientes validados");
+            } else {
+                reglasFallidas.push("Monotributista con empleo pero sin aportes recientes suficientes");
+            }
         } else {
-          reglasFallidas.push(
-            "Monotributista con empleo pero sin aportes recientes suficientes"
-          );
-          if (!motivoComerciante) {
-            motivoComerciante =
-              "Solicitud rechazada: empleo sin aportes recientes";
-          }
+            reglasFallidas.push("Cliente es monotributista sin empleo registrado");
         }
-      } else {
-        reglasFallidas.push("Cliente es monotributista sin empleo registrado");
-        if (!motivoComerciante) {
-          motivoComerciante =
-            "Solicitud rechazada: monotributista sin empleo registrado";
-        }
-      }
     } else if (!cambioLaboral.perdioEmpleo) {
-      const tieneLaboral = this.verificarSituacionLaboral(variables);
-      if (tieneLaboral) {
-        aprobados.push("Situación laboral validada");
-      } else {
-        reglasFallidas.push("Cliente no tiene situación laboral registrada");
-      }
+        const tieneLaboral = this.verificarSituacionLaboral(variables);
+        if (tieneLaboral) {
+            aprobados.push("Situación laboral validada");
+        } else {
+            reglasFallidas.push("Cliente no tiene situación laboral registrada");
+        }
     }
 
     // ✅ VERIFICACIÓN DE TARJETAS CREDIGUÍA
     if (this.tieneTarjetaCrediguia(variables)) {
-      reglasFallidas.push("Cliente tiene tarjeta Crediguía activa");
+        reglasFallidas.push("Cliente tiene tarjeta Crediguía activa");
     } else {
-      aprobados.push("No tiene tarjetas Crediguía activas");
+        aprobados.push("No tiene tarjetas Crediguía activas");
     }
 
-    // ===== DETERMINAR ESTADO FINAL =====
-
-    const eurekaRechazo = reglasFallidas.some((m) =>
-      m.includes("Situación en Eureka: RECHAZADO")
-    );
-    const eurekaPendiente = pendientes.some((m) =>
-      m.includes("Situación en Eureka: PENDIENTE")
-    );
+    // ===== DETERMINAR ESTADO FINAL CON PRIORIDAD CORRECTA =====
 
     let status: "aprobado" | "rechazado" | "pendiente" = "aprobado";
-    /*
-    const tieneAprobacionInmediata = aprobados.some(aprobado => 
-        aprobado.includes("APROBADO - Empleado doméstico") || 
-        aprobado.includes("APROBADO - Trabaja en rubro de construcción")
-    );
 
-    if (tieneAprobacionInmediata && reglasFallidas.length === 0) {
-        status = "aprobado";
-        if (!motivoComerciante) {
-            motivoComerciante = "Solicitud aprobada - cumple con criterios de aprobación inmediata";
+    // 🔥 NUEVA LÓGICA: Priorizar rechazos sobre aprobaciones
+    // Si hay REGLAS FALLIDAS (rechazos), el estado es RECHAZADO independientemente de Eureka
+    if (reglasFallidas.length > 0) {
+        status = "rechazado";
+        // Construir motivo principal con los rechazos más importantes
+        motivoComerciante = this.construirMotivoPrincipalComerciante(reglasFallidas);
+    } 
+    // Si hay PENDIENTES pero NO rechazos, el estado es PENDIENTE
+    else if (pendientes.length > 0) {
+        status = "pendiente";
+        motivoComerciante = this.construirMotivoPendienteComerciante(pendientes);
+    }
+    // Solo si NO hay rechazos NI pendientes, verificar Eureka
+    else {
+        // Si Eureka rechaza, priorizar ese rechazo
+        if (estadoEureka === "rechazado") {
+            status = "rechazado";
+            motivoComerciante = eurekaMensajeComerciante || "Solicitud rechazada por sistema anterior";
+        } 
+        // Si Eureka está pendiente
+        else if (estadoEureka === "pendiente") {
+            status = "pendiente";
+            motivoComerciante = eurekaMensajeComerciante || "Solicitud en revisión por sistema anterior";
         }
-    } else
-    */
-
-    // Verificar si hay aprobaciones inmediatas (empleados domésticos o construcción)
-    if (eurekaRechazo || reglasFallidas.length > 0) {
-      status = "rechazado";
-      if (!motivoComerciante) {
-        motivoComerciante =
-          "Solicitud rechazada: no cumple con los requisitos establecidos";
-      }
-    } else if (eurekaPendiente || pendientes.length > 0) {
-      status = "pendiente";
-      if (!motivoComerciante) {
-        motivoComerciante =
-          "Solicitud en revisión: requiere verificación adicional";
-      }
-    } else {
-      status = "aprobado";
-      if (!motivoComerciante) {
-        motivoComerciante = "Solicitud aprobada";
-      }
+        // Solo si todo está bien (incluyendo Eureka), aprobar
+        else {
+            status = "aprobado";
+            motivoComerciante = "Solicitud aprobada";
+        }
     }
 
     const approved = status === "aprobado";
 
     // ===== CONSTRUIR MENSAJE DETALLADO UNIFICADO =====
     const motivo = this.construirMensajeDetallado(
-      status,
-      aprobados,
-      reglasFallidas,
-      pendientes
+        status,
+        aprobados,
+        reglasFallidas,
+        pendientes
     );
 
     return {
-      status,
-      approved,
-      score,
-      motivo,
-      motivoComerciante,
-      reglasFallidas,
-      pendientes,
-      aprobados,
-      personalData,
-      entidadesSituacion2: resultadoSituacion2.entidades || [],
-      entidadesDeuda: tieneDeudaEntidades.entidades || [],
-      referenciasComerciales: {
-        referenciasValidas: resultadoReferencias.referenciasValidas,
-        referenciasInvalidas: resultadoReferencias.referenciasInvalidas,
-        totalValidas: resultadoReferencias.totalValidas,
-        totalInvalidas: resultadoReferencias.totalInvalidas,
-      },
-      eurekaMensajeComerciante,
-      eurekaMensajeAnalista,
-      detallesEureka,
+        status,
+        approved,
+        score,
+        motivo,
+        motivoComerciante,
+        reglasFallidas,
+        pendientes,
+        aprobados,
+        personalData,
+        entidadesSituacion2: resultadoSituacion2.entidades || [],
+        entidadesDeuda: tieneDeudaEntidades.entidades || [],
+        referenciasComerciales: {
+            referenciasValidas: resultadoReferencias.referenciasValidas,
+            referenciasInvalidas: resultadoReferencias.referenciasInvalidas,
+            totalValidas: resultadoReferencias.totalValidas,
+            totalInvalidas: resultadoReferencias.totalInvalidas,
+        },
+        eurekaMensajeComerciante,
+        eurekaMensajeAnalista,
+        detallesEureka,
     };
-  }
+}
+
+  /**
+ * Construye el motivo principal para el comerciante basado en los rechazos más importantes
+ */
+private construirMotivoPrincipalComerciante(reglasFallidas: string[]): string {
+    // Priorizar los motivos de rechazo más importantes
+    const motivosPrioritarios = [];
+
+    // 1. Deudas y situación 2 (más críticos)
+    const deudasSituacion2 = reglasFallidas.filter(motivo => 
+        motivo.includes('entidades en situación 2') || 
+        motivo.includes('entidades con deuda')
+    );
+    
+    // 2. Aportes insuficientes
+    const aportesInsuficientes = reglasFallidas.filter(motivo => 
+        motivo.includes('aporte')
+    );
+    
+    // 3. Situación laboral
+    const situacionLaboral = reglasFallidas.filter(motivo => 
+        motivo.includes('monotributista') || 
+        motivo.includes('situación laboral') ||
+        motivo.includes('empleo')
+    );
+    
+    // 4. Referencias comerciales
+    const referencias = reglasFallidas.filter(motivo => 
+        motivo.includes('referencias comerciales')
+    );
+    
+    // 5. Otros motivos
+    const otros = reglasFallidas.filter(motivo => 
+        !deudasSituacion2.includes(motivo) &&
+        !aportesInsuficientes.includes(motivo) &&
+        !situacionLaboral.includes(motivo) &&
+        !referencias.includes(motivo)
+    );
+
+    // Tomar los motivos más relevantes (máximo 2 para no saturar)
+    if (deudasSituacion2.length > 0) {
+        motivosPrioritarios.push(...deudasSituacion2.slice(0, 1));
+    }
+    if (aportesInsuficientes.length > 0 && motivosPrioritarios.length < 2) {
+        motivosPrioritarios.push(...aportesInsuficientes.slice(0, 1));
+    }
+    if (situacionLaboral.length > 0 && motivosPrioritarios.length < 2) {
+        motivosPrioritarios.push(...situacionLaboral.slice(0, 1));
+    }
+
+    // Si no hay motivos prioritarios, tomar los primeros 2
+    if (motivosPrioritarios.length === 0 && reglasFallidas.length > 0) {
+        motivosPrioritarios.push(...reglasFallidas.slice(0, 2));
+    }
+
+    // Simplificar los mensajes para el comerciante
+    const motivosSimplificados = motivosPrioritarios.map(motivo => {
+        if (motivo.includes('entidades en situación 2')) {
+            const match = motivo.match(/(\d+) entidades/);
+            return match ? `tiene ${match[1]} entidades en situación 2` : 'tiene entidades en situación 2';
+        }
+        if (motivo.includes('entidades con deuda')) {
+            const match = motivo.match(/(\d+) entidades/);
+            return match ? `tiene deuda con ${match[1]} entidades` : 'tiene deudas con entidades';
+        }
+        if (motivo.includes('aporte')) {
+            return 'no cumple con el mínimo de aportes requerido';
+        }
+        if (motivo.includes('monotributista')) {
+            return 'es monotributista sin empleo registrado';
+        }
+        if (motivo.includes('referencias comerciales')) {
+            return 'no cumple con criterios de referencias comerciales';
+        }
+        return motivo.split(':')[0] || motivo;
+    });
+
+    return `Solicitud rechazada: ${motivosSimplificados.join(', ')}`;
+}
+
+/**
+ * Construye el motivo para pendientes
+ */
+private construirMotivoPendienteComerciante(pendientes: string[]): string {
+    const motivosPrincipales = pendientes.slice(0, 2).map(pendiente => {
+        if (pendiente.includes('entidades en situación 2')) {
+            return 'tiene 1 entidad en situación 2';
+        }
+        if (pendiente.includes('entidades con deuda')) {
+            return 'tiene deuda con algunas entidades';
+        }
+        if (pendiente.includes('referencias comerciales')) {
+            return 'tiene referencias comerciales a validar';
+        }
+        return pendiente.toLowerCase();
+    });
+
+    return `Solicitud en revisión: ${motivosPrincipales.join(', ')}`;
+}
 
   /**
    * Construye el mensaje detallado unificado para todas las situaciones

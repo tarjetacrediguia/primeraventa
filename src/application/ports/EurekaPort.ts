@@ -1,5 +1,4 @@
-//src/application/ports/EurekaPort.ts
-
+// src/application/ports/EurekaPort.ts
 export interface SituacionPersonaResponse {
   Apellidos: string | null;
   CUILT: string | null;
@@ -17,13 +16,50 @@ export interface SituacionPersonaResponse {
   Situacion: "OK" | "OPERADOR" | "RECHAZAR";
 }
 
+export interface PlanCuota {
+  Aprobado: boolean;
+  Cuotas: number;
+  Descuento: number;
+  DescuentoProrrateado: boolean;
+  Estado: string;
+  FH: string;
+  Fecha: string;
+  IdComercio: number;
+  IdOrigen: number;
+  IdSucursal: number;
+  Importe: number;
+  ImporteFinanciadoCDesc: number;
+  MV: string;
+  MontoXCuotaCDesc: number;
+  MotivoRechazo: string;
+  NombreFantasia: string;
+  NroComercio: number;
+  NroDocumento: number;
+  NroSucursal: number;
+  Numero: number;
+  Origen: string;
+  PV: boolean;
+  RazonSocial: string;
+}
+
+export interface SucursalInfo {
+  CasaMatriz: boolean;
+  NombreFantasia: string;
+  NumeroSucursal: number;
+  SucursalOKParaOperar: boolean;
+  SucursalOKParaOperar_Mensaje: string;
+  idComercio: number;
+  idSucursal: number;
+}
+
 export interface PlanesDeCuotasResponse {
-  // Definir según la estructura de respuesta del endpoint de planes
-  // Por ahora lo dejamos genérico hasta tener más información
-  [key: string]: any;
+  Autorizaciones: PlanCuota[];
+  Autorizado: boolean;
+  Extra: any | null;
+  SucursalInfo: SucursalInfo;
 }
 
 export interface EurekaPort {
   getSituacionPersona(cuil: string): Promise<SituacionPersonaResponse>;
-  getPlanesDeCuotas(params: any): Promise<PlanesDeCuotasResponse>;
+  getPlanesDeCuotas(params: { nroComercio: string; importe: number }): Promise<PlanesDeCuotasResponse>;
 }

@@ -28,6 +28,7 @@ import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import { pool } from "../../config/Database/DatabaseDonfig";
 import { QueryResult } from 'pg';
+import { Comercio } from "../../../domain/entities/Comercio";
 
 const JWT_SECRET: jwt.Secret = process.env.JWT_SECRET || 'kjhskdf65454sdfkhvxtu_clave_secreta_muy_segura';
 const JWT_EXPIRES_IN: string = process.env.JWT_EXPIRES_IN || '1h';
@@ -146,13 +147,23 @@ export class AuthAdapter implements AuthPort {
             case 'comerciante':
                 // Obtener datos adicionales del comerciante
                 const comercianteResult = await pool.query(
-                    'SELECT * FROM comerciantes WHERE usuario_id = $1',
+                    `SELECT c.numero_comercio, co.nombre_comercio, co.cuil, co.direccion_comercio
+                     FROM comerciantes c
+                     INNER JOIN comercios co ON c.numero_comercio = co.numero_comercio
+                     WHERE c.usuario_id = $1`,
                     [userRow.id]
                 );
                 if (comercianteResult.rows.length === 0) {
                     throw new Error('Datos de comerciante no encontrados');
                 }
-                const comercianteRow = comercianteResult.rows[0];
+                const comercioRow  = comercianteResult.rows[0];
+
+                const comercio = new Comercio({
+                    numeroComercio: comercioRow.numero_comercio,
+                    nombreComercio: comercioRow.nombre_comercio,
+                    cuil: comercioRow.cuil,
+                    direccionComercio: comercioRow.direccion_comercio
+                });
                 usuario = new Comerciante({
                     id: userRow.id.toString(),
                     nombre: userRow.nombre,
@@ -160,9 +171,7 @@ export class AuthAdapter implements AuthPort {
                     email: userRow.email,
                     password: userRow.password_hash,
                     telefono: userRow.telefono,
-                    nombreComercio: comercianteRow.nombre_comercio,
-                    cuil: comercianteRow.cuil,
-                    direccionComercio: comercianteRow.direccion_comercio,
+                    comercio: comercio,
                     permisos: [] // permisos vacío o ajusta según tu lógica
                 });
                 break;
