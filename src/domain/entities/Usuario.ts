@@ -80,6 +80,15 @@ export abstract class Usuario {
     return [];
   }
 
+   /**
+   * Establece una nueva contraseña para el usuario.
+   * 
+   * @param password - Nueva contraseña del usuario.
+   */
+  public setPassword(password: string): void {
+    this.password = password;
+  }
+
   /**
    * Obtiene el ID único del usuario.
    * 

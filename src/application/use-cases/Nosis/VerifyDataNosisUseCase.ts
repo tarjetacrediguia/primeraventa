@@ -5,6 +5,7 @@ import {
 import { EurekaAdapter } from "../../../infrastructure/adapters/eureka/eurekaAdapter";
 import { EntidadesService } from "../../../infrastructure/entidadesBancarias/EntidadesService";
 import { RubrosLaboralesService } from "../../../infrastructure/RubrosLaborales/RubrosLaboralesService";
+import { SituacionPersonaResponse } from "../../ports/EurekaPort";
 import { GetSituacionPersona } from "../Eureka/GetSituacionPersona";
 
 /**
@@ -763,7 +764,8 @@ private mapearEstadoEureka(estadoEureka: string): "aprobado" | "rechazado" | "pe
    * @param nosisData - Respuesta cruda del servicio Nosis
    * @returns Promise<VerificationResult> - Resultado estructurado de la verificación
    */
-  async execute(nosisData: NosisResponse): Promise<VerificationResult> {
+  async execute(  nosisData: NosisResponse,
+  situacionEureka?: SituacionPersonaResponse): Promise<VerificationResult> {
     const variables = nosisData.Contenido.Datos.Variables.Variable;
     const reglasFallidas: string[] = [];
     const pendientes: string[] = [];
@@ -777,38 +779,46 @@ private mapearEstadoEureka(estadoEureka: string): "aprobado" | "rechazado" | "pe
     // Extraer CUIL para verificación en Eureka
     const cuil = variables.find((v) => v.Nombre === "VI_Identificacion")?.Valor;
 
-    // ✅ VERIFICACIÓN EN EUREKA (SGCG)
-    let eurekaMensajeComerciante: string | undefined;
-    let eurekaMensajeAnalista: string | undefined;
-    let detallesEureka: any;
-    let estadoEureka: "aprobado" | "rechazado" | "pendiente" = "pendiente";
+  // ✅ VERIFICACIÓN EN EUREKA (SGCG)
+  let eurekaMensajeComerciante: string | undefined;
+  let eurekaMensajeAnalista: string | undefined;
+  let detallesEureka: SituacionPersonaResponse | undefined = situacionEureka;
+  let estadoEureka: "aprobado" | "rechazado" | "pendiente" = "pendiente";
 
-    if (cuil) {
-        const verificacionEureka = await this.verificarSituacionEureka(cuil);
-        estadoEureka = verificacionEureka.estado;
-        eurekaMensajeComerciante = verificacionEureka.mensajeComerciante;
-        eurekaMensajeAnalista = verificacionEureka.mensajeAnalista;
-        detallesEureka = verificacionEureka.detallesEureka;
-
-        // Solo agregar a las listas si NO es aprobado
-        if (estadoEureka !== "aprobado") {
-            switch (estadoEureka) {
-                case "pendiente":
-                    pendientes.push(verificacionEureka.mensajeComerciante);
-                    break;
-                case "rechazado":
-                    reglasFallidas.push(verificacionEureka.mensajeComerciante);
-                    break;
-            }
-        } else {
-            aprobados.push(verificacionEureka.mensajeComerciante);
-        }
+  if (situacionEureka) {
+    // Usar los datos de Eureka proporcionados
+    estadoEureka = this.mapearEstadoEureka(situacionEureka.Situacion);
+    eurekaMensajeComerciante = this.obtenerMensajeComerciantePorEstado(situacionEureka.Situacion, situacionEureka.Detalle);
+    eurekaMensajeAnalista = this.construirMensajeAnalista(situacionEureka, estadoEureka);
+    
+    // Solo agregar a las listas si NO es aprobado
+    if (estadoEureka !== "aprobado") {
+      switch (estadoEureka) {
+        case "pendiente":
+          pendientes.push(eurekaMensajeComerciante);
+          break;
+        case "rechazado":
+          reglasFallidas.push(eurekaMensajeComerciante);
+          break;
+      }
     } else {
-        const mensaje = "No se pudo obtener CUIL para verificación en sistema anterior";
-        pendientes.push(mensaje);
-        eurekaMensajeComerciante = mensaje;
-        eurekaMensajeAnalista = mensaje;
+      aprobados.push(eurekaMensajeComerciante);
     }
+
+    // ✅ Agregar información específica de Issues si existe
+    if (situacionEureka.Issues && situacionEureka.Issues.length > 0) {
+      const issuesMensajes = situacionEureka.Issues.map(issue => 
+        `${issue.Situacion}: ${issue.Detalle}${issue.InfoAdicional ? ` (${issue.InfoAdicional})` : ''}`
+      );
+      eurekaMensajeAnalista += `\n• Issues de Eureka: ${issuesMensajes.join('; ')}`;
+    }
+
+  } else {
+    const mensaje = "No se pudo obtener información del sistema anterior (Eureka)";
+    pendientes.push(mensaje);
+    eurekaMensajeComerciante = mensaje;
+    eurekaMensajeAnalista = mensaje;
+  }
 
     // Extraer datos personales (siempre se hace)
     const personalData = this.extraerDatosPersonales(variables);
@@ -987,28 +997,28 @@ private mapearEstadoEureka(estadoEureka: string): "aprobado" | "rechazado" | "pe
         pendientes
     );
 
-    return {
-        status,
-        approved,
-        score,
-        motivo,
-        motivoComerciante,
-        reglasFallidas,
-        pendientes,
-        aprobados,
-        personalData,
-        entidadesSituacion2: resultadoSituacion2.entidades || [],
-        entidadesDeuda: tieneDeudaEntidades.entidades || [],
-        referenciasComerciales: {
-            referenciasValidas: resultadoReferencias.referenciasValidas,
-            referenciasInvalidas: resultadoReferencias.referenciasInvalidas,
-            totalValidas: resultadoReferencias.totalValidas,
-            totalInvalidas: resultadoReferencias.totalInvalidas,
-        },
-        eurekaMensajeComerciante,
-        eurekaMensajeAnalista,
-        detallesEureka,
-    };
+  return {
+    status,
+    approved,
+    score,
+    motivo,
+    motivoComerciante,
+    reglasFallidas,
+    pendientes,
+    aprobados,
+    personalData,
+    entidadesSituacion2: resultadoSituacion2.entidades || [],
+    entidadesDeuda: tieneDeudaEntidades.entidades || [],
+    referenciasComerciales: {
+      referenciasValidas: resultadoReferencias.referenciasValidas,
+      referenciasInvalidas: resultadoReferencias.referenciasInvalidas,
+      totalValidas: resultadoReferencias.totalValidas,
+      totalInvalidas: resultadoReferencias.totalInvalidas,
+    },
+    eurekaMensajeComerciante,
+    eurekaMensajeAnalista,
+    detallesEureka,
+  };
 }
 
   /**

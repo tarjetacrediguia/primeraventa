@@ -226,30 +226,161 @@ export const crearSolicitudInicial = async (req: Request, res: Response) => {
 
     res.status(201).json(response);
   } catch (error) {
-    if (
-      error instanceof Error &&
-      error.message === "El cliente ya tiene un crédito activo"
-    ) {
-      res.status(409).json({ error: error.message });
-    } else if (
-      error instanceof Error &&
-      error.message.includes(
-        "El cliente ya tiene una solicitud inicial en el sistema"
-      )
-    ) {
-      // Nuevo error para cliente con solicitud de otro comercio
-      res.status(409).json({
-        error: error.message,
-        codigo: "CLIENTE_YA_REGISTRADO",
-        mensaje: "El cliente ya fue cargado por otro comercio en el sistema",
-      });
-    } else if (error instanceof Error) {
-      res.status(400).json({ error: error.message });
+    console.error("Error en crearSolicitudInicial:", error);
+    
+    // Manejar diferentes tipos de error con respuestas específicas
+    if (error instanceof Error) {
+      if (error.message === "El cliente ya tiene un crédito activo") {
+        return res.status(409).json({ error: error.message });
+      
+      } else if (error.message.includes("El cliente ya tiene una solicitud inicial en el sistema")) {
+        return res.status(409).json({
+          error: error.message,
+          codigo: "CLIENTE_YA_REGISTRADO",
+          mensaje: "El cliente ya fue cargado por otro comercio en el sistema",
+        });
+      
+      } else if (error.message.startsWith("ERROR_EUREKA:")) {
+        // Error específico de Eureka con clasificación
+        const partes = error.message.split(':');
+        const tipoError = partes[1] || 'DESCONOCIDO';
+        const mensajeOriginal = partes.slice(2).join(':').trim();
+        
+        const respuesta = construirRespuestaErrorEureka(tipoError, mensajeOriginal);
+        return res.status(502).json(respuesta);
+      
+      } else if (error.message.startsWith("ERROR_NOSIS:")) {
+        // Error específico de Nosis con clasificación
+        const partes = error.message.split(':');
+        const tipoError = partes[1] || 'DESCONOCIDO';
+        const mensajeOriginal = partes.slice(2).join(':').trim();
+        
+        const respuesta = construirRespuestaErrorNosis(tipoError, mensajeOriginal);
+        return res.status(502).json(respuesta);
+      
+      } else if (error.message.startsWith("ERROR_VERIFICACION:")) {
+        // Error general de verificación
+        const mensajeOriginal = error.message.replace("ERROR_VERIFICACION:", "").trim();
+        return res.status(502).json({
+          error: mensajeOriginal,
+          codigo: "ERROR_VERIFICACION_CREDITICIA",
+          mensaje: "Error en la verificación crediticia. Por favor, intente nuevamente.",
+          servicio: "verificacion_general",
+          accion_recomendada: "reintentar"
+        });
+      
+      } else {
+        return res.status(400).json({ error: error.message });
+      }
     } else {
-      res.status(400).json({ error: "Unknown error" });
+      return res.status(400).json({ error: "Error desconocido" });
     }
   }
 };
+
+/**
+ * Construye respuesta específica para errores de Eureka
+ */
+function construirRespuestaErrorEureka(tipoError: string, mensajeOriginal: string): any {
+  const respuestas: { [key: string]: any } = {
+    'TIMEOUT': {
+      error: mensajeOriginal,
+      codigo: "ERROR_EUREKA_TIMEOUT",
+      mensaje: "El sistema anterior no respondió a tiempo. Por favor, intente nuevamente en unos minutos.",
+      servicio: "eureka",
+      accion_recomendada: "reintentar",
+      tiempo_espera: "2-5 minutos"
+    },
+    'CONEXION': {
+      error: mensajeOriginal,
+      codigo: "ERROR_EUREKA_CONEXION", 
+      mensaje: "Error de conexión con el sistema anterior. Verifique su conexión a internet e intente nuevamente.",
+      servicio: "eureka",
+      accion_recomendada: "verificar_conexion"
+    },
+    'AUTENTICACION': {
+      error: mensajeOriginal,
+      codigo: "ERROR_EUREKA_AUTENTICACION",
+      mensaje: "Error de autenticación con el sistema anterior. Contacte al administrador del sistema.",
+      servicio: "eureka",
+      accion_recomendada: "contactar_administrador"
+    },
+    'ENDPOINT_NO_ENCONTRADO': {
+      error: mensajeOriginal,
+      codigo: "ERROR_EUREKA_ENDPOINT",
+      mensaje: "Servicio del sistema anterior no disponible temporalmente. Contacte al administrador.",
+      servicio: "eureka", 
+      accion_recomendada: "contactar_administrador"
+    },
+    'ERROR_SERVIDOR': {
+      error: mensajeOriginal,
+      codigo: "ERROR_EUREKA_SERVIDOR",
+      mensaje: "Error interno en el sistema anterior. Por favor, intente nuevamente más tarde.",
+      servicio: "eureka",
+      accion_recomendada: "reintentar_mas_tarde"
+    },
+    'CUIL_INVALIDO': {
+      error: mensajeOriginal,
+      codigo: "ERROR_EUREKA_CUIL_INVALIDO",
+      mensaje: "El CUIL proporcionado es inválido para el sistema anterior. Verifique los datos del cliente.",
+      servicio: "eureka",
+      accion_recomendada: "verificar_datos_cliente"
+    }
+  };
+
+  return respuestas[tipoError] || {
+    error: mensajeOriginal,
+    codigo: "ERROR_EUREKA_DESCONOCIDO",
+    mensaje: "Error en el sistema anterior. Por favor, intente nuevamente.",
+    servicio: "eureka",
+    accion_recomendada: "reintentar"
+  };
+}
+
+/**
+ * Construye respuesta específica para errores de Nosis
+ */
+function construirRespuestaErrorNosis(tipoError: string, mensajeOriginal: string): any {
+  const respuestas: { [key: string]: any } = {
+    'TIMEOUT': {
+      error: mensajeOriginal,
+      codigo: "ERROR_NOSIS_TIMEOUT",
+      mensaje: "El servicio de verificación crediticia no respondió a tiempo. Por favor, intente nuevamente.",
+      servicio: "nosis",
+      accion_recomendada: "reintentar",
+      tiempo_espera: "2-5 minutos"
+    },
+    'CONEXION': {
+      error: mensajeOriginal,
+      codigo: "ERROR_NOSIS_CONEXION",
+      mensaje: "Error de conexión con el servicio de verificación crediticia. Verifique su conexión a internet.",
+      servicio: "nosis",
+      accion_recomendada: "verificar_conexion"
+    },
+    'RESPUESTA_INVALIDA': {
+      error: mensajeOriginal,
+      codigo: "ERROR_NOSIS_RESPUESTA_INVALIDA", 
+      mensaje: "Error en el formato de respuesta del servicio de verificación crediticia. Contacte al administrador.",
+      servicio: "nosis",
+      accion_recomendada: "contactar_administrador"
+    },
+    'CUIL_INVALIDO': {
+      error: mensajeOriginal,
+      codigo: "ERROR_NOSIS_CUIL_INVALIDO",
+      mensaje: "El CUIL proporcionado es inválido para la verificación crediticia. Verifique los datos del cliente.",
+      servicio: "nosis",
+      accion_recomendada: "verificar_datos_cliente"
+    }
+  };
+
+  return respuestas[tipoError] || {
+    error: mensajeOriginal,
+    codigo: "ERROR_NOSIS_DESCONOCIDO",
+    mensaje: "Error en el servicio de verificación crediticia. Por favor, intente nuevamente.",
+    servicio: "nosis",
+    accion_recomendada: "reintentar"
+  };
+}
 
 // Función auxiliar para obtener mensaje por estado (solo como fallback)
 function obtenerMensajePorEstado(estado: string): string {

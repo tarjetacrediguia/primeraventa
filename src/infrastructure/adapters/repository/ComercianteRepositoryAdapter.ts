@@ -230,19 +230,58 @@ export class ComercianteRepositoryAdapter implements ComercianteRepositoryPort {
         try {
             await client.query('BEGIN');
             
+            // Determinar si se está actualizando la contraseña
+            const actualizarPassword = comerciante.getPassword() && comerciante.getPassword() !== '';
+            
             // Actualizar datos básicos en usuarios
-            const updateUserQuery = `
-                UPDATE usuarios
-                SET nombre = $1, apellido = $2, email = $3, telefono = $4
-                WHERE id = $5
-            `;
-            await client.query(updateUserQuery, [
-                comerciante.getNombre(),
-                comerciante.getApellido(),
-                comerciante.getEmail(),
-                comerciante.getTelefono(),
-                id
-            ]);
+            let updateUserQuery: string;
+            let updateUserValues: any[];
+            
+            if (actualizarPassword) {
+                updateUserQuery = `
+                    UPDATE usuarios
+                    SET nombre = $1, apellido = $2, email = $3, telefono = $4, 
+                        password_hash = $5, fecha_actualizacion = CURRENT_TIMESTAMP
+                    WHERE id = $6
+                `;
+                updateUserValues = [
+                    comerciante.getNombre(),
+                    comerciante.getApellido(),
+                    comerciante.getEmail(),
+                    comerciante.getTelefono(),
+                    comerciante.getPassword(),
+                    id
+                ];
+            } else {
+                updateUserQuery = `
+                    UPDATE usuarios
+                    SET nombre = $1, apellido = $2, email = $3, telefono = $4,
+                        fecha_actualizacion = CURRENT_TIMESTAMP
+                    WHERE id = $5
+                `;
+                updateUserValues = [
+                    comerciante.getNombre(),
+                    comerciante.getApellido(),
+                    comerciante.getEmail(),
+                    comerciante.getTelefono(),
+                    id
+                ];
+            }
+            
+            await client.query(updateUserQuery, updateUserValues);
+            
+            // Actualizar número de comercio si es necesario
+            if (comerciante.getComercio() && comerciante.getComercio().getNumeroComercio()) {
+                const updateComercianteQuery = `
+                    UPDATE comerciantes
+                    SET numero_comercio = $1
+                    WHERE usuario_id = $2
+                `;
+                await client.query(updateComercianteQuery, [
+                    comerciante.getComercio().getNumeroComercio(),
+                    id
+                ]);
+            }
             
             await client.query('COMMIT');
             

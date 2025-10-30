@@ -14,6 +14,7 @@
 
 import { Analista } from "../../../domain/entities/Analista";
 import { AnalistaRepositoryPort } from "../../ports/AnalistaRepositoryPort";
+import bcrypt from 'bcrypt';
 
 /**
  * Caso de uso para actualizar los datos de un analista.
@@ -43,26 +44,38 @@ export class UpdateAnalistaUseCase {
         id: number,
         nombre: string,
         apellido: string,
-        telefono: string
+        telefono: string,
+        password?: string
     ): Promise<Analista> {
         // Validaciones básicas
         if (!nombre || !apellido || !telefono) {
             throw new Error("Todos los campos son obligatorios");
         }
+        
         // Verificar existencia
         const existe = await this.repository.getAnalistaById(id);
         if (!existe) {
             throw new Error("Analista no encontrado");
         }
 
+        // Hash de la contraseña si se proporciona
+        let hashedPassword = existe.getPassword();
+        if (password && password.trim() !== '') {
+            if (password.length < 8) {
+                throw new Error("La contraseña debe tener al menos 8 caracteres");
+            }
+            const saltRounds = 10;
+            hashedPassword = await bcrypt.hash(password, saltRounds);
+        }
+
         // Crear objeto con datos actualizados
         const analistaActualizado = new Analista({
             id: id,
-            nombre: nombre || existe.getNombre(),
-            apellido: apellido || existe.getApellido(),
+            nombre: nombre,
+            apellido: apellido,
             email: existe.getEmail(),
-            password: existe.getPassword(), // No permitimos actualizar la contraseña aquí
-            telefono: telefono || existe.getTelefono(),
+            password: hashedPassword,
+            telefono: telefono,
             permisos: existe.getPermisos()
         });
 

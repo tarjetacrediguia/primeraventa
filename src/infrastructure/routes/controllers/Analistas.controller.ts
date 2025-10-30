@@ -48,21 +48,23 @@ export const createAnalista = async (req: Request, res: Response) => {
 export const updateAnalista = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
-    const { nombre, apellido, telefono } = req.body;
+    const { nombre, apellido, telefono, password } = req.body;
     
     const useCase = new UpdateAnalistaUseCase(analistaRepository);
     const analistaActualizado = await useCase.execute(
       Number(id),
-        nombre,
-        apellido,
-        telefono
+      nombre,
+      apellido,
+      telefono,
+      password
     );
     
     res.status(200).json(analistaActualizado.toPlainObject());
   } catch (error: any) {
     if (error.message === "Analista no encontrado") {
       res.status(404).json({ error: error.message });
-    } else if (error.message === "Todos los campos son obligatorios") {
+    } else if (error.message === "Todos los campos son obligatorios" || 
+               error.message === "La contraseña debe tener al menos 8 caracteres") {
       res.status(400).json({ error: error.message });
     } else {
       res.status(500).json({ error: 'Error al actualizar analista' });

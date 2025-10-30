@@ -53,13 +53,14 @@ export const updateComerciante = async (req: Request, res: Response) => {
             nombre,
             apellido,
             telefono,
-            numeroComercio
+            numeroComercio,
+            password
         } = req.body;
 
         // Validar que al menos un campo a actualizar esté presente
-        if (!nombre && !apellido && !telefono && !numeroComercio) {
+        if (!nombre && !apellido && !telefono && !numeroComercio && !password) {
             return res.status(400).json({
-                error: "Al menos un campo debe ser proporcionado para actualizar: nombre, apellido, telefono o numeroComercio"
+                error: "Al menos un campo debe ser proporcionado para actualizar: nombre, apellido, telefono, numeroComercio o password"
             });
         }
 
@@ -73,7 +74,8 @@ export const updateComerciante = async (req: Request, res: Response) => {
             nombre,
             apellido,
             telefono,
-            numeroComercio
+            numeroComercio,
+            password
         );
 
         res.status(200).json(comercianteActualizado.toPlainObject());

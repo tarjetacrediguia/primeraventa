@@ -20,6 +20,8 @@ export class Comerciante extends Usuario {
         this.permisos = permisos ?? [];
     }
 
+    
+
     public getComercio(): Comercio {
         return this.comercio;
     }

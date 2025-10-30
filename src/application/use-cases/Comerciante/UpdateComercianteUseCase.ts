@@ -15,6 +15,7 @@
 import { Comerciante } from "../../../domain/entities/Comerciante";
 import { ComercianteRepositoryPort } from "../../ports/ComercianteRepositoryPort";
 import { ComercioRepositoryPort } from "../../ports/ComercioRepositoryPort";
+import bcrypt from 'bcrypt';
 
 /**
  * Caso de uso para actualizar los datos de un comerciante.
@@ -50,7 +51,8 @@ export class UpdateComercianteUseCase {
         nombre?: string,
         apellido?: string,
         telefono?: string,
-        numeroComercio?: string
+        numeroComercio?: string,
+        password?: string
     ): Promise<Comerciante> {
         // Verificar existencia del comerciante
         const comercianteExistente = await this.repository.getComercianteById(id);
@@ -69,10 +71,22 @@ export class UpdateComercianteUseCase {
             comercio = nuevoComercio;
         }
 
+        // Hash de la contraseña si se proporciona
+        let hashedPassword: string | undefined;
+        if (password && password.trim() !== '') {
+            // Validar longitud mínima de contraseña
+            if (password.length < 8) {
+                throw new Error("La contraseña debe tener al menos 8 caracteres");
+            }
+            const saltRounds = 10;
+            hashedPassword = await bcrypt.hash(password, saltRounds);
+        }
+
         // Actualizar solo los campos proporcionados
         if (nombre) comercianteExistente.setNombre(nombre);
         if (apellido) comercianteExistente.setApellido(apellido);
         if (telefono) comercianteExistente.setTelefono(telefono);
+        if (hashedPassword) comercianteExistente.setPassword(hashedPassword);
         
         // Actualizar comercio si cambió
         if (numeroComercio && numeroComercio !== comercianteExistente.getComercio().getNumeroComercio()) {
@@ -96,6 +110,7 @@ export class UpdateComercianteUseCase {
             apellido?: string;
             telefono?: string;
             numeroComercio?: string;
+            password?: string;
         }
     ): Promise<Comerciante> {
         return this.execute(
@@ -103,7 +118,8 @@ export class UpdateComercianteUseCase {
             updates.nombre,
             updates.apellido,
             updates.telefono,
-            updates.numeroComercio
+            updates.numeroComercio,
+            updates.password
         );
     }
 }

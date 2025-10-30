@@ -148,19 +148,44 @@ export class AnalistaRepositoryAdapter implements AnalistaRepositoryPort {
         try {
             await client.query('BEGIN');
             
-            // Actualizar datos básicos en usuarios
-            const updateUserQuery = `
-                UPDATE usuarios
-                SET nombre = $1, apellido = $2, email = $3, telefono = $4
-                WHERE id = $5
-            `;
-            await client.query(updateUserQuery, [
-                analista.getNombre(),
-                analista.getApellido(),
-                analista.getEmail(),
-                analista.getTelefono(),
-                analista.getId()
-            ]);
+            // Determinar si se está actualizando la contraseña
+            const actualizarPassword = analista.getPassword() && analista.getPassword() !== '';
+            
+            let updateUserQuery: string;
+            let updateUserValues: any[];
+            
+            if (actualizarPassword) {
+                updateUserQuery = `
+                    UPDATE usuarios
+                    SET nombre = $1, apellido = $2, email = $3, telefono = $4, 
+                        password_hash = $5, fecha_actualizacion = CURRENT_TIMESTAMP
+                    WHERE id = $6
+                `;
+                updateUserValues = [
+                    analista.getNombre(),
+                    analista.getApellido(),
+                    analista.getEmail(),
+                    analista.getTelefono(),
+                    analista.getPassword(),
+                    analista.getId()
+                ];
+            } else {
+                updateUserQuery = `
+                    UPDATE usuarios
+                    SET nombre = $1, apellido = $2, email = $3, telefono = $4,
+                        fecha_actualizacion = CURRENT_TIMESTAMP
+                    WHERE id = $5
+                `;
+                updateUserValues = [
+                    analista.getNombre(),
+                    analista.getApellido(),
+                    analista.getEmail(),
+                    analista.getTelefono(),
+                    analista.getId()
+                ];
+            }
+            
+            await client.query(updateUserQuery, updateUserValues);
             
             await client.query('COMMIT');
             
