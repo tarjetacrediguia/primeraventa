@@ -17,7 +17,7 @@
  * - Registrar evento en el historial del sistema
  * - Notificar al comerciante sobre la aprobación
  * - Manejar errores y excepciones del proceso
- * 
+ *
  * FLUJO PRINCIPAL:
  * 1. Validación de existencia y estado de compra
  * 2. Validación de solicitud formal asociada
@@ -41,7 +41,7 @@ import { SolicitudInicialRepositoryPort } from "../../ports/SolicitudInicialRepo
 export class AprobarCompraUseCase {
   /**
    * Constructor del caso de uso para aprobar compras
-   * 
+   *
    * @param compraRepository - Repositorio para operaciones de compra
    * @param solicitudFormalRepository - Repositorio para operaciones de solicitud formal
    * @param historialRepository - Repositorio para registro de eventos en historial
@@ -84,16 +84,16 @@ export class AprobarCompraUseCase {
    * @throws Error - Si no se cumplen las validaciones o ocurre un error
    */
   async execute(
-    id: number, 
+    id: number,
     usuarioId: number,
     numeroAutorizacion: string,
     numeroCuenta: string
-    ): Promise<Compra> {
+  ): Promise<Compra> {
     try {
       // ===== PASO 1: OBTENER Y VALIDAR COMPRA =====
       // Buscar la compra por ID
       const compra = await this.compraRepository.getCompraById(id);
-      
+
       // Verificar que la compra existe
       if (!compra) {
         // Obtener ID de solicitud formal para el historial de errores
@@ -109,7 +109,7 @@ export class AprobarCompraUseCase {
           solicitudInicialIdSinCompra =
             solicitudFormalSinCompra?.getSolicitudInicialId();
         }
-        
+
         // Registrar evento de error en historial
         await this.historialRepository.registrarEvento({
           usuarioId: usuarioId,
@@ -124,25 +124,17 @@ export class AprobarCompraUseCase {
         });
         throw new Error(`No existe una compra con ID: ${id}`);
       }
-      
-      // Obtener solicitud formal asociada
-      const solicitudFormalId = compra.getSolicitudFormalId();
-      const solicitudFormal =
-        await this.solicitudFormalRepository.getSolicitudFormalById(
-          solicitudFormalId
+
+      // ===== VALIDAR ESTADOS VÁLIDOS PARA APROBACIÓN =====
+      // Permitir aprobar compras pendientes O rechazadas (para cambiar de rechazada a aprobada)
+      if (
+        compra.getEstado() !== EstadoCompra.PENDIENTE &&
+        compra.getEstado() !== EstadoCompra.RECHAZADA
+      ) {
+        const solicitudInicialId = await this.obtenerSolicitudInicialId(
+          compra.getId()
         );
-      const solicitudInicialId = solicitudFormal?.getSolicitudInicialId();
-      
-      // ===== PASO 2: ASIGNAR DATOS BANCARIOS =====
-      // Asignar número de autorización y cuenta bancaria a la compra
-      compra.setNumeroAutorizacion(numeroAutorizacion);
-      compra.setNumeroCuenta(numeroCuenta);
 
-
-      // ===== PASO 3: VALIDAR ESTADO DE LA COMPRA =====
-      // Verificar que la compra esté en estado PENDIENTE para poder aprobarla
-      if (compra.getEstado() !== EstadoCompra.PENDIENTE) {
-        // Registrar evento de estado inválido en historial
         await this.historialRepository.registrarEvento({
           usuarioId: usuarioId,
           accion: HISTORIAL_ACTIONS.ERROR_PROCESO,
@@ -151,13 +143,24 @@ export class AprobarCompraUseCase {
           detalles: {
             error: `Estado inválido para aprobación: ${compra.getEstado()}`,
             estado_actual: compra.getEstado(),
+            estados_permitidos: ["pendiente", "rechazada"],
           },
           solicitudInicialId: solicitudInicialId,
         });
         throw new Error(
-          `La compra ${id} no está pendiente. Estado actual: ${compra.getEstado()}`
+          `La compra ${id} no puede ser aprobada desde el estado actual: ${compra.getEstado()}. Solo se pueden aprobar compras pendientes o rechazadas.`
         );
       }
+
+      // Obtener solicitud formal asociada
+      const solicitudFormalId = compra.getSolicitudFormalId();
+      const solicitudFormal =
+        await this.solicitudFormalRepository.getSolicitudFormalById(
+          solicitudFormalId
+        );
+      const solicitudInicialId = solicitudFormal?.getSolicitudInicialId();
+
+    
 
       // ===== PASO 4: VALIDAR SOLICITUD FORMAL ASOCIADA =====
       // Verificar que la solicitud formal existe
@@ -217,11 +220,13 @@ export class AprobarCompraUseCase {
               error: "Límite de crédito excedido sin ampliación solicitada",
               monto_compra: montoCompra,
               limite_credito: limiteActual,
-              tiene_ampliacion: false
+              tiene_ampliacion: false,
             },
             solicitudInicialId: solicitudInicialId,
           });
-          throw new Error(`El monto de la compra (${montoCompra}) excede el límite de crédito (${limiteActual}) y no se solicitó ampliación.`);
+          throw new Error(
+            `El monto de la compra (${montoCompra}) excede el límite de crédito (${limiteActual}) y no se solicitó ampliación.`
+          );
         }
 
         // CASO 2: Tiene ampliación de crédito solicitada -> APROBAR AUTOMÁTICAMENTE
@@ -232,35 +237,52 @@ export class AprobarCompraUseCase {
         await this.historialRepository.registrarEvento({
           usuarioId: usuarioId,
           accion: HISTORIAL_ACTIONS.AMPLIACION_CREDITO_APROBADA,
-          entidadAfectada: 'solicitudes_formales',
+          entidadAfectada: "solicitudes_formales",
           entidadId: solicitudFormal.getId(),
           detalles: {
             monto_anterior: limiteActual,
             nuevo_limite: montoCompra,
-            compra_id: id
+            compra_id: id,
           },
-          solicitudInicialId: solicitudInicialId
+          solicitudInicialId: solicitudInicialId,
         });
       }
+
+      // ===== PASO 2: ASIGNAR DATOS BANCARIOS =====
+      // Asignar número de autorización y cuenta bancaria a la compra
+      compra.setNumeroAutorizacion(numeroAutorizacion);
+      compra.setNumeroCuenta(numeroCuenta);
+
+      
 
       // ===== PASO 6: ACTUALIZAR ESTADO DE LA COMPRA =====
       // Cambiar estado de la compra a APROBADA
       compra.setEstado(EstadoCompra.APROBADA);
-      
+
       // Asignar ID del analista que aprueba la compra
       compra.setAnalistaAprobadorId(usuarioId);
 
       // ===== PASO 7: PERSISTIR CAMBIOS =====
       // Actualizar solicitud formal (en caso de ampliación de crédito)
-      await this.solicitudFormalRepository.updateSolicitudFormal(solicitudFormal);
-      
-      // Actualizar compra en base de datos
-      const compraActualizada = await this.compraRepository.updateCompra(
-        compra, compra.getClienteId()
+      await this.solicitudFormalRepository.updateSolicitudFormal(
+        solicitudFormal
       );
 
+      // Actualizar compra en base de datos
+      const compraActualizada = await this.compraRepository.updateCompra(
+        compra,
+        compra.getClienteId()
+      );
+
+      // ===== APROBACIÓN EN CASCADA DE SOLICITUDES ASOCIADAS =====
+      await this.aprobarSolicitudesAsociadas(compraActualizada, usuarioId);
+
       // ===== RECHAZAR SOLICITUDES INICIALES DUPLICADAS =====
-      await this.rechazarSolicitudesInicialesDuplicadas(compraActualizada, solicitudFormal, usuarioId);
+      await this.rechazarSolicitudesInicialesDuplicadas(
+        compraActualizada,
+        solicitudFormal,
+        usuarioId
+      );
 
       // ===== PASO 8: REGISTRAR APROBACIÓN EN HISTORIAL =====
       // Registrar evento de aprobación exitosa en historial
@@ -271,7 +293,8 @@ export class AprobarCompraUseCase {
         entidadId: id,
         detalles: {
           monto_total: compra.getMontoTotal(),
-          cantidad_cuotas: compra.getCantidadCuotas()
+          cantidad_cuotas: compra.getCantidadCuotas(),
+          estado_anterior: compra.getEstado(),
         },
         solicitudInicialId: solicitudInicialId,
       });
@@ -340,7 +363,144 @@ export class AprobarCompraUseCase {
     }
   }
 
-   /**
+  /**
+   * Aprobar en cascada las solicitudes formales e iniciales asociadas
+   */
+  private async aprobarSolicitudesAsociadas(
+    compra: Compra,
+    usuarioId: number
+  ): Promise<void> {
+    try {
+      // Obtener solicitud formal asociada
+      const solicitudFormal =
+        await this.solicitudFormalRepository.getSolicitudFormalById(
+          compra.getSolicitudFormalId()
+        );
+
+      if (!solicitudFormal) {
+        console.warn(
+          `No se encontró solicitud formal para la compra ${compra.getId()}`
+        );
+        return;
+      }
+
+      const solicitudInicialId = solicitudFormal.getSolicitudInicialId();
+
+      // Aprobar solicitud formal si no está ya aprobada
+      if (solicitudFormal.getEstado() !== "aprobada") {
+        const estadoAnteriorFormal = solicitudFormal.getEstado();
+        solicitudFormal.setEstado("aprobada");
+        solicitudFormal.setAnalistaAprobadorId(usuarioId);
+
+        await this.solicitudFormalRepository.updateSolicitudFormal(
+          solicitudFormal
+        );
+
+        // Registrar en historial
+        await this.historialRepository.registrarEvento({
+          usuarioId: usuarioId,
+          accion: HISTORIAL_ACTIONS.APROBAR_SOLICITUD_FORMAL_AUTOMATICO,
+          entidadAfectada: "solicitudes_formales",
+          entidadId: solicitudFormal.getId(),
+          detalles: {
+            compra_id: compra.getId(),
+            estado_anterior: estadoAnteriorFormal,
+          },
+          solicitudInicialId: solicitudInicialId,
+        });
+
+        console.log(
+          `✅ Solicitud formal ${solicitudFormal.getId()} aprobada automáticamente por aprobación de compra. Estado anterior: ${estadoAnteriorFormal}`
+        );
+      }
+
+      // Aprobar solicitud inicial si no está ya aprobada
+      const solicitudInicial =
+        await this.solicitudInicialRepository.getSolicitudInicialById(
+          solicitudInicialId
+        );
+
+      if (solicitudInicial && solicitudInicial.getEstado() !== "aprobada") {
+        // Obtener cliente para la actualización
+        const cliente = await this.clienteRepository.findById(
+          solicitudInicial.getClienteId()
+        );
+
+        if (cliente) {
+          const estadoAnteriorInicial = solicitudInicial.getEstado();
+          solicitudInicial.setEstado("aprobada");
+          solicitudInicial.setAnalistaAprobadorId(usuarioId);
+
+          await this.solicitudInicialRepository.updateSolicitudInicialAprobaciónRechazo(
+            solicitudInicial,
+            cliente
+          );
+
+          // Registrar en historial
+          await this.historialRepository.registrarEvento({
+            usuarioId: usuarioId,
+            accion: HISTORIAL_ACTIONS.APROBAR_SOLICITUD_INICIAL_AUTOMATICO,
+            entidadAfectada: "solicitudes_iniciales",
+            entidadId: solicitudInicialId,
+            detalles: {
+              compra_id: compra.getId(),
+              estado_anterior: estadoAnteriorInicial,
+            },
+            solicitudInicialId: solicitudInicialId,
+          });
+
+          console.log(
+            `✅ Solicitud inicial ${solicitudInicialId} aprobada automáticamente por aprobación de compra. Estado anterior: ${estadoAnteriorInicial}`
+          );
+        }
+      }
+    } catch (error) {
+      console.error("❌ Error en aprobación en cascada de solicitudes:", error);
+      // No lanzamos el error para no interrumpir el flujo principal de aprobación de compra
+      // Pero registramos el error en el historial
+      await this.historialRepository.registrarEvento({
+        usuarioId: usuarioId,
+        accion: HISTORIAL_ACTIONS.ERROR_PROCESO,
+        entidadAfectada: "compras",
+        entidadId: compra.getId(),
+        detalles: {
+          error: `Error en aprobación en cascada: ${
+            error instanceof Error ? error.message : String(error)
+          }`,
+          etapa: "aprobacion_cascada_solicitudes",
+        },
+        solicitudInicialId: await this.obtenerSolicitudInicialId(
+          compra.getId()
+        ),
+      });
+    }
+  }
+
+  /**
+   * MÉTODO AUXILIAR: Obtener ID de solicitud inicial
+   */
+  private async obtenerSolicitudInicialId(
+    compraId: number
+  ): Promise<number | undefined> {
+    try {
+      const solicitudFormalId =
+        await this.compraRepository.getSolicitudFormalIdByCompraId(compraId);
+
+      if (!solicitudFormalId) return undefined;
+
+      const solicitudFormal =
+        await this.solicitudFormalRepository.getSolicitudFormalById(
+          solicitudFormalId
+        );
+
+      return solicitudFormal?.getSolicitudInicialId();
+    } catch (e) {
+      console.error("Error obteniendo solicitudInicialId", e);
+      return undefined;
+    }
+  }
+
+  /**
    * Rechaza automáticamente las demás solicitudes iniciales del mismo cliente
    * cuando se concreta una compra
    */
@@ -351,29 +511,37 @@ export class AprobarCompraUseCase {
   ): Promise<void> {
     try {
       // Obtener la solicitud inicial asociada a esta compra
-      const solicitudInicialOrigen = await this.solicitudInicialRepository.getSolicitudInicialById(
-        solicitudFormal.getSolicitudInicialId()
-      );
+      const solicitudInicialOrigen =
+        await this.solicitudInicialRepository.getSolicitudInicialById(
+          solicitudFormal.getSolicitudInicialId()
+        );
 
       if (!solicitudInicialOrigen) {
-        console.warn(`No se encontró solicitud inicial para la compra ${compra.getId()}`);
+        console.warn(
+          `No se encontró solicitud inicial para la compra ${compra.getId()}`
+        );
         return;
       }
 
       // Obtener CUIL del cliente
       const cuilCliente = solicitudInicialOrigen.getCuilCliente();
       if (!cuilCliente) {
-        console.warn(`No se pudo obtener CUIL del cliente para la compra ${compra.getId()}`);
+        console.warn(
+          `No se pudo obtener CUIL del cliente para la compra ${compra.getId()}`
+        );
         return;
       }
 
-      console.log(`🔄 Rechazando solicitudes duplicadas para CUIL: ${cuilCliente}, compra: ${compra.getId()}`);
+      console.log(
+        `🔄 Rechazando solicitudes duplicadas para CUIL: ${cuilCliente}, compra: ${compra.getId()}`
+      );
 
       // Usar el método del repositorio que ahora devuelve las solicitudes rechazadas
-      const solicitudesRechazadas = await this.compraRepository.rechazarSolicitudesInicialesPorCompra(
-        cuilCliente,
-        solicitudInicialOrigen.getId()
-      );
+      const solicitudesRechazadas =
+        await this.compraRepository.rechazarSolicitudesInicialesPorCompra(
+          cuilCliente,
+          solicitudInicialOrigen.getId()
+        );
 
       // Registrar en el historial y notificar por cada solicitud rechazada
       for (const solicitud of solicitudesRechazadas) {
@@ -381,15 +549,15 @@ export class AprobarCompraUseCase {
         await this.historialRepository.registrarEvento({
           usuarioId: usuarioId,
           accion: HISTORIAL_ACTIONS.RECHAZO_AUTOMATICO_SOLICITUDES_DUPLICADAS,
-          entidadAfectada: 'solicitudes_iniciales',
+          entidadAfectada: "solicitudes_iniciales",
           entidadId: solicitud.id,
           detalles: {
-            motivo: 'Rechazada por concreción de compra en otro local',
+            motivo: "Rechazada por concreción de compra en otro local",
             cuil_cliente: cuilCliente,
             solicitud_inicial_excluida: solicitudInicialOrigen.getId(),
-            compra_id: compra.getId()
+            compra_id: compra.getId(),
           },
-          solicitudInicialId: solicitud.id
+          solicitudInicialId: solicitud.id,
         });
 
         // Notificar al comerciante afectado usando el puerto
@@ -399,20 +567,20 @@ export class AprobarCompraUseCase {
             type: "solicitud_inicial",
             message: `Solicitud rechazada: El cliente con CUIL ${cuilCliente} concretó una compra en otro comercio`,
             metadata: {
-              motivo: 'compra_concretada_otro_comercio',
+              motivo: "compra_concretada_otro_comercio",
               cuil_cliente: cuilCliente,
-              solicitud_inicial_id: solicitud.id
-            }
+              solicitud_inicial_id: solicitud.id,
+            },
           });
         }
       }
 
-      console.log(`✅ ${solicitudesRechazadas.length} solicitudes duplicadas rechazadas para CUIL: ${cuilCliente}`);
-      
+      console.log(
+        `✅ ${solicitudesRechazadas.length} solicitudes duplicadas rechazadas para CUIL: ${cuilCliente}`
+      );
     } catch (error) {
-      console.error('❌ Error rechazando solicitudes duplicadas:', error);
+      console.error("❌ Error rechazando solicitudes duplicadas:", error);
       // No lanzar error para no interrumpir el flujo principal de aprobación de compra
     }
   }
-
 }

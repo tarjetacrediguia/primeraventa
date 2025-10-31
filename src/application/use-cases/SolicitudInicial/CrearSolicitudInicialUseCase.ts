@@ -95,7 +95,7 @@ export class CrearSolicitudInicialUseCase {
         });
 
         throw new Error(
-          `El cliente ya tiene una solicitud inicial en el sistema. Comercio original: ${solicitudesExistentes.nombreComercioOriginal}`
+          `El cliente ya tiene una solicitud inicial en el sistema, creada por otro comercio.`
         );
       }
 

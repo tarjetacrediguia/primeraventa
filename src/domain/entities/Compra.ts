@@ -50,10 +50,9 @@ export class Compra {
     private cantidadCuotas: number;
     private fechaCreacion: Date;
     private fechaActualizacion: Date;
-    //private items: ItemCompra[];
     private estado: EstadoCompra;
     private valorCuota: number;
-    private clienteId: number; // ID del cliente asociado a la compra
+    private clienteId: number;
     private numeroAutorizacion?: string;
     private numeroCuenta?: string;
     private comercianteId?: number;
@@ -77,8 +76,7 @@ export class Compra {
         this.solicitudFormalId = params.solicitudFormalId;
         this.descripcion = params.descripcion;
         this.cantidadCuotas = params.cantidadCuotas;
-        //this.items = params.items || [];
-        this.montoTotal = params.montoTotal //|| this.calcularMontoTotal();
+        this.montoTotal = params.montoTotal
         this.fechaCreacion = params.fechaCreacion || new Date();
         this.fechaActualizacion = params.fechaActualizacion || new Date();
         this.estado = params.estado || EstadoCompra.PENDIENTE;

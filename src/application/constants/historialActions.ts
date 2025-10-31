@@ -128,6 +128,10 @@ export const HISTORIAL_ACTIONS = {
     RECHAZAR_SOLICITUD_FORMAL_AUTOMATICO: 'rechazar_solicitud_formal_automatico',
     /** Rechazo automático de solicitudes iniciales al rechazar una compra */
     RECHAZAR_SOLICITUD_INICIAL_AUTOMATICO: 'rechazar_solicitud_inicial_automatico',
+    /** Aprobación automática de solicitudes formales al aprobar una compra */
+    APROBAR_SOLICITUD_FORMAL_AUTOMATICO: 'aprobar_solicitud_formal_automatico',
+    /** Aprobación automática de solicitudes iniciales al aprobar una compra */
+    APROBAR_SOLICITUD_INICIAL_AUTOMATICO: 'aprobar_solicitud_inicial_automatico',
 
     // ===== AMPLIACIONES DE CRÉDITO =====
     /** Solicitud de ampliación de crédito */

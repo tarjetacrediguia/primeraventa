@@ -110,27 +110,33 @@ export class RechazarCompraUseCase {
                 });
                 throw new Error(`No existe una compra con ID: ${id}`);
             }
-            
-            // Obtener solicitudInicialId para usar en registros
-            solicitudInicialId = await this.obtenerSolicitudInicialId(compra.getId());
 
-            // ===== PASO 2: VALIDAR ESTADO PENDIENTE =====
-            // Verificar que la compra esté en estado pendiente
-            if ((compra.getEstado() !== EstadoCompra.PENDIENTE) && (compra.getEstado() !== EstadoCompra.APROBADA)) {
-                // Registrar evento de estado inválido
+            // ===== VALIDACIÓN MÁS CLARA DE ESTADOS =====
+            const estadoActual = compra.getEstado();
+            if (estadoActual !== EstadoCompra.PENDIENTE && estadoActual !== EstadoCompra.APROBADA) {
+                solicitudInicialId = await this.obtenerSolicitudInicialId(compra.getId());
+                
                 await this.historialRepository.registrarEvento({
                     usuarioId: usuarioId,
                     accion: HISTORIAL_ACTIONS.ERROR_PROCESO,
                     entidadAfectada: 'compras',
                     entidadId: id,
                     detalles: {
-                        error: `Estado inválido para rechazo: ${compra.getEstado()}`,
-                        estado_actual: compra.getEstado()
+                        error: `Estado inválido para rechazo: ${estadoActual}`,
+                        estado_actual: estadoActual,
+                        estados_permitidos: ['pendiente', 'aprobada']
                     },
                     solicitudInicialId: solicitudInicialId
                 });
-                throw new Error(`Solo se pueden rechazar compras pendientes y aprobadas. Estado actual: ${compra.getEstado()}`);
+                throw new Error(
+                    `Solo se pueden rechazar compras pendientes o aprobadas. Estado actual: ${estadoActual}`
+                );
             }
+            
+            // Obtener solicitudInicialId para usar en registros
+            solicitudInicialId = await this.obtenerSolicitudInicialId(compra.getId());
+
+            
 
             // ===== PASO 3: VALIDAR MOTIVO DE RECHAZO =====
             // Validar que el motivo tenga al menos 10 caracteres
