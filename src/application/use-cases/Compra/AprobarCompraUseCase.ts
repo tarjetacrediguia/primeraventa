@@ -274,6 +274,9 @@ export class AprobarCompraUseCase {
         compra.getClienteId()
       );
 
+      // =====  RECHAZAR OTRAS COMPRAS PENDIENTES =====
+      await this.rechazarOtrasComprasPendientes(compraActualizada, usuarioId, solicitudInicialId);
+
       // ===== APROBACIÓN EN CASCADA DE SOLICITUDES ASOCIADAS =====
       await this.aprobarSolicitudesAsociadas(compraActualizada, usuarioId);
 
@@ -360,6 +363,88 @@ export class AprobarCompraUseCase {
 
       // Re-lanzar el error para que sea manejado por el controlador
       throw error;
+    }
+  }
+
+  /**
+   * NUEVO MÉTODO: Rechaza automáticamente las demás compras pendientes de la misma solicitud formal
+   */
+  private async rechazarOtrasComprasPendientes(
+    compraAprobada: Compra,
+    usuarioId: number,
+    solicitudInicialId: number | undefined
+  ): Promise<void> {
+    try {
+      // Obtener todas las compras de la misma solicitud formal
+      const compras = await this.compraRepository.getComprasBySolicitudFormalId(compraAprobada.getSolicitudFormalId());
+      
+      // Filtrar las compras pendientes que no sean la compra aprobada
+      const comprasPendientes = compras.filter(compra => 
+        compra.getId() !== compraAprobada.getId() && 
+        compra.getEstado() === EstadoCompra.PENDIENTE
+      );
+
+      // Rechazar cada compra pendiente
+      for (const compra of comprasPendientes) {
+        const estadoAnterior = compra.getEstado();
+        compra.setEstado(EstadoCompra.RECHAZADA);
+        compra.setMotivoRechazo("Rechazada automáticamente al aprobar otra compra en la misma solicitud formal");
+        compra.setFechaActualizacion(new Date());
+
+        // Actualizar en base de datos
+        await this.compraRepository.updateCompra(compra, compra.getClienteId());
+
+        // Registrar en historial
+        await this.historialRepository.registrarEvento({
+          usuarioId: usuarioId,
+          accion: HISTORIAL_ACTIONS.RECHAZO_COMPRA_AUTOMATICO,
+          entidadAfectada: "compras",
+          entidadId: compra.getId(),
+          detalles: {
+            motivo: "Rechazada automáticamente al aprobar otra compra en la misma solicitud formal",
+            compra_aprobada_id: compraAprobada.getId(),
+            estado_anterior: estadoAnterior,
+            solicitud_formal_id: compraAprobada.getSolicitudFormalId()
+          },
+          solicitudInicialId: solicitudInicialId,
+        });
+
+        // Notificar al comerciante sobre el rechazo automático
+        const comercianteId = compra.getComercianteId();
+        if (typeof comercianteId === "number") {
+          await this.notificationService.emitNotification({
+            userId: comercianteId,
+            type: "compra",
+            message: `Compra rechazada automáticamente: ${compra.getDescripcion()}`,
+            metadata: {
+              compraId: compra.getId(),
+              motivo: "Otra compra fue aprobada en la misma solicitud formal",
+              compra_aprobada_id: compraAprobada.getId()
+            },
+          });
+        }
+
+        console.log(`✅ Compra ${compra.getId()} rechazada automáticamente por aprobación de compra ${compraAprobada.getId()}`);
+      }
+
+      if (comprasPendientes.length > 0) {
+        console.log(`✅ ${comprasPendientes.length} compras pendientes rechazadas automáticamente`);
+      }
+    } catch (error) {
+      console.error("❌ Error rechazando otras compras pendientes:", error);
+      
+      // Registrar error en historial pero no interrumpir el flujo principal
+      await this.historialRepository.registrarEvento({
+        usuarioId: usuarioId,
+        accion: HISTORIAL_ACTIONS.ERROR_PROCESO,
+        entidadAfectada: "compras",
+        entidadId: compraAprobada.getId(),
+        detalles: {
+          error: `Error rechazando otras compras pendientes: ${error instanceof Error ? error.message : String(error)}`,
+          etapa: "rechazo_automatico_compras",
+        },
+        solicitudInicialId: solicitudInicialId,
+      });
     }
   }
 

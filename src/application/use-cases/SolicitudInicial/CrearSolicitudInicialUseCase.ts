@@ -632,92 +632,91 @@ export class CrearSolicitudInicialUseCase {
   }
 
   private generarComentariosComerciante(resultadoNosis: VerificationResult, entidadesService: EntidadesService): string {
-    if (resultadoNosis.eurekaMensajeComerciante && 
-        (!resultadoNosis.reglasFallidas || resultadoNosis.reglasFallidas.length === 0)) {
-      return resultadoNosis.eurekaMensajeComerciante;
+    // 1. PRIMERO - Si hay RECHAZOS de Nosis, mostrar esos
+  if (resultadoNosis.reglasFallidas && resultadoNosis.reglasFallidas.length > 0) {
+    let motivo = "Solicitud rechazada";
+    const motivosPrincipales: string[] = [];
+
+    for (const regla of resultadoNosis.reglasFallidas) {
+      if (regla.includes("entidades en situación 2")) {
+        const match = regla.match(/(\d+) entidades/);
+        const cantidad = match ? match[1] : "varias";
+        motivosPrincipales.push(`tiene ${cantidad} entidades en situación 2`);
+      } else if (regla.includes("entidades con deuda")) {
+        const match = regla.match(/(\d+) entidades/);
+        const cantidad = match ? match[1] : "varias";
+        motivosPrincipales.push(`tiene deuda con ${cantidad} entidades`);
+      } else if (regla.includes("referencias comerciales")) {
+        const match = regla.match(/(\d+) referencias comerciales válidas/);
+        if (match) {
+          motivosPrincipales.push(`tiene ${match[1]} referencias comerciales válidas (máximo permitido: 2)`);
+        } else {
+          motivosPrincipales.push("no cumple con criterios de referencias comerciales");
+        }
+      } else if (regla.includes("tarjeta Crediguía")) {
+        motivosPrincipales.push("tiene tarjeta Crediguía activa");
+      } else if (regla.includes("aporte")) {
+        motivosPrincipales.push("no cumple con el mínimo de aportes requerido");
+      } else if (regla.includes("jubilado")) {
+        motivosPrincipales.push("es jubilado");
+      } else if (regla.includes("monotributista")) {
+        motivosPrincipales.push("es monotributista sin empleo registrado");
+      } else if (regla.includes("situación laboral")) {
+        motivosPrincipales.push("no tiene situación laboral registrada");
+      } else {
+        const partePrincipal = regla.split(":")[0] || regla;
+        motivosPrincipales.push(partePrincipal.toLowerCase());
+      }
+    }
+
+    if (motivosPrincipales.length > 0) {
+      motivo += `: ${motivosPrincipales.join(", ")}`;
+    }
+
+    return motivo;
+  }
+
+  // 2. SEGUNDO - Si hay PENDIENTES de Nosis, mostrar esos (IGNORAR Eureka)
+  if (resultadoNosis.pendientes && resultadoNosis.pendientes.length > 0) {
+    let motivo = "Solicitud pendiente de revisión manual";
+    const motivosPendientes: string[] = [];
+    
+    for (const pendiente of resultadoNosis.pendientes) {
+      if (pendiente.includes("entidades en situación 2")) {
+        motivosPendientes.push("tiene 1 entidad en situación 2");
+      } else if (pendiente.includes("entidades con deuda")) {
+        const match = pendiente.match(/(\d+) entidades/);
+        const cantidad = match ? match[1] : "algunas";
+        motivosPendientes.push(`tiene deuda con ${cantidad} entidades`);
+      } else if (pendiente.includes("referencias comerciales")) {
+        const match = pendiente.match(/(\d+) referencia/);
+        if (match) {
+          motivosPendientes.push(`tiene ${match[1]} referencia(s) comercial(es) válida(s)`);
+        } else {
+          motivosPendientes.push("requiere validación de referencias comerciales");
+        }
+      } else {
+        motivosPendientes.push(pendiente.toLowerCase());
+      }
     }
     
-    if (resultadoNosis.status === "rechazado") {
-      let motivo = "Solicitud rechazada";
-
-      if (resultadoNosis.reglasFallidas && resultadoNosis.reglasFallidas.length > 0) {
-        const motivosPrincipales: string[] = [];
-
-        for (const regla of resultadoNosis.reglasFallidas) {
-          if (regla.includes("entidades en situación 2")) {
-            const match = regla.match(/(\d+) entidades/);
-            const cantidad = match ? match[1] : "varias";
-            motivosPrincipales.push(`tiene ${cantidad} entidades en situación 2`);
-          } else if (regla.includes("entidades con deuda")) {
-            const match = regla.match(/(\d+) entidades/);
-            const cantidad = match ? match[1] : "varias";
-            motivosPrincipales.push(`tiene deuda con ${cantidad} entidades`);
-          } else if (regla.includes("referencias comerciales")) {
-            const match = regla.match(/(\d+) referencias comerciales válidas/);
-            if (match) {
-              motivosPrincipales.push(`tiene ${match[1]} referencias comerciales válidas (máximo permitido: 2)`);
-            } else {
-              motivosPrincipales.push("no cumple con criterios de referencias comerciales");
-            }
-          } else if (regla.includes("tarjeta Crediguía")) {
-            motivosPrincipales.push("tiene tarjeta Crediguía activa");
-          } else if (regla.includes("aporte")) {
-            motivosPrincipales.push("no cumple con el mínimo de aportes requerido");
-          } else if (regla.includes("jubilado")) {
-            motivosPrincipales.push("es jubilado");
-          } else if (regla.includes("monotributista")) {
-            motivosPrincipales.push("es monotributista sin empleo registrado");
-          } else if (regla.includes("situación laboral")) {
-            motivosPrincipales.push("no tiene situación laboral registrada");
-          } else {
-            const partePrincipal = regla.split(":")[0] || regla;
-            motivosPrincipales.push(partePrincipal.toLowerCase());
-          }
-        }
-
-        if (motivosPrincipales.length > 0) {
-          motivo += `: ${motivosPrincipales.join(", ")}`;
-        }
-      }
-
-      return motivo;
-    } else if (resultadoNosis.status === "pendiente") {
-      if (resultadoNosis.eurekaMensajeComerciante && 
-          (!resultadoNosis.pendientes || resultadoNosis.pendientes.length === 0)) {
-        return resultadoNosis.eurekaMensajeComerciante;
-      }
-      
-      let motivo = "Solicitud pendiente de revisión manual";
-      if (resultadoNosis.pendientes && resultadoNosis.pendientes.length > 0) {
-        const motivosPendientes: string[] = [];
-        for (const pendiente of resultadoNosis.pendientes) {
-          if (pendiente.includes("entidades en situación 2")) {
-            motivosPendientes.push("tiene 1 entidad en situación 2");
-          } else if (pendiente.includes("entidades con deuda")) {
-            const match = pendiente.match(/(\d+) entidades/);
-            const cantidad = match ? match[1] : "algunas";
-            motivosPendientes.push(`tiene deuda con ${cantidad} entidades`);
-          } else if (pendiente.includes("referencias comerciales")) {
-            const match = pendiente.match(/(\d+) referencia/);
-            if (match) {
-              motivosPendientes.push(`tiene ${match[1]} referencia(s) comercial(es) válida(s)`);
-            } else {
-              motivosPendientes.push("requiere validación de referencias comerciales");
-            }
-          } else {
-            motivosPendientes.push(pendiente.toLowerCase());
-          }
-        }
-        if (motivosPendientes.length > 0) {
-          motivo += `: ${motivosPendientes.join(", ")}`;
-        }
-      }
-      return motivo;
-    } else if (resultadoNosis.status === "aprobado") {
-      return resultadoNosis.eurekaMensajeComerciante || "Solicitud aprobada automáticamente";
+    if (motivosPendientes.length > 0) {
+      motivo += `: ${motivosPendientes.join(", ")}`;
     }
+    return motivo;
+  }
 
-    return "Solicitud en proceso de evaluación";
+  // 3. TERCERO - Solo si NO hay rechazos NI pendientes de Nosis, usar Eureka
+  if (resultadoNosis.eurekaMensajeComerciante) {
+    return resultadoNosis.eurekaMensajeComerciante;
+  }
+
+  // 4. Estado aprobado sin mensaje específico de Eureka
+  if (resultadoNosis.status === "aprobado") {
+    return "Solicitud aprobada automáticamente";
+  }
+
+  return "Solicitud en proceso de evaluación";
   }
 
   private async tieneCreditoActivo(cuilCliente: string): Promise<boolean> {

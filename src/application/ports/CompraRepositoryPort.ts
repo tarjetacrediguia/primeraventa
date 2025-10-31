@@ -9,7 +9,7 @@ export interface CompraRepositoryPort {
     getCompraById(id: number): Promise<any | null>;
     updateCompra(compra: Compra, clienteId: number): Promise<Compra>;
     deleteCompra(id: number): Promise<void>;
-    getComprasBySolicitudFormalId(solicitudFormalId: number): Promise<any>;
+    //getComprasBySolicitudFormalId(solicitudFormalId: number): Promise<any>;
     getComprasByEstado(estado: EstadoCompra): Promise<any[]>;
     getSolicitudFormalIdByCompraId(compraId: number): Promise<number | null>;
     getComprasByComerciante(comercianteId: number): Promise<any[]>;
@@ -19,4 +19,7 @@ export interface CompraRepositoryPort {
         solicitudInicialExcluida: number
     ): Promise<Array<{ id: number, comercianteId: number | null }>>;
     getComprasBySolicitudFormalIdReporte(solicitudFormalId: number): Promise<Compra[]>;
+    getComprasBySolicitudFormalId(solicitudFormalId: number): Promise<Compra[]>;
+    existeCompraAprobada(solicitudFormalId: number): Promise<boolean>;
+    rechazarComprasPendientes(solicitudFormalId: number, compraAprobadaId: number, motivo: string): Promise<void>;
 }

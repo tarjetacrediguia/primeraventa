@@ -25,13 +25,20 @@ CREATE TABLE analistas (
     usuario_id INTEGER PRIMARY KEY REFERENCES usuarios(id) ON DELETE CASCADE
 );
 
--- Tabla de Comerciantes
-CREATE TABLE comerciantes (
-    usuario_id INTEGER PRIMARY KEY REFERENCES usuarios(id) ON DELETE CASCADE,
+-- Tabla de Comercios
+CREATE TABLE comercios (
+    numero_comercio TEXT PRIMARY KEY,
     nombre_comercio TEXT NOT NULL,
     cuil TEXT NOT NULL UNIQUE,
     direccion_comercio TEXT NOT NULL,
-    numero_comercio TEXT NOT NULL
+    fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    fecha_actualizacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Tabla de Comerciantes
+CREATE TABLE comerciantes (
+    usuario_id INTEGER PRIMARY KEY REFERENCES usuarios(id) ON DELETE CASCADE,
+    numero_comercio TEXT NOT NULL REFERENCES comercios(numero_comercio) ON DELETE CASCADE
 );
 
 -- Tabla de Permisos

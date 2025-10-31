@@ -125,6 +125,27 @@ export class CrearCompraUseCase {
         );
       }
 
+      // ===== VERIFICAR SI EXISTE COMPRA APROBADA =====
+            const existeAprobada = await this.compraRepository.existeCompraAprobada(solicitudFormalId);
+            if (existeAprobada) {
+                const solicitudInicial = await this.solicitudInicialRepository.getSolicitudInicialById(
+                    solicitudFormal.getSolicitudInicialId()
+                );
+                
+                await this.historialRepository.registrarEvento({
+                    usuarioId: usuarioId,
+                    accion: HISTORIAL_ACTIONS.ERROR_PROCESO,
+                    entidadAfectada: "compras",
+                    entidadId: 0,
+                    detalles: {
+                        error: "Ya existe una compra aprobada para esta solicitud formal",
+                        solicitud_formal_id: solicitudFormalId,
+                    },
+                    solicitudInicialId: solicitudInicial?.getId(),
+                });
+                throw new Error("No se puede crear la compra porque ya existe una compra aprobada para esta solicitud formal.");
+            }
+
       // Obtener la solicitud inicial asociada para validaciones adicionales
       const solicitudInicial =
         await this.solicitudInicialRepository.getSolicitudInicialById(
@@ -247,18 +268,18 @@ export class CrearCompraUseCase {
       // ===== PASO 5: CREACIÓN DE ENTIDAD COMPRA =====
       // Crear nueva instancia de Compra con estado PENDIENTE
       const compra = new Compra({
-        id: 0, // ID temporal, se asignará automáticamente al guardar
-        solicitudFormalId: solicitudFormalId,
-        descripcion: descripcion,
-        cantidadCuotas: cantidadCuotas,
-        estado: EstadoCompra.PENDIENTE, // Estado inicial: pendiente de revisión
-        montoTotal: montoTotal,
-        fechaCreacion: new Date(),
-        fechaActualizacion: new Date(),
-        valorCuota: cantidadCuotas > 0 ? montoTotal / cantidadCuotas : 0, // Calcular valor por cuota
-        clienteId: solicitudFormal.getClienteId(),
-        comercianteId: usuarioId, // Asignar comerciante que crea la compra
-      });
+                id: 0,
+                solicitudFormalId: solicitudFormalId,
+                descripcion: descripcion,
+                cantidadCuotas: cantidadCuotas,
+                estado: EstadoCompra.PENDIENTE,
+                montoTotal: montoTotal,
+                fechaCreacion: new Date(),
+                fechaActualizacion: new Date(),
+                valorCuota: cantidadCuotas > 0 ? montoTotal / cantidadCuotas : 0,
+                clienteId: solicitudFormal.getClienteId(),
+                comercianteId: usuarioId,
+            });
 
       // ===== PASO 6: PERSISTENCIA EN BASE DE DATOS =====
       // Guardar la compra en el repositorio

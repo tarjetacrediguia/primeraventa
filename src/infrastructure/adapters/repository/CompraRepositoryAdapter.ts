@@ -469,6 +469,101 @@ export class CompraRepositoryAdapter implements CompraRepositoryPort {
         }
     }
 
+    async getComprasBySolicitudFormalId(solicitudFormalId: number): Promise<Compra[]> {
+        const client = await pool.connect();
+        try {
+            const query = `
+                SELECT c.*, 
+                       cl.nombre_completo as cliente_nombre,
+                       cl.apellido as cliente_apellido,
+                       cl.cuil as cliente_cuil,
+                       com.nombre_comercio,
+                       co.usuario_id as comerciante_id
+                FROM compras c
+                LEFT JOIN clientes cl ON c.cliente_id = cl.id
+                LEFT JOIN comerciantes co ON c.comerciante_id = co.usuario_id
+                LEFT JOIN comercios com ON co.numero_comercio = com.numero_comercio
+                WHERE c.solicitud_formal_id = $1
+                ORDER BY c.fecha_creacion DESC
+            `;
+            const res = await client.query(query, [solicitudFormalId]);
+            
+            const compras: Compra[] = [];
+            for (const row of res.rows) {
+                const compra = new Compra({
+                    id: row.id,
+                    solicitudFormalId: row.solicitud_formal_id,
+                    descripcion: row.descripcion,
+                    cantidadCuotas: row.cantidad_cuotas,
+                    estado: row.estado,
+                    montoTotal: row.monto_total,
+                    clienteId: row.cliente_id,
+                    fechaCreacion: row.fecha_creacion,
+                    fechaActualizacion: row.fecha_actualizacion,
+                    valorCuota: row.valor_cuota,
+                    numeroAutorizacion: row.numero_autorizacion,
+                    numeroCuenta: row.numero_cuenta,
+                    comercianteId: row.comerciante_id,
+                    analistaAprobadorId: row.analista_aprobador_id,
+                    motivoRechazo: row.motivo_rechazo
+                });
+
+                (compra as any).cliente_nombre = `${row.cliente_nombre} ${row.cliente_apellido}`;
+                (compra as any).nombre_comercio = row.nombre_comercio;
+                (compra as any).comerciante_id = row.comerciante_id;
+                (compra as any).cliente_cuil = row.cliente_cuil;
+
+                compras.push(compra);
+            }
+            
+            return compras;
+        } finally {
+            client.release();
+        }
+    }
+
+    // Método para verificar si existe compra aprobada
+    async existeCompraAprobada(solicitudFormalId: number): Promise<boolean> {
+        const client = await pool.connect();
+        try {
+            const query = `
+                SELECT COUNT(*) as count 
+                FROM compras 
+                WHERE solicitud_formal_id = $1 AND estado = 'aprobada'
+            `;
+            const result = await client.query(query, [solicitudFormalId]);
+            return parseInt(result.rows[0].count) > 0;
+        } finally {
+            client.release();
+        }
+    }
+
+    // Método para rechazar compras pendientes cuando se aprueba una
+    async rechazarComprasPendientes(solicitudFormalId: number, compraAprobadaId: number, motivo: string): Promise<void> {
+        const client = await pool.connect();
+        try {
+            await client.query('BEGIN');
+            
+            const query = `
+                UPDATE compras 
+                SET estado = 'rechazada', 
+                    motivo_rechazo = $1,
+                    fecha_actualizacion = CURRENT_TIMESTAMP
+                WHERE solicitud_formal_id = $2 
+                AND id != $3 
+                AND estado = 'pendiente'
+            `;
+            
+            await client.query(query, [motivo, solicitudFormalId, compraAprobadaId]);
+            await client.query('COMMIT');
+        } catch (error) {
+            await client.query('ROLLBACK');
+            throw error;
+        } finally {
+            client.release();
+        }
+    }
+/*
     async getComprasBySolicitudFormalId(solicitudFormalId: number): Promise<any> {
     const client = await pool.connect();
     try {
@@ -509,6 +604,7 @@ export class CompraRepositoryAdapter implements CompraRepositoryPort {
             row.cantidad
         ));
         */
+       /*
         // Crear y retornar la instancia de Compra
         const compra = new Compra({
             id: compraData.id,
@@ -539,7 +635,7 @@ export class CompraRepositoryAdapter implements CompraRepositoryPort {
         client.release();
     }
 }
-
+*/
     async getComprasByEstado(estado: EstadoCompra): Promise<Compra[]> {
     const client = await pool.connect();
     try {
