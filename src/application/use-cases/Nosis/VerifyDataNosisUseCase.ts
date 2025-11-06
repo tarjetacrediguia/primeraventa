@@ -284,7 +284,7 @@ private obtenerMensajeComerciantePorEstado(estado: string, detalle: string): str
       if (detalle.includes("Persona no registrada en SGCG")) {
         return "✅ Cliente no registrado en sistema anterior";
       }
-      return "❌ Cliente rechazado por sistema anterior";
+      return "❌ Cliente rechazado por sistema SGCG";
     default:
       return "⏳ Situación del cliente en revisión";
   }
@@ -297,14 +297,9 @@ private construirMensajeAnalista(situacion: any, estadoFinal: string): string {
   const { Situacion, Detalle, CUILT, Nombres, Apellidos, InfoAdicional1, InfoAdicional2, Issues, Meta } = situacion;
   
   let mensaje = `SITUACIÓN SGCG - ${estadoFinal.toUpperCase()}\n` +
-                `• Estado Original: ${Situacion}\n` +
-                `• Estado Final: ${estadoFinal}\n` +
                 `• Detalle: ${Detalle || 'N/A'}\n` +
                 `• CUILT: ${CUILT || 'No disponible'}\n` +
                 `• Nombre: ${Nombres || 'No disponible'} ${Apellidos || ''}\n` +
-                `• Info Adicional 1: ${InfoAdicional1 || 'N/A'}\n` +
-                `• Info Adicional 2: ${InfoAdicional2 || 'N/A'}\n` +
-                `• Meta: ${Meta || 'N/A'}\n` +
                 `• Issues: ${Issues?.length || 0} problemas detectados`;
 
   if (Issues && Issues.length > 0) {
@@ -341,81 +336,103 @@ private mapearEstadoEureka(estadoEureka: string): "aprobado" | "rechazado" | "pe
    * no tiene deudas y tiene 12 meses de aportes completos
    */
   private verificarRubrosConstruccionContratacion(variables: NosisVariable[]): {
-    esRubroConstruccionContratacion: boolean;
-    estado: "aprobado" | "rechazado";
-    mensaje: string;
-    codigoRubro?: string;
-    descripcionRubro?: string;
-  } {
-    // Obtener el código del rubro del empleador
-    const codigoRubroEmpleador = variables.find(
-      (v) => v.Nombre === "VI_Empleador_Act01_Cod"
-    )?.Valor;
+  esRubroConstruccionContratacion: boolean;
+  estado: "aprobado" | "rechazado" | "pendiente";
+  mensaje: string;
+  codigoRubro?: string;
+  descripcionRubro?: string;
+} {
+  // Obtener el código del rubro del empleador
+  const codigoRubroEmpleador = variables.find(
+    (v) => v.Nombre === "VI_Empleador_Act01_Cod"
+  )?.Valor;
 
-    if (!codigoRubroEmpleador) {
-      return {
-        esRubroConstruccionContratacion: false,
-        estado: "aprobado", // No aplica la regla especial
-        mensaje: "",
-      };
-    }
-
-    // Verificar si pertenece a los rubros de construcción/contratación
-    const esRubroConstruccionContratacion =
-      this.rubrosLaboralesService.esRubroConstruccionOContratacion(
-        codigoRubroEmpleador
-      );
-
-    if (!esRubroConstruccionContratacion) {
-      return {
-        esRubroConstruccionContratacion: false,
-        estado: "aprobado", // No aplica la regla especial
-        mensaje: "",
-      };
-    }
-
-    // Obtener descripción del rubro
-    const descripcionRubro =
-      this.rubrosLaboralesService.obtenerDescripcionRubro(codigoRubroEmpleador);
-
-    // Verificar que no tenga deudas en situación 3-4-5
-    const verificacionDeudas = this.verificarDeudaEntidades(variables);
-    const sinDeudas = verificacionDeudas.estado === "aprobado";
-
-    // Verificar que tenga 12 meses de aportes completos
-    const tiene12Aportes = this.verificar12MesesAportesCompletos(variables);
-
-    // ÚNICA CONDICIÓN DE APROBACIÓN: 12 meses de aportes + sin deudas
-    if (sinDeudas && tiene12Aportes) {
-      return {
-        esRubroConstruccionContratacion: true,
-        estado: "aprobado",
-        codigoRubro: codigoRubroEmpleador,
-        descripcionRubro: descripcionRubro,
-        mensaje: `APROBADO - Trabaja en rubro de construcción/contratación (${codigoRubroEmpleador} - ${descripcionRubro}) sin deudas y con 12 meses de aportes completos`,
-      };
-    } else {
-      // CUALQUIER OTRA COMBINACIÓN ES RECHAZADA
-      let motivoRechazo = `Trabaja en rubro de construcción/contratación (${codigoRubroEmpleador} - ${descripcionRubro}) RECHAZADO - `;
-
-      if (!sinDeudas && !tiene12Aportes) {
-        motivoRechazo +=
-          "no tiene 12 meses de aportes completos y tiene deudas";
-      } else if (!tiene12Aportes) {
-        motivoRechazo += "no tiene 12 meses de aportes completos";
-      } else if (!sinDeudas) {
-        motivoRechazo += "tiene deudas";
-      }
-
-      return {
-        esRubroConstruccionContratacion: true,
-        estado: "rechazado",
-        codigoRubro: codigoRubroEmpleador,
-        descripcionRubro: descripcionRubro,
-        mensaje: motivoRechazo,
-      };
-    }
+  if (!codigoRubroEmpleador) {
+    return {
+      esRubroConstruccionContratacion: false,
+      estado: "aprobado", // No aplica la regla especial
+      mensaje: "",
+    };
   }
+
+  // Verificar si pertenece a los rubros de construcción/contratación
+  const esRubroConstruccionContratacion =
+    this.rubrosLaboralesService.esRubroConstruccionOContratacion(
+      codigoRubroEmpleador
+    );
+
+  if (!esRubroConstruccionContratacion) {
+    return {
+      esRubroConstruccionContratacion: false,
+      estado: "aprobado", // No aplica la regla especial
+      mensaje: "",
+    };
+  }
+
+  // Obtener descripción del rubro
+  const descripcionRubro =
+    this.rubrosLaboralesService.obtenerDescripcionRubro(codigoRubroEmpleador);
+
+  // Verificar deudas en situación 3-4-5
+  const verificacionDeudas = this.verificarDeudaEntidades(variables);
+  const cantidadDeudas = verificacionDeudas.entidades?.length || 0;
+
+  // Verificar referencias comerciales
+  const resultadoReferencias = this.verificarReferenciasComerciales(variables);
+  const cantidadReferencias = resultadoReferencias.totalValidas;
+
+  // Verificar que tenga 12 meses de aportes completos
+  const tiene12Aportes = this.verificar12MesesAportesCompletos(variables);
+
+  // Calcular total de "problemas" (deudas + referencias)
+  const totalProblemas = cantidadDeudas + cantidadReferencias;
+
+  // CONDICIONES SEGÚN LOS NUEVOS REQUISITOS:
+  if (!tiene12Aportes) {
+    return {
+      esRubroConstruccionContratacion: true,
+      estado: "rechazado",
+      codigoRubro: codigoRubroEmpleador,
+      descripcionRubro: descripcionRubro,
+      mensaje: `Trabaja en rubro de construcción/contratación (${codigoRubroEmpleador} - ${descripcionRubro}) RECHAZADO - no tiene 12 meses de aportes completos`,
+    };
+  }
+
+  // Tiene 12 meses de aportes
+  if (totalProblemas === 0) {
+    return {
+      esRubroConstruccionContratacion: true,
+      estado: "aprobado",
+      codigoRubro: codigoRubroEmpleador,
+      descripcionRubro: descripcionRubro,
+      mensaje: `APROBADO - Trabaja en rubro de construcción/contratación (${codigoRubroEmpleador} - ${descripcionRubro}) sin deudas ni referencias comerciales y con 12 meses de aportes completos`,
+    };
+  } else if (totalProblemas === 1) {
+    let motivo = `PENDIENTE - Trabaja en rubro de construcción/contratación (${codigoRubroEmpleador} - ${descripcionRubro}) con 12 meses de aportes completos`;
+    if (cantidadDeudas === 1) {
+      motivo += " y 1 deuda";
+    }
+    if (cantidadReferencias === 1) {
+      motivo += cantidadDeudas === 1 ? " y 1 referencia comercial" : " y 1 referencia comercial";
+    }
+    return {
+      esRubroConstruccionContratacion: true,
+      estado: "pendiente",
+      codigoRubro: codigoRubroEmpleador,
+      descripcionRubro: descripcionRubro,
+      mensaje: motivo,
+    };
+  } else {
+    // 2 o más problemas (deudas + referencias)
+    return {
+      esRubroConstruccionContratacion: true,
+      estado: "rechazado",
+      codigoRubro: codigoRubroEmpleador,
+      descripcionRubro: descripcionRubro,
+      mensaje: `RECHAZADO - Trabaja en rubro de construcción/contratación (${codigoRubroEmpleador} - ${descripcionRubro}) con 12 meses de aportes completos, ${cantidadDeudas} deudas y ${cantidadReferencias} referencias comerciales`,
+    };
+  }
+}
 
   /**
    * Evalúa una regla de validación contra una variable de Nosis
@@ -907,16 +924,18 @@ private mapearEstadoEureka(estadoEureka: string): "aprobado" | "rechazado" | "pe
         aprobados.push("Cumple con criterios de referencias comerciales");
     }
 
-    // ✅ VERIFICACIÓN DE COMBINACIÓN REFERENCIAS + DEUDAS
-    const combinacionReferenciasDeudas = this.verificarCombinacionReferenciasDeudas(
-        resultadoReferencias,
-        tieneDeudaEntidades
-    );
-    if (combinacionReferenciasDeudas.estado === "rechazado") {
-        reglasFallidas.push(combinacionReferenciasDeudas.mensaje!);
-    } else if (combinacionReferenciasDeudas.estado === "pendiente") {
-        pendientes.push(combinacionReferenciasDeudas.mensaje!);
-    }
+// ✅ VERIFICACIÓN DE COMBINACIÓN REFERENCIAS + DEUDAS + SITUACIÓN 2
+const combinacionReferenciasDeudas = this.verificarCombinacionReferenciasDeudas(
+    resultadoReferencias,
+    tieneDeudaEntidades,
+    resultadoSituacion2 
+);
+
+if (combinacionReferenciasDeudas.estado === "rechazado") {
+    reglasFallidas.push(combinacionReferenciasDeudas.mensaje!);
+} else if (combinacionReferenciasDeudas.estado === "pendiente") {
+    pendientes.push(combinacionReferenciasDeudas.mensaje!);
+}
 
     // ✅ VERIFICACIÓN DE SITUACIÓN LABORAL Y MONOTRIBUTO
     const esMonotributista = variables.find((v) => v.Nombre === "VI_Inscrip_Monotributo_Es")?.Valor === "Si";
@@ -1166,47 +1185,70 @@ private construirMotivoPendienteComerciante(pendientes: string[]): string {
     }
   }
 
-  /**
-   * Verifica la combinación específica entre referencias comerciales y entidades con deuda
-   * según las reglas de negocio:
-   * - 1 ref. comercial y 1 entidad en sit 3,4, o 5: pendiente
-   * - 1 referencia comercial y dos entidades con deudas 3,4 o 5: rechazo
-   */
-  private verificarCombinacionReferenciasDeudas(
+/**
+ * Verifica la combinación específica entre:
+ * - Referencias comerciales 
+ * - Entidades en situación 2
+ * - Entidades con deuda activa (sit 3-4-5)
+ * Según las reglas de negocio:
+ * - Suma total de problemas >= 3: RECHAZADO
+ * - Suma total de problemas = 2: PENDIENTE  
+ * - Suma total de problemas <= 1: APROBADO
+ */
+private verificarCombinacionReferenciasDeudas(
     resultadoReferencias: {
-      estado: "aprobado" | "pendiente" | "rechazado";
-      mensaje?: string;
-      referenciasValidas: string[];
-      totalValidas: number;
+        estado: "aprobado" | "pendiente" | "rechazado";
+        mensaje?: string;
+        referenciasValidas: string[];
+        totalValidas: number;
     },
     resultadoDeudas: {
-      estado: "aprobado" | "pendiente" | "rechazado";
-      mensaje?: string;
-      entidades?: number[];
+        estado: "aprobado" | "pendiente" | "rechazado";
+        mensaje?: string;
+        entidades?: number[];
+    },
+    resultadoSituacion2: {
+        estado: "aprobado" | "pendiente" | "rechazado";
+        mensaje?: string;
+        entidades?: number[];
     }
-  ): {
+): {
     estado: "aprobado" | "pendiente" | "rechazado";
     mensaje?: string;
-  } {
-    const tiene1Referencia = resultadoReferencias.totalValidas === 1;
+} {
+    const cantidadReferencias = resultadoReferencias.totalValidas;
     const cantidadEntidadesDeuda = resultadoDeudas.entidades?.length || 0;
+    const cantidadEntidadesSituacion2 = resultadoSituacion2.entidades?.length || 0;
 
-    // Aplicar reglas específicas de combinación
-    if (tiene1Referencia && cantidadEntidadesDeuda === 1) {
-      return {
-        estado: "pendiente",
-        mensaje: `Tiene 1 referencia comercial y 1 entidad con deuda en situación 3-4-5`,
-      };
-    } else if (tiene1Referencia && cantidadEntidadesDeuda >= 2) {
-      return {
-        estado: "rechazado",
-        mensaje: `Tiene 1 referencia comercial y ${cantidadEntidadesDeuda} entidades con deudas en situación 3-4-5`,
-      };
+    // 🔥 REGLA: Cualquier combinación que sume 3 se rechaza
+    const totalCombinado = cantidadReferencias + cantidadEntidadesDeuda + cantidadEntidadesSituacion2;
+    
+    if (totalCombinado >= 3) {
+        return {
+            estado: "rechazado",
+            mensaje: "solicitud rechazada, cliente presenta deuda en 3 o más entidades con situación de riesgo",
+        };
+    }
+
+    // 🔥 REGLA: 1 referencia + 2+ deudas: Rechazado
+    if (cantidadReferencias === 1 && (cantidadEntidadesDeuda + cantidadEntidadesSituacion2) >= 2) {
+        return {
+            estado: "rechazado",
+            mensaje: "solicitud rechazada, cliente presenta deuda en 3 o más entidades con situación de riesgo",
+        };
+    }
+
+    // 🔥 REGLA: 1 referencia + 1 deuda: Pendiente
+    if (cantidadReferencias === 1 && (cantidadEntidadesDeuda + cantidadEntidadesSituacion2) === 1) {
+        return {
+            estado: "pendiente",
+            mensaje: "situación pendiente de revisión",
+        };
     }
 
     // Si no aplican las reglas de combinación, retornar aprobado (no afecta)
     return { estado: "aprobado" };
-  }
+}
 
   /**
    * Verifica si el cliente perdió su empleo recientemente
@@ -1453,19 +1495,15 @@ private construirMotivoPendienteComerciante(pendientes: string[]): string {
 
     const cantidadEntidades = entidadesSituacion2.size;
     const entidadesArray = Array.from(entidadesSituacion2);
-    const nombresEntidades =
-      this.entidadesService.obtenerNombresEntidades(entidadesArray);
+    const nombresEntidades = this.entidadesService.obtenerNombresEntidades(entidadesArray);
 
     let mensaje = "";
 
+    // Mostrar la cantidad de entidades
     if (cantidadEntidades >= 3) {
-      mensaje = `Tiene ${cantidadEntidades} entidades en situación 2: ${nombresEntidades.join(
-        ", "
-      )}`;
+        mensaje = `Tiene ${cantidadEntidades} entidades en situación 2: ${nombresEntidades.join(", ")}`;
     } else if (cantidadEntidades >= 1) {
-      mensaje = `Tiene 1 entidad en situación 2: ${nombresEntidades.join(
-        ", "
-      )}`;
+        mensaje = `Tiene ${cantidadEntidades} entidades en situación 2: ${nombresEntidades.join(", ")}`;
     }
 
     if (cantidadEntidades >= 3) {
@@ -1495,57 +1533,74 @@ private construirMotivoPendienteComerciante(pendientes: string[]): string {
    * @returns Objeto con estado y mensaje de verificación
    */
   private verificarEmpleadoDomesticoSinDeudas(variables: NosisVariable[]): {
-    esEmpleadoDomestico: boolean;
-    estado: "aprobado" | "rechazado";
-    mensaje: string;
-  } {
-    const esEmpleadoDomestico =
-      variables.find((v) => v.Nombre === "VI_EmpleadoDomestico_Es")?.Valor ===
-      "Si";
+  esEmpleadoDomestico: boolean;
+  estado: "aprobado" | "rechazado" | "pendiente";
+  mensaje: string;
+} {
+  const esEmpleadoDomestico =
+    variables.find((v) => v.Nombre === "VI_EmpleadoDomestico_Es")?.Valor ===
+    "Si";
 
-    if (!esEmpleadoDomestico) {
-      return {
-        esEmpleadoDomestico: false,
-        estado: "aprobado", // No aplica la regla especial
-        mensaje: "",
-      };
-    }
-
-    // Verificar que no tenga deudas en situación 3-4-5
-    const verificacionDeudas = this.verificarDeudaEntidades(variables);
-    const sinDeudas = verificacionDeudas.estado === "aprobado";
-
-    // Verificar que tenga 12 meses de aportes completos
-    const tiene12Aportes = this.verificar12MesesAportesCompletos(variables);
-
-    // ÚNICA CONDICIÓN DE APROBACIÓN: 12 meses de aportes + sin deudas
-    if (sinDeudas && tiene12Aportes) {
-      return {
-        esEmpleadoDomestico: true,
-        estado: "aprobado",
-        mensaje:
-          "APROBADO - Empleado doméstico sin deudas y con 12 meses de aportes completos",
-      };
-    } else {
-      // CUALQUIER OTRA COMBINACIÓN ES RECHAZADA
-      let motivoRechazo = "Empleado doméstico RECHAZADO - ";
-
-      if (!sinDeudas && !tiene12Aportes) {
-        motivoRechazo +=
-          "no tiene 12 meses de aportes completos y tiene deudas";
-      } else if (!tiene12Aportes) {
-        motivoRechazo += "no tiene 12 meses de aportes completos";
-      } else if (!sinDeudas) {
-        motivoRechazo += "tiene deudas";
-      }
-
-      return {
-        esEmpleadoDomestico: true,
-        estado: "rechazado",
-        mensaje: motivoRechazo,
-      };
-    }
+  if (!esEmpleadoDomestico) {
+    return {
+      esEmpleadoDomestico: false,
+      estado: "aprobado", // No aplica la regla especial
+      mensaje: "",
+    };
   }
+
+  // Verificar deudas en situación 3-4-5
+  const verificacionDeudas = this.verificarDeudaEntidades(variables);
+  const cantidadDeudas = verificacionDeudas.entidades?.length || 0;
+
+  // Verificar referencias comerciales
+  const resultadoReferencias = this.verificarReferenciasComerciales(variables);
+  const cantidadReferencias = resultadoReferencias.totalValidas;
+
+  // Verificar que tenga 12 meses de aportes completos
+  const tiene12Aportes = this.verificar12MesesAportesCompletos(variables);
+
+  // Calcular total de "problemas" (deudas + referencias)
+  const totalProblemas = cantidadDeudas + cantidadReferencias;
+
+  // CONDICIONES SEGÚN LOS NUEVOS REQUISITOS:
+  if (!tiene12Aportes) {
+    return {
+      esEmpleadoDomestico: true,
+      estado: "rechazado",
+      mensaje: "Empleado doméstico RECHAZADO - no tiene 12 meses de aportes completos",
+    };
+  }
+
+  // Tiene 12 meses de aportes
+  if (totalProblemas === 0) {
+    return {
+      esEmpleadoDomestico: true,
+      estado: "aprobado",
+      mensaje: "APROBADO - Empleado doméstico sin deudas ni referencias comerciales y con 12 meses de aportes completos",
+    };
+  } else if (totalProblemas === 1) {
+    let motivo = "PENDIENTE - Empleado doméstico con 12 meses de aportes completos";
+    if (cantidadDeudas === 1) {
+      motivo += " y 1 deuda";
+    }
+    if (cantidadReferencias === 1) {
+      motivo += cantidadDeudas === 1 ? " y 1 referencia comercial" : " y 1 referencia comercial";
+    }
+    return {
+      esEmpleadoDomestico: true,
+      estado: "pendiente",
+      mensaje: motivo,
+    };
+  } else {
+    // 2 o más problemas (deudas + referencias)
+    return {
+      esEmpleadoDomestico: true,
+      estado: "rechazado",
+      mensaje: `RECHAZADO - Empleado doméstico con 12 meses de aportes completos, ${cantidadDeudas} deudas y ${cantidadReferencias} referencias comerciales`,
+    };
+  }
+}
 
   /**
    * Verifica si el cliente tiene 12 meses de aportes completos
@@ -1618,106 +1673,74 @@ private construirMotivoPendienteComerciante(pendientes: string[]): string {
   /**
    * Verifica el estado de deudas en entidades financieras
    * SOLO considera deuda si en el período MÁS RECIENTE la situación es 3, 4 o 5
-   * Y si el período más reciente está dentro de los 2 períodos más recientes disponibles
    */
-  private verificarDeudaEntidades(variables: NosisVariable[]): {
+private verificarDeudaEntidades(variables: NosisVariable[]): {
     estado: "aprobado" | "pendiente" | "rechazado";
     mensaje?: string;
     entidades?: number[];
-    datosDesactualizados?: boolean;
-  } {
+} {
     const detalleDeudas = variables.find(
-      (v) => v.Nombre === "CI_24m_Detalle"
+        (v) => v.Nombre === "CI_24m_Detalle"
     )?.Valor;
     if (!detalleDeudas) return { estado: "aprobado" };
 
-    // Verificar actualización de datos
-    const datosDesactualizados = this.verificarActualizacionDatos(variables);
-
     const registros = this.parsearDetalleDeudas(detalleDeudas);
+    const entidadesConDeuda = new Set<number>();
 
-    // Agrupar registros por entidad y encontrar el MÁS RECIENTE de CADA ENTIDAD
+    // Por cada entidad, buscar el ÚLTIMO registro disponible
     const entidadesMap = new Map<
-      string,
-      { periodo: number; situacion: number; monto: number }
+        string, 
+        { 
+            ultimoPeriodo: number; 
+            ultimaSituacion: number;
+            tieneDeudaActiva: boolean;
+            periodoDeuda: number;
+        }
     >();
 
+    // Primero: encontrar el último registro de CADA entidad
     for (const registro of registros) {
-      const entidad = registro.entidad;
-
-      // Para cada entidad, mantener solo el registro MÁS RECIENTE
-      if (
-        !entidadesMap.has(entidad) ||
-        registro.periodo > entidadesMap.get(entidad)!.periodo
-      ) {
-        entidadesMap.set(entidad, registro);
-      }
+        const entidad = registro.entidad;
+        const codigoEntidad = parseInt(entidad);
+        
+        if (!entidadesMap.has(entidad) || 
+            registro.periodo > entidadesMap.get(entidad)!.ultimoPeriodo) {
+            
+            entidadesMap.set(entidad, {
+                ultimoPeriodo: registro.periodo,
+                ultimaSituacion: registro.situacion,
+                tieneDeudaActiva: registro.situacion >= 3 && registro.situacion <= 5,
+                periodoDeuda: registro.situacion >= 3 && registro.situacion <= 5 ? registro.periodo : 0
+            });
+        }
     }
 
-    const entidadesConDeudaActiva = new Set<number>();
-
-    // Analizar cada entidad según su situación MÁS RECIENTE
-    for (const [entidad, registroMasReciente] of entidadesMap.entries()) {
-      const codigoEntidad = parseInt(entidad);
-      if (isNaN(codigoEntidad)) continue;
-
-      console.log(
-        `📊 Entidad ${entidad}: Situación más reciente = ${registroMasReciente.situacion} (período ${registroMasReciente.periodo})`
-      );
-
-      // SOLO considerar deuda activa si en el período MÁS RECIENTE está en 3, 4 o 5
-      if (
-        registroMasReciente.situacion >= 3 &&
-        registroMasReciente.situacion <= 5
-      ) {
-        entidadesConDeudaActiva.add(codigoEntidad);
-        console.log(
-          `❌ Entidad ${entidad} con DEUDA ACTIVA (situación ${registroMasReciente.situacion})`
-        );
-      } else if (registroMasReciente.situacion === 1) {
-        console.log(`✅ Entidad ${entidad} REGULARIZADA (situación 1)`);
-      } else if (registroMasReciente.situacion === 2) {
-        console.log(
-          `⚠️ Entidad ${entidad} en situación 2 (no cuenta como deuda activa)`
-        );
-      }
+    // Considerar que si el último estado conocido es 3-4-5, es deuda ACTIVA
+    // aunque no sea el período global más reciente
+    for (const [entidad, datos] of entidadesMap.entries()) {
+        if (datos.tieneDeudaActiva) {
+            const codigoEntidad = parseInt(entidad);
+            entidadesConDeuda.add(codigoEntidad);
+            console.log(`❌ ENTIDAD ${entidad} con DEUDA ACTIVA en período ${datos.periodoDeuda} (situación ${datos.ultimaSituacion})`);
+        }
     }
 
-    const cantidad = entidadesConDeudaActiva.size;
-    const entidadesArray = Array.from(entidadesConDeudaActiva);
-    const nombresEntidades =
-      this.entidadesService.obtenerNombresEntidades(entidadesArray);
+    const cantidad = entidadesConDeuda.size;
+    const entidadesArray = Array.from(entidadesConDeuda);
+    const nombresEntidades = this.entidadesService.obtenerNombresEntidades(entidadesArray);
 
     let mensaje = "";
 
     if (cantidad >= 3) {
-      mensaje = `Tiene deuda ACTIVA en 3 o más entidades con situación 3, 4 o 5: ${nombresEntidades.join(
-        ", "
-      )}`;
+        mensaje = `Tiene deuda ACTIVA en 3 o más entidades con situación 3, 4 o 5: ${nombresEntidades.join(", ")}`;
+        return { estado: "rechazado", mensaje, entidades: entidadesArray };
     } else if (cantidad >= 1) {
-      mensaje = `Tiene deuda ACTIVA en ${cantidad} entidades con situación 3, 4 o 5: ${nombresEntidades.join(
-        ", "
-      )}`;
-    }
-
-    if (cantidad >= 3) {
-      return {
-        estado: "rechazado",
-        mensaje,
-        entidades: entidadesArray,
-        datosDesactualizados,
-      };
-    } else if (cantidad >= 1) {
-      return {
-        estado: "pendiente",
-        mensaje,
-        entidades: entidadesArray,
-        datosDesactualizados,
-      };
+        mensaje = `Tiene deuda ACTIVA en ${cantidad} entidades con situación 3, 4 o 5: ${nombresEntidades.join(", ")}`;
+        return { estado: "pendiente", mensaje, entidades: entidadesArray };
     }
 
     return { estado: "aprobado" };
-  }
+}
 
   /**
    * Verifica si los datos de Nosis están actualizados

@@ -66,7 +66,9 @@ export class CrearSolicitudInicialUseCase {
   ): Promise<CrearSolicitudInicialResponse> {
     try {
       // ===== PASO 1: VERIFICAR SOLICITUDES EXISTENTES =====
-      console.log(`Verificando solicitudes existentes para CUIL: ${cuilCliente}, comerciante: ${comercianteId}`);
+      console.log(
+        `Verificando solicitudes existentes para CUIL: ${cuilCliente}, comerciante: ${comercianteId}`
+      );
 
       const solicitudesExistentes = await this.verificarSolicitudesExistentes(
         cuilCliente,
@@ -89,7 +91,8 @@ export class CrearSolicitudInicialUseCase {
             motivo: "Cliente ya tiene solicitud de otro comercio",
             cuil_cliente: cuilCliente,
             comerciante_original: solicitudesExistentes.comercianteOriginal,
-            nombre_comercio_original: solicitudesExistentes.nombreComercioOriginal,
+            nombre_comercio_original:
+              solicitudesExistentes.nombreComercioOriginal,
           },
           solicitudInicialId: undefined,
         });
@@ -126,8 +129,6 @@ export class CrearSolicitudInicialUseCase {
 
       console.log(`✅ No hay solicitudes bloqueantes, continuando...`);
 
-
-
       // ===== PASO 2: VALIDAR CRÉDITO ACTIVO =====
       console.log(`🔍 Validando créditos activos para CUIL: ${cuilCliente}`);
       const tieneCreditoActivo = await this.tieneCreditoActivo(cuilCliente);
@@ -162,29 +163,39 @@ export class CrearSolicitudInicialUseCase {
       let situacionEureka: SituacionPersonaResponse | undefined;
 
       try {
-        console.log(`🔍 Iniciando verificación con Nosis para CUIL: ${cuilCliente}`);
-        
+        console.log(
+          `🔍 Iniciando verificación con Nosis para CUIL: ${cuilCliente}`
+        );
+
         // 3.1 Verificación con Nosis
         const getNosisData = new GetDataNosisUseCase(this.nosisPort);
         const nosisResponse = await getNosisData.execute(cuilCliente);
-        
+
         console.log(`✅ Nosis: Datos obtenidos exitosamente`);
 
         // 3.2 Verificación con Eureka
-        console.log(`🔍 Iniciando verificación con Eureka para CUIL: ${cuilCliente}`);
+        console.log(
+          `🔍 Iniciando verificación con Eureka para CUIL: ${cuilCliente}`
+        );
         try {
-          const getSituacionPersona = new GetSituacionPersona(new EurekaAdapter());
+          const getSituacionPersona = new GetSituacionPersona(
+            new EurekaAdapter()
+          );
           situacionEureka = await getSituacionPersona.execute(cuilCliente);
-          console.log(`✅ Eureka: Verificación exitosa - Estado: ${situacionEureka.Situacion}`);
-          
+          console.log(
+            `✅ Eureka: Verificación exitosa - Estado: ${situacionEureka.Situacion}`
+          );
+
           if (!situacionEureka.Situacion) {
             throw new Error("Respuesta de Eureka inválida: Estado no definido");
           }
-          
         } catch (errorEureka) {
-          const mensajeError = errorEureka instanceof Error ? errorEureka.message : 'Error desconocido en Eureka';
+          const mensajeError =
+            errorEureka instanceof Error
+              ? errorEureka.message
+              : "Error desconocido en Eureka";
           console.error(`❌ Eureka: Error en verificación - ${mensajeError}`);
-          
+
           await this.notificationService.emitNotification({
             userId: Number(comercianteId),
             type: "error",
@@ -201,12 +212,16 @@ export class CrearSolicitudInicialUseCase {
               servicio: "eureka",
               etapa: "verificacion_eureka",
               cuil_cliente: cuilCliente,
-              tipo_error: this.clasificarErrorEureka(mensajeError)
+              tipo_error: this.clasificarErrorEureka(mensajeError),
             },
             solicitudInicialId: undefined,
           });
 
-          throw new Error(`ERROR_EUREKA:${this.clasificarErrorEureka(mensajeError)}:${mensajeError}`);
+          throw new Error(
+            `ERROR_EUREKA:${this.clasificarErrorEureka(
+              mensajeError
+            )}:${mensajeError}`
+          );
         }
 
         // 3.3 Verificar datos de Nosis
@@ -216,19 +231,26 @@ export class CrearSolicitudInicialUseCase {
           this.entidadesService,
           this.rubrosLaboralesService
         );
-        
-        resultadoNosis = await verifyNosis.execute(nosisResponse, situacionEureka);
+
+        resultadoNosis = await verifyNosis.execute(
+          nosisResponse,
+          situacionEureka
+        );
         nosisData = resultadoNosis.personalData;
 
-        console.log(`✅ Verificación Nosis completada - Estado: ${resultadoNosis.status}`);
-
+        console.log(
+          `✅ Verificación Nosis completada - Estado: ${resultadoNosis.status}`
+        );
       } catch (error) {
         if (error instanceof Error) {
-          if (error.message.startsWith('ERROR_EUREKA:')) {
+          if (error.message.startsWith("ERROR_EUREKA:")) {
             throw error;
-          } else if (error.message.includes('Nosis') || error.message.includes('nosis')) {
+          } else if (
+            error.message.includes("Nosis") ||
+            error.message.includes("nosis")
+          ) {
             console.error(`❌ Nosis: Error en verificación - ${error.message}`);
-            
+
             await this.notificationService.emitNotification({
               userId: Number(comercianteId),
               type: "error",
@@ -245,20 +267,30 @@ export class CrearSolicitudInicialUseCase {
                 servicio: "nosis",
                 etapa: "verificacion_nosis",
                 cuil_cliente: cuilCliente,
-                tipo_error: this.clasificarErrorNosis(error.message)
+                tipo_error: this.clasificarErrorNosis(error.message),
               },
               solicitudInicialId: undefined,
             });
 
-            throw new Error(`ERROR_NOSIS:${this.clasificarErrorNosis(error.message)}:${error.message}`);
+            throw new Error(
+              `ERROR_NOSIS:${this.clasificarErrorNosis(error.message)}:${
+                error.message
+              }`
+            );
           }
         }
-        
+
         console.error(`❌ Error general en integración:`, error);
-        throw new Error(`ERROR_VERIFICACION:INTEGRACION:${error instanceof Error ? error.message : 'Error desconocido en verificación crediticia'}`);
+        throw new Error(
+          `ERROR_VERIFICACION:INTEGRACION:${
+            error instanceof Error
+              ? error.message
+              : "Error desconocido en verificación crediticia"
+          }`
+        );
       }
 
-            // ===== PASO 4: CREAR O RECUPERAR CLIENTE =====
+      // ===== PASO 4: CREAR O RECUPERAR CLIENTE =====
       let cliente: Cliente;
       let clienteTemporal: Cliente;
 
@@ -294,17 +326,23 @@ export class CrearSolicitudInicialUseCase {
         try {
           this.actualizarDatosClienteConNosis(clienteTemporal, nosisData);
           await this.clienteRepository.update(clienteTemporal);
-          console.log(`✅ Datos del cliente actualizados con información de Nosis`);
+          console.log(
+            `✅ Datos del cliente actualizados con información de Nosis`
+          );
         } catch (error) {
-          console.error("Error actualizando datos del cliente con Nosis:", error);
+          console.error(
+            "Error actualizando datos del cliente con Nosis:",
+            error
+          );
         }
       }
 
       // ===== PASO 7: PERSISTIR SOLICITUD =====
-      const solicitudCreada = await this.solicitudInicialRepository.createSolicitudInicial(
-        solicitud,
-        clienteTemporal
-      );
+      const solicitudCreada =
+        await this.solicitudInicialRepository.createSolicitudInicial(
+          solicitud,
+          clienteTemporal
+        );
 
       const solicitudInicialId = solicitudCreada.getId();
 
@@ -334,7 +372,7 @@ export class CrearSolicitudInicialUseCase {
           estado: solicitudCreada.getEstado(),
           nosis_exitoso: !!nosisData,
           eureka_exitoso: !!situacionEureka,
-          estado_eureka: situacionEureka?.Situacion || 'NO_DISPONIBLE'
+          estado_eureka: situacionEureka?.Situacion || "NO_DISPONIBLE",
         },
         solicitudInicialId: solicitudInicialId,
       });
@@ -356,7 +394,6 @@ export class CrearSolicitudInicialUseCase {
         entidadesDeuda: resultadoNosis?.entidadesDeuda,
         referenciasComerciales: resultadoNosis?.referenciasComerciales,
       };
-
     } catch (error) {
       let errorMessage = "Error desconocido";
       if (error instanceof Error) {
@@ -389,41 +426,64 @@ export class CrearSolicitudInicialUseCase {
 
   private clasificarErrorEureka(mensajeError: string): string {
     const mensaje = mensajeError.toLowerCase();
-    
-    if (mensaje.includes('timeout') || mensaje.includes('timed out')) {
-      return 'TIMEOUT';
-    } else if (mensaje.includes('network') || mensaje.includes('conexión') || mensaje.includes('conexion')) {
-      return 'CONEXION';
-    } else if (mensaje.includes('401') || mensaje.includes('authenticat') || mensaje.includes('auth')) {
-      return 'AUTENTICACION';
-    } else if (mensaje.includes('404') || mensaje.includes('not found')) {
-      return 'ENDPOINT_NO_ENCONTRADO';
-    } else if (mensaje.includes('500') || mensaje.includes('internal server')) {
-      return 'ERROR_SERVIDOR';
-    } else if (mensaje.includes('invalid') || mensaje.includes('inválido') || mensaje.includes('invalido')) {
-      return 'CUIL_INVALIDO';
+
+    if (mensaje.includes("timeout") || mensaje.includes("timed out")) {
+      return "TIMEOUT";
+    } else if (
+      mensaje.includes("network") ||
+      mensaje.includes("conexión") ||
+      mensaje.includes("conexion")
+    ) {
+      return "CONEXION";
+    } else if (
+      mensaje.includes("401") ||
+      mensaje.includes("authenticat") ||
+      mensaje.includes("auth")
+    ) {
+      return "AUTENTICACION";
+    } else if (mensaje.includes("404") || mensaje.includes("not found")) {
+      return "ENDPOINT_NO_ENCONTRADO";
+    } else if (mensaje.includes("500") || mensaje.includes("internal server")) {
+      return "ERROR_SERVIDOR";
+    } else if (
+      mensaje.includes("invalid") ||
+      mensaje.includes("inválido") ||
+      mensaje.includes("invalido")
+    ) {
+      return "CUIL_INVALIDO";
     } else {
-      return 'DESCONOCIDO';
+      return "DESCONOCIDO";
     }
   }
 
   private clasificarErrorNosis(mensajeError: string): string {
     const mensaje = mensajeError.toLowerCase();
-    
-    if (mensaje.includes('timeout') || mensaje.includes('timed out')) {
-      return 'TIMEOUT';
-    } else if (mensaje.includes('network') || mensaje.includes('conexión') || mensaje.includes('conexion')) {
-      return 'CONEXION';
-    } else if (mensaje.includes('xml') || mensaje.includes('parse')) {
-      return 'RESPUESTA_INVALIDA';
-    } else if (mensaje.includes('invalid') || mensaje.includes('inválido') || mensaje.includes('invalido')) {
-      return 'CUIL_INVALIDO';
+
+    if (mensaje.includes("timeout") || mensaje.includes("timed out")) {
+      return "TIMEOUT";
+    } else if (
+      mensaje.includes("network") ||
+      mensaje.includes("conexión") ||
+      mensaje.includes("conexion")
+    ) {
+      return "CONEXION";
+    } else if (mensaje.includes("xml") || mensaje.includes("parse")) {
+      return "RESPUESTA_INVALIDA";
+    } else if (
+      mensaje.includes("invalid") ||
+      mensaje.includes("inválido") ||
+      mensaje.includes("invalido")
+    ) {
+      return "CUIL_INVALIDO";
     } else {
-      return 'DESCONOCIDO';
+      return "DESCONOCIDO";
     }
   }
 
-  private actualizarDatosClienteConNosis(cliente: Cliente, nosisData: PersonalData): void {
+  private actualizarDatosClienteConNosis(
+    cliente: Cliente,
+    nosisData: PersonalData
+  ): void {
     if (nosisData.nombreCompleto?.nombre) {
       cliente.setNombreCompleto(nosisData.nombreCompleto.nombre);
     }
@@ -437,7 +497,9 @@ export class CrearSolicitudInicialUseCase {
       cliente.setCuil(nosisData.documentacion.cuil);
     }
     if (nosisData.documentacion?.fechaNacimiento) {
-      cliente.setFechaNacimiento(new Date(nosisData.documentacion.fechaNacimiento));
+      cliente.setFechaNacimiento(
+        new Date(nosisData.documentacion.fechaNacimiento)
+      );
     }
     if (nosisData.documentacion?.sexo !== undefined) {
       cliente.setSexo(nosisData.documentacion.sexo);
@@ -462,9 +524,11 @@ export class CrearSolicitudInicialUseCase {
     }
 
     if (nosisData.datosLaborales?.empleador) {
-      cliente.setEmpleadorRazonSocial(nosisData.datosLaborales.empleador.razonSocial || null);
+      cliente.setEmpleadorRazonSocial(
+        nosisData.datosLaborales.empleador.razonSocial || null
+      );
       cliente.setEmpleadorCuit(nosisData.datosLaborales.empleador.cuit || null);
-      
+
       if (nosisData.datosLaborales.empleador.domicilio) {
         cliente.setEmpleadorDomicilio(
           `${nosisData.datosLaborales.empleador.domicilio.calle || ""} ${
@@ -472,9 +536,11 @@ export class CrearSolicitudInicialUseCase {
           }`
         );
       }
-      
-      cliente.setEmpleadorTelefono(nosisData.datosLaborales.empleador.telefono || null);
-      
+
+      cliente.setEmpleadorTelefono(
+        nosisData.datosLaborales.empleador.telefono || null
+      );
+
       if (nosisData.datosLaborales.empleador.domicilio) {
         cliente.setEmpleadorCodigoPostal(
           nosisData.datosLaborales.empleador.domicilio.codigoPostal || null
@@ -486,12 +552,15 @@ export class CrearSolicitudInicialUseCase {
           nosisData.datosLaborales.empleador.domicilio.provincia || null
         );
       }
-      
+
       if (nosisData.datosLaborales.empleador.rubro) {
-        const descripcionCorta = this.rubrosLaboralesService.obtenerDescripcionCorta(
-          nosisData.datosLaborales.empleador.rubro
+        const descripcionCorta =
+          this.rubrosLaboralesService.obtenerDescripcionCorta(
+            nosisData.datosLaborales.empleador.rubro
+          );
+        cliente.setRubroEmpleador(
+          descripcionCorta || nosisData.datosLaborales.empleador.rubro
         );
-        cliente.setRubroEmpleador(descripcionCorta || nosisData.datosLaborales.empleador.rubro);
       }
     }
   }
@@ -505,11 +574,20 @@ export class CrearSolicitudInicialUseCase {
   ): Promise<void> {
     if (resultadoNosis.status === "aprobado") {
       solicitud.setEstado("aprobada");
-      await this.solicitudInicialRepository.updateSolicitudInicial(solicitud, cliente);
-      
-      solicitud.agregarComentario(crearComentarioComerciante("Solicitud aprobada automáticamente"));
-      solicitud.agregarComentario(crearComentarioAnalista(this.generarComentariosAnalista(resultadoNosis, this.entidadesService)));
-      
+      await this.solicitudInicialRepository.updateSolicitudInicial(
+        solicitud,
+        cliente
+      );
+
+      solicitud.agregarComentario(
+        crearComentarioComerciante("Solicitud aprobada automáticamente")
+      );
+      solicitud.agregarComentario(
+        crearComentarioAnalista(
+          this.generarComentariosAnalista(resultadoNosis, this.entidadesService)
+        )
+      );
+
       await this.historialRepository.registrarEvento({
         usuarioId: null,
         accion: HISTORIAL_ACTIONS.APPROVE_SOLICITUD_INICIAL,
@@ -525,17 +603,37 @@ export class CrearSolicitudInicialUseCase {
           entidadesSituacion2: resultadoNosis.entidadesSituacion2,
           entidadesDeuda: resultadoNosis.entidadesDeuda,
           referenciasComerciales: resultadoNosis.referenciasComerciales,
-          comentarioComerciante: this.generarComentariosComerciante(resultadoNosis, this.entidadesService),
-          comentarioAnalista: this.generarComentariosAnalista(resultadoNosis, this.entidadesService),
+          comentarioComerciante: this.generarComentariosComerciante(
+            resultadoNosis,
+            this.entidadesService
+          ),
+          comentarioAnalista: this.generarComentariosAnalista(
+            resultadoNosis,
+            this.entidadesService
+          ),
         },
         solicitudInicialId,
       });
     } else if (resultadoNosis.status === "pendiente") {
       solicitud.setEstado("pendiente");
-      solicitud.agregarComentario(crearComentarioComerciante(this.generarComentariosComerciante(resultadoNosis, this.entidadesService)));
-      solicitud.agregarComentario(crearComentarioAnalista(this.generarComentariosAnalista(resultadoNosis, this.entidadesService)));
+      solicitud.agregarComentario(
+        crearComentarioComerciante(
+          this.generarComentariosComerciante(
+            resultadoNosis,
+            this.entidadesService
+          )
+        )
+      );
+      solicitud.agregarComentario(
+        crearComentarioAnalista(
+          this.generarComentariosAnalista(resultadoNosis, this.entidadesService)
+        )
+      );
 
-      await this.solicitudInicialRepository.updateSolicitudInicial(solicitud, cliente);
+      await this.solicitudInicialRepository.updateSolicitudInicial(
+        solicitud,
+        cliente
+      );
 
       await this.historialRepository.registrarEvento({
         usuarioId: null,
@@ -552,17 +650,37 @@ export class CrearSolicitudInicialUseCase {
           entidadesSituacion2: resultadoNosis.entidadesSituacion2,
           entidadesDeuda: resultadoNosis.entidadesDeuda,
           referenciasComerciales: resultadoNosis.referenciasComerciales,
-          comentarioComerciante: this.generarComentariosComerciante(resultadoNosis, this.entidadesService),
-          comentarioAnalista: this.generarComentariosAnalista(resultadoNosis, this.entidadesService),
+          comentarioComerciante: this.generarComentariosComerciante(
+            resultadoNosis,
+            this.entidadesService
+          ),
+          comentarioAnalista: this.generarComentariosAnalista(
+            resultadoNosis,
+            this.entidadesService
+          ),
         },
         solicitudInicialId,
       });
     } else if (resultadoNosis.status === "rechazado") {
       solicitud.setEstado("rechazada");
-      solicitud.agregarComentario(crearComentarioComerciante(this.generarComentariosComerciante(resultadoNosis, this.entidadesService)));
-      solicitud.agregarComentario(crearComentarioAnalista(this.generarComentariosAnalista(resultadoNosis, this.entidadesService)));
+      solicitud.agregarComentario(
+        crearComentarioComerciante(
+          this.generarComentariosComerciante(
+            resultadoNosis,
+            this.entidadesService
+          )
+        )
+      );
+      solicitud.agregarComentario(
+        crearComentarioAnalista(
+          this.generarComentariosAnalista(resultadoNosis, this.entidadesService)
+        )
+      );
 
-      await this.solicitudInicialRepository.updateSolicitudInicial(solicitud, cliente);
+      await this.solicitudInicialRepository.updateSolicitudInicial(
+        solicitud,
+        cliente
+      );
 
       await this.historialRepository.registrarEvento({
         usuarioId: null,
@@ -579,151 +697,319 @@ export class CrearSolicitudInicialUseCase {
           entidadesSituacion2: resultadoNosis.entidadesSituacion2,
           entidadesDeuda: resultadoNosis.entidadesDeuda,
           referenciasComerciales: resultadoNosis.referenciasComerciales,
-          comentarioComerciante: this.generarComentariosComerciante(resultadoNosis, this.entidadesService),
-          comentarioAnalista: this.generarComentariosAnalista(resultadoNosis, this.entidadesService),
+          comentarioComerciante: this.generarComentariosComerciante(
+            resultadoNosis,
+            this.entidadesService
+          ),
+          comentarioAnalista: this.generarComentariosAnalista(
+            resultadoNosis,
+            this.entidadesService
+          ),
         },
         solicitudInicialId,
       });
     } else {
       solicitud.setEstado("pendiente");
-      await this.solicitudInicialRepository.updateSolicitudInicial(solicitud, cliente);
+      await this.solicitudInicialRepository.updateSolicitudInicial(
+        solicitud,
+        cliente
+      );
       await this.notificarAnalistas(solicitud, cliente);
     }
   }
 
-  private generarComentariosAnalista(resultadoNosis: VerificationResult, entidadesService: EntidadesService): string {
-    let comentario = "";
+  private generarComentariosAnalista(
+    resultadoNosis: VerificationResult,
+    entidadesService: EntidadesService
+  ): string {
+    let comentario = "📊 INFORME DETALLADO DE VERIFICACIÓN\n\n";
 
+    // 1. Información de Eureka
     if (resultadoNosis.eurekaMensajeAnalista) {
-      comentario += `${resultadoNosis.eurekaMensajeAnalista}\n\n`;
+      comentario += "1. SISTEMA ANTERIOR (EUREKA):\n";
+      comentario += `   ${resultadoNosis.eurekaMensajeAnalista}\n\n`;
     }
 
-    comentario += `Resultado Nosis: ${resultadoNosis.status}. `;
-
-    if (resultadoNosis.reglasFallidas && resultadoNosis.reglasFallidas.length > 0) {
-      comentario += `Rechazos: ${resultadoNosis.reglasFallidas.join("; ")}. `;
+    // 2. Resultado general de Nosis
+    comentario += "2. RESULTADO VERIFICACIÓN NOSIS:\n";
+    comentario += `   • Estado: ${resultadoNosis.status.toUpperCase()}\n`;
+    if (resultadoNosis.score) {
+      comentario += `   • Score: ${resultadoNosis.score}\n`;
     }
+    comentario += "\n";
 
-    if (resultadoNosis.pendientes && resultadoNosis.pendientes.length > 0) {
-      comentario += `Pendientes: ${resultadoNosis.pendientes.join("; ")}. `;
-    }
-
+    // 3. Criterios aprobados
     if (resultadoNosis.aprobados && resultadoNosis.aprobados.length > 0) {
-      comentario += `Aprobados: ${resultadoNosis.aprobados.join("; ")}. `;
+      comentario += "3. ✅ CRITERIOS APROBADOS:\n";
+      resultadoNosis.aprobados.forEach((aprobado, index) => {
+        comentario += `   ${index + 1}. ${aprobado}\n`;
+      });
+      comentario += "\n";
     }
 
-    if (resultadoNosis.entidadesSituacion2 && resultadoNosis.entidadesSituacion2.length > 0) {
-      const nombresEntidades = entidadesService.obtenerNombresEntidades(resultadoNosis.entidadesSituacion2);
-      comentario += `Entidades situación 2: ${nombresEntidades.join(", ")}. `;
+    // 4. Motivos de rechazo
+    if (
+      resultadoNosis.reglasFallidas &&
+      resultadoNosis.reglasFallidas.length > 0
+    ) {
+      comentario += "4. ❌ MOTIVOS DE RECHAZO:\n";
+      resultadoNosis.reglasFallidas.forEach((rechazo, index) => {
+        comentario += `   ${index + 1}. ${rechazo}\n`;
+      });
+      comentario += "\n";
     }
 
-    if (resultadoNosis.entidadesDeuda && resultadoNosis.entidadesDeuda.length > 0) {
-      const nombresEntidades = entidadesService.obtenerNombresEntidades(resultadoNosis.entidadesDeuda);
-      comentario += `Entidades con deuda: ${nombresEntidades.join(", ")}. `;
+    // 5. Pendientes de revisión
+    if (resultadoNosis.pendientes && resultadoNosis.pendientes.length > 0) {
+      comentario += "5. ⚠️ PENDIENTES DE REVISIÓN:\n";
+      resultadoNosis.pendientes.forEach((pendiente, index) => {
+        comentario += `   ${index + 1}. ${pendiente}\n`;
+      });
+      comentario += "\n";
     }
 
+    // 6. Entidades en situación 2
+    if (
+      resultadoNosis.entidadesSituacion2 &&
+      resultadoNosis.entidadesSituacion2.length > 0
+    ) {
+      const nombresEntidades = entidadesService.obtenerNombresEntidades(
+        resultadoNosis.entidadesSituacion2
+      );
+      comentario += "6. 🟡 ENTIDADES EN SITUACIÓN 2 (ALERTA):\n";
+      nombresEntidades.forEach((entidad, index) => {
+        comentario += `   ${index + 1}. ${entidad}\n`;
+      });
+      comentario += `   • Total: ${resultadoNosis.entidadesSituacion2.length} entidades\n\n`;
+    }
+
+    // 7. Entidades con deuda grave (3-4-5)
+    if (
+      resultadoNosis.entidadesDeuda &&
+      resultadoNosis.entidadesDeuda.length > 0
+    ) {
+      const nombresEntidades = entidadesService.obtenerNombresEntidades(
+        resultadoNosis.entidadesDeuda
+      );
+      comentario += "7. 🔴 ENTIDADES CON DEUDA GRAVE (SIT 3-4-5):\n";
+      nombresEntidades.forEach((entidad, index) => {
+        comentario += `   ${index + 1}. ${entidad}\n`;
+      });
+      comentario += `   • Total: ${resultadoNosis.entidadesDeuda.length} entidades\n\n`;
+    }
+
+    // 8. Referencias comerciales
     if (resultadoNosis.referenciasComerciales) {
       const ref = resultadoNosis.referenciasComerciales;
-      comentario += `Ref. válidas: ${ref.totalValidas} (${ref.referenciasValidas.join(", ")}). `;
-      comentario += `Ref. no válidas: ${ref.totalInvalidas} (${ref.referenciasInvalidas.join(", ")}). `;
+      comentario += "8. 📋 REFERENCIAS COMERCIALES:\n";
+      comentario += `   • Válidas: ${ref.totalValidas}\n`;
+      if (ref.referenciasValidas.length > 0) {
+        comentario += "   • Detalle referencias válidas:\n";
+        ref.referenciasValidas.forEach((referencia, index) => {
+          comentario += `     ${index + 1}. ${referencia}\n`;
+        });
+      }
+      if (ref.referenciasInvalidas.length > 0) {
+        comentario += `   • No válidas: ${ref.totalInvalidas}\n`;
+        comentario += "   • Referencias excluidas (telefonía):\n";
+        ref.referenciasInvalidas.forEach((referencia, index) => {
+          comentario += `     ${index + 1}. ${referencia}\n`;
+        });
+      }
+      comentario += "\n";
+    }
+
+    // 9. Resumen ejecutivo
+    comentario += "9. 📈 RESUMEN EJECUTIVO:\n";
+    const totalProblemas =
+      (resultadoNosis.reglasFallidas?.length || 0) +
+      (resultadoNosis.pendientes?.length || 0);
+
+    if (totalProblemas === 0) {
+      comentario +=
+        "   • Cliente cumple con todos los criterios de aprobación\n";
+      comentario += "   • Sin observaciones críticas\n";
+    } else {
+      comentario += `   • Total de observaciones: ${totalProblemas}\n`;
+      comentario += `   • Motivos rechazo: ${
+        resultadoNosis.reglasFallidas?.length || 0
+      }\n`;
+      comentario += `   • Pendientes revisión: ${
+        resultadoNosis.pendientes?.length || 0
+      }\n`;
     }
 
     return comentario;
   }
 
-  private generarComentariosComerciante(resultadoNosis: VerificationResult, entidadesService: EntidadesService): string {
-    // 1. PRIMERO - Si hay RECHAZOS de Nosis, mostrar esos
-  if (resultadoNosis.reglasFallidas && resultadoNosis.reglasFallidas.length > 0) {
-    let motivo = "Solicitud rechazada";
-    const motivosPrincipales: string[] = [];
-
-    for (const regla of resultadoNosis.reglasFallidas) {
-      if (regla.includes("entidades en situación 2")) {
-        const match = regla.match(/(\d+) entidades/);
-        const cantidad = match ? match[1] : "varias";
-        motivosPrincipales.push(`tiene ${cantidad} entidades en situación 2`);
-      } else if (regla.includes("entidades con deuda")) {
-        const match = regla.match(/(\d+) entidades/);
-        const cantidad = match ? match[1] : "varias";
-        motivosPrincipales.push(`tiene deuda con ${cantidad} entidades`);
-      } else if (regla.includes("referencias comerciales")) {
-        const match = regla.match(/(\d+) referencias comerciales válidas/);
-        if (match) {
-          motivosPrincipales.push(`tiene ${match[1]} referencias comerciales válidas (máximo permitido: 2)`);
-        } else {
-          motivosPrincipales.push("no cumple con criterios de referencias comerciales");
+  private generarComentariosComerciante(
+    resultadoNosis: VerificationResult,
+    entidadesService: EntidadesService
+  ): string {
+    // Mensajes específicos para combinaciones (alta prioridad)
+    if (resultadoNosis.reglasFallidas) {
+      for (const regla of resultadoNosis.reglasFallidas) {
+        if (
+          regla.includes("Combinación rechazada") ||
+          (regla.includes("1 referencia comercial +") &&
+            regla.includes("deudas = RECHAZADO"))
+        ) {
+          return this.formatearMensajeComerciante("RECHAZADO", [regla]);
         }
-      } else if (regla.includes("tarjeta Crediguía")) {
-        motivosPrincipales.push("tiene tarjeta Crediguía activa");
-      } else if (regla.includes("aporte")) {
-        motivosPrincipales.push("no cumple con el mínimo de aportes requerido");
-      } else if (regla.includes("jubilado")) {
-        motivosPrincipales.push("es jubilado");
-      } else if (regla.includes("monotributista")) {
-        motivosPrincipales.push("es monotributista sin empleo registrado");
-      } else if (regla.includes("situación laboral")) {
-        motivosPrincipales.push("no tiene situación laboral registrada");
-      } else {
-        const partePrincipal = regla.split(":")[0] || regla;
-        motivosPrincipales.push(partePrincipal.toLowerCase());
       }
     }
 
-    if (motivosPrincipales.length > 0) {
-      motivo += `: ${motivosPrincipales.join(", ")}`;
-    }
+    // 1. RECHAZOS de Nosis (prioridad alta)
+    if (
+      resultadoNosis.reglasFallidas &&
+      resultadoNosis.reglasFallidas.length > 0
+    ) {
+      const motivosRechazo: string[] = [];
 
-    return motivo;
-  }
-
-  // 2. SEGUNDO - Si hay PENDIENTES de Nosis, mostrar esos (IGNORAR Eureka)
-  if (resultadoNosis.pendientes && resultadoNosis.pendientes.length > 0) {
-    let motivo = "Solicitud pendiente de revisión manual";
-    const motivosPendientes: string[] = [];
-    
-    for (const pendiente of resultadoNosis.pendientes) {
-      if (pendiente.includes("entidades en situación 2")) {
-        motivosPendientes.push("tiene 1 entidad en situación 2");
-      } else if (pendiente.includes("entidades con deuda")) {
-        const match = pendiente.match(/(\d+) entidades/);
-        const cantidad = match ? match[1] : "algunas";
-        motivosPendientes.push(`tiene deuda con ${cantidad} entidades`);
-      } else if (pendiente.includes("referencias comerciales")) {
-        const match = pendiente.match(/(\d+) referencia/);
-        if (match) {
-          motivosPendientes.push(`tiene ${match[1]} referencia(s) comercial(es) válida(s)`);
+      resultadoNosis.reglasFallidas.forEach((regla) => {
+        if (regla.includes("entidades en situación 2")) {
+          const match = regla.match(/(\d+) entidades/);
+          const cantidad = match ? match[1] : "varias";
+          motivosRechazo.push(
+            `${cantidad} alertas crediticias en entidades bancarias`
+          );
+        } else if (regla.includes("entidades con deuda")) {
+          const match = regla.match(/(\d+) entidades/);
+          const cantidad = match ? match[1] : "varias";
+          motivosRechazo.push(`deudas activas con ${cantidad} entidades`);
+        } else if (regla.includes("referencias comerciales")) {
+          const match = regla.match(/(\d+) referencias comerciales válidas/);
+          if (match) {
+            motivosRechazo.push(
+              `${match[1]} referencias comerciales (máximo permitido: 2)`
+            );
+          } else {
+            motivosRechazo.push(
+              "no cumple con criterios de referencias comerciales"
+            );
+          }
+        } else if (regla.includes("tarjeta Crediguía")) {
+          motivosRechazo.push("tarjeta Crediguía activa");
+        } else if (regla.includes("aporte")) {
+          motivosRechazo.push("no cumple con el mínimo de aportes requerido");
+        } else if (regla.includes("jubilado")) {
+          motivosRechazo.push("cliente jubilado");
+        } else if (regla.includes("monotributista")) {
+          motivosRechazo.push("monotributista sin empleo registrado");
+        } else if (regla.includes("situación laboral")) {
+          motivosRechazo.push("sin situación laboral registrada");
         } else {
-          motivosPendientes.push("requiere validación de referencias comerciales");
+          // Extraer solo la parte principal del mensaje
+          const partePrincipal = regla.split(":")[0] || regla;
+          motivosRechazo.push(partePrincipal.toLowerCase());
         }
-      } else {
-        motivosPendientes.push(pendiente.toLowerCase());
-      }
+      });
+
+      return this.formatearMensajeComerciante("RECHAZADO", motivosRechazo);
     }
-    
-    if (motivosPendientes.length > 0) {
-      motivo += `: ${motivosPendientes.join(", ")}`;
+
+    // 2. PENDIENTES de Nosis (prioridad media)
+    if (resultadoNosis.pendientes && resultadoNosis.pendientes.length > 0) {
+      const motivosPendientes: string[] = [];
+
+      resultadoNosis.pendientes.forEach((pendiente) => {
+        if (pendiente.includes("entidades en situación 2")) {
+          motivosPendientes.push("1 alerta crediticia en entidad bancaria");
+        } else if (pendiente.includes("entidades con deuda")) {
+          const match = pendiente.match(/(\d+) entidades/);
+          const cantidad = match ? match[1] : "algunas";
+          motivosPendientes.push(`deudas con ${cantidad} entidades`);
+        } else if (pendiente.includes("referencias comerciales")) {
+          const match = pendiente.match(/(\d+) referencia/);
+          if (match) {
+            motivosPendientes.push(
+              `${match[1]} referencia(s) comercial(es) a validar`
+            );
+          } else {
+            motivosPendientes.push("referencias comerciales a validar");
+          }
+        } else {
+          motivosPendientes.push(pendiente.toLowerCase());
+        }
+      });
+
+      return this.formatearMensajeComerciante("PENDIENTE", motivosPendientes);
     }
-    return motivo;
+
+    // 3. Información de Eureka (prioridad baja)
+    if (resultadoNosis.eurekaMensajeComerciante) {
+      return this.formatearMensajeComerciante("INFORMACIÓN SISTEMA ANTERIOR", [
+        resultadoNosis.eurekaMensajeComerciante,
+      ]);
+    }
+
+    // 4. Estado aprobado
+    if (resultadoNosis.status === "aprobado") {
+      return this.formatearMensajeComerciante("APROBADO", [
+        "Solicitud aprobada automáticamente",
+      ]);
+    }
+
+    return this.formatearMensajeComerciante("EN PROCESO", [
+      "Solicitud en proceso de evaluación",
+    ]);
   }
 
-  // 3. TERCERO - Solo si NO hay rechazos NI pendientes de Nosis, usar Eureka
-  if (resultadoNosis.eurekaMensajeComerciante) {
-    return resultadoNosis.eurekaMensajeComerciante;
-  }
+  /**
+   * Formatea el mensaje para el comerciante con estructura clara y numerada
+   */
+  private formatearMensajeComerciante(
+    estado: string,
+    motivos: string[]
+  ): string {
+    let mensaje = "";
 
-  // 4. Estado aprobado sin mensaje específico de Eureka
-  if (resultadoNosis.status === "aprobado") {
-    return "Solicitud aprobada automáticamente";
-  }
+    switch (estado) {
+      case "RECHAZADO":
+        mensaje = "❌ SOLICITUD RECHAZADA\n\n";
+        mensaje += "Motivos principales:\n";
+        motivos.forEach((motivo, index) => {
+          mensaje += `${index + 1}. ${motivo}\n`;
+        });
+        break;
 
-  return "Solicitud en proceso de evaluación";
+      case "PENDIENTE":
+        mensaje = "⚠️ SOLICITUD PENDIENTE DE REVISIÓN\n\n";
+        mensaje += "Se requiere validación manual por:\n";
+        motivos.forEach((motivo, index) => {
+          mensaje += `${index + 1}. ${motivo}\n`;
+        });
+        break;
+
+      case "APROBADO":
+        mensaje = "✅ SOLICITUD APROBADA\n\n";
+        mensaje += motivos.join("\n");
+        break;
+
+      case "INFORMACIÓN SISTEMA ANTERIOR":
+        mensaje = "📋 INFORMACIÓN DEL SISTEMA ANTERIOR\n\n";
+        mensaje += motivos.join("\n");
+        break;
+
+      default:
+        mensaje = "🔄 SOLICITUD EN PROCESO\n\n";
+        mensaje += motivos.join("\n");
+    }
+
+    return mensaje;
   }
 
   private async tieneCreditoActivo(cuilCliente: string): Promise<boolean> {
-    const solicitudesFormales = await this.solicitudFormalRepository.getSolicitudesFormalesByCuil(cuilCliente);
+    const solicitudesFormales =
+      await this.solicitudFormalRepository.getSolicitudesFormalesByCuil(
+        cuilCliente
+      );
 
     for (const solicitud of solicitudesFormales) {
-      const contratos = await this.contratoRepository.getContratosBySolicitudFormalId(solicitud.getId());
+      const contratos =
+        await this.contratoRepository.getContratosBySolicitudFormalId(
+          solicitud.getId()
+        );
       const tieneContratoActivo = contratos.some(
         (contrato) => contrato.getEstado().toLowerCase() === "generado"
       );
@@ -735,9 +1021,13 @@ export class CrearSolicitudInicialUseCase {
     return false;
   }
 
-  private async notificarAnalistas(solicitud: SolicitudInicial, cliente: Cliente): Promise<void> {
+  private async notificarAnalistas(
+    solicitud: SolicitudInicial,
+    cliente: Cliente
+  ): Promise<void> {
     try {
-      const analistaIds = await this.analistaRepository.obtenerIdsAnalistasActivos();
+      const analistaIds =
+        await this.analistaRepository.obtenerIdsAnalistasActivos();
       const notificaciones = analistaIds.map((analistaId) =>
         this.notificationService.emitNotification({
           userId: analistaId,
@@ -757,7 +1047,10 @@ export class CrearSolicitudInicialUseCase {
     }
   }
 
-  private async verificarSolicitudesExistentes(cuilCliente: string, comercianteIdActual: number): Promise<{
+  private async verificarSolicitudesExistentes(
+    cuilCliente: string,
+    comercianteIdActual: number
+  ): Promise<{
     tieneSolicitudOtroComercio: boolean;
     tieneSolicitudMismoComercio: boolean;
     comercianteOriginal?: number;
@@ -765,36 +1058,50 @@ export class CrearSolicitudInicialUseCase {
   }> {
     try {
       console.log(`🔍 Buscando solicitudes para CUIL: ${cuilCliente}`);
-      const solicitudesCliente = await this.solicitudInicialRepository.getSolicitudesInicialesByCuil(cuilCliente);
-      console.log(`📊 Encontradas ${solicitudesCliente.length} solicitudes para el cliente`);
+      const solicitudesCliente =
+        await this.solicitudInicialRepository.getSolicitudesInicialesByCuil(
+          cuilCliente
+        );
+      console.log(
+        `📊 Encontradas ${solicitudesCliente.length} solicitudes para el cliente`
+      );
 
       if (solicitudesCliente.length === 0) {
-        return { 
-          tieneSolicitudOtroComercio: false, 
-          tieneSolicitudMismoComercio: false 
+        return {
+          tieneSolicitudOtroComercio: false,
+          tieneSolicitudMismoComercio: false,
         };
       }
 
-      const solicitudesBloqueantes = await this.filtrarSolicitudesBloqueantes(solicitudesCliente, comercianteIdActual);
-      console.log(`📊 Solicitudes bloqueantes totales: ${solicitudesBloqueantes.length}`);
+      const solicitudesBloqueantes = await this.filtrarSolicitudesBloqueantes(
+        solicitudesCliente,
+        comercianteIdActual
+      );
+      console.log(
+        `📊 Solicitudes bloqueantes totales: ${solicitudesBloqueantes.length}`
+      );
 
       if (solicitudesBloqueantes.length === 0) {
-        return { 
-          tieneSolicitudOtroComercio: false, 
-          tieneSolicitudMismoComercio: false 
+        return {
+          tieneSolicitudOtroComercio: false,
+          tieneSolicitudMismoComercio: false,
         };
       }
 
       const solicitudesMismoComercio = solicitudesBloqueantes.filter(
-        solicitud => solicitud.getComercianteId() === comercianteIdActual
-      );
-      
-      const solicitudesOtroComercio = solicitudesBloqueantes.filter(
-        solicitud => solicitud.getComercianteId() !== comercianteIdActual
+        (solicitud) => solicitud.getComercianteId() === comercianteIdActual
       );
 
-      console.log(`📊 Solicitudes bloqueantes mismo comercio: ${solicitudesMismoComercio.length}`);
-      console.log(`📊 Solicitudes bloqueantes otro comercio: ${solicitudesOtroComercio.length}`);
+      const solicitudesOtroComercio = solicitudesBloqueantes.filter(
+        (solicitud) => solicitud.getComercianteId() !== comercianteIdActual
+      );
+
+      console.log(
+        `📊 Solicitudes bloqueantes mismo comercio: ${solicitudesMismoComercio.length}`
+      );
+      console.log(
+        `📊 Solicitudes bloqueantes otro comercio: ${solicitudesOtroComercio.length}`
+      );
 
       if (solicitudesOtroComercio.length > 0) {
         const solicitudOriginal = solicitudesOtroComercio[0];
@@ -803,11 +1110,15 @@ export class CrearSolicitudInicialUseCase {
 
         if (comercianteOriginalId) {
           try {
-            const comercianteOriginal = await this.comercianteRepository.findById(comercianteOriginalId);
+            const comercianteOriginal =
+              await this.comercianteRepository.findById(comercianteOriginalId);
             nombreComercioOriginal = comercianteOriginal.getNombreComercio();
             console.log(`🏪 Comercio original: ${nombreComercioOriginal}`);
           } catch (error) {
-            console.error("Error obteniendo datos del comerciante original:", error);
+            console.error(
+              "Error obteniendo datos del comerciante original:",
+              error
+            );
           }
         }
 
@@ -826,28 +1137,36 @@ export class CrearSolicitudInicialUseCase {
         };
       }
 
-      return { 
-        tieneSolicitudOtroComercio: false, 
-        tieneSolicitudMismoComercio: false 
+      return {
+        tieneSolicitudOtroComercio: false,
+        tieneSolicitudMismoComercio: false,
       };
     } catch (error) {
-      console.error("❌ Error en verificación de solicitudes existentes:", error);
-      return { 
-        tieneSolicitudOtroComercio: false, 
-        tieneSolicitudMismoComercio: false 
+      console.error(
+        "❌ Error en verificación de solicitudes existentes:",
+        error
+      );
+      return {
+        tieneSolicitudOtroComercio: false,
+        tieneSolicitudMismoComercio: false,
       };
     }
   }
 
-  private async filtrarSolicitudesBloqueantes(solicitudesCliente: SolicitudInicial[], comercianteIdActual: number): Promise<SolicitudInicial[]> {
+  private async filtrarSolicitudesBloqueantes(
+    solicitudesCliente: SolicitudInicial[],
+    comercianteIdActual: number
+  ): Promise<SolicitudInicial[]> {
     const solicitudesBloqueantes: SolicitudInicial[] = [];
 
     for (const solicitud of solicitudesCliente) {
       const solicitudComercianteId = solicitud.getComercianteId();
       const esMismoComerciante = solicitudComercianteId === comercianteIdActual;
       const estado = solicitud.getEstado();
-      
-      console.log(`📋 Analizando Solicitud ID: ${solicitud.getId()}, Estado: ${estado}, Comerciante: ${solicitudComercianteId}`);
+
+      console.log(
+        `📋 Analizando Solicitud ID: ${solicitud.getId()}, Estado: ${estado}, Comerciante: ${solicitudComercianteId}`
+      );
 
       let esBloqueante = false;
 
@@ -870,16 +1189,28 @@ export class CrearSolicitudInicialUseCase {
         switch (estado) {
           case "pendiente":
             esBloqueante = true;
-            console.log(`   🚫 BLOQUEANTE (otro comercio): Solicitud pendiente en evaluación`);
+            console.log(
+              `   🚫 BLOQUEANTE (otro comercio): Solicitud pendiente en evaluación`
+            );
             break;
           case "rechazada":
             esBloqueante = true;
-            console.log(`   🚫 BLOQUEANTE (otro comercio): Solicitud rechazada`);
+            console.log(
+              `   🚫 BLOQUEANTE (otro comercio): Solicitud rechazada`
+            );
             break;
           case "aprobada":
-            const tieneComprasActivas = await this.tieneComprasActivas(solicitud);
+            const tieneComprasActivas = await this.tieneComprasActivas(
+              solicitud
+            );
             esBloqueante = tieneComprasActivas;
-            console.log(`   ${tieneComprasActivas ? '🚫 BLOQUEANTE' : '✅ PERMITIDA'} (otro comercio): Solicitud aprobada ${tieneComprasActivas ? 'CON' : 'SIN'} compras activas`);
+            console.log(
+              `   ${
+                tieneComprasActivas ? "🚫 BLOQUEANTE" : "✅ PERMITIDA"
+              } (otro comercio): Solicitud aprobada ${
+                tieneComprasActivas ? "CON" : "SIN"
+              } compras activas`
+            );
             break;
           case "expirada":
             esBloqueante = false;
@@ -898,23 +1229,32 @@ export class CrearSolicitudInicialUseCase {
     return solicitudesBloqueantes;
   }
 
-  private async tieneComprasActivas(solicitudInicial: SolicitudInicial): Promise<boolean> {
+  private async tieneComprasActivas(
+    solicitudInicial: SolicitudInicial
+  ): Promise<boolean> {
     try {
-      const solicitudFormal = await this.solicitudFormalRepository.getSolicitudFormalBySolicitudInicialId(solicitudInicial.getId());
+      const solicitudFormal =
+        await this.solicitudFormalRepository.getSolicitudFormalBySolicitudInicialId(
+          solicitudInicial.getId()
+        );
 
       if (!solicitudFormal) {
         console.log(`   📦 No hay solicitud formal asociada`);
         return false;
       }
 
-      const compras = await this.compraRepository.getComprasBySolicitudFormalId(solicitudFormal.getId());
-      const tieneComprasActivas = compras.some((compra: { getEstado: () => string; }) => 
-        compra.getEstado().toLowerCase() !== 'rechazada'
+      const compras = await this.compraRepository.getComprasBySolicitudFormalId(
+        solicitudFormal.getId()
+      );
+      const tieneComprasActivas = compras.some(
+        (compra: { getEstado: () => string }) =>
+          compra.getEstado().toLowerCase() !== "rechazada"
       );
 
-      console.log(`   📦 Compras encontradas: ${compras.length}, Activas: ${tieneComprasActivas}`);
+      console.log(
+        `   📦 Compras encontradas: ${compras.length}, Activas: ${tieneComprasActivas}`
+      );
       return tieneComprasActivas;
-
     } catch (error) {
       console.error(`   ❌ Error verificando compras:`, error);
       return false;

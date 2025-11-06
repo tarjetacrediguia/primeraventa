@@ -8,7 +8,7 @@
  * Todas las rutas están protegidas por el middleware de rol de administrador.
  */
 import { Router } from 'express';
-import { esAdministrador } from './middlewares/rolesMiddleware';
+import { esAdministrador, esComercianteOAnalistaOAdministrador } from './middlewares/rolesMiddleware';
 import { 
     getConfiguracion, 
     updateConfiguracion, 
@@ -18,7 +18,7 @@ import {
 const router = Router();
 
 // Obtener toda la configuración
-router.get('/', esAdministrador, getConfiguracion);
+router.get('/', esComercianteOAnalistaOAdministrador, getConfiguracion);
 
 router.put('/', esAdministrador, updateConfiguracion);
 

@@ -345,7 +345,7 @@ CREATE TYPE estado_compra AS ENUM (
 
 CREATE TABLE compras (
     id SERIAL PRIMARY KEY,
-    solicitud_formal_id INTEGER UNIQUE NOT NULL REFERENCES solicitudes_formales(id) ON DELETE CASCADE,
+    solicitud_formal_id INTEGER NOT NULL REFERENCES solicitudes_formales(id) ON DELETE CASCADE,
     cliente_id INTEGER NOT NULL REFERENCES clientes(id) ON DELETE SET NULL,
     monto_total NUMERIC(15,2) NOT NULL,
     descripcion TEXT,
