@@ -1,184 +1,268 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8">
-  <title>Página 10 de 8</title>
-  <style>
-    @page {
-      size: A4 portrait;
-      margin: 0;
-    }
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Contrato de Tarjeta de Crédito CREDI GUIA</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            font-size: 5px;
+            line-height: 1.2;
+            margin: 0;
+            padding: 0px;
+            background-color: white;
+            font-size: 8pt;   /* Un punto más pequeño */
+            line-height: 1.05;  /* Reduce interlineado */
+            width: 210mm;       /* Ancho real de A4 */
+            height: 297mm;      /* Alto real de A4 */
+        }
+    
+        
+        .header {
+            background-color: #cc0000;
+            color: white;
+            padding: 5px;
+            text-align: center;
+            font-weight: bold;
+            font-size: 10.5pt;
+        }
+        
+        .subheader {
+            background-color: #cc0000;
+            color: white;
+            padding: 4px 8px;
+            font-size: 6pt;
+            text-align: left;
+            text-transform: uppercase;
+        }
+        
+        .content {
+            padding: 12px;
+            text-align: justify;
+            font-size: 8pt;
+            font-family: sans-serif;
+        }
+        p {
+        line-height: 17px;
+        }
+        
+        .section-header {
+            background-color: #cc0000;
+            color: white;
+            padding: 4px 8px;
+            font-weight: bold;
+            font-size: 9pt;
+            margin: 10px 0 5px 0;
+            text-align: start;
+        }
+        
+        .section-content {
+            margin: 10px 0;
+            line-height: 15px;
+        }
+        
+        .underline {
+            text-decoration: underline;
+        }
+        
+        .bold {
+            font-weight: bold;
+        }
+        
+        .page-number {
+            text-align: right;
+            color: #999;
+            font-size: 8px;
+            margin-top: 10px;
+        }
+        
+        .footer{
+            display:flex;
+            justify-content:space-between;
+            margin-top:10px;
+            font-size:9px;
+            color:#0066cc;
+        }
 
-    body {
-      margin: 0;
-      padding: 20px;
-      font-family: "Times New Roman", Times, serif;
-      font-size: 8.5pt;
-      line-height: 1.05;
-      width: 210mm;
-      height: 297mm;
-      background: #fff;
-      color: #000;
-      box-sizing: border-box;
-    }
+        .footer-col{
+            flex:1;
+            text-align:center;
+            margin:0 10px;
+        }
 
-    /* --- UTILITIES --- */
-    .page-number {
-      text-align: right;
-      font-size: 11px;
-      color: #0066cc;
-      margin-bottom: 20px;
-    }
+        .signature-line{
+            border-bottom:1px dashed #000;
+            margin-bottom:4px;
+            height:20px;
+        }
+        
+        .numbered-section {
+            margin: 15px 0;
+        }
+        
+        .subsection {
+            margin: 8px 0;
+            line-height: 15px;
+        }
+        
+        .title-block {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background-color: #cc0000;
+            color: white;
+            padding: 2px;
+            font-family: 'Times New Roman', Times, serif;
+            font-size: 18px;
+            margin: 1px;
+        }
 
-    .section-title {
-      background-color: #0080c7;
-      color: #fff;
-      font-weight: bold;
-      font-size: 11px;
-      padding: 6px;
-      margin-top: 10px;
-    }
+.title-block div {
+    flex: 1;
+}
 
-    /* --- FLEX-TABLE SYSTEM (copied from pages 7/8) --- */
-    .flex-table {
-      width: 100%;
-      display: flex;
-      flex-direction: column;
-      margin-top: 5px;
-    }
-    .flex-row {
-      display: flex;
-      width: 100%;
-    }
-    .flex-cell {
-      padding: 8px;
-      box-sizing: border-box;
-      flex: 1 1 0;
-      margin: 1px;
-    }
-    .gray-header-small {
-      background-color: #d3d3d3;
-      font-weight: lighter;
-      font-size: 7.5pt;
-    }
-    .white-header-small {
-      background-color: #fbfaf8;
-      font-weight: lighter;
-      font-size: 7.5pt;
-    }
+.title-block .title-left {
+    flex-grow: 3; /* Occupa el 30% del espacio */
+    text-align: right;
+}
 
-    /* --- SIGNATURE LINES --- */
-    .signature-grid {
-      display: grid;
-      grid-template-columns: repeat(2, 1fr);
-      gap: 40px;
-      margin-top: 30px;
-      text-align: center;
-      font-size: 9px;
-      color: #0066cc;
-    }
-    .signature-line {
-      border-bottom: 1px dashed #0066cc;
-      height: 20px;
-      margin-bottom: 20px;
-    }
-  </style>
+.title-block .title-right {
+    flex-grow: 9; /* Occupa el 70% del espacio */
+    text-align: left;
+}
+    .fuente-dato {
+            font-family: monospace;
+            font-size: 7.5pt; 
+        }
+    </style>
 </head>
-
 <body>
-  <div class="page-number">10 de 8</div>
-
-  <p style="font-size:10px;">copia para el Cliente.</p>
-
-  <!-- Grey header -->
-  <div class="gray-header-small" style="text-align:center; font-size:12pt;">
-    CONTRATO DE TARJETA DE CRÉDITO CREDI GUÍA
-  </div>
-
-  <div class="section-title">
-    RESUMEN – CONDICIONES GENERALES
-  </div>
-
-  <!-- Content -->
-  <div class="white-header-small" style="text-align:justify; padding:0 15px; line-height: 15px;">
-    <p>
-      UD. PODRÁ EFECTUAR OPERACIONES DE COMPRAS, LOCACIÓN DE BIENES, SERVICIOS U OBRAS EN FORMA PRESENCIAL Y ONLINE EN NUESTROS COMERCIOS ADHERIDOS.
-    </p>
-    <p>
-      LOS PLANES DE CUOTAS QUE AL VENCIMIENTO INCLUYEN INTERESES DE FINANCIACIÓN DEVENGAN A LAS SIGUIENTES TASAS: TEA: 84,40% - TNA: 62,78% - TEM: 5,16% - CFT: 84,40%.
-    </p>
-    <p>
-      DESDE EL VENCIMIENTO DEL RESUMEN Y HASTA SU EFECTIVO PAGO SE DEVENGARÁN LOS SIGUIENTES INTERESES: INTERESES PUNITORIOS: TNA: 31,39% - TEM: 2,58%.
-    </p>
-    <p>
-      LOS PLANES DE PAGO SE EFECTUARÁN CON LA SIGUIENTE TASA DE INTERÉS POR REFINANCIACIÓN: TEA: 70,24% - TNA: 54,50%.
-    </p>
-    <p>C.F.T. NACIONAL: 84,40%</p>
-    <p>El monto de IVA discriminado no puede computarse como crédito fiscal.</p>
-    <p>
-      Comisión por mantenimiento de cuenta $650,00 (mensual).<br>
-      Comisión reposición plástico $1.026,00.<br>
-      Comisión por renovación anual $3.500 (anual: pagaderos en tres cuotas).
-    </p>
-    <p>
-      <strong>Cargos por gestión de morosidad</strong><br>
-      De 10 a 31 días de atraso desde el vencimiento: $380,00<br>
-      De 32 a 60 días de atraso desde el vencimiento: $549,00<br>
-      De 61 a 90 días de atraso desde el vencimiento: $742,00<br>
-      Cargo por cobranza en medios tercerizados: $909,00
-    </p>
-    <p>
-      Las modificaciones en las comisiones y cargos serán informadas con 60 días de anticipación y al correo electrónico que UD. haya informado. Solamente las comisiones y cargos informados incluyen IVA.
-    </p>
-    <p>
-      UD. PODRÁ CONSULTAR POR TASAS DE INTERÉS VIGENTES EN NUESTRA PÁGINA WEB
-      <a href="http://www.crediguia.com.ar" style="color:#0066cc;">www.crediguia.com.ar</a>.<br>
-      El resumen de cuenta se genera mensualmente y se enviará al domicilio (físico o electrónico) del titular que fue constituido en el contrato de tarjeta de crédito o el indicado con posterioridad de forma fehaciente al emisor. El envío del resumen de cuenta se realiza con una antelación de 5 (cinco) días a la fecha de su vencimiento.<br>
-      El plazo para hacer efectivo el pago del importe que resultare del resumen de cuenta, vencerá entre el día 09 y 13 de cada mes. La fecha será indicada en su resumen de cuenta.
-    </p>
-    <p>
-      Ud. dispondrá de un plazo de 30 días corridos desde la fecha de recepción del resumen para realizar por escrito (correo electrónico o carta) a la emisora la objeción o impugnación del resumen de cuenta o de consumos específicos.<br>
-      La impugnación no exime de abonar en término las operaciones de crédito no impugnadas sean estas anteriores al resumen de cuenta en cuestión.<br>
-      El límite total de compras se compone por el límite para planes cortos de 1 a 4 cuotas, que surge de aplicar un porcentaje definido por la emisora sobre los ingresos netos demostrados. Y el límite para planes largos de 6 a 14 cuotas, que surge de aplicar el coeficiente de 1,3 sobre el límite de planes cortos. La suma de ambos conforma el límite total de compras.
-    </p>
-    <p>
-      El pago mínimo es igual al monto total a pagar del último resumen de cuenta enviado.<br>
-      La falta de pago a partir de la fecha de vencimiento del resumen hará incurrir en mora al usuario y/o codeudores si los hubiera, sin necesidad de interpelación previa judicial o extrajudicial alguna, generándose a partir de esa fecha el devengamiento de los respectivos intereses compensatorios, punitorios y gastos de mora previamente informados hasta la cancelación de lo adeudado o la realización de un acuerdo de pago.<br>
-      La tarjeta se inhabilita por mora en el pago a los 6 (seis) días de la fecha de vencimiento para las tarjetas normales y el día 23 para las tarjetas jubilados.
-    </p>
-    <p>
-      Ud. podrá solicitar la rescisión del contrato de tarjeta y solicitar la baja de la cuenta por medio de solicitud web, correo electrónico, llamada telefónica y en forma presencial en cualquiera de nuestras sucursales.<br>
-      Ud. podrá utilizar los siguientes canales para realizar reclamos:
-      <a href="http://www.crediguia.com.ar" style="color:#0066cc;">www.crediguia.com.ar</a>, nuestras redes sociales y el libro de quejas que se encuentra disponible en cualquiera de nuestras sucursales.
-    </p>
-    <p>
-      <strong>USTED PODRÁ CONSULTAR EL “RÉGIMEN DE TRANSPARENCIA” ELABORADO POR EL BANCO CENTRAL SOBRE LA BASE DE LA INFORMACIÓN PROPORCIONADA POR LOS SUJETOS OBLIGADOS A FIN DE COMPARAR LOS COSTOS Y CARACTERÍSTICAS DE LOS PRODUCTOS Y SERVICIOS FINANCIEROS INGRESANDO A:</strong>
-      <a href="http://www.bcra.gob.ar/Bcrayvos/Regimen_de_transparencia.asp" style="color:#0066cc;">http://www.bcra.gob.ar/Bcrayvos/Regimen_de_transparencia.asp</a>
-    </p>
-    <p>
-      En cumplimiento a la COMUNICACIÓN “B” 12135 BCRA, se firmarán dos ejemplares uno para el EMISOR y otro para el TITULAR.
-    </p>
-  </div>
-
-  <p style="margin-top:30px;"><strong>Fecha ____/____/______</strong></p>
-
- <!-- Firmas -->
-  <div class="signature-grid">
-    <div>
-      <div class="signature-line"></div>
-      FIRMA TITULAR
-      
+    <div class="container">
+    
+        <div class="title-block">
+            <div class="title-left" style="padding: 15px;">Credi Guía</div>
+            <div class="title-right">
+                CONTRATO DE TARJETA DE CRÉDITO CREDI GUIA<br>
+                <div class="subheader">CONDICIONES GENERALES Y PARTICULARES QUE RIGEN EL OTORGAMIENTO Y USO DE LA TARJETA</div>
+            </div>
+            
+        </div>
+        
+        <div class="content">
+            <div class="red-line">
+                <div class="section-content">
+                    En la ciudad de Neuquén, a los 25 días del mes de Mar del año 2025 entre la empresa Cooperativa de Servicios de Administración de Ventas a Crédito y de Crédito Guía Limitada, CUIT 30-58401237-0, domicilio Legal Corrientes 231, en adelante el <span class="bold">"EMISOR"</span>, y 
+                    __<span class="fuente-dato">{{TITULAR_NOMBRE}}</span>___, DNI N° ___<span class="fuente-dato">{{TITULAR_DNI}}</span>_____, CUIL/CUIT/CDI __<span class="fuente-dato">{{TITULAR_CUIT}}</span>___, domicilio ___<span class="fuente-dato">{{TITULAR_DOMICILIO}}</span>____, 
+                    en adelante el <span class="bold">"TITULAR"</span>, acuerdan celebrar el presente contrato de Emisión de tarjeta de Crédito <span class="bold">"CREDI GUIA"</span>,
+                    en adelante el <span class="bold">"CONTRATO"</span>, el que se integra con las Condiciones Generales que se siguen y el <span class="bold">Anexo I de condiciones Particulares que forma parte del mismo</span>.
+                </div>
+                
+                <div class="section-content">
+                    El <span class="bold">"TITULAR"</span> solicita la emisión de una Tarjeta de Crédito <span class="bold">CREDI GUIA</span> y de las tarjetas adicionales, 
+                    según consta en el presente. Las obligaciones de las partes darán comienzo cuando la tarjeta solicitada se emita y sea recibida por el <span class="bold">TITULAR</span> 
+                    o quien lo represente.
+                </div>
+            </div>
+            
+            <div class="section-header">
+                CONDICIONES GENERALES
+            </div>
+            
+            <div class="numbered-section">
+                <div class="bold" style="color: #0066cc; font-size: 9pt;">1. VIGENCIA DEL CONTRATO:</div>
+                <div class="section-content">
+                    El "CONTRATO" tendrá vigencia por ________( ) años a partir de la fecha arriba indicada y hasta el último día del igual mes del año en que se finalice. 
+                    Las partes convienen la renovación automática y por tiempo indeterminado del "CONTRATO" en uso de las facultades conferidas por el ART. 10 de la 
+                    Ley 25065, de no mediar comunicación fehaciente en contrario dirigida al <span class="bold">"EMISOR"</span> por parte del <span class="bold">"TITULAR"</span> 
+                    con una antelación de (30) días al vencimiento del contrato, obligándose el "EMISOR" a notificar al <span class="bold">"TITULAR"</span> en los tres(3) 
+                    últimos resúmenes de cuenta anteriores al vencimiento de la relación contractual, la fecha en que opera dicho vencimiento.
+                </div>
+            </div>
+            
+            <div class="numbered-section">
+                <div class="bold" style="color: #0066cc; font-size: 9pt;">2. DE LA TARJETA DE CRÉDITO:</div>
+                
+                <div class="subsection">
+                    <div class="bold">2.01 Emisión y entrega:</div> Una vez suscrito el presente contrato, el <span class="bold">"EMISOR"</span> entregará al 
+                    <span class="bold">"TITULAR"</span> una tarjeta de crédito <span class="bold">"CREDIGUIA"</span>, que extendida a su nombre será intransferible y 
+                    de uso personal y exclusivo del Titular. Otras tarjetas podrán, a solicitud del <span class="bold">"TITULAR"</span>, extenderse a 
+                    nombre de las personas físicas que éste designe, en adelante denominadas <span class="bold">"ADICIONALES"</span> cumplimentando las 
+                    condiciones exigidas para el <span class="bold">"EMISOR"</span> y con cargo a la cuenta del Titular. Resultando tanto el Titular como los 
+                    Adicionales solidaria e ilimitadamente responsables frente al <span class="bold">"EMISOR"</span> por todas las obligaciones, saldos, 
+                    cargos, gastos y demás conceptos que se causen por el uso de la tarjeta tanto sea la titular como las adicionales, todas ellas denominadas 
+                    en adelante las <span class="bold">"TARJETAS"</span>. La recepción de las tarjetas por el titular, importa la ratificación de todas 
+                    y cada una de las cláusulas contenidas en el presente.
+                </div>
+                
+                <div class="subsection">
+                    Tanto la Tarjeta Titular como las Adicionales solicitadas deberán ser retiradas en el domicilio del <span class="bold">"EMISOR"</span>. 
+                    No obstante, éste podrá enviar para su entrega a la Tarjeta Titular o a las Adicionales el domicilio del <span class="bold">"TITULAR"</span>. 
+                    En todos los casos, el <span class="bold">"TITULAR"</span> resulta personalmente a los <span class="bold">"ADICIONALES"</span> 
+                    para recibir, en su nombre, tanto la Tarjeta Titular como las Adicionales.
+                </div>
+                
+                <div class="subsection">
+                    <div class="bold">2.02 Vigencia y Renovación:</div> La Tarjeta será emitida con un plazo de vigencia de hasta ____( ) años, y caduca en la fecha de vencimiento 
+                    consignada en la misma. En ningún caso, podrá utilizarse la Tarjeta antes de la fecha a partir de la cual tenga validez o con posterioridad a la fecha en la 
+                    que haya caducado. Siempre que no medie oposición del <span class="bold">"EMISOR"</span>, la <span class="bold">"TARJETA"</span> será renovada 
+                    periódicamente hasta ____________( ) años, salvo aviso por escrito del <span class="bold">"TITULAR"</span> efectuado con no menos de treinta (30) días 
+                    de anterioridad al vencimiento correspondiente.
+                </div>
+                
+                <div class="subsection">
+                    Recibida la Tarjeta solicitada el <span class="bold">"TITULAR"</span> y/o los <span class="bold">"ADICIONALES"</span> deberán firmar la que a cada uno le corresponda, 
+                    en el lugar destinado a tal fin, al dorso de la misma.
+                </div>
+                
+                <div class="subsection">
+                    La Tarjetas adicionales se extinguen en la fecha de vencimiento o siempre que cesique, por la razón que sea, la Tarjeta Titular.
+                </div>
+                
+                <div class="subsection">
+                    <div class="bold">2.03 Utilización de la tarjeta y responsabilidad por uso de adicionales:</div> La <span class="bold">"TARJETA"</span> 
+                    será utilizada por el Titular y los Titulares Adicionales, con el objeto de solemnizar como usuario habitual para efectuar las operaciones de compra o 
+                    locación de bienes, servicios u otras, en los comercios y establecimientos adheridos a su satisfacción. Una vez concluida la operación, 
+                    el usuario de la <span class="bold">"TARJETA"</span> deberá firmar los disputas o comprobantes venta respectivos. El <span class="bold">"EMISOR"</span> 
+                    no es de ninguna manera, salvo error de facto, alieno ajeno a las compras y/o servicios efectuados y abonará mediante el uso de la Tarjeta.
+                </div>
+                
+                <div class="subsection">
+                    El <span class="bold">"TITULAR"</span> y <span class="bold">"ADICIONALES"</span> declaran y aceptan que los montos por compras y/o servicios 
+                    y los gastos imputados por motivos del uso de la <span class="bold">"TARJETA"</span>. En consecuencia, el <span class="bold">"TITULAR"</span> 
+                    y <span class="bold">"ADICIONALES"</span> se constituyen recíprocamente en fisos, llanos y principales pagadores, sin beneficio de retracción 
+                    ni división ni excusión ni información respecto de todos los compras y/o gastos efectuados mediante cualquiera de las Tarjetas.
+                </div>
+                
+                <div class="subsection">
+                    <div class="bold">2.04 Robo, hurto, extravío. Responsabilidad:</div> En caso de extravío, robo, hurto o uso indebido de la Tarjeta del Titular 
+                    y/o los Adicionales si las hubiese, el <span class="bold">"TITULAR"</span> procederá de inmediato a dar aviso al <span class="bold">"EMISOR"</span> 
+                    en forma telefónica durante las 24 horas de cada día, o bien efectuarlo por telegrama o personalmente, al que tendrá carácter precautorio. 
+                    Dentro de las 72 horas de dicho aviso, el Titular deberá ratificarlo personalmente en el domicilio del <span class="bold">"EMISOR"</span> 
+                    acompañando al original o constancia de la denuncia que efectuare ante la autoridad policial o la que resultare autorizada o competente en 
+                    razón del lugar del hecho. Cuando el hecho de extravío, robo o hurto se produjere en el exterior de la República Argentina o en alguna 
+                    localidad del país donde el <span class="bold">"EMISOR"</span> no opera con su sistema de Tarjeta, el <span class="bold">"TITULAR"</span> 
+                    y/o en su caso los <span class="bold">"ADICIONALES"</span>, efectuarán la denuncia en la localidad de situación donde al encontrarse el 
+                    <span class="bold">"EMISOR"</span>. El <span class="bold">"TITULAR"</span> y/o <span class="bold">"ADICIONALES"</span> serán responsables 
+                    de cualquier compra y/o gasto que se efectuaron con las tarjetas en la forma antes indicada. No obstante el <span class="bold">"EMISOR"</span> 
+                    se reserva el derecho de verificar las transacciones efectuadas en ese día, a efectos de determinar las operaciones genuinas del Titular 
+                    y/o Adicionales y las consideradas fraudulentas, aún en el caso de que las tarjetas fueren recuperadas o devueltas por terceros antes del aviso. 
+                    Si el <span class="bold">"TITULAR"</span> y/o sus <span class="bold">"ADICIONALES"</span> omitieren el trámite del aviso precautorio, 
+                    serán responsables de todos los gastos y/o compras que se produjeren con las tarjetas hasta su vencimiento o eventual recupero.
+                </div>
+            </div>
+            
+            <div class="footer">
+                <div class="footer-col">
+                    <div class="signature-line"></div>
+                    <p>p/Cooperativa Guía Ltda.</p>
+                </div>
+                <div class="footer-col">
+                    <div class="signature-line"></div>
+                    <p>Firma</p>
+                </div>
+            </div>
+        </div>
     </div>
-    <div>
-      <div class="signature-line"></div>
-      ACLARACIÓN
-      
-    </div>
-  </div>
-
-  <div style="text-align:center; margin-top:40px; font-size:9px;">
-    Cooperativa Guía Ltda.
-  </div>
-
 </body>
 </html>

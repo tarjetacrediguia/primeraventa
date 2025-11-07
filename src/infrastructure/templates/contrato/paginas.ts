@@ -530,12 +530,12 @@ export const paginas = {
     <style>
         body {
             font-family: Arial, sans-serif;
-            font-size: 10px;
+            font-size: 5px;
             line-height: 1.2;
             margin: 0;
-            padding: 20px;
+            padding: 0px;
             background-color: white;
-            font-size: 8.5pt;   /* Un punto más pequeño */
+            font-size: 8pt;   /* Un punto más pequeño */
             line-height: 1.05;  /* Reduce interlineado */
             width: 210mm;       /* Ancho real de A4 */
             height: 297mm;      /* Alto real de A4 */
@@ -545,7 +545,7 @@ export const paginas = {
         .header {
             background-color: #cc0000;
             color: white;
-            padding: 8px;
+            padding: 5px;
             text-align: center;
             font-weight: bold;
             font-size: 10.5pt;
@@ -561,7 +561,7 @@ export const paginas = {
         }
         
         .content {
-            padding: 15px;
+            padding: 3px;
             text-align: justify;
             font-size: 8pt;
             font-family: sans-serif;
@@ -603,7 +603,7 @@ export const paginas = {
         .footer{
             display:flex;
             justify-content:space-between;
-            margin-top:20px;
+            margin-top:10px;
             font-size:9px;
             color:#0066cc;
         }
@@ -635,10 +635,10 @@ export const paginas = {
             align-items: center;
             background-color: #cc0000;
             color: white;
-            padding: 10px;
+            padding: 2px;
             font-family: 'Times New Roman', Times, serif;
             font-size: 18px;
-            margin: 10px;
+            margin: 1px;
         }
 
 .title-block div {
@@ -662,10 +662,9 @@ export const paginas = {
 </head>
 <body>
     <div class="container">
-        <div class="page-number">2 de 8</div>
     
         <div class="title-block">
-            <div class="title-left" style="padding: 20px;">Credi Guía</div>
+            <div class="title-left" style="padding: 15px;">Credi Guía</div>
             <div class="title-right">
                 CONTRATO DE TARJETA DE CRÉDITO CREDI GUIA<br>
                 <div class="subheader">CONDICIONES GENERALES Y PARTICULARES QUE RIGEN EL OTORGAMIENTO Y USO DE LA TARJETA</div>
@@ -675,18 +674,18 @@ export const paginas = {
         
         <div class="content">
             <div class="red-line">
-                <p>
+                <div class="section-content">
                     En la ciudad de Neuquén, a los 25 días del mes de Mar del año 2025 entre la empresa Cooperativa de Servicios de Administración de Ventas a Crédito y de Crédito Guía Limitada, CUIT 30-58401237-0, domicilio Legal Corrientes 231, en adelante el <span class="bold">"EMISOR"</span>, y 
                     __<span class="fuente-dato">{{TITULAR_NOMBRE}}</span>___, DNI N° ___<span class="fuente-dato">{{TITULAR_DNI}}</span>_____, CUIL/CUIT/CDI __<span class="fuente-dato">{{TITULAR_CUIT}}</span>___, domicilio ___<span class="fuente-dato">{{TITULAR_DOMICILIO}}</span>____, 
                     en adelante el <span class="bold">"TITULAR"</span>, acuerdan celebrar el presente contrato de Emisión de tarjeta de Crédito <span class="bold">"CREDI GUIA"</span>,
                     en adelante el <span class="bold">"CONTRATO"</span>, el que se integra con las Condiciones Generales que se siguen y el <span class="bold">Anexo I de condiciones Particulares que forma parte del mismo</span>.
-                </p>
+                </div>
                 
-                <p>
+                <div class="section-content">
                     El <span class="bold">"TITULAR"</span> solicita la emisión de una Tarjeta de Crédito <span class="bold">CREDI GUIA</span> y de las tarjetas adicionales, 
                     según consta en el presente. Las obligaciones de las partes darán comienzo cuando la tarjeta solicitada se emita y sea recibida por el <span class="bold">TITULAR</span> 
                     o quien lo represente.
-                </p>
+                </div>
             </div>
             
             <div class="section-header">
@@ -2275,11 +2274,6 @@ export const paginas = {
       
     </div>
   </div>
-
-  <div style="text-align:center; margin-top:40px; font-size:9px;">
-    Cooperativa Guía Ltda.
-  </div>
-
 </body>
 </html>`,
 };

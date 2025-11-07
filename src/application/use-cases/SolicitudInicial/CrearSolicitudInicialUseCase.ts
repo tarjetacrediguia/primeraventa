@@ -842,162 +842,190 @@ export class CrearSolicitudInicialUseCase {
     return comentario;
   }
 
-  private generarComentariosComerciante(
+ private generarComentariosComerciante(
     resultadoNosis: VerificationResult,
     entidadesService: EntidadesService
-  ): string {
+): string {
     // Mensajes específicos para combinaciones (alta prioridad)
     if (resultadoNosis.reglasFallidas) {
-      for (const regla of resultadoNosis.reglasFallidas) {
-        if (
-          regla.includes("Combinación rechazada") ||
-          (regla.includes("1 referencia comercial +") &&
-            regla.includes("deudas = RECHAZADO"))
-        ) {
-          return this.formatearMensajeComerciante("RECHAZADO", [regla]);
+        for (const regla of resultadoNosis.reglasFallidas) {
+            if (
+                regla.includes("Combinación rechazada") ||
+                (regla.includes("1 referencia comercial +") &&
+                    regla.includes("deudas = RECHAZADO"))
+            ) {
+                return this.formatearMensajeComerciante("RECHAZADO", [regla]);
+            }
         }
-      }
     }
 
     // 1. RECHAZOS de Nosis (prioridad alta)
     if (
-      resultadoNosis.reglasFallidas &&
-      resultadoNosis.reglasFallidas.length > 0
+        resultadoNosis.reglasFallidas &&
+        resultadoNosis.reglasFallidas.length > 0
     ) {
-      const motivosRechazo: string[] = [];
+        const motivosRechazo: string[] = [];
 
-      resultadoNosis.reglasFallidas.forEach((regla) => {
-        if (regla.includes("entidades en situación 2")) {
-          const match = regla.match(/(\d+) entidades/);
-          const cantidad = match ? match[1] : "varias";
-          motivosRechazo.push(
-            `${cantidad} alertas crediticias en entidades bancarias`
-          );
-        } else if (regla.includes("entidades con deuda")) {
-          const match = regla.match(/(\d+) entidades/);
-          const cantidad = match ? match[1] : "varias";
-          motivosRechazo.push(`deudas activas con ${cantidad} entidades`);
-        } else if (regla.includes("referencias comerciales")) {
-          const match = regla.match(/(\d+) referencias comerciales válidas/);
-          if (match) {
-            motivosRechazo.push(
-              `${match[1]} referencias comerciales (máximo permitido: 2)`
-            );
-          } else {
-            motivosRechazo.push(
-              "no cumple con criterios de referencias comerciales"
-            );
-          }
-        } else if (regla.includes("tarjeta Crediguía")) {
-          motivosRechazo.push("tarjeta Crediguía activa");
-        } else if (regla.includes("aporte")) {
-          motivosRechazo.push("no cumple con el mínimo de aportes requerido");
-        } else if (regla.includes("jubilado")) {
-          motivosRechazo.push("cliente jubilado");
-        } else if (regla.includes("monotributista")) {
-          motivosRechazo.push("monotributista sin empleo registrado");
-        } else if (regla.includes("situación laboral")) {
-          motivosRechazo.push("sin situación laboral registrada");
-        } else {
-          // Extraer solo la parte principal del mensaje
-          const partePrincipal = regla.split(":")[0] || regla;
-          motivosRechazo.push(partePrincipal.toLowerCase());
-        }
-      });
+        resultadoNosis.reglasFallidas.forEach((regla) => {
+            if (regla.includes("entidades en situación 2")) {
+                const match = regla.match(/(\d+) entidades/);
+                const cantidad = match ? match[1] : "varias";
+                // OBTENER NOMBRES DE ENTIDADES PARA SITUACIÓN 2
+                const nombresEntidades = resultadoNosis.entidadesSituacion2 && resultadoNosis.entidadesSituacion2.length > 0
+                    ? entidadesService.obtenerNombresEntidades(resultadoNosis.entidadesSituacion2).join(", ")
+                    : "entidades varias";
+                motivosRechazo.push(
+                    `${cantidad} alertas crediticias en entidades bancarias: ${nombresEntidades}`
+                );
+            } else if (regla.includes("entidades con deuda")) {
+                const match = regla.match(/(\d+) entidades/);
+                const cantidad = match ? match[1] : "varias";
+                // OBTENER NOMBRES DE ENTIDADES PARA DEUDAS
+                const nombresEntidades = resultadoNosis.entidadesDeuda && resultadoNosis.entidadesDeuda.length > 0
+                    ? entidadesService.obtenerNombresEntidades(resultadoNosis.entidadesDeuda).join(", ")
+                    : "entidades varias";
+                motivosRechazo.push(
+                    `deudas activas con ${cantidad} entidades: ${nombresEntidades}`
+                );
+            } else if (regla.includes("referencias comerciales")) {
+                const match = regla.match(/(\d+) referencias comerciales válidas/);
+                if (match) {
+                    // MOSTRAR TODAS LAS REFERENCIAS COMERCIALES VÁLIDAS
+                    const referenciasValidas = resultadoNosis.referenciasComerciales?.referenciasValidas || [];
+                    const referenciasLista = referenciasValidas.length > 0 
+                        ? referenciasValidas.join(", ")
+                        : "no especificadas";
+                    motivosRechazo.push(
+                        `${match[1]} referencias comerciales (máximo permitido: 2): ${referenciasLista}`
+                    );
+                } else {
+                    motivosRechazo.push(
+                        "no cumple con criterios de referencias comerciales"
+                    );
+                }
+            } else if (regla.includes("tarjeta Crediguía")) {
+                motivosRechazo.push("tarjeta Crediguía activa");
+            } else if (regla.includes("aporte")) {
+                motivosRechazo.push("no cumple con el mínimo de aportes requerido");
+            } else if (regla.includes("jubilado")) {
+                motivosRechazo.push("cliente jubilado");
+            } else if (regla.includes("monotributista")) {
+                motivosRechazo.push("monotributista sin empleo registrado");
+            } else if (regla.includes("situación laboral")) {
+                motivosRechazo.push("sin situación laboral registrada");
+            } else {
+                // Extraer solo la parte principal del mensaje
+                const partePrincipal = regla.split(":")[0] || regla;
+                motivosRechazo.push(partePrincipal.toLowerCase());
+            }
+        });
 
-      return this.formatearMensajeComerciante("RECHAZADO", motivosRechazo);
+        return this.formatearMensajeComerciante("RECHAZADO", motivosRechazo);
     }
 
     // 2. PENDIENTES de Nosis (prioridad media)
     if (resultadoNosis.pendientes && resultadoNosis.pendientes.length > 0) {
-      const motivosPendientes: string[] = [];
+        const motivosPendientes: string[] = [];
 
-      resultadoNosis.pendientes.forEach((pendiente) => {
-        if (pendiente.includes("entidades en situación 2")) {
-          motivosPendientes.push("1 alerta crediticia en entidad bancaria");
-        } else if (pendiente.includes("entidades con deuda")) {
-          const match = pendiente.match(/(\d+) entidades/);
-          const cantidad = match ? match[1] : "algunas";
-          motivosPendientes.push(`deudas con ${cantidad} entidades`);
-        } else if (pendiente.includes("referencias comerciales")) {
-          const match = pendiente.match(/(\d+) referencia/);
-          if (match) {
-            motivosPendientes.push(
-              `${match[1]} referencia(s) comercial(es) a validar`
-            );
-          } else {
-            motivosPendientes.push("referencias comerciales a validar");
-          }
-        } else {
-          motivosPendientes.push(pendiente.toLowerCase());
-        }
-      });
+        resultadoNosis.pendientes.forEach((pendiente) => {
+            if (pendiente.includes("entidades en situación 2")) {
+                // OBTENER NOMBRES DE ENTIDADES PARA SITUACIÓN 2
+                const nombresEntidades = resultadoNosis.entidadesSituacion2 && resultadoNosis.entidadesSituacion2.length > 0
+                    ? entidadesService.obtenerNombresEntidades(resultadoNosis.entidadesSituacion2).join(", ")
+                    : "entidades varias";
+                motivosPendientes.push(`1 alerta crediticia en entidad bancaria: ${nombresEntidades}`);
+            } else if (pendiente.includes("entidades con deuda")) {
+                const match = pendiente.match(/(\d+) entidades/);
+                const cantidad = match ? match[1] : "algunas";
+                // OBTENER NOMBRES DE ENTIDADES PARA DEUDAS
+                const nombresEntidades = resultadoNosis.entidadesDeuda && resultadoNosis.entidadesDeuda.length > 0
+                    ? entidadesService.obtenerNombresEntidades(resultadoNosis.entidadesDeuda).join(", ")
+                    : "entidades varias";
+                motivosPendientes.push(`deudas con ${cantidad} entidades: ${nombresEntidades}`);
+            } else if (pendiente.includes("referencias comerciales")) {
+                const match = pendiente.match(/(\d+) referencia/);
+                // MOSTRAR TODAS LAS REFERENCIAS COMERCIALES VÁLIDAS
+                const referenciasValidas = resultadoNosis.referenciasComerciales?.referenciasValidas || [];
+                const referenciasLista = referenciasValidas.length > 0 
+                    ? referenciasValidas.join(", ")
+                    : "no especificadas";
+                if (match) {
+                    motivosPendientes.push(
+                        `${match[1]} referencia(s) comercial(es) a validar: ${referenciasLista}`
+                    );
+                } else {
+                    motivosPendientes.push(`referencias comerciales a validar: ${referenciasLista}`);
+                }
+            } else {
+                motivosPendientes.push(pendiente.toLowerCase());
+            }
+        });
 
-      return this.formatearMensajeComerciante("PENDIENTE", motivosPendientes);
+        return this.formatearMensajeComerciante("PENDIENTE", motivosPendientes);
     }
 
     // 3. Información de Eureka (prioridad baja)
     if (resultadoNosis.eurekaMensajeComerciante) {
-      return this.formatearMensajeComerciante("INFORMACIÓN SISTEMA ANTERIOR", [
-        resultadoNosis.eurekaMensajeComerciante,
-      ]);
+        return this.formatearMensajeComerciante("INFORMACIÓN SISTEMA ANTERIOR", [
+            resultadoNosis.eurekaMensajeComerciante,
+        ]);
     }
 
     // 4. Estado aprobado
     if (resultadoNosis.status === "aprobado") {
-      return this.formatearMensajeComerciante("APROBADO", [
-        "Solicitud aprobada automáticamente",
-      ]);
+        return this.formatearMensajeComerciante("APROBADO", [
+            "Solicitud aprobada automáticamente",
+        ]);
     }
 
     return this.formatearMensajeComerciante("EN PROCESO", [
-      "Solicitud en proceso de evaluación",
+        "Solicitud en proceso de evaluación",
     ]);
-  }
+}
 
   /**
    * Formatea el mensaje para el comerciante con estructura clara y numerada
    */
-  private formatearMensajeComerciante(
+private formatearMensajeComerciante(
     estado: string,
     motivos: string[]
-  ): string {
+): string {
     let mensaje = "";
 
     switch (estado) {
-      case "RECHAZADO":
-        mensaje = "❌ SOLICITUD RECHAZADA\n\n";
-        mensaje += "Motivos principales:\n";
-        motivos.forEach((motivo, index) => {
-          mensaje += `${index + 1}. ${motivo}\n`;
-        });
-        break;
+        case "RECHAZADO":
+            mensaje = "❌ SOLICITUD RECHAZADA\n\n";
+            mensaje += "Motivos principales (información para solicitar libres de deuda):\n";
+            motivos.forEach((motivo, index) => {
+                mensaje += `${index + 1}. ${motivo}\n`;
+            });
+            break;
 
-      case "PENDIENTE":
-        mensaje = "⚠️ SOLICITUD PENDIENTE DE REVISIÓN\n\n";
-        mensaje += "Se requiere validación manual por:\n";
-        motivos.forEach((motivo, index) => {
-          mensaje += `${index + 1}. ${motivo}\n`;
-        });
-        break;
+        case "PENDIENTE":
+            mensaje = "⚠️ SOLICITUD PENDIENTE DE REVISIÓN\n\n";
+            mensaje += "Se requiere validación manual (información para solicitar libres de deuda):\n";
+            motivos.forEach((motivo, index) => {
+                mensaje += `${index + 1}. ${motivo}\n`;
+            });
+            break;
 
-      case "APROBADO":
-        mensaje = "✅ SOLICITUD APROBADA\n\n";
-        mensaje += motivos.join("\n");
-        break;
+        case "APROBADO":
+            mensaje = "✅ SOLICITUD APROBADA\n\n";
+            mensaje += motivos.join("\n");
+            break;
 
-      case "INFORMACIÓN SISTEMA ANTERIOR":
-        mensaje = "📋 INFORMACIÓN DEL SISTEMA ANTERIOR\n\n";
-        mensaje += motivos.join("\n");
-        break;
+        case "INFORMACIÓN SISTEMA ANTERIOR":
+            mensaje = "📋 INFORMACIÓN DEL SISTEMA ANTERIOR\n\n";
+            mensaje += motivos.join("\n");
+            break;
 
-      default:
-        mensaje = "🔄 SOLICITUD EN PROCESO\n\n";
-        mensaje += motivos.join("\n");
+        default:
+            mensaje = "🔄 SOLICITUD EN PROCESO\n\n";
+            mensaje += motivos.join("\n");
     }
 
     return mensaje;
-  }
+}
 
   private async tieneCreditoActivo(cuilCliente: string): Promise<boolean> {
     const solicitudesFormales =
