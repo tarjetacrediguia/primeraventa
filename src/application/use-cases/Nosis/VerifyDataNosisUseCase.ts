@@ -598,6 +598,7 @@ private mapearEstadoEureka(estadoEureka: string): "aprobado" | "rechazado" | "pe
       "Claro",
       "Telefónica Moviles Argentina SA",
       "DirecTv",
+      "DIRECTV ARGENTINA SA"
     ];
 
     // Obtener cantidad total de referencias VIGENTES
@@ -622,104 +623,102 @@ private mapearEstadoEureka(estadoEureka: string): "aprobado" | "rechazado" | "pe
     let referenciasValidas: string[] = [];
     let referenciasInvalidas: string[] = [];
 
-    // Procesar referencias VIGENTES (prioridad)
-    if (fuentesRefVigentes) {
-      const fuentes = fuentesRefVigentes
-        .split(/[|;]/)
-        .map((f) => f.trim())
-        .filter((f) => f);
+        console.log("=== DEPURACIÓN REFERENCIAS ===");
+    console.log("Referencias vigentes:", fuentesRefVigentes);
+    console.log("Cantidad vigentes:", cantidadRefVigentes);
+    console.log("Referencias 12m:", fuentesRef12m);
+    console.log("Cantidad 12m:", cantidadRef12m);
 
-      fuentes.forEach((fuente) => {
-        if (
-          EXCLUIR_FUENTES.some((excluida) =>
-            fuente.toLowerCase().includes(excluida.toLowerCase())
-          )
-        ) {
-          referenciasInvalidas.push(fuente);
-        } else {
-          referenciasValidas.push(fuente);
-        }
-      });
+    // 🔥 CORRECCIÓN: Priorizar referencias VIGENTES sobre las de 12 meses
+    if (fuentesRefVigentes && cantidadRefVigentes > 0) {
+        const fuentes = fuentesRefVigentes.split('/')
+            .map((f) => f.trim())
+            .filter((f) => f && f !== "");
+
+        console.log("Fuentes procesadas vigentes:", fuentes);
+
+        fuentes.forEach((fuente) => {
+            const esExcluida = EXCLUIR_FUENTES.some((excluida) =>
+                fuente.toLowerCase().includes(excluida.toLowerCase())
+            );
+            
+            if (esExcluida) {
+                referenciasInvalidas.push(fuente);
+                console.log(`❌ Referencia excluida: ${fuente}`);
+            } else {
+                referenciasValidas.push(fuente);
+                console.log(`✅ Referencia válida: ${fuente}`);
+            }
+        });
     }
+    // Solo usar referencias de 12 meses si NO hay referencias vigentes
+    else if (referenciasValidas.length === 0 && fuentesRef12m && cantidadRef12m > 0) {
+        const fuentes = fuentesRef12m.split('/')
+            .map((f) => f.trim())
+            .filter((f) => f && f !== "");
 
-    // Procesar referencias de últimos 12 meses (si no hay vigentes)
-    if (referenciasValidas.length === 0 && fuentesRef12m) {
-      const fuentes = fuentesRef12m
-        .split(/[|;]/)
-        .map((f) => f.trim())
-        .filter((f) => f);
+        console.log("Fuentes procesadas 12m:", fuentes);
 
-      fuentes.forEach((fuente) => {
-        if (
-          EXCLUIR_FUENTES.some((excluida) =>
-            fuente.toLowerCase().includes(excluida.toLowerCase())
-          )
-        ) {
-          referenciasInvalidas.push(fuente);
-        } else {
-          referenciasValidas.push(fuente);
-        }
-      });
+        fuentes.forEach((fuente) => {
+            const esExcluida = EXCLUIR_FUENTES.some((excluida) =>
+                fuente.toLowerCase().includes(excluida.toLowerCase())
+            );
+            
+            if (esExcluida) {
+                referenciasInvalidas.push(fuente);
+                console.log(`❌ Referencia excluida (12m): ${fuente}`);
+            } else {
+                referenciasValidas.push(fuente);
+                console.log(`✅ Referencia válida (12m): ${fuente}`);
+            }
+        });
     }
 
     const totalValidas = referenciasValidas.length;
     const totalInvalidas = referenciasInvalidas.length;
 
+        console.log("Resultado final referencias:");
+    console.log("- Válidas:", referenciasValidas, "Total:", totalValidas);
+    console.log("- Invalidas:", referenciasInvalidas, "Total:", totalInvalidas);
+
     // 🔥 LÓGICA SIMPLE SOLO PARA REFERENCIAS
     if (totalValidas === 0) {
-      let mensaje = "No tiene referencias comerciales válidas";
-      if (totalInvalidas > 0) {
-        mensaje += `. Referencias no consideradas: ${referenciasInvalidas.join(
-          ", "
-        )}`;
-      }
-
-      return {
-        estado: "aprobado",
-        mensaje,
-        referenciasValidas,
-        referenciasInvalidas,
-        totalValidas,
-        totalInvalidas,
-      };
-    } else if (totalValidas <= 1) {
-      // 1 o 2 referencias válidas - PENDIENTE
-      let mensaje = `Tiene ${totalValidas} referencia(s) comercial(es) válida(s): ${referenciasValidas.join(
-        ", "
-      )}`;
-      if (totalInvalidas > 0) {
-        mensaje += `. Referencias no consideradas: ${referenciasInvalidas.join(
-          ", "
-        )}`;
-      }
-
-      return {
-        estado: "pendiente",
-        mensaje,
-        referenciasValidas,
-        referenciasInvalidas,
-        totalValidas,
-        totalInvalidas,
-      };
+        return {
+            estado: "aprobado",
+            mensaje: "No tiene referencias comerciales válidas",
+            referenciasValidas,
+            referenciasInvalidas,
+            totalValidas,
+            totalInvalidas,
+        };
+    } else if (totalValidas === 1) {
+        return {
+            estado: "pendiente",
+            mensaje: `Tiene 1 referencia comercial válida: ${referenciasValidas[0]}`,
+            referenciasValidas,
+            referenciasInvalidas,
+            totalValidas,
+            totalInvalidas,
+        };
+    } else if (totalValidas === 2) {
+        return {
+            estado: "pendiente",
+            mensaje: `Tiene 2 referencias comerciales válidas: ${referenciasValidas.join(", ")}`,
+            referenciasValidas,
+            referenciasInvalidas,
+            totalValidas,
+            totalInvalidas,
+        };
     } else {
-      // 3+ referencias válidas - RECHAZADO
-      let mensaje = `Tiene ${totalValidas} referencias comerciales válidas (máximo permitido: 2): ${referenciasValidas.join(
-        ", "
-      )}`;
-      if (totalInvalidas > 0) {
-        mensaje += `. Referencias no consideradas: ${referenciasInvalidas.join(
-          ", "
-        )}`;
-      }
-
-      return {
-        estado: "rechazado",
-        mensaje,
-        referenciasValidas,
-        referenciasInvalidas,
-        totalValidas,
-        totalInvalidas,
-      };
+        // 3+ referencias válidas
+        return {
+            estado: "rechazado",
+            mensaje: `Tiene ${totalValidas} referencias comerciales válidas (máximo permitido: 2): ${referenciasValidas.join(", ")}`,
+            referenciasValidas,
+            referenciasInvalidas,
+            totalValidas,
+            totalInvalidas,
+        };
     }
   }
 
@@ -889,10 +888,16 @@ private mapearEstadoEureka(estadoEureka: string): "aprobado" | "rechazado" | "pe
     // ✅ VERIFICACIÓN DE APORTES
     const totalAportes = this.calcularTotalAportes(variables);
     if (totalAportes >= this.MINIMO_APORTES) {
+    // Solo agregar si no existe ya
+    if (!aprobados.some(a => a.includes('aporte'))) {
         aprobados.push(`Cumple con el mínimo de aportes requerido (${totalAportes} aportes)`);
-    } else {
+    }
+} else {
+    // Solo agregar si no existe ya  
+    if (!reglasFallidas.some(r => r.includes('aporte'))) {
         reglasFallidas.push(`Cliente no cumple con el mínimo de aportes registrados en los últimos 12 meses (${totalAportes} de ${this.MINIMO_APORTES} requeridos)`);
     }
+}
 
     // ✅ VERIFICACIÓN DE ENTIDADES EN SITUACIÓN 2
     const resultadoSituacion2 = this.verificarEntidadesSituacion2(variables);
@@ -924,18 +929,7 @@ private mapearEstadoEureka(estadoEureka: string): "aprobado" | "rechazado" | "pe
         aprobados.push("Cumple con criterios de referencias comerciales");
     }
 
-// ✅ VERIFICACIÓN DE COMBINACIÓN REFERENCIAS + DEUDAS + SITUACIÓN 2
-const combinacionReferenciasDeudas = this.verificarCombinacionReferenciasDeudas(
-    resultadoReferencias,
-    tieneDeudaEntidades,
-    resultadoSituacion2 
-);
 
-if (combinacionReferenciasDeudas.estado === "rechazado") {
-    reglasFallidas.push(combinacionReferenciasDeudas.mensaje!);
-} else if (combinacionReferenciasDeudas.estado === "pendiente") {
-    pendientes.push(combinacionReferenciasDeudas.mensaje!);
-}
 
     // ✅ VERIFICACIÓN DE SITUACIÓN LABORAL Y MONOTRIBUTO
     const esMonotributista = variables.find((v) => v.Nombre === "VI_Inscrip_Monotributo_Es")?.Valor === "Si";
@@ -971,9 +965,39 @@ if (combinacionReferenciasDeudas.estado === "rechazado") {
         aprobados.push("No tiene tarjetas Crediguía activas");
     }
 
+    // ✅ VERIFICACIÓN DE COMBINACIÓN REFERENCIAS + DEUDAS + SITUACIÓN 2
+const combinacionReferenciasDeudas = this.verificarCombinacionReferenciasDeudas(
+    resultadoReferencias,
+    tieneDeudaEntidades,
+    resultadoSituacion2 
+);
+
+// COMBINACIÓN DETERMINA RECHAZO O PENDIENTE, TIENE PRIORIDAD ABSOLUTA
+if (combinacionReferenciasDeudas.estado === "rechazado") {
+    // LIMPIAR cualquier pendiente anterior y agregar solo el rechazo de combinación
+    pendientes.length = 0;
+    reglasFallidas.push(combinacionReferenciasDeudas.mensaje!);
+} else if (combinacionReferenciasDeudas.estado === "pendiente") {
+    // LIMPIAR cualquier pendiente de referencias individuales y agregar solo el de combinación
+    const pendientesFiltrados = pendientes.filter(p => 
+        !p.includes('referencias comerciales') && 
+        !p.includes('referencia comercial')
+    );
+    pendientes.length = 0;
+    pendientes.push(...pendientesFiltrados);
+    pendientes.push(combinacionReferenciasDeudas.mensaje!);
+}
+
     // ===== DETERMINAR ESTADO FINAL CON PRIORIDAD CORRECTA =====
 
     let status: "aprobado" | "rechazado" | "pendiente" = "aprobado";
+
+    // 🔥 LOGS TEMPORALES PARA DEPURACIÓN
+console.log("=== DEPURACIÓN ESTADO FINAL ===");
+console.log("Reglas fallidas:", reglasFallidas);
+console.log("Pendientes:", pendientes);
+console.log("Resultado referencias:", resultadoReferencias.estado, "total válidas:", resultadoReferencias.totalValidas);
+console.log("Combinación:", combinacionReferenciasDeudas.estado);
 
     // 🔥 NUEVA LÓGICA: Priorizar rechazos sobre aprobaciones
     // Si hay REGLAS FALLIDAS (rechazos), el estado es RECHAZADO independientemente de Eureka
@@ -1216,37 +1240,30 @@ private verificarCombinacionReferenciasDeudas(
     estado: "aprobado" | "pendiente" | "rechazado";
     mensaje?: string;
 } {
-    const cantidadReferencias = resultadoReferencias.totalValidas;
-    const cantidadEntidadesDeuda = resultadoDeudas.entidades?.length || 0;
-    const cantidadEntidadesSituacion2 = resultadoSituacion2.entidades?.length || 0;
+    // 🔥 SOLO considerar referencias VÁLIDAS (las excluidas no cuentan)
+    const cantidadReferenciasValidas = resultadoReferencias.totalValidas;
 
-    // 🔥 REGLA: Cualquier combinación que sume 3 se rechaza
-    const totalCombinado = cantidadReferencias + cantidadEntidadesDeuda + cantidadEntidadesSituacion2;
-    
-    if (totalCombinado >= 3) {
-        return {
-            estado: "rechazado",
-            mensaje: "solicitud rechazada, cliente presenta deuda en 3 o más entidades con situación de riesgo",
-        };
+        console.log("=== DEPURACIÓN COMBINACIÓN ===");
+    console.log("Referencias válidas:", cantidadReferenciasValidas);
+    console.log("Lista referencias:", resultadoReferencias.referenciasValidas);
+
+    // Cualquier referencia válida hace que sea PENDIENTE
+    // 🔥 CORRECCIÓN: Cualquier referencia válida hace que sea PENDIENTE
+    if (cantidadReferenciasValidas >= 1) {
+        if (cantidadReferenciasValidas === 1) {
+            return {
+                estado: "pendiente",
+                mensaje: `1 referencia comercial válida (${resultadoReferencias.referenciasValidas[0]}) - requiere validación manual (solicitar libre de deuda)`,
+            };
+        } else {
+            return {
+                estado: "pendiente", 
+                mensaje: `${cantidadReferenciasValidas} referencias comerciales válidas (${resultadoReferencias.referenciasValidas.join(", ")}) - requiere validación manual (solicitar libres de deuda)`,
+            };
+        }
     }
 
-    // 🔥 REGLA: 1 referencia + 2+ deudas: Rechazado
-    if (cantidadReferencias === 1 && (cantidadEntidadesDeuda + cantidadEntidadesSituacion2) >= 2) {
-        return {
-            estado: "rechazado",
-            mensaje: "solicitud rechazada, cliente presenta deuda en 3 o más entidades con situación de riesgo",
-        };
-    }
-
-    // 🔥 REGLA: 1 referencia + 1 deuda: Pendiente
-    if (cantidadReferencias === 1 && (cantidadEntidadesDeuda + cantidadEntidadesSituacion2) === 1) {
-        return {
-            estado: "pendiente",
-            mensaje: "situación pendiente de revisión",
-        };
-    }
-
-    // Si no aplican las reglas de combinación, retornar aprobado (no afecta)
+    // Si no hay referencias válidas, no afecta
     return { estado: "aprobado" };
 }
 

@@ -846,6 +846,8 @@ export class CrearSolicitudInicialUseCase {
     resultadoNosis: VerificationResult,
     entidadesService: EntidadesService
 ): string {
+
+  
     // Mensajes específicos para combinaciones (alta prioridad)
     if (resultadoNosis.reglasFallidas) {
         for (const regla of resultadoNosis.reglasFallidas) {
@@ -866,6 +868,14 @@ export class CrearSolicitudInicialUseCase {
     ) {
         const motivosRechazo: string[] = [];
 
+        // 🔥 AGREGAR DEUDAS DETECTADAS PRIMERO
+    if (resultadoNosis.entidadesDeuda && resultadoNosis.entidadesDeuda.length > 0) {
+        const nombresEntidades = entidadesService.obtenerNombresEntidades(resultadoNosis.entidadesDeuda);
+        nombresEntidades.forEach(nombre => {
+            motivosRechazo.push(`deuda activa con ${nombre} - situación 5 (incumplimiento grave)`);
+        });
+    }
+
         resultadoNosis.reglasFallidas.forEach((regla) => {
             if (regla.includes("entidades en situación 2")) {
                 const match = regla.match(/(\d+) entidades/);
@@ -878,6 +888,7 @@ export class CrearSolicitudInicialUseCase {
                     `${cantidad} alertas crediticias en entidades bancarias: ${nombresEntidades}`
                 );
             } else if (regla.includes("entidades con deuda")) {
+              /*
                 const match = regla.match(/(\d+) entidades/);
                 const cantidad = match ? match[1] : "varias";
                 // OBTENER NOMBRES DE ENTIDADES PARA DEUDAS
@@ -887,6 +898,8 @@ export class CrearSolicitudInicialUseCase {
                 motivosRechazo.push(
                     `deudas activas con ${cantidad} entidades: ${nombresEntidades}`
                 );
+                */
+               return; // Ya se agregaron arriba
             } else if (regla.includes("referencias comerciales")) {
                 const match = regla.match(/(\d+) referencias comerciales válidas/);
                 if (match) {
@@ -906,7 +919,9 @@ export class CrearSolicitudInicialUseCase {
             } else if (regla.includes("tarjeta Crediguía")) {
                 motivosRechazo.push("tarjeta Crediguía activa");
             } else if (regla.includes("aporte")) {
-                motivosRechazo.push("no cumple con el mínimo de aportes requerido");
+                
+                    //motivosRechazo.push("no cumple con el mínimo de aportes requerido");
+                
             } else if (regla.includes("jubilado")) {
                 motivosRechazo.push("cliente jubilado");
             } else if (regla.includes("monotributista")) {
@@ -919,6 +934,21 @@ export class CrearSolicitudInicialUseCase {
                 motivosRechazo.push(partePrincipal.toLowerCase());
             }
         });
+
+        // ✅ Si hay referencias pendientes, agregarlas al mensaje de rechazo
+        if (resultadoNosis.pendientes && resultadoNosis.pendientes.length > 0) {
+            const referenciasPendientes = resultadoNosis.pendientes.filter(p => 
+                p.includes('referencias comerciales') || p.includes('referencia comercial')
+            );
+            
+            if (referenciasPendientes.length > 0) {
+                // Extraer las referencias válidas para mostrarlas específicamente
+                const referenciasValidas = resultadoNosis.referenciasComerciales?.referenciasValidas || [];
+                if (referenciasValidas.length > 0) {
+                    motivosRechazo.push(`tiene referencia comercial pendiente de validación: ${referenciasValidas.join(", ")} - solicitar libre de deuda`);
+                }
+            }
+        }
 
         return this.formatearMensajeComerciante("RECHAZADO", motivosRechazo);
     }
@@ -942,17 +972,16 @@ export class CrearSolicitudInicialUseCase {
                     ? entidadesService.obtenerNombresEntidades(resultadoNosis.entidadesDeuda).join(", ")
                     : "entidades varias";
                 motivosPendientes.push(`deudas con ${cantidad} entidades: ${nombresEntidades}`);
-            } else if (pendiente.includes("referencias comerciales")) {
-                const match = pendiente.match(/(\d+) referencia/);
-                // MOSTRAR TODAS LAS REFERENCIAS COMERCIALES VÁLIDAS
+            } else if (pendiente.includes("referencias comerciales") || pendiente.includes("referencia comercial válida")) {
                 const referenciasValidas = resultadoNosis.referenciasComerciales?.referenciasValidas || [];
                 const referenciasLista = referenciasValidas.length > 0 
                     ? referenciasValidas.join(", ")
                     : "no especificadas";
-                if (match) {
-                    motivosPendientes.push(
-                        `${match[1]} referencia(s) comercial(es) a validar: ${referenciasLista}`
-                    );
+                
+                if (referenciasValidas.length === 1) {
+                    motivosPendientes.push(`tiene 1 referencia comercial a validar: ${referenciasLista} - solicitar libre de deuda`);
+                } else if (referenciasValidas.length === 2) {
+                    motivosPendientes.push(`tiene 2 referencias comerciales a validar: ${referenciasLista} - solicitar libres de deuda`);
                 } else {
                     motivosPendientes.push(`referencias comerciales a validar: ${referenciasLista}`);
                 }
@@ -1005,7 +1034,12 @@ private formatearMensajeComerciante(
             mensaje = "⚠️ SOLICITUD PENDIENTE DE REVISIÓN\n\n";
             mensaje += "Se requiere validación manual (información para solicitar libres de deuda):\n";
             motivos.forEach((motivo, index) => {
-                mensaje += `${index + 1}. ${motivo}\n`;
+                // Destacar referencias comerciales
+                if (motivo.includes("referencias comerciales")) {
+                    mensaje += `⭐ ${index + 1}. ${motivo} ⭐\n`;
+                } else {
+                    mensaje += `${index + 1}. ${motivo}\n`;
+                }
             });
             break;
 
