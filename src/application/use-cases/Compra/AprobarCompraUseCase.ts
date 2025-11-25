@@ -303,15 +303,18 @@ export class AprobarCompraUseCase {
       });
 
       // ===== PASO 9: NOTIFICAR AL COMERCIANTE =====
+      const cliente = await this.clienteRepository.findById(compra.getClienteId());
+      const cuilCliente = cliente.getCuil();
       // Enviar notificación al comerciante sobre la aprobación
       await this.notificationService.emitNotification({
         userId: solicitudFormal.getComercianteId(),
         type: "compra",
-        message: `Compra aprobada: ${compra.getDescripcion()}`,
+        message: `Compra aprobada: ${compra.getDescripcion()} - CUIL: ${cuilCliente}`,
         metadata: {
           compraId: id,
           monto: compra.getMontoTotal(),
           estado: "aprobada",
+          cuilCliente: cuilCliente
         },
       });
 

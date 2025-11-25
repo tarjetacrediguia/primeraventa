@@ -35,6 +35,7 @@ import { NotificationPort } from "../../ports/NotificationPort";
 import { AnalistaRepositoryPort } from "../../ports/AnalistaRepositoryPort";
 import { HISTORIAL_ACTIONS } from "../../constants/historialActions";
 import { SolicitudInicialRepositoryAdapter } from "../../../infrastructure/adapters/repository/SolicitudInicialRepositoryAdapter";
+import { ClienteRepositoryPort } from "../../ports/ClienteRepositoryPort";
 
 export class CrearCompraUseCase {
   /**
@@ -53,7 +54,8 @@ export class CrearCompraUseCase {
     private readonly historialRepository: HistorialRepositoryPort,
     private readonly notificationService: NotificationPort,
     private readonly analistaRepo: AnalistaRepositoryPort,
-    private readonly solicitudInicialRepository: SolicitudInicialRepositoryAdapter
+    private readonly solicitudInicialRepository: SolicitudInicialRepositoryAdapter,
+    private readonly clienteRepository: ClienteRepositoryPort,
   ) {}
 
   /**
@@ -299,10 +301,24 @@ export class CrearCompraUseCase {
 
       // ===== PASO 8: NOTIFICACIÓN A ANALISTAS =====
       // Notificar a analistas sobre nueva compra pendiente de revisión
+      // Obtener información del cliente para el CUIL
+      const cliente = await this.clienteRepository.findById(compraCreada.getClienteId());
+      const cuilCliente = cliente.getCuil();
+
+      // Construir mensaje personalizado según el estado
+      let mensajeNotificacion = `Nueva compra pendiente de revisión - CUIL: ${cuilCliente}`;
+
+      if (estadoActual === "pendiente_aprobacion_inicial") {
+        mensajeNotificacion = `⚠️ Compra creada - Esperando aprobación de solicitud formal - CUIL: ${cuilCliente}`;
+      } else if (estadoActual === "pendiente") {
+        mensajeNotificacion = `📋 Compra creada - Solicitud formal pendiente - CUIL: ${cuilCliente}`;
+      }
+
       await this.notificarAnalistas(
         compraCreada,
         usuarioId,
-        solicitudInicial.getId()
+        solicitudInicial.getId(),
+        mensajeNotificacion
       );
 
       // Retornar la compra creada exitosamente
@@ -497,73 +513,75 @@ export class CrearCompraUseCase {
   }
 
   /**
-   * Notifica a analistas sobre nueva compra pendiente de revisión.
-   *
-   * Este método obtiene todos los analistas activos del sistema y les envía
-   * una notificación sobre la nueva compra que requiere revisión.
-   *
-   * @param compra - Compra creada que requiere revisión
-   * @param usuarioId - ID del usuario que creó la compra
-   * @param solicitudInicialId - ID de la solicitud inicial asociada (opcional)
-   */
-  private async notificarAnalistas(
-    compra: Compra,
-    usuarioId: number,
-    solicitudInicialId: number | undefined
-  ): Promise<void> {
-    try {
-      const analistaIds = await this.analistaRepo.obtenerIdsAnalistasActivos();
+ * Notifica a analistas sobre nueva compra pendiente de revisión.
+ *
+ * Este método obtiene todos los analistas activos del sistema y les envía
+ * una notificación sobre la nueva compra que requiere revisión.
+ *
+ * @param compra - Compra creada que requiere revisión
+ * @param usuarioId - ID del usuario que creó la compra
+ * @param solicitudInicialId - ID de la solicitud inicial asociada (opcional)
+ * @param message - Mensaje personalizado para enviar a los analistas
+ */
+private async notificarAnalistas(
+  compra: Compra,
+  usuarioId: number,
+  solicitudInicialId: number | undefined,
+  message: string
+): Promise<void> {
+  try {
+    const analistaIds = await this.analistaRepo.obtenerIdsAnalistasActivos();
+    
+    // Obtener información del cliente para el CUIL
+    const cliente = await this.clienteRepository.findById(compra.getClienteId());
+    const cuilCliente = cliente.getCuil();
 
-      // Obtener información contextual para la notificación
-      const solicitudFormal =
-        await this.solicitudFormalRepository.getSolicitudFormalById(
-          compra.getSolicitudFormalId()
-        );
+    // Obtener información contextual para la notificación
+    const solicitudFormal = await this.solicitudFormalRepository.getSolicitudFormalById(
+      compra.getSolicitudFormalId()
+    );
 
-      const estadoSolicitud = solicitudFormal?.getEstado() || "desconocido";
-      let mensajePrioridad = "Nueva compra pendiente de revisión";
-      let prioridad = "media";
+    const estadoSolicitud = solicitudFormal?.getEstado() || "desconocido";
+    let prioridad = "media";
 
-      // Ajustar mensaje y prioridad según el estado
-      if (estadoSolicitud === "pendiente_aprobacion_inicial") {
-        mensajePrioridad =
-          "⚠️ Compra creada - Esperando aprobación de solicitud formal";
-        prioridad = "baja";
-      } else if (estadoSolicitud === "pendiente") {
-        mensajePrioridad = "📋 Compra creada - Solicitud formal pendiente";
-        prioridad = "media";
-      }
-
-      const notificaciones = analistaIds.map((analistaId) =>
-        this.notificationService.emitNotification({
-          userId: analistaId,
-          type: "compra",
-          message: mensajePrioridad,
-          metadata: {
-            compraId: compra.getId(),
-            descripcion: compra.getDescripcion(),
-            monto: compra.getMontoTotal(),
-            prioridad: prioridad,
-            estadoSolicitudFormal: estadoSolicitud,
-            requiereAprobacionSolicitud: estadoSolicitud !== "aprobada",
-          },
-        })
-      );
-
-      await Promise.all(notificaciones);
-    } catch (error) {
-      // Registrar error en historial si falla la notificación
-      await this.historialRepository.registrarEvento({
-        usuarioId: usuarioId,
-        accion: HISTORIAL_ACTIONS.ERROR_PROCESO,
-        entidadAfectada: "compras",
-        entidadId: compra.getId(),
-        detalles: {
-          error: "Error notificando a analistas",
-          error_detalle: error instanceof Error ? error.message : String(error),
-        },
-        solicitudInicialId: solicitudInicialId,
-      });
+    // Ajustar prioridad según el estado
+    if (estadoSolicitud === "pendiente_aprobacion_inicial") {
+      prioridad = "baja";
+    } else if (estadoSolicitud === "pendiente") {
+      prioridad = "media";
     }
+
+    const notificaciones = analistaIds.map((analistaId) =>
+      this.notificationService.emitNotification({
+        userId: analistaId,
+        type: "compra",
+        message: message, // Usar el mensaje pasado por parámetro
+        metadata: {
+          compraId: compra.getId(),
+          descripcion: compra.getDescripcion(),
+          monto: compra.getMontoTotal(),
+          cuilCliente: cuilCliente,
+          prioridad: prioridad,
+          estadoSolicitudFormal: estadoSolicitud,
+          requiereAprobacionSolicitud: estadoSolicitud !== "aprobada",
+        },
+      })
+    );
+
+    await Promise.all(notificaciones);
+  } catch (error) {
+    // Registrar error en historial si falla la notificación
+    await this.historialRepository.registrarEvento({
+      usuarioId: usuarioId,
+      accion: HISTORIAL_ACTIONS.ERROR_PROCESO,
+      entidadAfectada: "compras",
+      entidadId: compra.getId(),
+      detalles: {
+        error: "Error notificando a analistas",
+        error_detalle: error instanceof Error ? error.message : String(error),
+      },
+      solicitudInicialId: solicitudInicialId,
+    });
   }
+}
 }

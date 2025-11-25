@@ -1427,6 +1427,7 @@ export const aprobarSolicitudInicial = async (req: Request, res: Response) => {
 export const rechazarSolicitudInicial = async (req: Request, res: Response) => {
   try {
     const id = req.params.id;
+    console.log("Rechazando solicitud inicial ID:", id);
     const { comentario } = req.body;
     if (!req.user?.id || !req.user?.rol) {
       return res.status(401).json({ error: "Usuario no autenticado" });
@@ -1764,73 +1765,3 @@ export const descargarArchivoAdjunto = async (req: Request, res: Response) => {
   }
 };
 
-/*
-
-{
-  "idSolicitudInicial": 1,
-  "importeNeto":1500000,
-  "comentarioInicial":"Solicitud creada por comerciante",
-  "solicitaAmpliacionDeCredito":false,
-  "datosEmpleador":{
-    "razonSocialEmpleador":"Acme S.A",
-    "cuitEmpleador":"123456",
-    "cargoEmpleador":"cargo en la empresa",
-    "sectorEmpleador": "sector en la empresa",
-    "codigoPostalEmpleador":"8300",
-    "localidadEmpleador":"NEUQUEN",
-    "provinciaEmpleador":"NEUQUEN",
-    "telefonoEmpleador":"299456789"
-  },
-  "cliente": {
-    "nombreCompleto": "Benito",
-    "apellido": "Dongato",
-    "telefono": "+549555222669",
-    "email": "Benito.Dongato@example.com",
-    "aceptaTarjeta": true,
-    "fechaNacimiento": "1985-05-15",
-    "domicilio": "Calle Falsa 123, Buenos Aires",
-    "sexo":"M",
-    "codigoPostal":"8300",
-    "localidad":"NEUQUEN",
-    "provincia":"NEUQUEN",
-    "numeroDomicilio":"1234",
-    "barrio":"Barrio Falso",
-    "recibo":"/9joA//9k="
-  },
-  "referentes": [
-    {
-      "nombreCompleto": "María Gómez",
-      "apellido": "Gómez",
-      "vinculo": "Familiar",
-      "telefono": "+5491134567890"
-    },
-    {
-      "nombreCompleto": "Pedro Gómez",
-      "apellido": "Gómez",
-      "vinculo": "Familiar",
-      "telefono": "+5491134525870"
-    }
-  ],
-  "archivosAdjuntos":[
-        {
-            "nombre": "pdf libre de deuda",
-            "tipo": "application/pdf",
-            "contenido": "JVBERi0xLjQKJ3NzkKJSVFT0YK"
-        },
-        {
-            "nombre": "libre de deuda",
-            "tipo": "image/png",
-            "contenido": "iVBORwFTkSuQmCC"
-        },
-        {
-            "nombre": "recibo alternativo",
-            "tipo": "image/png",
-            "contenido": "iVBORw0KGgkSuQmCC"
-        }
-    ]
-}
-
-
-
-
-*/

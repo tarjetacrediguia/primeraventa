@@ -391,10 +391,10 @@ private mapearEstadoEureka(estadoEureka: string): "aprobado" | "rechazado" | "pe
   if (!tiene12Aportes) {
     return {
       esRubroConstruccionContratacion: true,
-      estado: "rechazado",
+      estado: "pendiente",
       codigoRubro: codigoRubroEmpleador,
       descripcionRubro: descripcionRubro,
-      mensaje: `Trabaja en rubro de construcción/contratación (${codigoRubroEmpleador} - ${descripcionRubro}) RECHAZADO - no tiene 12 meses de aportes completos`,
+      mensaje: `Trabaja en rubro de construcción/contratación (${codigoRubroEmpleador} - ${descripcionRubro}) PENDIENTE - no tiene 12 meses de aportes completos`,
     };
   }
 
@@ -852,6 +852,8 @@ private mapearEstadoEureka(estadoEureka: string): "aprobado" | "rechazado" | "pe
     if (verificacionEmpleadoDomestico.esEmpleadoDomestico) {
         if (verificacionEmpleadoDomestico.estado === "aprobado") {
             aprobados.push(verificacionEmpleadoDomestico.mensaje);
+        } else if(verificacionEmpleadoDomestico.estado === "pendiente") {
+            pendientes.push(verificacionEmpleadoDomestico.mensaje);
         } else {
             reglasFallidas.push(verificacionEmpleadoDomestico.mensaje);
         }
@@ -862,6 +864,8 @@ private mapearEstadoEureka(estadoEureka: string): "aprobado" | "rechazado" | "pe
     if (verificacionRubrosConstruccion.esRubroConstruccionContratacion) {
         if (verificacionRubrosConstruccion.estado === "aprobado") {
             aprobados.push(verificacionRubrosConstruccion.mensaje);
+        } else if(verificacionRubrosConstruccion.estado === "pendiente") {
+            pendientes.push(verificacionRubrosConstruccion.mensaje);
         } else {
             reglasFallidas.push(verificacionRubrosConstruccion.mensaje);
         }
@@ -895,7 +899,7 @@ private mapearEstadoEureka(estadoEureka: string): "aprobado" | "rechazado" | "pe
 } else {
     // Solo agregar si no existe ya  
     if (!reglasFallidas.some(r => r.includes('aporte'))) {
-        reglasFallidas.push(`Cliente no cumple con el mínimo de aportes registrados en los últimos 12 meses (${totalAportes} de ${this.MINIMO_APORTES} requeridos)`);
+        pendientes.push(`Cliente no cumple con el mínimo de aportes registrados en los últimos 12 meses (${totalAportes} de ${this.MINIMO_APORTES} requeridos)`);
     }
 }
 
@@ -936,7 +940,7 @@ private mapearEstadoEureka(estadoEureka: string): "aprobado" | "rechazado" | "pe
     const cambioLaboral = this.verificarPerdidaEmpleoReciente(variables);
 
     if (cambioLaboral.perdioEmpleo) {
-        reglasFallidas.push(cambioLaboral.motivo);
+        pendientes.push(cambioLaboral.motivo);
     } else if (esMonotributista) {
         const tieneEmpleoRegistrado = this.tieneEmpleoRegistrado(variables);
         if (tieneEmpleoRegistrado) {
@@ -944,17 +948,17 @@ private mapearEstadoEureka(estadoEureka: string): "aprobado" | "rechazado" | "pe
             if (tieneAportesRecientes) {
                 aprobados.push("Monotributista con empleo registrado y aportes recientes validados");
             } else {
-                reglasFallidas.push("Monotributista con empleo pero sin aportes recientes suficientes");
+                pendientes.push("Monotributista con empleo pero sin aportes recientes suficientes");
             }
         } else {
-            reglasFallidas.push("Cliente es monotributista sin empleo registrado");
+            pendientes.push("Cliente es monotributista sin empleo registrado");
         }
     } else if (!cambioLaboral.perdioEmpleo) {
         const tieneLaboral = this.verificarSituacionLaboral(variables);
         if (tieneLaboral) {
             aprobados.push("Situación laboral validada");
         } else {
-            reglasFallidas.push("Cliente no tiene situación laboral registrada");
+            pendientes.push("Cliente no tiene situación laboral registrada");
         }
     }
 
@@ -1241,14 +1245,33 @@ private verificarCombinacionReferenciasDeudas(
     mensaje?: string;
 } {
     // 🔥 SOLO considerar referencias VÁLIDAS (las excluidas no cuentan)
-    const cantidadReferenciasValidas = resultadoReferencias.totalValidas;
+        const cantidadReferenciasValidas = resultadoReferencias.totalValidas;
+    const cantidadSituacion2 = resultadoSituacion2.entidades?.length || 0;
+    const cantidadDeudas = resultadoDeudas.entidades?.length || 0;
+
+    const totalProblemas = cantidadReferenciasValidas + cantidadSituacion2 + cantidadDeudas;
 
         console.log("=== DEPURACIÓN COMBINACIÓN ===");
     console.log("Referencias válidas:", cantidadReferenciasValidas);
     console.log("Lista referencias:", resultadoReferencias.referenciasValidas);
 
-    // Cualquier referencia válida hace que sea PENDIENTE
-    // 🔥 CORRECCIÓN: Cualquier referencia válida hace que sea PENDIENTE
+    // ✅ OBTENER NOMBRES DE ENTIDADES (USANDO SERVICIO EXISTENTE)
+    const nombresSituacion2 = resultadoSituacion2.entidades 
+        ? this.entidadesService.obtenerNombresEntidades(resultadoSituacion2.entidades)
+        : [];
+    const nombresDeudas = resultadoDeudas.entidades 
+        ? this.entidadesService.obtenerNombresEntidades(resultadoDeudas.entidades)
+        : [];
+
+    // ✅ REGLAS COMBINADAS CON NOMBRES
+    if (totalProblemas >= 3) {
+        return {
+            estado: "rechazado",
+            mensaje: `Combinación rechazada: ${cantidadReferenciasValidas} referencia(s) comercial(es) + ${cantidadSituacion2} entidad(es) en situación 2 + ${cantidadDeudas} entidad(es) con deuda = RECHAZADO (total: ${totalProblemas}) - Solicitar libres de deuda: ${[...nombresSituacion2, ...nombresDeudas].join(", ")}`
+        };
+    }
+
+    // ✅ MANTENER LÓGICA ORIGINAL PARA REFERENCIAS + NUEVA LÓGICA COMBINADA
     if (cantidadReferenciasValidas >= 1) {
         if (cantidadReferenciasValidas === 1) {
             return {
@@ -1263,7 +1286,29 @@ private verificarCombinacionReferenciasDeudas(
         }
     }
 
-    // Si no hay referencias válidas, no afecta
+    // ✅ CASOS DE 2 PROBLEMAS (SITUACIÓN 2 + DEUDAS)
+    if (totalProblemas === 2) {
+        return {
+            estado: "pendiente",
+            mensaje: `Combinación pendiente: ${cantidadSituacion2} entidad(es) en situación 2 + ${cantidadDeudas} entidad(es) con deuda = PENDIENTE (total: 2) - Solicitar libres de deuda: ${[...nombresSituacion2, ...nombresDeudas].join(", ")}`
+        };
+    }
+
+    // ✅ CASOS DE 1 PROBLEMA INDIVIDUAL
+    if (cantidadSituacion2 === 1) {
+        return {
+            estado: "pendiente",
+            mensaje: `1 entidad en situación 2 (${nombresSituacion2[0]}) - requiere validación manual (solicitar libre de deuda)`
+        };
+    }
+
+    if (cantidadDeudas === 1) {
+        return {
+            estado: "pendiente",
+            mensaje: `1 entidad con deuda (${nombresDeudas[0]}) - requiere validación manual (solicitar libre de deuda)`
+        };
+    }
+
     return { estado: "aprobado" };
 }
 
@@ -1584,8 +1629,8 @@ private verificarCombinacionReferenciasDeudas(
   if (!tiene12Aportes) {
     return {
       esEmpleadoDomestico: true,
-      estado: "rechazado",
-      mensaje: "Empleado doméstico RECHAZADO - no tiene 12 meses de aportes completos",
+      estado: "pendiente",
+      mensaje: "Empleado doméstico PENDIENTE - no tiene 12 meses de aportes completos",
     };
   }
 

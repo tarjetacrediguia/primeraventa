@@ -135,7 +135,7 @@ export class AprobarRechazarSolicitudInicialUseCase {
       ? "aprobación manual / aprobado por administrador" 
       : "aprobación manual / aprobado por analista";
     solicitud.agregarComentario(crearComentarioComerciante(mensajeComerciante));
-        
+        solicitud.agregarComentario(crearComentarioComerciante(`Aprobación: ${comentario}`));
         // ===== PASO 5: ACTUALIZAR ESTADO =====
         // Cambiar estado de la solicitud a "aprobada"
         solicitud.setEstado("aprobada");
@@ -159,7 +159,7 @@ export class AprobarRechazarSolicitudInicialUseCase {
         // Enviar notificación al comerciante sobre la aprobación
         await this.notificarCliente(
             solicitudActualizada, 
-            `Su solicitud inicial de crédito ha sido aprobada`
+            `Su solicitud inicial de crédito ha sido aprobada - CUIL: ${cliente?.getCuil()}`
         );
 
         // Retornar la solicitud actualizada exitosamente
@@ -206,7 +206,8 @@ export class AprobarRechazarSolicitudInicialUseCase {
         // ===== PASO 1: OBTENER Y VALIDAR SOLICITUD INICIAL =====
         // Obtener la solicitud inicial por ID
         const solicitud = await this.repository.getSolicitudInicialById(solicitudId);
-        
+        console.log(`Buscando solicitud inicial ID: ${solicitudId}`);
+        console.log(`Solicitud encontrada: ${solicitud ? 'SÍ' : 'NO'}`);
         // Verificar que la solicitud existe
         if (!solicitud) {
             await this.historialRepository.registrarEvento({
@@ -261,7 +262,7 @@ export class AprobarRechazarSolicitudInicialUseCase {
         // ===== PASO 6: ESTABLECER MOTIVO DE RECHAZO =====
         // Establecer el motivo de rechazo en la solicitud
         solicitud.setMotivoRechazo(comentario);
-        
+        solicitud.agregarComentario(crearComentarioComerciante(`Rechazo: ${comentario}`));
         // ===== PASO 7: ACTUALIZAR ESTADO =====
         // Cambiar estado de la solicitud a "rechazada"
         solicitud.setEstado("rechazada");
@@ -285,7 +286,7 @@ export class AprobarRechazarSolicitudInicialUseCase {
         // Enviar notificación al comerciante sobre el rechazo
         await this.notificarCliente(
             solicitudActualizada, 
-            `Su solicitud inicial ha sido rechazada. Motivo: ${comentario}`
+            `Su solicitud inicial ha sido rechazada. Motivo: ${comentario} - CUIL: ${cliente?.getCuil()}`
         );
 
         // Retornar la solicitud actualizada exitosamente

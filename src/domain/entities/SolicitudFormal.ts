@@ -60,6 +60,8 @@ export interface SolicitudFormalParams {
     comercianteAprobadorId?: number;
     nuevoLimiteCompletoSolicitado?: number | null;
     archivosAdjuntos?: ArchivoAdjunto[];
+    dni?: string | null;
+    cuil?: string | null;
 }
 /**
  * Clase que representa una solicitud formal de préstamo en el sistema.
@@ -109,6 +111,8 @@ export class SolicitudFormal {
     private barrio: string | null;  
     private archivosAdjuntos: ArchivoAdjunto[] = [];
     private rubroEmpleador: string;
+    private dni: string | null;
+    private cuil: string | null;
 
   /**
    * Constructor de la clase SolicitudFormal.
@@ -182,6 +186,24 @@ export class SolicitudFormal {
         this.comercianteAprobadorId = params.comercianteAprobadorId;
         this.rubroEmpleador = params.rubroEmpleador || "";
         this.calcularLimites();
+        this.dni = params.dni || null;
+        this.cuil = params.cuil || null;
+    }
+
+        public getDni(): string | null {
+        return this.dni;
+    }
+
+    public setDni(dni: string | null): void {
+        this.dni = dni;
+    }
+
+    public getCuil(): string | null {
+        return this.cuil;
+    }
+
+    public setCuil(cuil: string | null): void {
+        this.cuil = cuil;
     }
 
     // Getter y setter para rubroEmpleador
@@ -759,6 +781,8 @@ export class SolicitudFormal {
         comercianteId: this.comercianteId,
         nombreCompleto: this.nombreCompleto,
         apellido: this.apellido,
+        dni: this.dni,
+        cuil: this.cuil,
         telefono: this.telefono,
         email: this.email,
         fechaSolicitud: this.fechaSolicitud,
@@ -818,6 +842,8 @@ export class SolicitudFormal {
             comercianteId: map.comercianteId,
             nombreCompleto: map.nombreCompleto,
             apellido: map.apellido,
+            dni: map.dni,
+            cuil: map.cuil,
             telefono: map.telefono,
             email: map.email,
             fechaSolicitud: map.fechaSolicitud,

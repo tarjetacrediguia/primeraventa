@@ -192,12 +192,14 @@ export class RechazarCompraUseCase {
             });
 
             // ===== PASO 8: NOTIFICAR AL COMERCIANTE =====
+            const cliente = await this.clienteRepository.findById(compra.getClienteId());
+      const cuilCliente = cliente.getCuil();
             // Enviar notificación al comerciante sobre el rechazo
             if (solicitudFormal) {
                 await this.notificationService.emitNotification({
                     userId: solicitudFormal.getComercianteId(),
                     type: "compra",
-                    message: `Compra rechazada: ${compra.getDescripcion()}`,
+                    message: `Compra rechazada: ${compra.getDescripcion()} - CUIL: ${cuilCliente}`,
                     metadata: {
                         compraId: id,
                         motivo: motivo,

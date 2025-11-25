@@ -356,7 +356,7 @@ export class CrearSolicitudInicialUseCase {
           comercianteId
         );
       } else {
-        await this.notificarAnalistas(solicitudCreada, clienteTemporal);
+        await this.notificarAnalistas(solicitudCreada, clienteTemporal,`Nueva solicitud inicial requiere revisión - CUIL: ${cuilCliente}`);
       }
 
       // ===== PASO 9: REGISTRAR EVENTO EN HISTORIAL =====
@@ -381,8 +381,10 @@ export class CrearSolicitudInicialUseCase {
       await this.notificationService.emitNotification({
         userId: Number(comercianteId),
         type: "solicitud_inicial",
-        message: "Solicitud inicial creada exitosamente",
+        message: `Nueva solicitud inicial creada exitosamente - CUIL: ${cuilCliente}`,
       });
+
+      await this.notificarAnalistas(solicitudCreada, clienteTemporal,`Nueva solicitud inicial requiere revisión - CUIL: ${cuilCliente}`);
 
       // ===== PASO 11: RETORNAR RESPUESTA =====
       return {
@@ -714,7 +716,7 @@ export class CrearSolicitudInicialUseCase {
         solicitud,
         cliente
       );
-      await this.notificarAnalistas(solicitud, cliente);
+      await this.notificarAnalistas(solicitud, cliente,`Nueva solicitud inicial requiere revisión - CUIL: ${cliente.getCuil()}`);
     }
   }
 
@@ -899,7 +901,7 @@ export class CrearSolicitudInicialUseCase {
                     `deudas activas con ${cantidad} entidades: ${nombresEntidades}`
                 );
                 */
-               return; // Ya se agregaron arriba
+                // Ya se agregaron arriba
             } else if (regla.includes("referencias comerciales")) {
                 const match = regla.match(/(\d+) referencias comerciales válidas/);
                 if (match) {
@@ -920,7 +922,7 @@ export class CrearSolicitudInicialUseCase {
                 motivosRechazo.push("tarjeta Crediguía activa");
             } else if (regla.includes("aporte")) {
                 
-                    //motivosRechazo.push("no cumple con el mínimo de aportes requerido");
+                    motivosRechazo.push("no cumple con el mínimo de aportes requerido");
                 
             } else if (regla.includes("jubilado")) {
                 motivosRechazo.push("cliente jubilado");
@@ -1084,30 +1086,30 @@ private formatearMensajeComerciante(
   }
 
   private async notificarAnalistas(
-    solicitud: SolicitudInicial,
-    cliente: Cliente
-  ): Promise<void> {
-    try {
-      const analistaIds =
-        await this.analistaRepository.obtenerIdsAnalistasActivos();
-      const notificaciones = analistaIds.map((analistaId) =>
-        this.notificationService.emitNotification({
-          userId: analistaId,
-          type: "solicitud_inicial",
-          message: "Nueva solicitud inicial requiere revisión",
-          metadata: {
-            solicitudId: solicitud.getId(),
-            cuilCliente: cliente.getCuil(),
-            comercianteId: solicitud.getComercianteId(),
-            prioridad: "media",
-          },
-        })
-      );
-      await Promise.all(notificaciones);
-    } catch (error) {
-      console.error("Error notificando a analistas:", error);
-    }
+  solicitud: SolicitudInicial,
+  cliente: Cliente,
+  message: string
+): Promise<void> {
+  try {
+    const analistaIds = await this.analistaRepository.obtenerIdsAnalistasActivos();
+    const notificaciones = analistaIds.map((analistaId) =>
+      this.notificationService.emitNotification({
+        userId: analistaId,
+        type: "solicitud_inicial",
+        message: message, // Usar el mensaje personalizado
+        metadata: {
+          solicitudId: solicitud.getId(),
+          cuilCliente: cliente.getCuil(),
+          comercianteId: solicitud.getComercianteId(),
+          prioridad: "media",
+        },
+      })
+    );
+    await Promise.all(notificaciones);
+  } catch (error) {
+    console.error("Error notificando a analistas:", error);
   }
+}
 
   private async verificarSolicitudesExistentes(
     cuilCliente: string,

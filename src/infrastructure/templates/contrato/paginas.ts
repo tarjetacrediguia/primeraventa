@@ -243,6 +243,7 @@ export const paginas = {
             .fuente-dato {
             font-family: monospace;
             font-size: 7.5pt; 
+            text-transform: uppercase;
         }
     </style>
 </head>
@@ -657,6 +658,7 @@ export const paginas = {
     .fuente-dato {
             font-family: monospace;
             font-size: 7.5pt; 
+            text-transform: uppercase;
         }
     </style>
 </head>
@@ -1834,6 +1836,7 @@ export const paginas = {
             .fuente-dato {
             font-family: monospace;
             font-size: 7.5pt; 
+            text-transform: uppercase;
         }
   </style>
 </head>
@@ -2004,6 +2007,24 @@ export const paginas = {
       height: 20px;
       margin-bottom: 20px;
     }
+      /* --- footer bipartito --- */
+    .footer{
+      display:flex;
+      justify-content:space-between;
+      margin-top:30px;
+      font-size:9px;
+      color:#0066cc;
+    }
+    .footer-col{
+      flex:1;
+      margin:0 10px;
+      text-align:center;
+    }
+    .signature-line{
+      border-bottom:1px dashed #000;
+      height:20px;
+      margin-bottom:4px;
+    }
   </style>
 </head>
 
@@ -2094,18 +2115,30 @@ export const paginas = {
     </div>
   </div>
 
+  <!-- Footer -->
+    <div class="footer">
+      <div class="footer-col">
+        <div class="signature-line"></div>
+        <p>p/Cooperativa Guía Ltda.</p>
+      </div>
+      <div class="footer-col">
+        <div class="signature-line"></div>
+        <p>Firma</p>
+      </div>
+    </div>
+
   <div style="text-align:center; margin-top:40px; font-size:9px;">
     Cooperativa Guía Ltda.
   </div>
 
-  <div class="page-number" style="position:absolute; bottom:20px; right:20px; top:auto;">9 de 8</div>
+  <div class="page-number" style="position:absolute; bottom:20px; right:20px; top:auto;">9 de 10</div>
 </body>
 </html>`,
   pagina10: `<!DOCTYPE html>
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <title>Página 10 de 8</title>
+  <title>Página 10 de 10</title>
   <style>
 
     body {
@@ -2185,7 +2218,7 @@ export const paginas = {
 </head>
 
 <body>
-  <div class="page-number">10 de 8</div>
+  <div class="page-number">10 de 10</div>
 
   <p style="font-size:10px;">copia para el Cliente.</p>
 
@@ -2261,19 +2294,9 @@ export const paginas = {
 
   <p style="margin-top:30px;"><strong>Fecha ____/____/______</strong></p>
 
- <!-- Firmas -->
-  <div class="signature-grid">
-    <div>
-      <div class="signature-line"></div>
-      FIRMA TITULAR
-      
-    </div>
-    <div>
-      <div class="signature-line"></div>
-      ACLARACIÓN
-      
-    </div>
-  </div>
+<div style="text-align:center; margin:40px 0 0 -40%; font-size:9px;">
+  Cooperativa Guía Ltda.
+</div>
 </body>
 </html>`,
 };

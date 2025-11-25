@@ -919,7 +919,9 @@ export class SolicitudFormalRepositoryAdapter
                 sf.localidad_empleador,
                 sf.provincia_empleador,
                 sf.telefono_empleador,
-                sf.rubro_empleador             
+                sf.rubro_empleador,
+                c.dni,
+                c.cuil              
             FROM solicitudes_formales sf
             INNER JOIN clientes c ON sf.cliente_id = c.id
             ORDER BY sf.fecha_solicitud DESC
@@ -977,6 +979,8 @@ export class SolicitudFormalRepositoryAdapter
           provinciaEmpleador: row.provincia_empleador,
           telefonoEmpleador: row.telefono_empleador,
           // Asignar valores por defecto para propiedades faltantes
+          dni: row.dni,
+          cuil: row.cuil,
           solicitaAmpliacionDeCredito: false, // Valor por defecto
           rubroEmpleador: row.rubro_empleador || "",
         })
@@ -1483,6 +1487,8 @@ export class SolicitudFormalRepositoryAdapter
               ? Number(row.nuevo_limite_completo_solicitado)
               : null,
           archivosAdjuntos: archivos,
+          dni: row.dni,
+          cuil: row.cuil
         })
       );
     }

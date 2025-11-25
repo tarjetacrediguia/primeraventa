@@ -129,6 +129,7 @@ export class AprobarSolicitudesFormalesUseCase {
         
         // ===== PASO 3: VALIDAR ESTADO PENDIENTE =====
         // Verificar que la solicitud esté en estado pendiente
+        /*
         if (solicitud.getEstado() !== "pendiente") {
             // Registrar evento de estado inválido
             await this.historialRepository.registrarEvento({
@@ -145,7 +146,7 @@ export class AprobarSolicitudesFormalesUseCase {
             });
             throw new Error("Solo se pueden aprobar solicitudes pendientes");
         }
-
+        */
         // ===== PASO 4: VALIDAR COMPLETITUD DE DATOS =====
         // Validar que todos los datos requeridos estén presentes
         try {
@@ -303,10 +304,11 @@ export class AprobarSolicitudesFormalesUseCase {
     
     // ===== PASO 3: VALIDAR ESTADO PENDIENTE =====
     // Verificar que la solicitud esté en estado pendiente
+    /*
     if (solicitud.getEstado() !== "pendiente") {
         throw new Error("Solo se pueden rechazar solicitudes pendientes");
     }
-    
+    */
     // ===== PASO 4: VALIDAR COMENTARIO OBLIGATORIO =====
     // Validar que el comentario tenga al menos 10 caracteres
     if (!comentario || comentario.trim().length < 10) {

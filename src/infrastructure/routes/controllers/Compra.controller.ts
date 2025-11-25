@@ -45,7 +45,8 @@ export const crearCompra = async (req: Request, res: Response) => {
             historialRepository,
             notificationService,
             analistaRepo,
-            solicitudInicialRepository
+            solicitudInicialRepository,
+            clienteRepository
         );
 
         const compra = await useCase.execute(

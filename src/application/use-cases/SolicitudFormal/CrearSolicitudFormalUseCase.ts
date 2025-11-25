@@ -415,9 +415,11 @@ export class CrearSolicitudFormalUseCase {
         }
       });
 
+      
+
       // ===== PASO 14: NOTIFICAR A ANALISTAS =====
       // Notificar a analistas sobre la nueva solicitud que requiere revisión
-      await this.notificarAnalistas(solicitudCreada);
+      await this.notificarAnalistas(solicitudCreada,`Nueva solicitud formal requiere revisión - CUIL: ${solicitudInicial.getCuilCliente()}`);
 
       // Retornar la solicitud formal creada exitosamente
       return solicitudCreada;
@@ -455,53 +457,54 @@ export class CrearSolicitudFormalUseCase {
     }
   }
 
-  /**
-   * Notifica a todos los analistas activos sobre una nueva solicitud formal.
-   *
-   * Este método privado obtiene todos los analistas activos del sistema y les
-   * envía una notificación sobre la nueva solicitud formal que requiere revisión.
-   *
-   * @param solicitud - La solicitud formal creada que requiere notificación
-   * @returns Promise<void> - No retorna valor
-   */
-  private async notificarAnalistas(solicitud: SolicitudFormal): Promise<void> {
-    try {
-      // 1. Obtener todos los IDs de analistas usando el repositorio
-      const analistaIds = await this.analistaRepo.obtenerIdsAnalistasActivos();
-      // 2. Enviar notificación individual a cada analista
-      const notificaciones = analistaIds.map((analistaId) =>
-        this.notificationService.emitNotification({
-          userId: analistaId,
-          type: "solicitud_formal",
-          message: "Nueva solicitud formal requiere revisión",
-          metadata: {
-            solicitudId: solicitud.getId(),
-            cliente: `${solicitud.getNombreCompleto()} ${solicitud.getApellido()}`,
-            comercianteId: solicitud.getComercianteId(),
-            prioridad: "alta",
-          },
-        })
-      );
-
-      await Promise.all(notificaciones);
-    } catch (error) {
-      console.error("Error notificando a analistas:", error);
-
-      // Registrar evento de error en notificación
-      await this.historialRepository.registrarEvento({
-        usuarioId: solicitud.getComercianteId(),
-        accion: HISTORIAL_ACTIONS.ERROR_PROCESO,
-        entidadAfectada: "solicitudes_formales",
-        entidadId: solicitud.getId(),
-        detalles: {
-          error: "Error notificando a analistas",
-          etapa: "notificacion_analistas",
+ /**
+ * Notifica a todos los analistas activos sobre una nueva solicitud formal.
+ *
+ * Este método privado obtiene todos los analistas activos del sistema y les
+ * envía una notificación sobre la nueva solicitud formal que requiere revisión.
+ *
+ * @param solicitud - La solicitud formal creada que requiere notificación
+ * @param message - Mensaje personalizado para enviar a los analistas
+ * @returns Promise<void> - No retorna valor
+ */
+private async notificarAnalistas(solicitud: SolicitudFormal, message: string): Promise<void> {
+  try {
+    // 1. Obtener todos los IDs de analistas usando el repositorio
+    const analistaIds = await this.analistaRepo.obtenerIdsAnalistasActivos();
+    
+    // 2. Enviar notificación individual a cada analista con el mensaje personalizado
+    const notificaciones = analistaIds.map((analistaId) =>
+      this.notificationService.emitNotification({
+        userId: analistaId,
+        type: "solicitud_formal",
+        message: message,
+        metadata: {
+          solicitudId: solicitud.getId(),
+          cliente: `${solicitud.getNombreCompleto()} ${solicitud.getApellido()}`,
+          comercianteId: solicitud.getComercianteId(),
+          prioridad: "alta",
         },
-        solicitudInicialId: solicitud.getSolicitudInicialId(),
-      });
-      // Opcional: Notificar a administradores sobre fallo
-    }
+      })
+    );
+
+    await Promise.all(notificaciones);
+  } catch (error) {
+    console.error("Error notificando a analistas:", error);
+
+    // Registrar evento de error en notificación
+    await this.historialRepository.registrarEvento({
+      usuarioId: solicitud.getComercianteId(),
+      accion: HISTORIAL_ACTIONS.ERROR_PROCESO,
+      entidadAfectada: "solicitudes_formales",
+      entidadId: solicitud.getId(),
+      detalles: {
+        error: "Error notificando a analistas",
+        etapa: "notificacion_analistas",
+      },
+      solicitudInicialId: solicitud.getSolicitudInicialId(),
+    });
   }
+}
 
   /**
    * Verifica si un cliente tiene un crédito activo basado en sus contratos.

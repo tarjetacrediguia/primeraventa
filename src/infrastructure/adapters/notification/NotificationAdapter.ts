@@ -175,8 +175,8 @@ export class NotificationAdapter implements NotificationPort {
      */
     private mapRowToNotification(row: any): Notificacion {
         return new Notificacion(
-            row.id.toString(),
-            row.usuario_id.toString(),
+            Number(row.id),
+            Number(row.usuario_id),
             row.tipo,
             row.mensaje,
             row.leida,
