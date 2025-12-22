@@ -16,44 +16,47 @@ export class SolicitudInicialRepositoryAdapter
   implements SolicitudInicialRepositoryPort
 {
   /**
-   * Obtiene las solicitudes iniciales que están próximas a expirar.
-   * @param diasExpiracion - Número de días después de los cuales una solicitud se considera expirada.
-   * @returns Promise<SolicitudInicial[]> - Array de solicitudes iniciales que están próximas a expirar.
-   */
-  async obtenerSolicitudesAExpirar(
-    diasExpiracion: number
-  ): Promise<SolicitudInicial[]> {
-    const query = `
-            SELECT 
-                si.id, 
-                si.cliente_id AS "clienteId",
-                si.fecha_creacion AS "fechaCreacion",
-                c.dni AS "dniCliente",
-                c.cuil AS "cuilCliente"
-            FROM solicitudes_iniciales si
-            INNER JOIN clientes c ON si.cliente_id = c.id
-            WHERE si.estado = 'aprobada'
-            AND si.fecha_creacion < NOW() - INTERVAL '1 day' * $1
-            AND NOT EXISTS (
-                SELECT 1
-                FROM solicitudes_formales
-                WHERE solicitudes_formales.solicitud_inicial_id = si.id
-            )
-        `;
-    const result = await pool.query(query, [diasExpiracion]);
+ * Obtiene las solicitudes iniciales que están próximas a expirar.
+ * @param diasExpiracion - Número de días después de los cuales una solicitud se considera expirada.
+ * @returns Promise<SolicitudInicial[]> - Array de solicitudes iniciales que están próximas a expirar.
+ */
+async obtenerSolicitudesAExpirar(
+  diasExpiracion: number
+): Promise<SolicitudInicial[]> {
+  const query = `
+    SELECT 
+      si.id, 
+      si.cliente_id AS "clienteId",
+      si.fecha_creacion AS "fechaCreacion",
+      si.estado,
+      c.dni AS "dniCliente",
+      c.cuil AS "cuilCliente"
+    FROM solicitudes_iniciales si
+    INNER JOIN clientes c ON si.cliente_id = c.id
+    WHERE si.estado != 'expirada'
+    AND si.fecha_creacion < NOW() - INTERVAL '1 day' * $1
+    AND NOT EXISTS (
+      SELECT 1
+      FROM solicitudes_formales sf
+      INNER JOIN compras co ON co.solicitud_formal_id = sf.id
+      WHERE sf.solicitud_inicial_id = si.id
+      AND co.estado = 'aprobada'
+    )
+  `;
+  const result = await pool.query(query, [diasExpiracion]);
 
-    return result.rows.map(
-      (row) =>
-        new SolicitudInicial({
-          id: row.id,
-          fechaCreacion: new Date(row.fechaCreacion),
-          estado: "aprobada",
-          clienteId: row.clienteId,
-          comercianteId: undefined, // comercianteId (no se necesita para esta operación)
-          comentarios: [], // comentarios (inicializar como array vacío)
-        })
-    );
-  }
+  return result.rows.map(
+    (row) =>
+      new SolicitudInicial({
+        id: row.id,
+        fechaCreacion: new Date(row.fechaCreacion),
+        estado: row.estado, // Usar el estado real de la base de datos
+        clienteId: row.clienteId,
+        comercianteId: undefined, // comercianteId (no se necesita para esta operación)
+        comentarios: [], // comentarios (inicializar como array vacío)
+      })
+  );
+}
   /**
    * Marca una solicitud inicial como expirada.
    * @param solicitudId - ID de la solicitud inicial a expirar.

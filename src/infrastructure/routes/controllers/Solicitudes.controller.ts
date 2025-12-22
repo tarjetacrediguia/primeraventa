@@ -149,7 +149,10 @@ const crearYAprobarSolicitudFormalUC = new CrearYAprobarSolicitudFormalUseCase(
   permisoRepo,
   historialRepository,
   solicitudInicialRepo,
-  solicitudFormalRepo
+  solicitudFormalRepo,
+  analistaRepository,
+  notificationService,
+  
 );
 
 const getSolicitudFormalBySolicitudInicialIdUC =

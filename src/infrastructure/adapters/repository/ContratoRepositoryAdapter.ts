@@ -609,4 +609,16 @@ export class ContratoRepositoryAdapter implements ContratoRepositoryPort {
         }
         return contrato;
   }
+
+  async getContratosByCuilCliente(cuil: string): Promise<Contrato[]> {
+  const query = `
+    SELECT c.* 
+    FROM contratos c
+    INNER JOIN clientes cl ON c.cliente_id = cl.id
+    WHERE cl.cuil = $1
+  `;
+  
+  const result = await pool.query(query, [cuil]);
+  return result.rows.map((row) => this.mapRowToContrato(row));
+}
 }

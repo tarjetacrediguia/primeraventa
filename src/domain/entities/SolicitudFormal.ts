@@ -627,7 +627,7 @@ export class SolicitudFormal {
    * 
    * @param estado - Nuevo estado de la solicitud.
    */
-  public setEstado(estado: "pendiente" | "aprobada" | "rechazada" | "pendiente_ampliacion" | "aprobada_sin_aumento"): void {
+  public setEstado(estado: "pendiente" | "aprobada" | "rechazada" | "pendiente_ampliacion" | "aprobada_sin_aumento" | "pendiente_aprobacion_inicial"): void {
     this.estado = estado;
   }
 

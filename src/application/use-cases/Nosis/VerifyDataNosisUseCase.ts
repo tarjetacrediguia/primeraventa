@@ -598,7 +598,9 @@ private mapearEstadoEureka(estadoEureka: string): "aprobado" | "rechazado" | "pe
       "Claro",
       "Telefónica Moviles Argentina SA",
       "DirecTv",
-      "DIRECTV ARGENTINA SA"
+      "DIRECTV ARGENTINA SA",
+      "Telefónica de Argentina SA",
+      "Telefónica",
     ];
 
     // Obtener cantidad total de referencias VIGENTES
@@ -830,7 +832,7 @@ private mapearEstadoEureka(estadoEureka: string): "aprobado" | "rechazado" | "pe
     }
 
   } else {
-    const mensaje = "No se pudo obtener información del sistema anterior (Eureka)";
+    const mensaje = "No se pudo obtener información del sistema (Eureka)";
     pendientes.push(mensaje);
     eurekaMensajeComerciante = mensaje;
     eurekaMensajeAnalista = mensaje;
@@ -997,11 +999,11 @@ if (combinacionReferenciasDeudas.estado === "rechazado") {
     let status: "aprobado" | "rechazado" | "pendiente" = "aprobado";
 
     // 🔥 LOGS TEMPORALES PARA DEPURACIÓN
-console.log("=== DEPURACIÓN ESTADO FINAL ===");
-console.log("Reglas fallidas:", reglasFallidas);
-console.log("Pendientes:", pendientes);
-console.log("Resultado referencias:", resultadoReferencias.estado, "total válidas:", resultadoReferencias.totalValidas);
-console.log("Combinación:", combinacionReferenciasDeudas.estado);
+    console.log("=== DEPURACIÓN ESTADO FINAL ===");
+    console.log("Reglas fallidas:", reglasFallidas);
+    console.log("Pendientes:", pendientes);
+    console.log("Resultado referencias:", resultadoReferencias.estado, "total válidas:", resultadoReferencias.totalValidas);
+    console.log("Combinación:", combinacionReferenciasDeudas.estado);
 
     // 🔥 NUEVA LÓGICA: Priorizar rechazos sobre aprobaciones
     // Si hay REGLAS FALLIDAS (rechazos), el estado es RECHAZADO independientemente de Eureka

@@ -195,7 +195,7 @@ export class AprobarSolicitudesFormalesUseCase {
         // Enviar notificación al comerciante sobre la aprobación
         await this.notificarCliente(
             solicitudActualizada, 
-            `Su solicitud formal de crédito ha sido aprobada.`
+            `Su solicitud formal de crédito ha sido aprobada. CUIL: ${solicitudActualizada.getCuil()}`
         );
         
         // Retornar la solicitud actualizada exitosamente
@@ -361,7 +361,7 @@ export class AprobarSolicitudesFormalesUseCase {
     // Enviar notificación al comerciante sobre el rechazo
     await this.notificarCliente(
         solicitudActualizada, 
-        `Su solicitud formal de crédito ha sido rechazada. Comentario: ${comentario}`
+        `Su solicitud formal de crédito ha sido rechazada. CUIL: ${solicitudActualizada.getCuil()} - Comentario: ${comentario}`
     );
     
     // Retornar la solicitud actualizada exitosamente

@@ -103,4 +103,13 @@ export interface ContratoRepositoryPort {
      * @returns Promise<Contrato[]> - Listado de contratos con ese estado
      */
     getContratosByEstado(estado: string): Promise<Contrato[]>;
+
+
+    /**
+     * Obtiene contratos por CUIL del cliente.
+     *
+     * @param cuil - CUIL del cliente
+     * @returns Promise<Contrato[]> - Listado de contratos asociados al cliente con ese CUIL
+     */
+    getContratosByCuilCliente(cuil: string): Promise<Contrato[]>;
 }

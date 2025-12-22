@@ -28,7 +28,10 @@
  */
 
 import { SolicitudFormal } from "../../../domain/entities/SolicitudFormal";
+import { HISTORIAL_ACTIONS } from "../../constants/historialActions";
+import { AnalistaRepositoryPort } from "../../ports/AnalistaRepositoryPort";
 import { HistorialRepositoryPort } from "../../ports/HistorialRepositoryPort";
+import { NotificationPort } from "../../ports/NotificationPort";
 import { PermisoRepositoryPort } from "../../ports/PermisoRepositoryPort";
 import { SolicitudFormalRepositoryPort } from "../../ports/SolicitudFormalRepositoryPort";
 import { SolicitudInicialRepositoryPort } from "../../ports/SolicitudInicialRepositoryPort";
@@ -50,7 +53,9 @@ export class CrearYAprobarSolicitudFormalUseCase {
     private permisoRepo: PermisoRepositoryPort,
     private historialRepository: HistorialRepositoryPort,
     private solicitudInicialRepo: SolicitudInicialRepositoryPort,
-    private solicitudFormalRepo: SolicitudFormalRepositoryPort
+    private solicitudFormalRepo: SolicitudFormalRepositoryPort,
+    private analistaRepo: AnalistaRepositoryPort,
+    private notificationService: NotificationPort
   ) {}
 
   /**
@@ -106,7 +111,7 @@ try {
       solicitaAmpliacionDeCredito,
       datosEmpleador
     );
-
+    /*
     // ===== PASO 3: INTENTAR APROBAR SOLO SI LA INICIAL ESTÁ APROBADA =====
     if (solicitudInicial.getEstado() === "aprobada") {
       // Si la solicitud inicial está aprobada, proceder con la aprobación automática
@@ -144,6 +149,44 @@ try {
       
       return solicitudActualizada;
     }
+      */
+
+      let estadoFinal: "pendiente" | "pendiente_aprobacion_inicial";
+        let mensajeEstado = "Solicitud formal creada exitosamente - Pendiente de aprobación manual por analista";
+
+        // Si la solicitud inicial no está aprobada, usar estado especial
+        if (solicitudInicial.getEstado() !== "aprobada") {
+            estadoFinal = "pendiente_aprobacion_inicial";
+            mensajeEstado = "Solicitud formal creada exitosamente - Pendiente de aprobación de solicitud inicial";
+        } else {
+            estadoFinal = "pendiente";
+        }
+
+      // Actualizar comentario con información del estado
+      const comentarioActualizado = `${comentario} | ${mensajeEstado}`;
+      solicitudCreada.agregarComentario(comentarioActualizado);
+      
+      // Actualizar estado de la solicitud
+      solicitudCreada.setEstado(estadoFinal);
+      
+      // Persistir cambios
+      const solicitudActualizada = await this.solicitudFormalRepo.updateSolicitudFormal(solicitudCreada);
+      
+      // ===== PASO 3: NOTIFICAR ANALISTAS =====
+      await this.notificarAnalistas(
+        solicitudActualizada, 
+        `Nueva solicitud formal requiere revisión manual - Cliente: ${datosSolicitud.nombreCompleto} ${datosSolicitud.apellido}`
+      );
+
+      // Registrar evento en historial
+      await this.registrarEventoCrearYAprobar(
+        comercianteId,
+        solicitudActualizada.getId(),
+        solicitudInicialId,
+        mensajeEstado
+      );
+      
+      return solicitudActualizada;
   } catch (error) {
     // Manejo de errores específico para este caso de uso
     await this.registrarErrorHistorial(
@@ -153,6 +196,55 @@ try {
       `Error en crear y aprobar: ${error instanceof Error ? error.message : String(error)}`
     );
     throw error;
+  }
+}
+
+ /**
+ * Notifica a todos los analistas activos sobre una nueva solicitud formal.
+ *
+ * Este método privado obtiene todos los analistas activos del sistema y les
+ * envía una notificación sobre la nueva solicitud formal que requiere revisión.
+ *
+ * @param solicitud - La solicitud formal creada que requiere notificación
+ * @param message - Mensaje personalizado para enviar a los analistas
+ * @returns Promise<void> - No retorna valor
+ */
+private async notificarAnalistas(solicitud: SolicitudFormal, message: string): Promise<void> {
+  try {
+    // 1. Obtener todos los IDs de analistas usando el repositorio
+    const analistaIds = await this.analistaRepo.obtenerIdsAnalistasActivos();
+    
+    // 2. Enviar notificación individual a cada analista con el mensaje personalizado
+    const notificaciones = analistaIds.map((analistaId) =>
+      this.notificationService.emitNotification({
+        userId: analistaId,
+        type: "solicitud_formal",
+        message: message,
+        metadata: {
+          solicitudId: solicitud.getId(),
+          cliente: `${solicitud.getNombreCompleto()} ${solicitud.getApellido()}`,
+          comercianteId: solicitud.getComercianteId(),
+          prioridad: "alta",
+        },
+      })
+    );
+
+    await Promise.all(notificaciones);
+  } catch (error) {
+    console.error("Error notificando a analistas:", error);
+
+    // Registrar evento de error en notificación
+    await this.historialRepository.registrarEvento({
+      usuarioId: solicitud.getComercianteId(),
+      accion: HISTORIAL_ACTIONS.ERROR_PROCESO,
+      entidadAfectada: "solicitudes_formales",
+      entidadId: solicitud.getId(),
+      detalles: {
+        error: "Error notificando a analistas",
+        etapa: "notificacion_analistas",
+      },
+      solicitudInicialId: solicitud.getSolicitudInicialId(),
+    });
   }
 }
 

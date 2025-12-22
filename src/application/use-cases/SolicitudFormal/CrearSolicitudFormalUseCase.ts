@@ -515,6 +515,112 @@ private async notificarAnalistas(solicitud: SolicitudFormal, message: string): P
    * @param solicitudInicialId - ID de la solicitud inicial para buscar el cliente
    * @returns Promise<boolean> - true si el cliente tiene un crédito activo, false en caso contrario
    */
+
+private async tieneCreditoActivo(
+  solicitudInicialId: number
+): Promise<boolean> {
+  try {
+    console.log(`🔍 Iniciando verificación de crédito activo para solicitud inicial: ${solicitudInicialId}`);
+    
+    // Obtener la solicitud inicial
+    const solicitudInicial = await this.solicitudInicialRepo.getSolicitudInicialById(
+      solicitudInicialId
+    );
+    
+    if (!solicitudInicial) {
+      console.error(`❌ Solicitud inicial no encontrada: ${solicitudInicialId}`);
+      throw new Error("Solicitud inicial no encontrada");
+    }
+    
+    console.log(`✅ Solicitud inicial encontrada: ID=${solicitudInicial.getId()}`);
+    
+    // Obtener el cliente
+    const cliente = await this.clienteRepository.findById(
+      solicitudInicial.getClienteId()
+    );
+    
+    if (!cliente) {
+      console.error(`❌ Cliente no encontrado para solicitud inicial: ${solicitudInicialId}`);
+      throw new Error("Cliente no encontrado");
+    }
+    
+    const cuilCliente = cliente.getCuil();
+    console.log(`✅ Cliente obtenido: CUIL=${cuilCliente}`);
+    
+    // Buscar contratos por CUIL del cliente
+    const contratos = await this.contratoRepository.getContratosByCuilCliente(cuilCliente);
+    
+    console.log(`📊 Contratos encontrados para CUIL ${cuilCliente}: ${contratos.length}`);
+    
+    // Verificar si hay algún contrato con estado "generado"
+    const tieneContratoActivo = contratos.some(contrato => {
+      const estado = contrato.getEstado().toLowerCase();
+      const esActivo = estado === "generado";
+      
+      if (esActivo) {
+        console.log(`⚠️ Contrato activo encontrado: ID=${contrato.getId()}, Estado=${estado}`);
+      }
+      
+      return esActivo;
+    });
+    
+    if (tieneContratoActivo) {
+      console.log(`❌ Cliente tiene crédito activo - CUIL: ${cuilCliente}`);
+      
+      // Registrar evento de rechazo por crédito activo
+      await this.historialRepository.registrarEvento({
+        usuarioId: solicitudInicial.getComercianteId() || null,
+        accion: HISTORIAL_ACTIONS.REJECT_SOLICITUD_FORMAL,
+        entidadAfectada: "solicitudes_formales",
+        entidadId: 0,
+        detalles: {
+          motivo: "Cliente con crédito activo",
+          Cuil_cliente: cuilCliente,
+          contratos_activos: contratos
+            .filter(c => c.getEstado().toLowerCase() === "generado")
+            .map(c => ({
+              id: c.getId(),
+              estado: c.getEstado(),
+              fecha_generacion: c.getFechaGeneracion()
+            }))
+        },
+        solicitudInicialId: solicitudInicialId,
+      });
+      
+      throw new Error(`El cliente ya tiene un crédito activo. CUIL: ${cuilCliente}`);
+    }
+    
+    console.log(`✅ Cliente no tiene créditos activos - CUIL: ${cuilCliente}`);
+    return false;
+    
+  } catch (error) {
+    console.error(`❌ Error en verificación de crédito activo:`, error);
+    
+    // Si ya es un error de crédito activo, relanzarlo
+    if (error instanceof Error && error.message.includes("crédito activo")) {
+      throw error;
+    }
+    
+    // Para otros errores, registrar pero no bloquear
+    await this.historialRepository.registrarEvento({
+      usuarioId: null,
+      accion: HISTORIAL_ACTIONS.ERROR_PROCESO,
+      entidadAfectada: "solicitudes_formales",
+      entidadId: 0,
+      detalles: {
+        error: error instanceof Error ? error.message : String(error),
+        etapa: "verificacion_credito_activo",
+        solicitud_inicial_id: solicitudInicialId,
+      },
+      solicitudInicialId: solicitudInicialId,
+    });
+    
+    console.warn(`⚠️ Error en verificación de crédito, continuando...: ${error}`);
+    return false; // No bloquear por errores de verificación
+  }
+}
+
+  /*
   private async tieneCreditoActivo(
     solicitudInicialId: number
   ): Promise<boolean> {
@@ -557,4 +663,5 @@ private async notificarAnalistas(solicitud: SolicitudFormal, message: string): P
 
     return false;
   }
+    */
 }

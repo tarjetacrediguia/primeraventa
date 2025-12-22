@@ -1051,7 +1051,7 @@ private formatearMensajeComerciante(
             break;
 
         case "INFORMACIÓN SISTEMA ANTERIOR":
-            mensaje = "📋 INFORMACIÓN DEL SISTEMA ANTERIOR\n\n";
+            mensaje = "📋 INFORMACIÓN DEL SISTEMA CREDIGUIA\n\n";
             mensaje += motivos.join("\n");
             break;
 
@@ -1062,7 +1062,7 @@ private formatearMensajeComerciante(
 
     return mensaje;
 }
-
+ 
   private async tieneCreditoActivo(cuilCliente: string): Promise<boolean> {
     const solicitudesFormales =
       await this.solicitudFormalRepository.getSolicitudesFormalesByCuil(

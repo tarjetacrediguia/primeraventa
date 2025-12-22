@@ -285,6 +285,14 @@
       "entidad": "BANCO DINO S.A."
     },
     {
+      "codigo": 10303,
+      "entidad": "FF YATASTO."
+    },
+    {
+      "codigo": 10692,
+      "entidad": "FF Privado Frankel."
+    },
+    {
       "codigo": 44077,
       "entidad": "COMPAÑIA FINANCIERA ARGENTINA S.A."
     },
@@ -2587,6 +2595,10 @@
     {
       "codigo": 55401,
       "entidad": "ZHARO SA"
+    },
+    {
+      "codigo": 10914,
+      "entidad": "RECUPERO DE ACTIVOS FF"
     }
   ]
 }
