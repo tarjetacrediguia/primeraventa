@@ -100,4 +100,29 @@ export interface EstadisticasRepositoryPort {
      * @returns Promise<any> - Estadísticas de tiempos de resolución
      */
     getTiemposResolucion(desde?: string, hasta?: string): Promise<any>;
+
+    getEstadisticasSistema(desde?: string, hasta?: string): Promise<any>;
+    getEstadisticasCompras(desde?: string, hasta?: string): Promise<any>;
+    getEstadisticasPorComercio(desde?: string, hasta?: string, comercio_id?: string): Promise<any>;
+    getEstadisticasPorComerciante(desde?: string, hasta?: string, comerciante_id?: string): Promise<any>;
+    getRankingComercios(desde?: string, hasta?: string, limite?: number): Promise<any>;
+    getRankingComerciantes(desde?: string, hasta?: string, comercio_id?: string, limite?: number): Promise<any>;
+    /**
+   * Obtiene todos los comercios con sus códigos.
+   * @returns Promise<any> - Lista de comercios con código y nombre
+   */
+  getTodosComercios(): Promise<any>;
+  
+  /**
+   * Obtiene los comerciantes asociados a un comercio específico.
+   * @param comercio_id - ID del comercio
+   * @returns Promise<any> - Lista de comerciantes del comercio
+   */
+  getComerciantesPorComercio(comercio_id: string): Promise<any>;
+  
+  /**
+   * Obtiene todos los analistas del sistema.
+   * @returns Promise<any> - Lista de analistas con información básica
+   */
+  getTodosAnalistas(): Promise<any>;
 }

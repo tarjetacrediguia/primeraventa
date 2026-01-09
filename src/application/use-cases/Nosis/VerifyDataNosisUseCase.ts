@@ -1269,7 +1269,7 @@ private verificarCombinacionReferenciasDeudas(
     if (totalProblemas >= 3) {
         return {
             estado: "rechazado",
-            mensaje: `Combinación rechazada: ${cantidadReferenciasValidas} referencia(s) comercial(es) + ${cantidadSituacion2} entidad(es) en situación 2 + ${cantidadDeudas} entidad(es) con deuda = RECHAZADO (total: ${totalProblemas}) - Solicitar libres de deuda: ${[...nombresSituacion2, ...nombresDeudas].join(", ")}`
+            mensaje: `Combinación rechazada: ${cantidadReferenciasValidas} referencia(s) comercial(es) + ${cantidadSituacion2} entidad(es) en situación 2 + ${cantidadDeudas} entidad(es) con deuda = RECHAZADO (total: ${totalProblemas}) - Solicitar libres de deuda: ${[...nombresSituacion2, ...nombresDeudas, ...resultadoReferencias.referenciasValidas].join(", ")}`
         };
     }
 
@@ -1292,7 +1292,7 @@ private verificarCombinacionReferenciasDeudas(
     if (totalProblemas === 2) {
         return {
             estado: "pendiente",
-            mensaje: `Combinación pendiente: ${cantidadSituacion2} entidad(es) en situación 2 + ${cantidadDeudas} entidad(es) con deuda = PENDIENTE (total: 2) - Solicitar libres de deuda: ${[...nombresSituacion2, ...nombresDeudas].join(", ")}`
+            mensaje: `Combinación pendiente: ${cantidadSituacion2} entidad(es) en situación 2 + ${cantidadDeudas} entidad(es) con deuda = PENDIENTE (total: 2) - Solicitar libres de deuda: ${[...nombresSituacion2, ...nombresDeudas, ...resultadoReferencias.referenciasValidas].join(", ")}`
         };
     }
 

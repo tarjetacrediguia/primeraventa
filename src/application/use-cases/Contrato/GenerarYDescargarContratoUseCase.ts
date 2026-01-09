@@ -302,7 +302,7 @@ export class GeneracionYDescargaContratoUseCase {
         // ===== ASIGNAR DATOS DEL COMERCIO =====
         // Asignar información del comerciante al contrato
         contrato.comercioNombre = comerciante.getNombreComercio();
-        contrato.comercioFecha = new Date().toISOString().split('T')[0];
+        contrato.comercioFecha = this.getCurrentLocalDate();
         contrato.comercioNAutorizacion = compra.getNumeroAutorizacion(); // Número de autorización de la compra
         contrato.comercioProducto = "Primera Venta";
         contrato.comercioSucursal = "";
@@ -469,6 +469,30 @@ export class GeneracionYDescargaContratoUseCase {
             solicitudInicialId: solicitudInicialId
         });
     }
+
+    /**
+ * Obtiene la fecha actual en formato YYYY-MM-DD en la zona horaria local
+ * @returns Fecha actual en formato YYYY-MM-DD
+ */
+private getCurrentLocalDate(): string {
+    const now = new Date();
+    // Ajustar por la diferencia de zona horaria para obtener la fecha local correcta
+    const offset = now.getTimezoneOffset() * 60000; // offset en milisegundos
+    const localDate = new Date(now.getTime() - offset);
+    return localDate.toISOString().split('T')[0];
+}
+
+/**
+ * Formatea una fecha a YYYY-MM-DD en la zona horaria local
+ * @param date - Fecha a formatear
+ * @returns Fecha formateada en formato YYYY-MM-DD
+ */
+private formatDateToLocalYYYYMMDD(date: Date): string {
+    if (!date) return "";
+    const offset = date.getTimezoneOffset() * 60000;
+    const localDate = new Date(date.getTime() - offset);
+    return localDate.toISOString().split('T')[0];
+}
 
     /**
      * Notifica al cliente que no tiene permisos para generar contrato.

@@ -276,6 +276,7 @@ export class CrearSolicitudFormalUseCase {
         "image/png",
         "image/webp",
         "image/gif",
+        "application/pdf"
       ];
 
       if (!type || !allowedMimeTypes.includes(type.mime)) {
@@ -287,12 +288,12 @@ export class CrearSolicitudFormalUseCase {
           entidadId: 0,
           detalles: {
             error:
-              "El recibo debe ser una imagen válida (JPG, PNG, WEBP o GIF)",
+              "El recibo debe ser una imagen válida (JPG, PNG, WEBP , GIF o un PDF)",
           },
           solicitudInicialId: solicitudInicialId,
         });
         throw new Error(
-          "El recibo debe ser una imagen válida (JPG, PNG, WEBP o GIF)"
+          "El recibo debe ser una imagen válida (JPG, PNG, WEBP , GIF o un PDF)"
         );
       }
 

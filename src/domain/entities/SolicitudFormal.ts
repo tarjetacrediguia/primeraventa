@@ -268,6 +268,8 @@ export class SolicitudFormal {
     getBarrio() {
         return this.barrio;
     }
+
+    
     
 
   setRazonSocialEmpleador(razonSocial: string) {

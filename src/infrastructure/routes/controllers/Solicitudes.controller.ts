@@ -521,18 +521,24 @@ export const crearSolicitudFormal = async (req: Request, res: Response) => {
 
     // Validar que sea una imagen JPG
 
-    const mimeType = await getImageMimeType(reciboBuffer);
-    /*
-    if (mimeType !== 'image/jpeg') {
-      return res.status(400).json({ error: 'El recibo debe ser una imagen JPG' });
-    }
-    */
-    // Validar tamaño máximo (5MB)
-    if (reciboBuffer.length > 5 * 1024 * 1024) {
-      return res
-        .status(400)
-        .json({ error: "El recibo no puede exceder los 5MB" });
-    }
+    // Detectar tipo MIME del recibo
+        const mimeType = await getFileMimeType(reciboBuffer);
+        const tiposReciboPermitidos = [
+            'image/jpeg', 'image/png', 'image/gif', 'image/webp', 
+            'application/pdf'
+        ];
+    // Validar tamaño máximo (10MB - aumentado para PDF)
+        if (reciboBuffer.length > 10 * 1024 * 1024) {
+            return res.status(400).json({ 
+                error: "El recibo no puede exceder los 10MB" 
+            });
+        }
+
+    if (!mimeType || !tiposReciboPermitidos.includes(mimeType)) {
+            return res.status(400).json({ 
+                error: "El recibo debe ser una imagen (JPG, PNG, GIF, WEBP) o PDF" 
+            });
+        }
 
     // Reemplazar el string base64 con el Buffer
     cliente.recibo = reciboBuffer;
@@ -557,20 +563,22 @@ export const crearSolicitudFormal = async (req: Request, res: Response) => {
 
         const contenidoBuffer = Buffer.from(archivo.contenido, "base64");
 
-        // Validar tipo y tamaño (5MB máximo)
         if (!validarArchivo(contenidoBuffer, archivo.tipo)) {
-          return res
-            .status(400)
-            .json({ error: `Tipo de archivo no permitido: ${archivo.nombre}` });
-        }
+                    return res.status(400).json({ 
+                        error: `Tipo de archivo no permitido: ${archivo.nombre}. Formatos aceptados: JPG, PNG, GIF, WEBP, PDF, DOC, DOCX, XLS, XLSX` 
+                    });
+                }
 
-        if (contenidoBuffer.length > 5 * 1024 * 1024) {
-          return res
-            .status(400)
-            .json({
-              error: `El archivo ${archivo.nombre} excede el tamaño máximo de 5MB`,
-            });
-        }
+        // Tamaño máximo según tipo de archivo
+                const maxSize = archivo.tipo.includes('image') || archivo.tipo === 'application/pdf' 
+                    ? 10 * 1024 * 1024  // 10MB para imágenes y PDF
+                    : 5 * 1024 * 1024;   // 5MB para otros documentos
+
+                if (contenidoBuffer.length > maxSize) {
+                    return res.status(400).json({
+                        error: `El archivo ${archivo.nombre} excede el tamaño máximo de ${maxSize/(1024*1024)}MB`,
+                    });
+                }
 
         archivosValidos.push({
           nombre: archivo.nombre,
@@ -670,6 +678,53 @@ export const crearSolicitudFormal = async (req: Request, res: Response) => {
     }
   }
 };
+
+/**
+ * Obtiene el tipo MIME de un archivo a partir de su buffer.
+ * Soporta imágenes (JPG, PNG, GIF, WEBP) y PDF.
+ * 
+ * @param buffer - Buffer del archivo
+ * @returns Devuelve el tipo MIME como string o null si no se puede determinar
+ */
+async function getFileMimeType(buffer: Buffer): Promise<string | null> {
+    try {
+        if (buffer.length < 4) return null;
+
+        // Verificar firma PDF: %PDF
+        if (buffer[0] === 0x25 && buffer[1] === 0x50 && buffer[2] === 0x44 && buffer[3] === 0x46) {
+            return 'application/pdf';
+        }
+
+        // Verificar firma JPG: FF D8 FF
+        if (buffer[0] === 0xff && buffer[1] === 0xd8 && buffer[2] === 0xff) {
+            return 'image/jpeg';
+        }
+
+        // PNG: 89 50 4E 47 0D 0A 1A 0A
+        if (buffer[0] === 0x89 && buffer[1] === 0x50 && buffer[2] === 0x4e && buffer[3] === 0x47 &&
+            buffer[4] === 0x0d && buffer[5] === 0x0a && buffer[6] === 0x1a && buffer[7] === 0x0a) {
+            return 'image/png';
+        }
+
+        // WEBP: 52 49 46 46 xx xx xx xx 57 45 42 50
+        if (buffer.length >= 12 &&
+            buffer[0] === 0x52 && buffer[1] === 0x49 && buffer[2] === 0x46 && buffer[3] === 0x46 &&
+            buffer[8] === 0x57 && buffer[9] === 0x45 && buffer[10] === 0x42 && buffer[11] === 0x50) {
+            return 'image/webp';
+        }
+
+        // GIF: 47 49 46 38
+        if (buffer[0] === 0x47 && buffer[1] === 0x49 && buffer[2] === 0x46 &&
+            (buffer[3] === 0x37 || buffer[3] === 0x39) && buffer[4] === 0x61) {
+            return 'image/gif';
+        }
+
+        return null;
+    } catch (error) {
+        console.error("Error al detectar tipo MIME:", error);
+        return null;
+    }
+}
 
 /**
  * Función auxiliar para actualizar el estado de solicitudes formales cuando se aprueba la solicitud inicial
@@ -1042,21 +1097,35 @@ export const actualizarSolicitudFormal = async (
       if (cliente.recibo !== undefined) {
         const reciboBuffer = Buffer.from(cliente.recibo, "base64");
 
-        // Validar que sea JPG
-        if (
-          !(
-            reciboBuffer[0] === 0xff &&
-            reciboBuffer[1] === 0xd8 &&
-            reciboBuffer[2] === 0xff
-          )
-        ) {
-          return res
-            .status(400)
-            .json({ error: "El recibo debe ser una imagen JPG válida" });
+        // Detectar tipo MIME del recibo
+        const mimeType = await getFileMimeType(reciboBuffer);
+        const tiposReciboPermitidos = [
+          'image/jpeg', 'image/png', 'image/gif', 'image/webp', 
+          'application/pdf'
+        ];
+
+        // Validar que sea un tipo permitido
+        if (!mimeType || !tiposReciboPermitidos.includes(mimeType)) {
+          return res.status(400).json({ 
+            error: "El recibo debe ser una imagen (JPG, PNG, GIF, WEBP) o PDF" 
+          });
+        }
+
+        // Validar tamaño máximo (10MB para PDF, 5MB para imágenes)
+        const maxSize = mimeType === 'application/pdf' 
+          ? 10 * 1024 * 1024  // 10MB para PDF
+          : 5 * 1024 * 1024;   // 5MB para imágenes
+
+        if (reciboBuffer.length > maxSize) {
+          const sizeMB = maxSize / (1024 * 1024);
+          return res.status(400).json({ 
+            error: `El recibo no puede exceder los ${sizeMB}MB` 
+          });
         }
 
         solicitudExistente.setRecibo(reciboBuffer);
       }
+    
     }
 
     // Actualizar campos del empleador
@@ -1082,6 +1151,37 @@ export const actualizarSolicitudFormal = async (
         solicitudExistente.setProvinciaEmpleador(empleador.provinciaEmpleador);
       if (empleador.telefonoEmpleador !== undefined)
         solicitudExistente.setTelefonoEmpleador(empleador.telefonoEmpleador);
+    }
+
+    // Actualizar importeNeto si se proporciona
+    if (updates.cliente && updates.cliente.importeNeto !== undefined) {
+        const importeNeto = Number(updates.cliente.importeNeto);
+        if (isNaN(importeNeto) || importeNeto <= 0) {
+            return res.status(400).json({ 
+                error: "El importe neto debe ser un número positivo" 
+            });
+        }
+        solicitudExistente.setImporteNeto(importeNeto);
+    }
+
+    // Actualizar otros campos de la solicitud si se proporcionan
+    if (updates.comentarios !== undefined) {
+        solicitudExistente.setComentarios(updates.comentarios);
+    }
+
+    if (updates.estado !== undefined) {
+        solicitudExistente.setEstado(updates.estado);
+    }
+
+    if (updates.solicitaAmpliacionDeCredito !== undefined) {
+        solicitudExistente.setSolicitaAmpliacionDeCredito(updates.solicitaAmpliacionDeCredito);
+    }
+
+    if (updates.nuevoLimiteCompletoSolicitado !== undefined) {
+        const nuevoLimite = Number(updates.nuevoLimiteCompletoSolicitado);
+        if (!isNaN(nuevoLimite) && nuevoLimite > 0) {
+            solicitudExistente.setNuevoLimiteCompletoSolicitado(nuevoLimite);
+        }
     }
 
     // Procesar archivos adjuntos si se proporcionan
@@ -1110,14 +1210,18 @@ export const actualizarSolicitudFormal = async (
         if (!validarArchivo(contenidoBuffer, archivo.tipo)) {
           return res
             .status(400)
-            .json({ error: `Tipo de archivo no permitido: ${archivo.nombre}` });
+            .json({ error: `Tipo de archivo no permitido: ${archivo.nombre} . Formatos aceptados: JPG, PNG, GIF, WEBP, PDF, DOC, DOCX, XLS, XLSX` });
         }
 
-        if (contenidoBuffer.length > 5 * 1024 * 1024) {
+        const maxSize = archivo.tipo.includes('image') || archivo.tipo === 'application/pdf' 
+          ? 10 * 1024 * 1024  // 10MB para imágenes y PDF
+          : 5 * 1024 * 1024;   // 5MB para otros documentos
+
+        if (contenidoBuffer.length > maxSize) {
           return res
             .status(400)
             .json({
-              error: `El archivo ${archivo.nombre} excede el tamaño máximo de 5MB`,
+              error: `El archivo ${archivo.nombre} excede el tamaño máximo de ${maxSize/(1024*1024)}MB`,
             });
         }
 
@@ -1681,46 +1785,71 @@ export const obtenerDatosClienteComerciante = async (
 };
 // Función auxiliar para validar archivos
 const validarArchivo = (contenido: Buffer, tipo: string): boolean => {
-  // Validar tipo MIME
-  const tiposPermitidos = [
-    "image/jpeg",
-    "image/png",
-    "image/gif",
-    "application/pdf",
-  ];
+    // Validar tipo MIME
+    const tiposPermitidos = [
+        'image/jpeg',
+        'image/jpg', // Para compatibilidad
+        'image/png',
+        'image/gif',
+        'image/webp',
+        'application/pdf',
+        'application/msword', // DOC
+        'application/vnd.openxmlformats-officedocument.wordprocessingml.document', // DOCX
+        'application/vnd.ms-excel', // XLS
+        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', // XLSX
+    ];
 
-  // Detectar tipo MIME
-  let mimeType = "application/octet-stream";
-  if (contenido.length > 4) {
+    // Detectar tipo MIME basado en la firma del archivo
+    let mimeType = 'application/octet-stream';
+    
+    if (contenido.length < 4) {
+        return false;
+    }
+
     // Verificar firma PDF
-    if (
-      contenido[0] === 0x25 &&
-      contenido[1] === 0x50 &&
-      contenido[2] === 0x44 &&
-      contenido[3] === 0x46
-    ) {
-      mimeType = "application/pdf";
+    if (contenido[0] === 0x25 && contenido[1] === 0x50 && contenido[2] === 0x44 && contenido[3] === 0x46) {
+        mimeType = 'application/pdf';
     }
     // Verificar firma JPG
-    else if (
-      contenido[0] === 0xff &&
-      contenido[1] === 0xd8 &&
-      contenido[2] === 0xff
-    ) {
-      mimeType = "image/jpeg";
+    else if (contenido[0] === 0xff && contenido[1] === 0xd8 && contenido[2] === 0xff) {
+        mimeType = 'image/jpeg';
     }
     // Verificar firma PNG
-    else if (
-      contenido[0] === 0x89 &&
-      contenido[1] === 0x50 &&
-      contenido[2] === 0x4e &&
-      contenido[3] === 0x47
-    ) {
-      mimeType = "image/png";
+    else if (contenido[0] === 0x89 && contenido[1] === 0x50 && contenido[2] === 0x4e && contenido[3] === 0x47) {
+        mimeType = 'image/png';
     }
-  }
+    // Verificar firma GIF
+    else if (contenido[0] === 0x47 && contenido[1] === 0x49 && contenido[2] === 0x46 && contenido[3] === 0x38) {
+        mimeType = 'image/gif';
+    }
+    // Verificar firma WEBP
+    else if (contenido.length >= 12 &&
+             contenido[0] === 0x52 && contenido[1] === 0x49 && contenido[2] === 0x46 && contenido[3] === 0x46 &&
+             contenido[8] === 0x57 && contenido[9] === 0x45 && contenido[10] === 0x42 && contenido[11] === 0x50) {
+        mimeType = 'image/webp';
+    }
+    // Verificar firma DOC (Compound File Binary Format)
+    else if (contenido[0] === 0xD0 && contenido[1] === 0xCF && contenido[2] === 0x11 && contenido[3] === 0xE0) {
+        mimeType = 'application/msword';
+    }
+    // Verificar firma DOCX (es un ZIP)
+    else if (contenido[0] === 0x50 && contenido[1] === 0x4B && contenido[2] === 0x03 && contenido[3] === 0x04) {
+        // Para DOCX, necesitamos verificar el contenido interno
+        mimeType = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
+    }
+    // Verificar firma XLSX (también es ZIP)
+    else if (contenido[0] === 0x50 && contenido[1] === 0x4B && contenido[2] === 0x03 && contenido[3] === 0x04) {
+        // Para XLSX, la validación específica sería más compleja
+        mimeType = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
+    }
 
-  return tiposPermitidos.includes(mimeType) && mimeType === tipo;
+    // Validar que el tipo declarado coincida con el detectado
+    // Para Office documentos, aceptamos múltiples tipos MIME
+    const tiposAceptados = tiposPermitidos.includes(tipo) ? 
+        [tipo] : 
+        tiposPermitidos.filter(t => t.startsWith('application/vnd') || t === 'application/msword');
+
+    return tiposAceptados.includes(mimeType);
 };
 
 export const descargarArchivoAdjunto = async (req: Request, res: Response) => {
@@ -1753,18 +1882,29 @@ export const descargarArchivoAdjunto = async (req: Request, res: Response) => {
       return res.status(404).json({ error: "Archivo no encontrado" });
     }
 
-    // Configurar headers
-    res.setHeader("Content-Type", archivo.getTipo());
-    res.setHeader(
-      "Content-Disposition",
-      `attachment; filename="${archivo.getNombre()}"`
-    );
-    res.setHeader("Content-Length", archivo.getContenido().length);
+    // Configurar headers según el tipo de archivo
+        const tipo = archivo.getTipo();
+        const nombre = archivo.getNombre();
+        
+        // Determinar Content-Disposition basado en el tipo
+        const esImagen = tipo.startsWith('image/');
+        const esPDF = tipo === 'application/pdf';
+        
+        const contentDisposition = esImagen || esPDF 
+            ? `inline; filename="${nombre}"`  // Mostrar en el navegador
+            : `attachment; filename="${nombre}"`; // Forzar descarga
 
-    // Enviar archivo
-    res.end(archivo.getContenido());
+        res.setHeader("Content-Type", tipo);
+        res.setHeader("Content-Disposition", contentDisposition);
+        res.setHeader("Content-Length", archivo.getContenido().length);
+
+        // Enviar archivo
+        res.end(archivo.getContenido());
   } catch (error) {
     res.status(500).json({ error: (error as Error).message });
   }
+
+
+  
 };
 
